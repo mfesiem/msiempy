@@ -242,7 +242,9 @@ PARAMS = {
 
     'query_result' : ("""qryGetResults?startPos=%(startPos)s&numRows=%(numRows)s&reverse=false""", """{"resultID": %(resultID)s}"""),
     
-    'time_zones' : ("""userGetTimeZones""", None)
+    'time_zones' : ("""userGetTimeZones""", None),
+
+    'logout' : ("""logout""", None)
     
 
 }

@@ -2,64 +2,33 @@
 """ 
     msiem constants
 """
-BASE_URL = 'https://{}/rs/esm/'
-BASE_URL_PRIV = 'https://{}/ess'
-
-ASYNC_MAX_WORKERS=15
-GENERAL_POST_TIMEOUT=30
-
-CONFIG_FILE_NAME='.msiem/conf.ini'
-
-CONFIG_FILE_DISCLAMER='''
-    ; The configuration file should be located securely in your path since it 
-    ; has credentials.
-    ; 
-    ; For Windows:  %APPDATA%\\\\'''+CONFIG_FILE_NAME+'''
-    ; For Mac :     $HOME/'''+CONFIG_FILE_NAME+'''
-    ; For Linux :   $XDG_CONFIG_HOME/'''+CONFIG_FILE_NAME+'''
-    ;        or :   $HOME/'''+CONFIG_FILE_NAME+'''
-
-    ; Use command line to setup authentication'''
-
-DEFAULT_CONFIG_FILE='''
-    [general]
-    verbose=no
-    ssl_verify=no
-    max_workers=15
-
-    [esm]
-    host=
-    user=
-    passwd=
-    '''
-
 POSSIBLE_FIELD_TYPES = [ 'BOOLEAN',
-        'STRING',
-        'CUSTOM',
-        'INT2',
-        'INT4',
-        'INT8',
-        'INT32',
-        'INT64',
-        'UINT8',
-        'UINT16',
-        'UINT32',
-        'UINT64',
-        'IPV4',
-        'FLOAT',
-        'SIGID',
-        'SSTRING',
-        'IPTYPE',
-        'IP',
-        'GUID',
-        'MAC_ADDRESS',
-        'LONG_CUSTOM',
-        'HSTRING',
-        'STRLIT',
-        'AGG',
-        'TIME4',
-        'TIME8']
-
+            'STRING',
+            'CUSTOM',
+            'INT2',
+            'INT4',
+            'INT8',
+            'INT32',
+            'INT64',
+            'UINT8',
+            'UINT16',
+            'UINT32',
+            'UINT64',
+            'IPV4',
+            'FLOAT',
+            'SIGID',
+            'SSTRING',
+            'IPTYPE',
+            'IP',
+            'GUID',
+            'MAC_ADDRESS',
+            'LONG_CUSTOM',
+            'HSTRING',
+            'STRLIT',
+            'AGG',
+            'TIME4',
+            'TIME8']
+            
 POSSIBLE_OPERATORS=['IN',
         'NOT_IN',
         'GREATER_THAN',
