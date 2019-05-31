@@ -18,36 +18,7 @@ from .error import NitroError
 from .utils import tob64
 from .params import PARAMS
 
-def log(verbose=False, logfile=None) -> object:
-    """
-    Private method. Inits the session's logger based on params
-    #TODO not too sure where to put the logger init method, 
-    All objects should be able to log stuff, NitroConig too, so the logger must be globaly accessible
-    """
 
-    log = logging.getLogger()
-    log.setLevel(logging.DEBUG)
-
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-
-    std = logging.StreamHandler()
-    std.setLevel(logging.DEBUG)
-    std.setFormatter(formatter)
-
-    if verbose :
-        std.setLevel(logging.DEBUG)
-    else :
-        std.setLevel(logging.INFO)
-        
-    log.addHandler(std)
-
-    if logfile :
-        fh = logging.FileHandler(logfile)
-        fh.setLevel(logging.INFO)
-        fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-        log.addHandler(fh)
-
-    return (log)
 
 class NitroSession():
     """NitroSession object represent the point of convergence of every request to the McFee ESM
@@ -63,6 +34,45 @@ class NitroSession():
     __initiated__ = False
     __unique_state__ = {}
 
+    log = None
+    config = None
+    executor = None
+
+    @staticmethod
+    def _init_log(verbose=False, logfile=None) -> object:
+        """
+        Private method. Inits the session's logger based on params
+        #TODO not too sure where to put the logger init method, 
+        All objects should be able to log stuff, NitroConig too, so the logger must be globaly accessible
+        """
+        
+        log = logging.getLogger()
+        log.setLevel(logging.DEBUG)
+
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+        std = logging.StreamHandler()
+        std.setLevel(logging.DEBUG)
+        std.setFormatter(formatter)
+
+        if verbose :
+            std.setLevel(logging.DEBUG)
+        else :
+            std.setLevel(logging.INFO)
+            
+        log.handlers=[]
+        
+        log.addHandler(std)
+
+        if logfile :
+            fh = logging.FileHandler(logfile)
+            fh.setLevel(logging.INFO)
+            fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+            log.addHandler(fh)
+        
+        
+        return (log)
+        
     def __str__(self):
         return repr(self.__unique_state__) 
 
@@ -80,7 +90,10 @@ class NitroSession():
         if not self.__initiated__ :
             NitroSession.__initiated__ = True
 
-            log().info('New NitroSession instance')
+            self.log = self._init_log()
+            NitroSession.log=self.log
+
+            self.log.info('New NitroSession instance')
             
             #Private attributes
             self._headers={'Content-Type': 'application/json'}
@@ -88,15 +101,16 @@ class NitroSession():
             
             #Config parsing
             self.config = NitroConfig(path=conf_path, config=config)
+            NitroSession.config=self.config
 
-            self.log = log(
+            self.log = self._init_log(
                 verbose=self.config.verbose,
                 logfile=self.config.logfile )
+            NitroSession.log=self.log
             
             self.executor = concurrent.futures.ThreadPoolExecutor(
                 max_workers=self.config.max_workers )
-
-            
+            NitroSession.executor=self.executor
 
     def _request(self, method, http, data=None, callback=None, raw=False, secure=False) -> object:
         """
@@ -316,15 +330,14 @@ class NitroConfig(configparser.ConfigParser):
     CONFIG_FILE_NAME='.msiem/conf.ini'
 
     CONFIG_FILE_DISCLAMER='''
-        ; The configuration file should be located securely in your path since it 
-        ; has credentials.
-        ; 
-        ; For Windows:  %APPDATA%\\\\'''+CONFIG_FILE_NAME+'''
-        ; For Mac :     $HOME/'''+CONFIG_FILE_NAME+'''
-        ; For Linux :   $XDG_CONFIG_HOME/'''+CONFIG_FILE_NAME+'''
-        ;        or :   $HOME/'''+CONFIG_FILE_NAME+'''
-
-        ; Use command line to setup authentication'''
+        # The configuration file should be located securely in your path since it 
+        # has credentials.
+        # For Windows:  %APPDATA%\\\\'''+CONFIG_FILE_NAME+'''
+        # For Mac :     $HOME/'''+CONFIG_FILE_NAME+'''
+        # For Linux :   $XDG_CONFIG_HOME/'''+CONFIG_FILE_NAME+'''
+        #        or :   $HOME/'''+CONFIG_FILE_NAME+'''
+        # Use command line to setup authentication
+        '''
 
     DEFAULT_CONFIG_FILE='''
         [esm]
@@ -347,15 +360,18 @@ class NitroConfig(configparser.ConfigParser):
         async_delta:12hr #dateutil.parser.parse()
 
         '''
+
     def __str__(self):
-        return('Configuration file : '+self._path+'\n'+str({section: dict(self[section]) for section in self.sections()}))
+        return(NitroConfig.CONFIG_FILE_DISCLAMER+'\nConfiguration file : '+
+            self._path+'\n'+str({section: dict(self[section]) for section in self.sections()}))
 
     def __init__(self, path=None, config=None, *arg, **kwarg):
         """
         Initialize the Config instance.
         """
-        super().__init__(*arg, **kwarg)
 
+        super().__init__(*arg, **kwarg)
+    
         if not path :
             self._path = self._find_ini_location()
 
@@ -363,12 +379,12 @@ class NitroConfig(configparser.ConfigParser):
             self._path = path
 
         try :
-            f=self.read(self._path)
-            if len(f) == 0:
+            files=self.read(self._path)
+            if len(files) == 0:
                 raise FileNotFoundError
 
         except :
-            log().info("Config file inexistant or currupted, applying defaults")
+            NitroSession.log.info("Config file inexistant or currupted, applying defaults")
 
             if not os.path.exists(os.path.dirname(self._path)):
                 os.makedirs(os.path.dirname(self._path))
@@ -380,14 +396,19 @@ class NitroConfig(configparser.ConfigParser):
             self.write()
 
         if config is not None :
-            log().info("Read! "+str(self))
+            NitroSession.log.info("Read! "+str(self))
 
             self.read_dict(config)
 
+        
+
     def write(self):
+
+        NitroSession.log.info("Write config file at "+self._path)
+
         with open(self._path, 'w') as conf:
             super().write(conf)
-        log().info("Config file wrote at "+self._path)
+        
         
 
     def _iset(self, section, option, secure=False):
