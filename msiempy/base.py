@@ -3,12 +3,6 @@ import collections
 
 from .session import NitroSession
 
-class NitroError(Exception):
-    """
-    Base internal exception
-    """
-    pass
-
 class NitroBase(abc.ABC):
     """
     Base class for all nitro objects. All objects have a reference t the single NitroSession object that handle the esm requests

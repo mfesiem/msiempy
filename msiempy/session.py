@@ -1,3 +1,6 @@
+"""Session
+"""
+
 import logging
 import requests
 import json
@@ -8,9 +11,39 @@ import urllib.parse
 import getpass
 import concurrent.futures
 import configparser
-import msiempy.base as base
-import msiempy.utils as utils
-import msiempy.params
+
+from .error import NitroError
+from .utils import tob64
+from .params import PARAMS
+
+def log(verbose=False, logfile=None) -> object:
+    """
+    Private method. Inits the session's logger based on params
+    """
+
+    log = logging.getLogger()
+    log.setLevel(logging.DEBUG)
+
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+    std = logging.StreamHandler()
+    std.setLevel(logging.DEBUG)
+    std.setFormatter(formatter)
+
+    if verbose :
+        std.setLevel(logging.DEBUG)
+    else :
+        std.setLevel(logging.INFO)
+        
+    log.addHandler(std)
+
+    if logfile :
+        fh = logging.FileHandler(logfile)
+        fh.setLevel(logging.INFO)
+        fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        log.addHandler(fh)
+
+    return (log)
 
 class NitroSession():
     """NitroSession object represent the point of convergence of every request to the McFee ESM
@@ -39,6 +72,8 @@ class NitroSession():
         #Init properties only once
         if not self.__initiated__ :
             NitroSession.__initiated__ = True
+
+            log().info('New NitroSession instance')
             
             #Private attributes
             self._headers={'Content-Type': 'application/json'}
@@ -46,13 +81,15 @@ class NitroSession():
             
             #Config parsing
             self.config = NitroConfig(path=conf_path, **config)
+
+            self.log = log(
+                verbose=self.config.verbose,
+                logfile=self.config.logfile )
             
             self.executor = concurrent.futures.ThreadPoolExecutor(
                 max_workers=self.config.max_workers )
 
-            self.log = self._get_logger(
-                verbose=self.config.verbose,
-                logfile=self.config.logfile )
+            
 
     def _request(self, method, http, data=None, callback=None, raw=False, secure=False) -> object:
         """
@@ -136,20 +173,21 @@ class NitroSession():
         
     def _login(self, user=None, passwd=None):
 
-        userb64 = utils.tob64(self.config.user)
+        userb64 = tob64(self.config.user)
         passb64 = self.config.passwd
         
         resp = self.request('login', username=userb64, password=passb64, raw=True, secure=True)
         
-        if resp.status_code in [400, 401]:
-            raise base.NitroError('Invalid username or password for the ESM')
-        elif 402 <= resp.status_code <= 600:
-            raise base.NitroError('ESM Login Error:', resp.text)
-        
-        self._headers['Cookie'] = resp.headers.get('Set-Cookie')
-        self._headers['X-Xsrf-Token'] = resp.headers.get('Xsrf-Token')
+        if resp:
+            if resp.status_code in [400, 401]:
+                raise NitroError('Invalid username or password for the ESM')
+            elif 402 <= resp.status_code <= 600:
+                raise NitroError('ESM Login Error:', resp.text)
+       
+            self._headers['Cookie'] = resp.headers.get('Set-Cookie')
+            self._headers['X-Xsrf-Token'] = resp.headers.get('Xsrf-Token')
     
-        return True
+            return True
 
     def request(self, request, http='post', callback=None, raw=False, secure=False, *arg, **params) -> object:
         """
@@ -157,7 +195,7 @@ class NitroSession():
         """
         self.log.debug("Calling request with params :"+str(params))
 
-        method, data = msiempy.params.PARAMS.get(request)
+        method, data = PARAMS.get(request)
 
         if data :
             data =  data % params
@@ -248,35 +286,7 @@ class NitroSession():
         except json.decoder.JSONDecodeError: 
             raise
 
-    @staticmethod
-    def _get_logger(verbose=False, logfile=None) -> object:
-        """
-        Private method. Inits the session's logger based on params
-        """
-
-        log = logging.getLogger()
-        log.setLevel(logging.DEBUG)
-
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-
-        std = logging.StreamHandler()
-        std.setLevel(logging.DEBUG)
-        std.setFormatter(formatter)
-
-        if verbose :
-            std.setLevel(logging.DEBUG)
-        else :
-            std.setLevel(logging.INFO)
-            
-        log.addHandler(std)
-
-        if logfile :
-            fh = logging.FileHandler(logfile)
-            fh.setLevel(logging.INFO)
-            fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-            log.addHandler(fh)
-
-        return (log)
+    
 
 class NitroConfig(configparser.ConfigParser):
     """"NitroConfig
@@ -307,7 +317,7 @@ class NitroConfig(configparser.ConfigParser):
         verbose=no
         logfile=
         timeout=30
-        ssl_verift=no
+        ssl_verify=no
 
         [performance]
         max_workers=15
@@ -319,7 +329,7 @@ class NitroConfig(configparser.ConfigParser):
 
         '''
     def __str__(self):
-        return('Configuration file : '+self._path+'\n'+open(self._path, 'r').read())
+        return('Configuration file : '+self._path+'\n'+str({section: dict(self[section]) for section in self.sections()}))
 
     def __init__(self, path=None, config=None, *arg, **kwarg):
         """
@@ -339,7 +349,7 @@ class NitroConfig(configparser.ConfigParser):
                 raise FileNotFoundError
 
         except :
-            NitroSession().log.info("Config file inexistant or currupted, applying defaults")
+            log().info("Config file inexistant or currupted, applying defaults")
 
             if not os.path.exists(os.path.dirname(self._path)):
                 os.makedirs(os.path.dirname(self._path))
@@ -351,12 +361,14 @@ class NitroConfig(configparser.ConfigParser):
             self.write()
 
         if config is not None :
+            log().info("Read! "+str(self))
+
             self.read_dict(config)
 
     def write(self):
         with open(self._path, 'w') as conf:
             super().write(conf)
-        NitroSession().log.info("Config file wrote at "+self._path)
+        log().info("Config file wrote at "+self._path)
         
 
     def _iset(self, section, option, secure=False):
@@ -364,7 +376,7 @@ class NitroConfig(configparser.ConfigParser):
         value = self.get(section, option)
         newvalue=''
         if secure :
-            newvalue = utils.tob64(getpass.getpass(msg.format(section, option)+'. Press <Enter> to skip: '))
+            newvalue = tob64(getpass.getpass(msg.format(section, option)+'. Press <Enter> to skip: '))
         else:
             newvalue = input(msg.format(section, option)+ '. Press <Enter> to keep '+ (value if (str(value) is not '') else 'empty') + ': ')
         if newvalue != '' :
