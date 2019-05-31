@@ -19,7 +19,9 @@ class NitroSession():
     
     Internal __dict__ refers to a unique instance of dict and thus, properties can be instanciated only once.
 
-    Use _discard() to delete the object
+    No need to call a login() method
+
+    Use logout() to delete the object
     """
 
     BASE_URL = 'https://{}/rs/esm/'
@@ -32,11 +34,11 @@ class NitroSession():
         return repr(self.__unique_state__) 
 
     def __init__(self, conf_path=None, **config):
-        self.__dict__ = self.__unique_state__
+        self.__dict__ = NitroSession.__unique_state__
         
         #Init properties only once
         if not self.__initiated__ :
-            self.__initiated__ = True
+            NitroSession.__initiated__ = True
             
             #Private attributes
             self._headers={'Content-Type': 'application/json'}
@@ -337,7 +339,7 @@ class NitroConfig(configparser.ConfigParser):
                 raise FileNotFoundError
 
         except :
-            print("Config file inexistant or currupted, applying defaults")
+            NitroSession().log.info("Config file inexistant or currupted, applying defaults")
 
             if not os.path.exists(os.path.dirname(self._path)):
                 os.makedirs(os.path.dirname(self._path))
@@ -354,7 +356,7 @@ class NitroConfig(configparser.ConfigParser):
     def write(self):
         with open(self._path, 'w') as conf:
             super().write(conf)
-        print("Config file wrote at "+self._path)
+        NitroSession().log.info("Config file wrote at "+self._path)
         
 
     def _iset(self, section, option, secure=False):
