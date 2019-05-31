@@ -1,4 +1,6 @@
-"""Session
+"""Session package regroup method and classes that are shared by all msiempy objects.
+NitroSession class
+NitroConfig class
 """
 
 import logging
@@ -19,6 +21,8 @@ from .params import PARAMS
 def log(verbose=False, logfile=None) -> object:
     """
     Private method. Inits the session's logger based on params
+    #TODO not too sure where to put the logger init method, 
+    All objects should be able to log stuff, NitroConig too, so the logger must be globaly accessible
     """
 
     log = logging.getLogger()
@@ -47,14 +51,10 @@ def log(verbose=False, logfile=None) -> object:
 
 class NitroSession():
     """NitroSession object represent the point of convergence of every request to the McFee ESM
-
     It provides standard dialogue with the esm with params.py
-    
     Internal __dict__ refers to a unique instance of dict and thus, properties can be instanciated only once.
-
     No need to call a login() method
-
-    Use logout() to delete the object
+    Use logout() to delete the object.
     """
 
     BASE_URL = 'https://{}/rs/esm/'
@@ -66,7 +66,14 @@ class NitroSession():
     def __str__(self):
         return repr(self.__unique_state__) 
 
-    def __init__(self, conf_path=None, **config):
+    def __init__(self, conf_path=None, config=None):
+        """
+        This init method is called every time you call NitroSession() constructor
+        but teh properties are actually initiated only once.
+        Use logout() to trash the obejct and re instanciate NitroSession
+        Configuration file path can be passed as conf_path attr and a config dict
+        can we read from config attr ie {'esm':{'host':'myhost.com','user':'username','passwd':'p22ssw0rd'}}
+        """
         self.__dict__ = NitroSession.__unique_state__
         
         #Init properties only once
@@ -80,7 +87,7 @@ class NitroSession():
             self._logged=False
             
             #Config parsing
-            self.config = NitroConfig(path=conf_path, **config)
+            self.config = NitroConfig(path=conf_path, config=config)
 
             self.log = log(
                 verbose=self.config.verbose,
@@ -93,8 +100,9 @@ class NitroSession():
 
     def _request(self, method, http, data=None, callback=None, raw=False, secure=False) -> object:
         """
-        Helper method
-        If method is all upper cases, a private API is done.
+        Helper method that format the request, handle the basic parsing of the SIEM result 
+        as well as other errors.        
+        If method is all upper cases, it's a private API call.
         Private API is under /ess/ and public api is under /rs/esm
         """
 
@@ -171,8 +179,11 @@ class NitroSession():
         except Exception as e:
             self.log.error(e)
         
-    def _login(self, user=None, passwd=None):
-
+    def _login(self):
+        """
+        Internal method that will be called when the user is not logged yet.
+        Throws NitroError if login fails
+        """
         userb64 = tob64(self.config.user)
         passb64 = self.config.passwd
         
@@ -191,7 +202,15 @@ class NitroSession():
 
     def request(self, request, http='post', callback=None, raw=False, secure=False, *arg, **params) -> object:
         """
-            This method is the centralized interface of all request coming to the SIEM
+            This method is the centralized interface of all request coming to the SIEM.
+                request :   keyword corresponding to the request name in PARAMS mapping
+                http :      http method
+                callback :  a callable to execute on the returned object if needed
+                raw :       if true will return the Response object from requests module
+                secure :    if true will not log the content of the request
+                *arg :      supplementary attributes (TBD)
+                **params : Interpolation parameters that will be match to PARAMS template
+
         """
         self.log.debug("Calling request with params :"+str(params))
 
