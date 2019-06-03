@@ -6,18 +6,25 @@ class T(unittest.TestCase):
     def test(self):
         
         print('creating new instance')
-        esm=msiempy.session.NitroSession()
+        session=msiempy.session.NitroSession()
 
         print('setting [esm]*')
-        esm.config.iset('esm')
-        esm.config.write()
+        session.config.iset('esm')
+        session.config.write()
 
-        print('getting devtree')
-        print(esm.request('get_devtree'))
+        print('getting time_zones')
+        print(session.request('time_zones'))
 
         print('printing config')
-        print(esm.config)
+        print(session.config)
 
-        print('printing esm')
-        print(esm)
+        print('printing session')
+        print(session)
+
+        session.logout()
+
+        print(session)
+
+        print('getting esm_time')
+        print(session.request('get_esm_time')) #The error is normal cause we just logged out
 

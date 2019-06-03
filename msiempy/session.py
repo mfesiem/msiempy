@@ -13,12 +13,14 @@ import urllib.parse
 import getpass
 import concurrent.futures
 import configparser
+import urllib3
 
 from .error import NitroError
 from .utils import tob64
 from .params import PARAMS
 
-
+urllib3.disable_warnings()
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 class NitroSession():
     """NitroSession object represent the point of convergence of every request to the McFee ESM
@@ -46,7 +48,7 @@ class NitroSession():
         All objects should be able to log stuff, NitroConig too, so the logger must be globaly accessible
         """
         
-        log = logging.getLogger()
+        log = logging.getLogger('msiempy')
         log.setLevel(logging.DEBUG)
 
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -138,7 +140,7 @@ class NitroSession():
                 data = json.dumps(data)
 
         #Logging the data request if not secure | Logs anyway the method
-        self.log.debug('POSTING : ' + method + ('\nDATA'+(data if data is not None else '') if not secure else ''))
+        #self.log.debug('POSTING : ' + method + ('\nDATA'+(data if data is not None else '') if not secure else ''))
 
         try :
             result = requests.request(
@@ -164,7 +166,7 @@ class NitroSession():
 
                 except requests.HTTPError as e :
                     self.log.error(str(e)+' '+str(result.text))
-                    #TODO handle exired session error, result unavailable / other siem errors
+                    #TODO handle expired session error, result unavailable / other siem errors
 
                 else: #
                     try:
@@ -214,7 +216,7 @@ class NitroSession():
     
             return True
 
-    def request(self, request, http='post', callback=None, raw=False, secure=False, *arg, **params) -> object:
+    def request(self, request, http='post', callback=None, raw=False, secure=False, *args, **params) -> object:
         """
             This method is the centralized interface of all request coming to the SIEM.
                 request :   keyword corresponding to the request name in PARAMS mapping
@@ -226,7 +228,7 @@ class NitroSession():
                 **params : Interpolation parameters that will be match to PARAMS template
 
         """
-        self.log.debug("Calling request with params :"+str(params))
+        self.log.debug("Calling request with params :"+str(locals()))
 
         method, data = PARAMS.get(request)
 
@@ -243,7 +245,7 @@ class NitroSession():
             self._logged=self._login()
 
         try :
-            post = self._request(request, http, data, callback, raw, secure)
+            post = self._request(method, http, data, callback, raw, secure)
             return post
 
         except Exception as err:
@@ -302,22 +304,16 @@ class NitroSession():
         Args: 
             response: requests response object
         """
-        data = None
-        try:
-            if isinstance(response.json(), list):
-                data = response.json()
-            elif isinstance(response.json(), dict):
+        data = response.json()
+        if isinstance(response.json(), dict):
+            try:
+                data = data['value']
+            except KeyError:
                 try:
-                    data = response.json()['value']
+                    data = data['return']
                 except KeyError:
-                    try:
-                        response.json()['return']
-                    except KeyError:
-                        data = response.json()
-            return data
-        
-        except json.decoder.JSONDecodeError: 
-            raise
+                    pass
+        return data
 
     
 
@@ -339,27 +335,33 @@ class NitroConfig(configparser.ConfigParser):
         # Use command line to setup authentication
         '''
 
-    DEFAULT_CONFIG_FILE='''
-        [esm]
-        host=
-        user=
-        passwd=
+    DEFAULT_VERBOSE=False
+    DEFAULT_LOGFILE=''
+    DEFAULT_TIMEOUT=30
+    DEFAULT_SSL_VERIFY=False
+    DEFAULT_OUTPUT='text'
 
-        [general]
-        verbose=no
-        logfile=
-        timeout=30
-        ssl_verify=no
+    DEFAULT_MAX_WORKERS=15
+    DEFAULT_MAX_ROWS=200000
+    DEFAULT_DEFAULT_ROWS=5000
+    DEFAULT_ASYNC_RULE='slots'
+    DEFAULT_ASYNC_SLOTS=5
+    DEFAULT_ASYNC_DELTA='5mn'
 
-        [performance]
-        max_workers=15
-        max_rows=200000
-        default_rows=500
-        async_rule=slots #or delta
-        async_slots=5
-        async_delta:12hr #dateutil.parser.parse()
-
-        '''
+    DEFAULT_CONF_DICT={'esm':{'host':'', 
+            'user':'',
+            'passwd':''},
+        'general':{'verbose':DEFAULT_VERBOSE,
+            'logfile':DEFAULT_LOGFILE,
+            'timeout':DEFAULT_TIMEOUT,
+            'ssl_verify':DEFAULT_SSL_VERIFY,
+            'output':DEFAULT_OUTPUT},
+        'performance':{'max_workers':DEFAULT_MAX_WORKERS,
+            'max_rows':DEFAULT_MAX_ROWS,
+            'default_rows':DEFAULT_DEFAULT_ROWS, 
+            'async_rule':DEFAULT_ASYNC_RULE,
+            'async_slots':DEFAULT_ASYNC_SLOTS,
+            'async_delta':DEFAULT_ASYNC_DELTA}}
 
     def __str__(self):
         return(NitroConfig.CONFIG_FILE_DISCLAMER+'\nConfiguration file : '+
@@ -371,10 +373,11 @@ class NitroConfig(configparser.ConfigParser):
         """
 
         super().__init__(*arg, **kwarg)
+
+        self.read_dict(NitroConfig.DEFAULT_CONF_DICT)
     
         if not path :
             self._path = self._find_ini_location()
-
         else : 
             self._path = path
 
@@ -388,33 +391,24 @@ class NitroConfig(configparser.ConfigParser):
 
             if not os.path.exists(os.path.dirname(self._path)):
                 os.makedirs(os.path.dirname(self._path))
-
-            with open(self._path, 'w') as conf :
-                conf.write(NitroConfig.DEFAULT_CONFIG_FILE)
-
-            self.read(self._path)
             self.write()
 
         if config is not None :
             NitroSession.log.info("Read! "+str(self))
-
             self.read_dict(config)
 
-        
-
     def write(self):
-
         NitroSession.log.info("Write config file at "+self._path)
-
         with open(self._path, 'w') as conf:
             super().write(conf)
-        
         
 
     def _iset(self, section, option, secure=False):
         msg='Enter [{}]{}'
         value = self.get(section, option)
         newvalue=''
+        if option=='passwd':
+            secure=True
         if secure :
             newvalue = tob64(getpass.getpass(msg.format(section, option)+'. Press <Enter> to skip: '))
         else:
@@ -428,7 +422,6 @@ class NitroConfig(configparser.ConfigParser):
                 self._iset(section, key, secure)
         else :
             self._iset(section, option, secure)
-        
 
     @property
     def user(self):
