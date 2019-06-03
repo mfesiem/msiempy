@@ -140,7 +140,7 @@ class NitroSession():
                 data = json.dumps(data)
 
         #Logging the data request if not secure | Logs anyway the method
-        #self.log.debug('POSTING : ' + method + ('\nDATA'+(data if data is not None else '') if not secure else ''))
+        self.log.debug('Requesting '+http+' '+ method + ((' with data '+str(data) if data is not None else '') if not secure else ''))
 
         try :
             result = requests.request(
@@ -224,11 +224,15 @@ class NitroSession():
                 callback :  a callable to execute on the returned object if needed
                 raw :       if true will return the Response object from requests module
                 secure :    if true will not log the content of the request
-                *arg :      supplementary attributes (TBD)
-                **params : Interpolation parameters that will be match to PARAMS template
+                *args :     supplementary attributes (TBD)
+                **params :  interpolation parameters that will be match to PARAMS template
 
         """
-        self.log.debug("Calling request with params :"+str(locals()))
+        log_param = locals()
+        del log_param['self']
+        if  secure :
+            del log_param['params']
+        self.log.debug("Calling request with params :"+str(log_param))
 
         method, data = PARAMS.get(request)
 
