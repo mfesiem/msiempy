@@ -59,7 +59,6 @@ def dehexify(data):
 def timethis(func):
     """
     Decorator that reports the execution time.
-    Credit: andywalen
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
