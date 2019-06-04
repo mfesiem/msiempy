@@ -1,7 +1,7 @@
 from .base import Row, Manager
-class WhatchlistManager(Manager):
+class WatchlistManager(Manager):
     pass
 
-class Whatchlist(Row):
+class Watchlist(Row):
     def add_element(self, element):
         pass
