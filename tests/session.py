@@ -12,11 +12,11 @@ class T(unittest.TestCase):
         session.config.iset('esm')
         session.config.write()
 
-        print('getting time_zones')
-        print(session.request('time_zones'))
-
         print('printing config')
         print(session.config)
+
+        print('getting time_zones')
+        print(session.request('time_zones'))
 
         print('printing session')
         print(session)

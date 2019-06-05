@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger('msiempy')
+
 from .base import NitroBase
 
 class Device(NitroBase):

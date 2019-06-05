@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger('msiempy')
+
 from .base import Row, Manager
 class WatchlistManager(Manager):
     pass

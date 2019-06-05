@@ -1,5 +1,5 @@
-# msiempy CONFIGURATION FILE
-./msiem/
+# msiem CONFIGURATION FILE
+.msiem/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

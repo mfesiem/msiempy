@@ -1,5 +1,7 @@
 import abc
 import collections
+import logging
+log = logging.getLogger('msiempy')
 
 from .session import NitroSession
 

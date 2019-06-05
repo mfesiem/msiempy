@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger('msiempy')
+
 from .base import Row, QueryManager
 from .event import EventManager
 
