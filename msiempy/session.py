@@ -103,8 +103,8 @@ class NitroSession():
                 data = json.dumps(data)
 
         #Logging the data request if not secure | Logs anyway the method
-        log.debug('Requesting '+http+' '+ method + 
-            ((' with data '+str(data) if data is not None else '') if not secure else '***'))
+        log.debug('Requesting HTTP '+http+' '+ method + 
+            (' with data '+str(data) if (data is not None and not secure) else '') )
 
         try :
             result = requests.request(
