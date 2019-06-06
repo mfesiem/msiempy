@@ -488,7 +488,7 @@ class QueryManager(Manager):
 
         if not completed :
             #If not completed the query is split and items aren't actually used
-            
+
             if self.sub_query > 0 :
                 log.info("The query couldn't be executed in one request, separating it in sub-queries...")
 
@@ -510,13 +510,12 @@ class QueryManager(Manager):
                     asynch=(sub_query==1), progress=True)
 
                 #Flatten the list of lists in a list
-                return(QueryManager([item for sublist in results for item in sublist]))
-            
+                items=[item for sublist in results for item in sublist]
             else :
                 log.warning("The query couldn't be fully executed after the maximum number of sub_queries.")
-                return QueryManager(items)
-        else :
-            return QueryManager(items)
+
+        self.data=items
+        return(QueryManager(items))
 
 
     
