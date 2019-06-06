@@ -2,6 +2,7 @@ import abc
 import collections
 import json
 import tqdm
+import copy
 import prettytable
 import datetime
 import logging
@@ -9,7 +10,7 @@ log = logging.getLogger('msiempy')
 
 from .session import NitroSession
 from .error import NitroError
-from .utils import regex_match, convert_to_time_obj
+from .utils import regex_match, convert_to_time_obj, divide_times
 
 class NitroObject(abc.ABC):
     """
@@ -264,11 +265,11 @@ class Manager(collections.UserList, NitroObject):
             raise InterruptedError
 
     @staticmethod
-    def __perform(func, datalist, confirm=False, asynch=False, progress=False, recursions=5, *args, **kwargs):
+    def __perform(func, datalist, confirm=False, asynch=False, progress=False, _recursions_=1):
         """
         Static helper perform method
         """
-        if confirm : Manager.__ask(func, datalist)
+        log.debug('Calling perform func='+str(func)+' with pattern :'+str(datalist))
 
         if not callable(func) :
             raise ValueError('func must be callable')
@@ -276,15 +277,16 @@ class Manager(collections.UserList, NitroObject):
         if not isinstance(datalist, (list, dict, Manager, Item)):
             raise ValueError('datalist can only be : (list, dict, Manager, Item) not '+str(type(datalist)))
 
-        recursions-=1
+        if confirm : Manager.__ask(func, datalist)
+        
         returned=list()
 
-        log.debug('Calling perform func='+str(func)+' with pattern :'+str(datalist))
-
         #End of the recursion potential
-        if recursions <= 0 :
+        _recursions_-=1
+        if _recursions_ < 0 :
             log.warning(RecursionError('''maximum perform recursion reached :/ 
-                try a data structure more simple'''))
+                try a data structure more simple. recursions=1 implies that onlt list of dict are supported.
+                Increase recursions argument to support list of lists'''))
             return returned
     
         # A list of data is passed to perform()
@@ -312,7 +314,7 @@ class Manager(collections.UserList, NitroObject):
                         returned.append(Manager.__perform(
                             func,
                             index_or_item,
-                            recursions=recursions))
+                            _recursions_=_recursions_))
 
                 return(returned)
         
@@ -327,7 +329,6 @@ class Manager(collections.UserList, NitroObject):
 class QueryManager(Manager):
     """
     Base class for query based managers. QueryManager object can handle time_ranges.
-    # the
     """
     DEFAULT_TIME_RANGE="CURRENT_DAY"
     POSSIBLE_TIME_RANGE=[
@@ -353,6 +354,9 @@ class QueryManager(Manager):
 
     def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
         sub_query=1, *arg, **kwargs):
+        """
+        Base class that handles the time ranges operations, loading data from the SIEM
+        """
 
         super().__init__(*arg, **kwargs)
 
@@ -363,6 +367,9 @@ class QueryManager(Manager):
         self._time_range=str()
         self._start_time=None
         self._end_time=None
+
+        self.filters=filters
+        self.sub_query=sub_query
 
     @property
     def time_range(self):
@@ -386,7 +393,8 @@ class QueryManager(Manager):
             self._time_range=self.DEFAULT_TIME_RANGE
 
         elif isinstance(time_range, str):
-            if time_range.upper() in self.POSSIBLE_TIME_RANGE :
+            time_range=time_range.upper()
+            if time_range in self.POSSIBLE_TIME_RANGE :
                 self._time_range=time_range
             else:
                 raise NitroError("The time range must be in "+str(self.POSSIBLE_TIME_RANGE))
@@ -425,10 +433,90 @@ class QueryManager(Manager):
         else:
             raise ValueError("Time must be string or datetime object.")
 
+    @abc.abstractproperty
+    def filters(self):
+        pass
+
+    @filters.setter
+    def filters(self, filters):
+        
+        if isinstance(filters, list):
+            for f in filters :
+                self.add_filter(f)
+
+        elif isinstance(filters, tuple):
+            self.add_filter(filters)
+
+        elif filters is None :
+            self.clear_filters()
+        
+        else :
+            raise NitroError("Illegal type for the filter object, it must be a list, a tuple or None.")
+
+    @abc.abstractmethod
     def add_filter(self, filter):
         pass
 
+    @abc.abstractmethod
     def clear_filters(self):
         pass 
+
+    @abc.abstractmethod
+    def _load_data(self):
+        """
+        Must return a tuple (items, completed)
+        conmpleted = True if all the data that should be load is loaded
+        """
+        pass
+
+    @staticmethod
+    def action_load_data(querymanager):
+        return(querymanager.load_data())
+
+    @abc.abstractmethod
+    def load_data(self):
+        """
+        Method that load the data from the SIEM
+        Split the query in defferents time slots if the query apprears not to be completed.
+        Splitting is done by duplicating current object, seeting different times and re-loading results.
+        Use async_slots of config file to control in how many queries your request is gonna be split.
+        Only async_slots configuration fields is taken into account for now.
+        Returns a QueryManager.
+        """
+
+        items, completed = self._load_data()
+
+        if not completed :
+            #If not completed the query is split and items aren't actually used
+            
+            if self.sub_query > 0 :
+                log.info("The query couldn't be executed in one request, separating it in sub-queries...")
+
+                times=divide_times(first=self.start_time, last=self.end_time, slots=self.nitro.config.async_slots)
+                sub_queries=list()
+
+                for time in times :
+                    sub_query = copy.copy(self)
+
+                    sub_query.time_range='CUSTOM'
+                    sub_query.start_time=time[0].isoformat()
+                    sub_query.end_time=time[1].isoformat()
+                    sub_query.sub_query-=1
+                    sub_queries.append(sub_query)
+
+                [log.debug(sub_query) for sub_query in sub_queries]
+
+                results = Manager.__perform(QueryManager.action_load_data, sub_queries, 
+                    asynch=(sub_query==1), progress=True)
+
+                #Flatten the list of lists in a list
+                return(QueryManager([item for sublist in results for item in sublist]))
+            
+            else :
+                log.warning("The query couldn't be fully executed after the maximum number of sub_queries.")
+                return QueryManager(items)
+        else :
+            return QueryManager(items)
+
 
     

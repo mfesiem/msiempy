@@ -134,7 +134,7 @@ def tfgettimes(timeFrame):
     elif t is 'PREVIOUS_YEAR':
         pass"""
 
-def divide_times(first, last, time=0, slots=0, delta=0, min_slots=5):
+def divide_times(first, last, time=0, slots=0, delta=0, min_slots=2):
     """"
         Divide the time range based on another time, a delta or on a number of slots
         Return list of tuple 
