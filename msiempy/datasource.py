@@ -1,6 +1,9 @@
-from .base import Row, Manager
+import logging
+log = logging.getLogger('msiempy')
 
-class DataSource(Row):
+from .base import Item, Manager
+
+class DataSource(Item):
     pass
 
 class DevTree(Manager):

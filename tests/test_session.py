@@ -8,15 +8,8 @@ class T(unittest.TestCase):
         print('creating new instance')
         session=msiempy.session.NitroSession()
 
-        print('setting [esm]*')
-        session.config.iset('esm')
-        session.config.write()
-
         print('getting time_zones')
         print(session.request('time_zones'))
-
-        print('printing config')
-        print(session.config)
 
         print('printing session')
         print(session)

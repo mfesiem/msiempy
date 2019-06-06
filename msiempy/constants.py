@@ -49,27 +49,8 @@ POSSIBLE_VALUE_TYPES=[
         {'type':'EsmBasicValue',        'key':'value'},
         {'type':'EsmCompoundValue',     'key':'values'}]
 
-DEFAULT_TIME_RANGE="LAST_30_MINUTES"
-POSSIBLE_TIME_RANGE=[
-            "CUSTOM",
-            "LAST_MINUTE",
-            "LAST_10_MINUTES",
-            "LAST_30_MINUTES",
-            "LAST_HOUR",
-            "CURRENT_DAY",
-            "PREVIOUS_DAY",
-            "LAST_24_HOURS",
-            "LAST_2_DAYS",
-            "LAST_3_DAYS",
-            "CURRENT_WEEK",
-            "PREVIOUS_WEEK",
-            "CURRENT_MONTH",
-            "PREVIOUS_MONTH",
-            "CURRENT_QUARTER",
-            "PREVIOUS_QUARTER",
-            "CURRENT_YEAR",
-            "PREVIOUS_YEAR"
-        ]
+
+
 
 POSSIBLE_ALARM_STATUS=[
         ('acknowledged', 'ack',),

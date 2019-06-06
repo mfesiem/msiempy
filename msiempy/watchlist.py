@@ -1,7 +1,10 @@
-from .base import Row, Manager
+import logging
+log = logging.getLogger('msiempy')
+
+from .base import Item, Manager
 class WatchlistManager(Manager):
     pass
 
-class Watchlist(Row):
+class Watchlist(Item):
     def add_element(self, element):
         pass
