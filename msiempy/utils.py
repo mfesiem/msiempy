@@ -185,3 +185,26 @@ def format_esm_time(esm_time):
     if isinstance(esm_time, str):
         esm_time = datetime.strptime(esm_time, _esm_out_time_fmt)
     return datetime.strftime(esm_time, _esm_in_time_fmt)
+
+def convert_to_time_obj(time_str):
+    """
+    Converts given timestamp string to datetime object
+    
+    Args:
+        time_str: timestamp in format 'YYYY/MM/DD HH:MM:SS',
+                         'MM/DD/YYYY HH:MM:SS', or 'DD/MM/YYYY HH:MM:SS'
+                         
+    Returns:
+        datetime object or None if no format matches
+    """
+    return dateutil.parser.parse(time_str)
+
+def convert_to_esm_time(time_obj):
+    """Converts time object to ESM time string.
+    
+    Arguments:
+        time_obj {[type]} -- [description]
+    Returns:
+        time string in format: 2019-04-08T19:35:02.971Z
+    """
+    return time_obj.strftime('%Y-%m-%dT%H:%M:%S.000Z')

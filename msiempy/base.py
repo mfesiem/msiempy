@@ -3,12 +3,13 @@ import collections
 import json
 import tqdm
 import prettytable
+import datetime
 import logging
 log = logging.getLogger('msiempy')
 
 from .session import NitroSession
 from .error import NitroError
-from .utils import regex_match
+from .utils import regex_match, convert_to_time_obj
 
 class NitroObject(abc.ABC):
     """
@@ -34,19 +35,31 @@ class NitroObject(abc.ABC):
         return self.text
 
     @abc.abstractproperty
-    def text(self) -> str:
+    def text(self):
+        """
+        Returns str
+        """
         pass
 
     @abc.abstractproperty
-    def json(self) -> dict:
+    def json(self):
+        """
+        Returns json repr
+        """
         pass
 
     @abc.abstractmethod
-    def refresh(self) -> bool:
+    def refresh(self):
+        """
+        Refresh the state of the object
+        """
         pass
 
     @staticmethod
-    def action_refresh(ntiro_object) -> bool:
+    def action_refresh(ntiro_object):
+        """
+        Refrech callable to use with perform()
+        """
         return(ntiro_object.refresh())
 
 class Item(collections.UserDict, NitroObject):
@@ -66,14 +79,14 @@ class Item(collections.UserDict, NitroObject):
         self.selected=False
 
     @property
-    def json(self) -> str:
+    def json(self):
         return(json.dumps(dict(self), indent=4, cls=NitroObject.NitroJSONEncoder))
 
     @property
-    def text(self) -> str:
+    def text(self):
         return(repr(dict(self)))
 
-    def refresh(self) -> bool:
+    def refresh(self):
         log.debug('Refreshing '+str(self))
 
     '''This code has been commented cause it adds unecessary complexity.
@@ -112,8 +125,13 @@ class Manager(collections.UserList, NitroObject):
             it will be added as such
         """
         NitroObject.__init__(self)
-        collections.UserList.__init__(
-            self, [Item(item) for item in other_list if isinstance(item, (dict, Item))])
+        if other_list is None:
+            other_list=[]
+        if isinstance(other_list, list):
+            collections.UserList.__init__(
+                self, [Item(item) for item in other_list if isinstance(item, (dict, Item))])
+        else :
+            raise ValueError('Manager can only be initiated based on a list')
 
     @property
     def text(self):
@@ -136,10 +154,10 @@ class Manager(collections.UserList, NitroObject):
         return table.get_string()
 
     @property
-    def json(self) -> str:
+    def json(self):
         return(json.dumps([dict(item) for item in self.data], indent=4, cls=NitroObject.NitroJSONEncoder))
 
-    def search(self, pattern=None, invert=False, match_func='json') -> list:
+    def search(self, pattern=None, invert=False, match_func='json'):
         """
         Return a list of elements that matches regex pattern
         See https://docs.python.org/3/library/re.html#re.Pattern.search
@@ -185,7 +203,7 @@ class Manager(collections.UserList, NitroObject):
     def refresh(self):
         self.perform(Item.action_refresh, '.*')
 
-    def perform(self, func, pattern=None, search=None, *args, **kwargs) -> list:
+    def perform(self, func, pattern=None, search=None, *args, **kwargs):
         """
             func : callable stateless function
             if data_or_pattern stays None, will perform the action on the seleted rows,
@@ -204,6 +222,8 @@ class Manager(collections.UserList, NitroObject):
             confirm : will ask interactively confirmation
             asynch : execute the task asynchronously with NitroSession executor
             progress : to show progress bar with ETA (tqdm)
+
+        Returns a list of returned results
         """
         #if confirm : self.__ask(func, data_or_pattern)
         
@@ -240,7 +260,7 @@ class Manager(collections.UserList, NitroObject):
     @staticmethod
     def __ask(func, data):
         if not 'y' in input('Are you sure you want to do this '+str(func)+' on '+
-        (str(data) if data is not None else 'all')+'? [y/n]: '):
+        ('\n'+str(data) if data is not None else 'all')+'? [y/n]: '):
             raise InterruptedError
 
     @staticmethod
@@ -300,7 +320,6 @@ class Manager(collections.UserList, NitroObject):
         elif isinstance(datalist, (dict, Item)):
             return(func(datalist))
 
-
     @property
     def selected_items(self):
         return(Manager([item for item in self.data if item.selected]))
@@ -310,16 +329,101 @@ class QueryManager(Manager):
     Base class for query based managers. QueryManager object can handle time_ranges.
     # the
     """
+    DEFAULT_TIME_RANGE="CURRENT_DAY"
+    POSSIBLE_TIME_RANGE=[
+            "CUSTOM",
+            "LAST_MINUTE",
+            "LAST_10_MINUTES",
+            "LAST_30_MINUTES",
+            "LAST_HOUR",
+            "CURRENT_DAY",
+            "PREVIOUS_DAY",
+            "LAST_24_HOURS",
+            "LAST_2_DAYS",
+            "LAST_3_DAYS",
+            "CURRENT_WEEK",
+            "PREVIOUS_WEEK",
+            "CURRENT_MONTH",
+            "PREVIOUS_MONTH",
+            "CURRENT_QUARTER",
+            "PREVIOUS_QUARTER",
+            "CURRENT_YEAR",
+            "PREVIOUS_YEAR"
+        ]
 
-    def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, nb_item_per_request=5000, 
-        nb_max_item=200000, sub_query=1, *arg, **kwargs):
+    def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
+        sub_query=1, *arg, **kwargs):
 
         super().__init__(*arg, **kwargs)
 
-        #Declaring attributes
+        self.nitro.config.default_rows #nb rows per request : eq limit/page_size
+        self.nitro.config.max_rows
+
+        #Declaring attributes and types
         self._time_range=str()
-        self._start_time=str()
-        self._end_time=str()
+        self._start_time=None
+        self._end_time=None
+
+    @property
+    def time_range(self):
+        return self._time_range
+
+    @property
+    def start_time(self):
+        return self._start_time
+
+    @property
+    def end_time(self):
+        return self._end_time
+
+    @time_range.setter
+    def time_range(self, time_range):
+        """
+        Set the time range of the query to the specified string value. Defaulf POSSIBLE_TIME_RANGE
+        """
+
+        if not time_range :
+            self._time_range=self.DEFAULT_TIME_RANGE
+
+        elif isinstance(time_range, str):
+            if time_range.upper() in self.POSSIBLE_TIME_RANGE :
+                self._time_range=time_range
+            else:
+                raise NitroError("The time range must be in "+str(self.POSSIBLE_TIME_RANGE))
+        else:
+            raise ValueError('time_range must be a string or None')
+
+    
+    @start_time.setter
+    def start_time(self, start_time):
+        """
+        Set the time start of the query.
+        """
+        
+        if not start_time:
+            self.start_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        elif isinstance(start_time, str):
+            self.start_time = convert_to_time_obj(start_time)
+        elif isinstance(start_time, datetime.datetime):
+            self._start_time = start_time
+        else:
+            raise ValueError("Time must be string or datetime object.")
+                
+    
+    @end_time.setter
+    def end_time(self, end_time):
+        """
+        Set the time end of the query.
+        """
+       
+        if not end_time:
+            self.end_time = datetime.datetime.now()
+        elif isinstance(end_time, str):
+            self.end_time = convert_to_time_obj(end_time)
+        elif isinstance(end_time, datetime.datetime):
+            self._end_time = end_time
+        else:
+            raise ValueError("Time must be string or datetime object.")
 
     def add_filter(self, filter):
         pass

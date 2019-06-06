@@ -1,9 +1,9 @@
 import logging
 log = logging.getLogger('msiempy')
 
-from .base import NitroBase
+from .base import NitroObject
 
-class Device(NitroBase):
+class Device(NitroObject):
     pass
 
 class EntrepriseSecurityManager(Device):
