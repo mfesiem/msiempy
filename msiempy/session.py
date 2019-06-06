@@ -76,7 +76,7 @@ class NitroSession():
                 max_workers=self.config.max_workers )
             NitroSession.executor=self.executor
 
-    def _request(self, method, http, data=None, callback=None, raw=False, secure=False) -> object:
+    def _request(self, method, http, data=None, callback=None, raw=False, secure=False):
         """
         Helper method that format the request, handle the basic parsing of the SIEM result 
         as well as other errors.        
@@ -173,7 +173,7 @@ class NitroSession():
     
             return True
 
-    def request(self, request, http='post', callback=None, raw=False, secure=False, **params) -> object:
+    def request(self, request, http='post', callback=None, raw=False, secure=False, **params):
         """
             This method is the centralized interface of all request coming to the SIEM.
                 request :   keyword corresponding to the request name in PARAMS mapping
@@ -223,7 +223,7 @@ class NitroSession():
         NitroSession.__initiated__ = False
 
     @staticmethod
-    def _init_log(verbose=False, logfile=None) -> object:
+    def _init_log(verbose=False, logfile=None):
         """
         Private method. Inits the session's logger settings based on params
         All objects should be able to log stuff, so the logger is globaly accessible
@@ -256,7 +256,7 @@ class NitroSession():
     
 
     @staticmethod
-    def _format_params(cmd, **params) -> object:
+    def _format_params(cmd, **params):
         """
         Format private API call.
         From mfe_saw project at https://github.com/andywalden/mfe_saw
@@ -271,7 +271,7 @@ class NitroSession():
         return params
 
     @staticmethod
-    def _format_priv_resp(resp) -> object:
+    def _format_priv_resp(resp):
         """
         Format response from private API
         From mfe_saw project at https://github.com/andywalden/mfe_saw
@@ -292,7 +292,7 @@ class NitroSession():
         return formatted
 
     @staticmethod
-    def _unpack_resp(response) -> object:
+    def _unpack_resp(response) :
         """Unpack data from response.
         Args: 
             response: requests.Response response object

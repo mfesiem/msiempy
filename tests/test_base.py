@@ -52,3 +52,8 @@ class T(unittest.TestCase):
         manager.refresh()
 
         print(manager.selected_items)
+
+        times=msiempy.session.NitroSession().request('time_zones')
+        print(times)
+
+        print(msiempy.base.Manager(times))

@@ -180,7 +180,7 @@ class NitroConfig(configparser.ConfigParser):
         return self.get('performance', 'async_delta')
 
     @staticmethod
-    def _find_ini_location() -> object:
+    def _find_ini_location():
         '''
         Returns the location of a supposed conf.ini file the conf.ini file,
         If the file doesn't exist, will still return the location.
