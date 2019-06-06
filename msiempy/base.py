@@ -311,8 +311,15 @@ class QueryManager(Manager):
     # the
     """
 
-    def __init__(self, time_range=None, start_time=None, end_time=None, sub_query=0):
-        super().__init__()
+    def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, nb_item_per_request=5000, 
+        nb_max_item=200000, sub_query=1, *arg, **kwargs):
+
+        super().__init__(*arg, **kwargs)
+
+        #Declaring attributes
+        self._time_range=str()
+        self._start_time=str()
+        self._end_time=str()
 
     def add_filter(self, filter):
         pass
