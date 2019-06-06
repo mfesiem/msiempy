@@ -1,7 +1,7 @@
 import logging
 log = logging.getLogger('msiempy')
 
-from .base import Row, QueryManager
+from .base import Item, QueryManager
 
 class EventManager(QueryManager):
     """
@@ -9,7 +9,7 @@ class EventManager(QueryManager):
     """ 
     pass
 
-class Event(Row):
+class Event(Item):
     """
     Event
     """
