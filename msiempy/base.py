@@ -22,6 +22,8 @@ class NitroObject(abc.ABC):
         def default(self, obj): # pylint: disable=E0202
             if isinstance(obj,(Item, Manager)):
                 return obj.data
+            elif isinstance(obj, (QueryFilter)):
+                return obj.config_dict
             else:
                 return json.JSONEncoder.default(self, obj) 
 
@@ -88,7 +90,7 @@ class Item(collections.UserDict, NitroObject):
         return(repr(dict(self)))
 
     def refresh(self):
-        log.debug('Refreshing '+str(self))
+        log.debug('Refreshing '+str(NotImplementedError())+str(self))
 
     '''This code has been commented cause it adds unecessary complexity.
     But it's a good example of how we could perform() method to do anything
@@ -121,9 +123,9 @@ class Manager(collections.UserList, NitroObject):
     def __init__(self, other_list=None):
         """
         Ignore nested lists. Meaning that if other_list if a list of lists 
-            it will we be ignored
-        Nevertheless, if a list is present as a key valur in a dict, 
-            it will be added as such
+            it will we be ignored.
+        Nevertheless, if a list is present as a key value in a dict, 
+            it will be added as such.
         """
         NitroObject.__init__(self)
         if other_list is None:
@@ -231,7 +233,7 @@ class Manager(collections.UserList, NitroObject):
         # If pattern is left None, apply the action to selected rows if any else everything
         # Recursion +1
         if pattern is None :
-            return self.__perform(func, 
+            return self.perform_static(func, 
                 self, *args, **kwargs)
 
         #pattern is a string
@@ -240,21 +242,21 @@ class Manager(collections.UserList, NitroObject):
             # Selected items only
             # +1 Recursion
             if pattern == self.SELECTED :
-                return self.__perform(func, 
+                return self.perform_static(func, 
                     self.selected_items,
                     *args, **kwargs)
             else:
                 # Regex search when pattern is String.
                 # search method returns a list 
                 # +1 Recursion
-                return self.__perform(
+                return self.perform_static(
                     func,
                     self.search(pattern, **(search if search is not None else {})),
                     *args, **kwargs)
 
         # If passed other object type 
-        #   use static __perform directly
-        return self.__perform(func,
+        #   use static perform_static directly
+        return self.perform_static(func,
                 datalist=pattern,
                 *args, **kwargs)
 
@@ -265,7 +267,7 @@ class Manager(collections.UserList, NitroObject):
             raise InterruptedError
 
     @staticmethod
-    def __perform(func, datalist, confirm=False, asynch=False, progress=False, _recursions_=1):
+    def perform_static(func, datalist, confirm=False, asynch=False, progress=False, _recursions_=1):
         """
         Static helper perform method
         """
@@ -279,21 +281,22 @@ class Manager(collections.UserList, NitroObject):
 
         if confirm : Manager.__ask(func, datalist)
         
-        returned=list()
+        
 
         #End of the recursion potential
         _recursions_-=1
         if _recursions_ < 0 :
             log.warning(RecursionError('''maximum perform recursion reached :/ 
-                try a data structure more simple. recursions=1 implies that onlt list of dict are supported.
-                Increase recursions argument to support list of lists'''))
-            return returned
+                try a data structure more simple. recursions=1 implies that only list of dict are supported.
+                Increase recursions argument to support list of lists ...'''))
+            return []
     
         # A list of data is passed to perform()
         #   this includes the possibility of being a Manager object
         # +1 Recursion if iterative mode (default)
         # +0 Recursion if asynch : use executor
         if isinstance(datalist, (Manager, list)):
+                returned=list()
 
                 if progress==True:
                     datalist=tqdm.tqdm(datalist)
@@ -311,7 +314,7 @@ class Manager(collections.UserList, NitroObject):
                             datalist))
                 else :
                     for index_or_item in datalist:
-                        returned.append(Manager.__perform(
+                        returned.append(Manager.perform_static(
                             func,
                             index_or_item,
                             _recursions_=_recursions_))
@@ -328,7 +331,8 @@ class Manager(collections.UserList, NitroObject):
 
 class QueryManager(Manager):
     """
-    Base class for query based managers. QueryManager object can handle time_ranges.
+    Base class for query based managers : AlarmManager, EventManager
+    QueryManager object can handle time_ranges.
     """
     DEFAULT_TIME_RANGE="CURRENT_DAY"
     POSSIBLE_TIME_RANGE=[
@@ -361,7 +365,7 @@ class QueryManager(Manager):
         super().__init__(*arg, **kwargs)
 
         self.nitro.config.default_rows #nb rows per request : eq limit/page_size
-        self.nitro.config.max_rows
+        self.nitro.config.max_rows #max nb rows 
 
         #Declaring attributes and types
         self._time_range=str()
@@ -386,7 +390,8 @@ class QueryManager(Manager):
     @time_range.setter
     def time_range(self, time_range):
         """
-        Set the time range of the query to the specified string value. Defaulf POSSIBLE_TIME_RANGE
+        Set the time range of the query to the specified string value. 
+        Defaulf QueryManager.DEFAULT_TIME_RANGE
         """
 
         if not time_range :
@@ -406,6 +411,7 @@ class QueryManager(Manager):
     def start_time(self, start_time):
         """
         Set the time start of the query.
+        If none : equivalent current_day start 00:00:00
         """
         
         if not start_time:
@@ -422,6 +428,7 @@ class QueryManager(Manager):
     def end_time(self, end_time):
         """
         Set the time end of the query.
+        If none : equivalent now
         """
        
         if not end_time:
@@ -465,7 +472,7 @@ class QueryManager(Manager):
     def _load_data(self):
         """
         Must return a tuple (items, completed)
-        conmpleted = True if all the data that should be load is loaded
+        completed = True if all the data that should be load is loaded
         """
         pass
 
@@ -473,14 +480,14 @@ class QueryManager(Manager):
     def action_load_data(querymanager):
         return(querymanager.load_data())
 
-    @abc.abstractmethod
     def load_data(self):
         """
         Method that load the data from the SIEM
         Split the query in defferents time slots if the query apprears not to be completed.
-        Splitting is done by duplicating current object, seeting different times and re-loading results.
+        Splitting is done by duplicating current object, setting different times and re-loading results.
         Use async_slots of config file to control in how many queries your request is gonna be split.
         Only async_slots configuration fields is taken into account for now.
+        Will automatically execute asynchronously on the 
         Returns a QueryManager.
         """
 
@@ -506,7 +513,7 @@ class QueryManager(Manager):
 
                 [log.debug(sub_query) for sub_query in sub_queries]
 
-                results = Manager.__perform(QueryManager.action_load_data, sub_queries, 
+                results = Manager.perform_static(QueryManager.action_load_data, sub_queries, 
                     asynch=(sub_query==1), progress=True)
 
                 #Flatten the list of lists in a list
@@ -514,8 +521,37 @@ class QueryManager(Manager):
             else :
                 log.warning("The query couldn't be fully executed after the maximum number of sub_queries.")
 
-        self.data=items
+        self.data+=items
         return(QueryManager(items))
 
+class TestQueryManager(QueryManager):
+    pass
 
-    
+class QueryFilter(NitroObject):
+
+    _possible_filters = []
+
+    def __init__(self):
+        super().__init__()
+
+        #Setting up static constant
+        """ Not checking dynamically the validity of the fields cause makes too much of unecessary requests
+            self._possible_filters = self._get_possible_filters()
+            """
+
+    def _get_possible_filters(self):
+        return(self.nitro.request('get_possible_filters'))
+
+    @abc.abstractproperty
+    def config_dict(self):
+        pass
+
+    def refresh(self):
+        log.warning("Can't refresh filter "+str(self))
+
+    @property
+    def json(self):
+        return (json.dumps(self, indent=4, cls=NitroObject.NitroJSONEncoder))
+    @property
+    def text(self):
+        return str(self.config_dict)

@@ -78,8 +78,8 @@ def fromb64(s):
     if type(s) is str:
         return base64.b64decode(s.encode('utf-8')).encode()
 
-def tfgettimes(timeFrame):
-    t=timeFrame
+def timerange_gettimes(time_range):
+    t=time_range
     now=datetime.now()
     times=tuple()
 
@@ -208,3 +208,44 @@ def convert_to_esm_time(time_obj):
         time string in format: 2019-04-08T19:35:02.971Z
     """
     return time_obj.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+
+def parse_query_result(columns, rows):
+    """
+    For input :
+        columns = ['key1','name','password']
+        rows = [
+            ['67','bob','b08b'],
+            ['68','mike','kaas'],
+            ['69','jean','p992'],
+        ]
+    Returns :
+    [
+        {key1=67, name=bob, password=b08b},
+        {...},
+        {},
+    ]
+
+    """
+    events=list()
+    for row in rows :
+        event=dict()
+        for i in range(len(columns)-1):
+            event.update({columns[i]['name']:row['values'][i]})
+
+        events.append(event)
+
+    return(events)
+
+
+def format_fields_for_query(fields):
+    """
+    ['field1','name','user']
+
+    Returns :
+    [
+        {'name':'field1'},
+        {...},
+        {},
+    ]
+    """
+    return([{'name':value} for value in list(fields)])
