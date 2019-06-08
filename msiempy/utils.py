@@ -78,8 +78,8 @@ def fromb64(s):
     if type(s) is str:
         return base64.b64decode(s.encode('utf-8')).encode()
 
-def tfgettimes(timeFrame):
-    t=timeFrame
+def timerange_gettimes(time_range):
+    t=time_range
     now=datetime.now()
     times=tuple()
 
@@ -96,7 +96,7 @@ def tfgettimes(timeFrame):
         times=(now-timedelta(minutes=60), now)
 
     elif t is 'CURRENT_DAY':
-        times=(now.replace(hour=0, minute=0, second=0), now.replace(hour=24, minute=59, second=59))
+        times=(now.replace(hour=0, minute=0, second=0), now.replace(hour=23, minute=59, second=59))
 
     elif t is 'PREVIOUS_DAY':
         yesterday=now-timedelta(hours=24)
@@ -180,10 +180,17 @@ def regex_match(regex, string):
         return False
 
 def format_esm_time(esm_time):
+    """Converts time object to ESM time string.
+    
+    Arguments:
+        time_obj {[type]} -- [description]
+    Returns:
+        time string in format: 2019-04-08T19:35:02.971Z
+    """
     _esm_out_time_fmt = '%m/%d/%Y %H:%M:%S'
     _esm_in_time_fmt = '%Y-%m-%dT%H:%M:%S.000Z'
     if isinstance(esm_time, str):
-        esm_time = datetime.strptime(esm_time, _esm_out_time_fmt)
+        esm_time = convert_to_time_obj(esm_time)#, _esm_out_time_fmt)
     return datetime.strftime(esm_time, _esm_in_time_fmt)
 
 def convert_to_time_obj(time_str):
@@ -199,12 +206,43 @@ def convert_to_time_obj(time_str):
     """
     return dateutil.parser.parse(time_str)
 
-def convert_to_esm_time(time_obj):
-    """Converts time object to ESM time string.
-    
-    Arguments:
-        time_obj {[type]} -- [description]
-    Returns:
-        time string in format: 2019-04-08T19:35:02.971Z
+def parse_query_result(columns, rows):
     """
-    return time_obj.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+    For input :
+        columns = ['key1','name','password']
+        rows = [
+            ['67','bob','b08b'],
+            ['68','mike','kaas'],
+            ['69','jean','p992'],
+        ]
+    Returns :
+    [
+        {key1=67, name=bob, password=b08b},
+        {...},
+        {},
+    ]
+
+    """
+    events=list()
+    for row in rows :
+        event=dict()
+        for i in range(len(columns)):
+            event.update({columns[i]['name']:row['values'][i]})
+
+        events.append(event)
+
+    return(events)
+
+
+def format_fields_for_query(fields):
+    """
+    ['field1','name','user']
+
+    Returns :
+    [
+        {'name':'field1'},
+        {...},
+        {},
+    ]
+    """
+    return([{'name':value} for value in list(fields)])

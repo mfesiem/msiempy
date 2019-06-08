@@ -173,7 +173,7 @@ class NitroConfig(configparser.ConfigParser):
 
     @property
     def async_slots(self):
-        return self.get('performance', 'async_slots')
+        return self.getint('performance', 'async_slots')
 
     @property
     def async_delta(self):
