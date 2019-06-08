@@ -10,7 +10,7 @@ log = logging.getLogger('msiempy')
 
 from .session import NitroSession
 from .error import NitroError
-from .utils import regex_match, convert_to_time_obj, divide_times
+from .utils import regex_match, convert_to_time_obj, divide_times, format_esm_time
 
 class NitroObject(abc.ABC):
     """
@@ -120,19 +120,19 @@ class Manager(collections.UserList, NitroObject):
     Just a random constant represents all the selectec items. Juste to make sure we don't interfer with regex matching
     """
 
-    def __init__(self, other_list=None):
+    def __init__(self, alist=None):
         """
-        Ignore nested lists. Meaning that if other_list if a list of lists 
+        Ignore nested lists. Meaning that if alist if a list of lists 
             it will we be ignored.
         Nevertheless, if a list is present as a key value in a dict, 
             it will be added as such.
         """
         NitroObject.__init__(self)
-        if other_list is None:
-            other_list=[]
-        if isinstance(other_list, list):
+        if alist is None:
+            alist=[]
+        if isinstance(alist , (list, Manager)):
             collections.UserList.__init__(
-                self, [Item(item) for item in other_list if isinstance(item, (dict, Item))])
+                self, [Item(item) for item in alist if isinstance(item, (dict, Item))])
         else :
             raise ValueError('Manager can only be initiated based on a list')
 
@@ -171,7 +171,7 @@ class Manager(collections.UserList, NitroObject):
                 for item in self.data :
                     if regex_match(pattern, getattr(item, match_func)) is not invert :
                         matching_items.append(item)
-                return Manager(matching_items)
+                return Manager(alist=matching_items)
 
             except Exception as err:
                 raise NotImplementedError(str(err))
@@ -271,7 +271,7 @@ class Manager(collections.UserList, NitroObject):
         """
         Static helper perform method
         """
-        log.debug('Calling perform func='+str(func)+' with pattern :'+str(datalist))
+        log.debug('Calling perform func='+str(func)+' with pattern :'+str(datalist)+' asynch='+str(asynch))
 
         if not callable(func) :
             raise ValueError('func must be callable')
@@ -290,12 +290,16 @@ class Manager(collections.UserList, NitroObject):
                 try a data structure more simple. recursions=1 implies that only list of dict are supported.
                 Increase recursions argument to support list of lists ...'''))
             return []
+
+        # The acual object last Recusion +0
+        if isinstance(datalist, (dict, Item, Manager)):
+            return(func(datalist))
     
         # A list of data is passed to perform()
         #   this includes the possibility of being a Manager object
-        # +1 Recursion if iterative mode (default)
+        # +0 Recursion if iterative mode (default) | iterates
         # +0 Recursion if asynch : use executor
-        if isinstance(datalist, (Manager, list)):
+        if isinstance(datalist, (list, )):
                 returned=list()
 
                 if progress==True:
@@ -304,30 +308,22 @@ class Manager(collections.UserList, NitroObject):
                 if asynch == True :
 
                     #Throws error if recursive asynchronous jobs are requested
-                    if any([not isinstance(data, (dict, Item)) for data in datalist]):
+                    if any([not isinstance(data, (dict, Item, Manager)) for data in datalist]):
                         raise ValueError('''recursive asynchronous jobs are not supported. 
                         datalist list can only contains dict or Item obects if asynch=True''')
 
                     else:
                         returned=list(NitroSession().executor.map(
-                            func,
-                            datalist))
+                            func, datalist))
                 else :
                     for index_or_item in datalist:
-                        returned.append(Manager.perform_static(
-                            func,
-                            index_or_item,
-                            _recursions_=_recursions_))
+                        returned.append(func(index_or_item))
 
                 return(returned)
-        
-        # The acual object last Recusion +0
-        elif isinstance(datalist, (dict, Item)):
-            return(func(datalist))
 
     @property
     def selected_items(self):
-        return(Manager([item for item in self.data if item.selected]))
+        return(Manager(alist=[item for item in self.data if item.selected]))
 
 class QueryManager(Manager):
     """
@@ -372,20 +368,26 @@ class QueryManager(Manager):
         self._start_time=None
         self._end_time=None
 
-        self.filters=filters
+        #self.filters=filters
+
         self.sub_query=sub_query
+
+        self.start_time=start_time
+        self.end_time=end_time
+
+        self.time_range=time_range
 
     @property
     def time_range(self):
-        return self._time_range
+        return self._time_range.upper()
 
     @property
     def start_time(self):
-        return self._start_time
+        return format_esm_time(self._start_time)
 
     @property
     def end_time(self):
-        return self._end_time
+        return format_esm_time(self._end_time)
 
     @time_range.setter
     def time_range(self, time_range):
@@ -395,14 +397,14 @@ class QueryManager(Manager):
         """
 
         if not time_range :
-            self._time_range=self.DEFAULT_TIME_RANGE
+            self.time_range=self.DEFAULT_TIME_RANGE
 
         elif isinstance(time_range, str):
             time_range=time_range.upper()
             if time_range in self.POSSIBLE_TIME_RANGE :
                 self._time_range=time_range
             else:
-                raise NitroError("The time range must be in "+str(self.POSSIBLE_TIME_RANGE))
+                raise ValueError("The time range must be in "+str(self.POSSIBLE_TIME_RANGE))
         else:
             raise ValueError('time_range must be a string or None')
 
@@ -442,7 +444,7 @@ class QueryManager(Manager):
 
     @abc.abstractproperty
     def filters(self):
-        pass
+        raise NotImplementedError()
 
     @filters.setter
     def filters(self, filters):
@@ -460,6 +462,7 @@ class QueryManager(Manager):
         else :
             raise NitroError("Illegal type for the filter object, it must be a list, a tuple or None.")
 
+    
     @abc.abstractmethod
     def add_filter(self, filter):
         pass
@@ -474,12 +477,14 @@ class QueryManager(Manager):
         Must return a tuple (items, completed)
         completed = True if all the data that should be load is loaded
         """
+       
         pass
 
     @staticmethod
     def action_load_data(querymanager):
         return(querymanager.load_data())
 
+    @abc.abstractmethod
     def load_data(self):
         """
         Method that load the data from the SIEM
@@ -504,25 +509,27 @@ class QueryManager(Manager):
 
                 for time in times :
                     sub_query = copy.copy(self)
-
+                    sub_query.compute_time_range=False
                     sub_query.time_range='CUSTOM'
                     sub_query.start_time=time[0].isoformat()
                     sub_query.end_time=time[1].isoformat()
                     sub_query.sub_query-=1
                     sub_queries.append(sub_query)
 
-                [log.debug(sub_query) for sub_query in sub_queries]
+                [log.info('sub-query : start='+sub_query.start_time+', end='+sub_query.end_time) for sub_query in sub_queries]
 
                 results = Manager.perform_static(QueryManager.action_load_data, sub_queries, 
-                    asynch=(sub_query==1), progress=True)
+                    asynch=(self.sub_query==1), progress=True)
+
+                
 
                 #Flatten the list of lists in a list
                 items=[item for sublist in results for item in sublist]
             else :
                 log.warning("The query couldn't be fully executed after the maximum number of sub_queries.")
 
-        self.data+=items
-        return(QueryManager(items))
+        self.data=items
+        return(Manager(alist=items))
 
 class TestQueryManager(QueryManager):
     pass

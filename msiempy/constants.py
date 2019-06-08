@@ -28,29 +28,6 @@ POSSIBLE_FIELD_TYPES = [ 'BOOLEAN',
             'AGG',
             'TIME4',
             'TIME8']
-            
-POSSIBLE_OPERATORS=['IN',
-        'NOT_IN',
-        'GREATER_THAN',
-        'LESS_THAN',
-        'GREATER_OR_EQUALS_THAN',
-        'LESS_OR_EQUALS_THAN',
-        'NUMERIC_EQUALS',
-        'NUMERIC_NOT_EQUALS',
-        'DOES_NOT_EQUAL',
-        'EQUALS',
-        'CONTAINS',
-        'DOES_NOT_CONTAIN',
-        'REGEX']
-
-POSSIBLE_VALUE_TYPES=[
-        {'type':'EsmWatchlistValue',    'key':'watchlist'},
-        {'type':'EsmVariableValue',     'key':'variable'},
-        {'type':'EsmBasicValue',        'key':'value'},
-        {'type':'EsmCompoundValue',     'key':'values'}]
-
-
-
 
 POSSIBLE_ALARM_STATUS=[
         ('acknowledged', 'ack',),
@@ -58,10 +35,6 @@ POSSIBLE_ALARM_STATUS=[
         ('', None, 'all', 'both')
     ]
 
-POSSBILE_ROW_ORDER=[
-        'ASCENDING',
-        'DESCENDING'
-]
 
 DEFAULTS_EVENT_FIELDS=[
  "DSIDSigID",

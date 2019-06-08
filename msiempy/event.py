@@ -15,22 +15,43 @@ class EventManager(QueryManager):
     TYPE='EVENT'
     GROUPTYPE='NO_GROUP'
 
+
+    POSSBILE_ROW_ORDER=[
+            'ASCENDING',
+            'DESCENDING'
+    ]
+
     #Declaring static value containing all the possibles
     # event fields, should be loaded once (when the session start ?)
     _possible_fields = []
 
-    def __init__(self, fields=None, order=None , *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, fields=None, order=None, limit=None, filters=None, compute_time_range=True, *args, **kwargs):
+        """
+        fields = list of str of fields name
+        order = tuple (direction, field)
+            if a dict is passed for the prder, will replace the whole param 
+            if a tuple is passed , will set the first order according to (direction, fields)
 
-        self.limit=self.nitro.config.default_rows
+        """
 
         #Declaring attributes
         self._filters=list()
+        self._order=dict()
 
-        self.fields=set(Event.DEFAULTS_EVENT_FIELDS+fields)
+        self.fields=Event.DEFAULTS_EVENT_FIELDS
+        if fields :
+            pass #self.fields+=fields
+
         self.reverse=bool()
+        self.compute_time_range=compute_time_range
 
-        if isinstance(order, dict):
+        #Calling constructor
+        super().__init__(*args, **kwargs)
+
+        #Setting limit according to config
+        self.limit=self.nitro.config.default_rows if limit is None else int(limit)
+
+        if isinstance(order, dict): #if a dict is passed for the prder, will replace the whole param
             self._order=order
         else:
             self._order=[{
@@ -39,15 +60,25 @@ class EventManager(QueryManager):
                     "name": None
                     }
                 }]
-            self.order=order
+            self.order=order #if a tuple is passed , will set the first order according to (direction, fields)
+
+        #self.filters=filters
+        ##https://bugs.python.org/issue14965
+        super(self.__class__, self.__class__).filters.__set__(self, filters)
+
+    @property
+    def order(self):
+        return((self._order[0]['direction'],self._order[0]['field']['name']))
 
     @order.setter
     def order(self, order):
         #tuple (direction, field)
-        #TODO check valid value
         if type(order) is tuple :
-            self._order[0]['direction']=order[0]
-            self._order[0]['field']['name']=order[1]
+            if order[0] in self.POSSBILE_ROW_ORDER:
+                self._order[0]['direction']=order[0]
+                self._order[0]['field']['name']=order[1]
+            else:
+                raise AttributeError("Illegal order value : "+str(order[0])+". The order must be in :"+str(self.POSSBILE_ROW_ORDER))
 
     @property
     def filters(self):
@@ -64,7 +95,13 @@ class EventManager(QueryManager):
             raise NitroError("Sorry the filters must be either a tuple(fiels, [values]) or a QueryFilter sub class.")
 
     def clear_filters(self):
-        self.filters = [FieldFilter(name='AvgSeverity', operator='GREATER_THAN' , values=[-1])]
+        ##https://bugs.python.org/issue14965
+        super(self.__class__, self.__class__).filters.__set__(self, #[])
+            [FieldFilter(name='DSIDSigID', operator='DOES_NOT_EQUAL' , values=['0'])])
+
+    @property
+    def time_range(self):
+        return(super().time_range)
 
     @time_range.setter
     def time_range(self, time_range):
@@ -72,20 +109,23 @@ class EventManager(QueryManager):
         Set the time range of the query to the specified string value.
         Trys by default to cut get a start and a end time with timerange_gettimes
         """
-        try :
-            times = timerange_gettimes(time_range)
-            self._time_range='CUSTOM'
-            self._start_time=times[0]
-            self._end_time=times[1]
-        # timerange_gettimes raises AttributeError until
-        # all timeranges are supported
-        except AttributeError as err:
-            log.warning(err)
-            #Calling super().time_range=time_range
-            #https://bugs.python.org/issue14965
+        if time_range and self.compute_time_range :
+            try :
+                times = timerange_gettimes(time_range)
+                self._time_range='CUSTOM'
+                self._start_time=times[0]
+                self._end_time=times[1]
+            # timerange_gettimes raises AttributeError until
+            # all timeranges are supported
+            except AttributeError as err:
+                log.warning(err)
+                #Calling super().time_range=time_range
+                #https://bugs.python.org/issue14965
+                super(self.__class__, self.__class__).time_range.__set__(self, time_range)
+            except :
+                raise
+        else :
             super(self.__class__, self.__class__).time_range.__set__(self, time_range)
-        except :
-            raise
 
     def _load_data(self):
         """"
@@ -95,7 +135,7 @@ class EventManager(QueryManager):
         """
         query_infos=dict()
 
-        if self.time_range is 'CUSTOM' :
+        if self.time_range == 'CUSTOM' :
             query_infos=self.nitro.request(
                 'event_query_custom_time',
                 time_range=self.time_range,
@@ -123,9 +163,15 @@ class EventManager(QueryManager):
         
         log.debug("Waiting for EsmRunningQuery object : "+str(query_infos))
         self._wait_for(query_infos['resultID'])
-        events=EventManager(self._get_events(query_infos['resultID']))
-        self.data+=events
+        events_raw=self._get_events(query_infos['resultID'])
+
+        events=EventManager(alist=events_raw)
+        log.debug("Data loaded : "+str(events))
+        self.data=events
         return((events,len(events)<self.limit))
+
+    def load_data(self):
+        return EventManager(alist=super().load_data())
 
     def _wait_for(self, resultID):
         log.debug("Waiting for the query to be executed on the SIEM...")
@@ -251,6 +297,27 @@ class FieldFilter(QueryFilter):
     Based on EsmFieldFilter
     """
 
+    POSSIBLE_OPERATORS=['IN',
+        'NOT_IN',
+        'GREATER_THAN',
+        'LESS_THAN',
+        'GREATER_OR_EQUALS_THAN',
+        'LESS_OR_EQUALS_THAN',
+        'NUMERIC_EQUALS',
+        'NUMERIC_NOT_EQUALS',
+        'DOES_NOT_EQUAL',
+        'EQUALS',
+        'CONTAINS',
+        'DOES_NOT_CONTAIN',
+        'REGEX']
+
+    POSSIBLE_VALUE_TYPES=[
+            {'type':'EsmWatchlistValue',    'key':'watchlist'},
+            {'type':'EsmVariableValue',     'key':'variable'},
+            {'type':'EsmBasicValue',        'key':'value'},
+            {'type':'EsmCompoundValue',     'key':'values'}]
+
+
     def __init__(self, name, values, operator='IN') :
         super().__init__()
         #Declaring attributes
@@ -288,16 +355,16 @@ class FieldFilter(QueryFilter):
         if True : # Not checking dynamically the velidity of the fields cause makes too much of unecessary requests any(f.get('name', None) == name for f in self._possible_filters):
             self._name = name
         else:
-            raise NitroError("Illegal value for the "+name+" field. The filter must be in :"+str([f['name'] for f in self._possible_filters]))
+            raise AttributeError("Illegal value for the "+name+" field. The filter must be in :"+str([f['name'] for f in self._possible_filters]))
        
 
     @operator.setter
     def operator(self, operator):
         try:
-            if operator in POSSIBLE_OPERATORS :
+            if operator in self.POSSIBLE_OPERATORS :
                 self._operator = operator
             else:
-                raise NitroError("Illegal value for the filter operator "+operator+". The operator must be in "+str(POSSIBLE_OPERATORS))
+                raise AttributeError("Illegal value for the filter operator "+operator+". The operator must be in "+str(self.POSSIBLE_OPERATORS))
         except:
             raise
         
@@ -307,7 +374,7 @@ class FieldFilter(QueryFilter):
         """
         try:
             type_template=None
-            for possible_value_type in POSSIBLE_VALUE_TYPES :
+            for possible_value_type in self.POSSIBLE_VALUE_TYPES :
                 if possible_value_type['type'] == type :
                     type_template=possible_value_type
                     break
@@ -317,10 +384,10 @@ class FieldFilter(QueryFilter):
                     self._values.append({'type':type, type_template['key']:args[type_template['key']]})
 
                 else:
-                    raise NitroError("You must provide a valid named parameter containing the value(s). The key must be in "+str(POSSIBLE_VALUE_TYPES))
+                    raise AttributeError("You must provide a valid named parameter containing the value(s). The key must be in "+str(self.POSSIBLE_VALUE_TYPES))
 
             else:
-                raise NitroError("Illegal value type for the value filter. The type must be in "+str(POSSIBLE_VALUE_TYPES))
+                raise AttributeError("Illegal value type for the value filter. The type must be in "+str(self.POSSIBLE_VALUE_TYPES))
         except:
             raise
 

@@ -125,7 +125,7 @@ class NitroSession():
 
                 except requests.HTTPError as e :
                     log.error(str(e)+' '+str(result.text))
-                    return None
+                    return result.text
                     #TODO handle expired session error, result unavailable / other siem errors
                     # ERROR_InvalidFilter (228)
                     # Status Code 500: Error processing request, see server logs for more details 
@@ -141,6 +141,8 @@ class NitroSession():
 
                     if callback:
                         result = callback(result)
+
+                    #log.debug('Result '+str(result))
 
                     return result
 
