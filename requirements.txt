@@ -1,0 +1,9 @@
+certifi
+chardet
+idna
+PTable
+python-dateutil
+requests
+six
+tqdm
+urllib3
