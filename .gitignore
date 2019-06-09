@@ -1,3 +1,7 @@
+# vscode
+.vscode
+.vscode/settings.json
+
 # msiem CONFIGURATION FILE
 .msiem/
 

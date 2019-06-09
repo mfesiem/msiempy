@@ -1,22 +1,22 @@
+from .utils import tob64
 import configparser
 import os
 import getpass
 import logging
 log = logging.getLogger('msiempy')
 
-from .utils import tob64
 
 class NitroConfig(configparser.ConfigParser):
     """"NitroConfig
    Class that handles the configuration.
     """
 
-    CONFIG_FILE_NAME='.msiem/conf.ini'
-    CONF_DIR='.msiem/'
+    CONFIG_FILE_NAME = '.msiem/conf.ini'
+    CONF_DIR = '.msiem/'
 
-    CONFIG_FILE_DISCLAMER='''
-        # The configuration file should be located securely in your path since it 
-        # has credentials.
+    CONFIG_FILE_DISCLAMER = '''
+        # The configuration file should be located securely in your path
+        # since it has credentials.
         # For Windows:  %APPDATA%\\\\'''+CONFIG_FILE_NAME+'''
         # For Mac :     $HOME/'''+CONFIG_FILE_NAME+'''
         # For Linux :   $XDG_CONFIG_HOME/'''+CONFIG_FILE_NAME+'''
@@ -24,66 +24,70 @@ class NitroConfig(configparser.ConfigParser):
         # Use command line to setup authentication
         '''
 
-    DEFAULT_VERBOSE=False
-    DEFAULT_LOGFILE=''
-    DEFAULT_TIMEOUT=30
-    DEFAULT_SSL_VERIFY=False
-    DEFAULT_OUTPUT='text'
+    DEFAULT_VERBOSE = False
+    DEFAULT_LOGFILE = ''
+    DEFAULT_TIMEOUT = 30
+    DEFAULT_SSL_VERIFY = False
+    DEFAULT_OUTPUT = 'text'
 
-    DEFAULT_MAX_WORKERS=15
-    DEFAULT_MAX_ROWS=200000
-    DEFAULT_DEFAULT_ROWS=5000
-    DEFAULT_ASYNC_RULE='slots'
-    DEFAULT_ASYNC_SLOTS=5
-    DEFAULT_ASYNC_DELTA='5mn'
+    DEFAULT_MAX_WORKERS = 15
+    DEFAULT_MAX_ROWS = 200000
+    DEFAULT_DEFAULT_ROWS = 5000
+    DEFAULT_ASYNC_RULE = 'slots'
+    DEFAULT_ASYNC_SLOTS = 5
+    DEFAULT_ASYNC_DELTA = '5mn'
 
-    DEFAULT_CONF_DICT={'esm':{'host':'', 
-            'user':'',
-            'passwd':''},
-        'general':{'verbose':DEFAULT_VERBOSE,
-            'logfile':DEFAULT_LOGFILE,
-            'timeout':DEFAULT_TIMEOUT,
-            'ssl_verify':DEFAULT_SSL_VERIFY,
-            'output':DEFAULT_OUTPUT},
-        'performance':{'max_workers':DEFAULT_MAX_WORKERS,
-            'max_rows':DEFAULT_MAX_ROWS,
-            'default_rows':DEFAULT_DEFAULT_ROWS, 
-            'async_rule':DEFAULT_ASYNC_RULE,
-            'async_slots':DEFAULT_ASYNC_SLOTS,
-            'async_delta':DEFAULT_ASYNC_DELTA}}
+    DEFAULT_CONF_DICT = {'esm': {'host': '',
+                                 'user': '',
+                                 'passwd': ''},
+                         'general': {'verbose': DEFAULT_VERBOSE,
+                                     'logfile': DEFAULT_LOGFILE,
+                                     'timeout': DEFAULT_TIMEOUT,
+                                     'ssl_verify': DEFAULT_SSL_VERIFY,
+                                     'output': DEFAULT_OUTPUT},
+                         'performance': {'max_workers': DEFAULT_MAX_WORKERS,
+                                         'max_rows': DEFAULT_MAX_ROWS,
+                                         'default_rows': DEFAULT_DEFAULT_ROWS,
+                                         'async_rule': DEFAULT_ASYNC_RULE,
+                                         'async_slots': DEFAULT_ASYNC_SLOTS,
+                                         'async_delta': DEFAULT_ASYNC_DELTA}}
 
     def __str__(self):
-        return(self.CONFIG_FILE_DISCLAMER+'\nConfiguration file : '+
-            self._path+'\n'+str({section: dict(self[section]) for section in self.sections()}))
+        return_text = [self.CONFIG_FILE_DISCLAMER,
+                       '\nConfiguration file : ',
+                       self._path,
+                       '\n',
+                       str({section: dict(self[section]) for section in self.sections()})]
+        return ''.join(return_text)
 
     def __init__(self, path=None, config=None, *arg, **kwarg):
         """
-        Initialize the Config instance. If path is left None, will automatically look for it :
-
+        Initialize the Config instance.
+        If path is left None, will automatically look for it.
         """
 
         super().__init__(*arg, **kwarg)
 
         self.read_dict(self.DEFAULT_CONF_DICT)
-    
-        if not path :
+
+        if not path:
             self._path = self._find_ini_location()
-        else : 
+        else:
             self._path = path
 
-        try :
-            files=self.read(self._path)
+        try:
+            files = self.read(self._path)
             if len(files) == 0:
                 raise FileNotFoundError
 
-        except :
+        except FileNotFoundError:
             log.info("Config file inexistant or currupted, applying defaults")
 
             if not os.path.exists(os.path.dirname(self._path)):
                 os.makedirs(os.path.dirname(self._path))
             self.write()
 
-        if config is not None :
+        if config is not None:
             log.info("Reading config_dict : "+str(self))
             self.read_dict(config)
 
@@ -96,27 +100,30 @@ class NitroConfig(configparser.ConfigParser):
             super().write(conf)
 
     def _iset(self, section, option, secure=False):
-        msg='Enter [{}]{}'
+        msg = 'Enter [{}]{}'
         value = self.get(section, option)
-        newvalue=''
-        if option=='passwd':
-            secure=True
-        if secure :
-            newvalue = tob64(getpass.getpass(msg.format(section, option)+'. Press <Enter> to skip: '))
+        newvalue = ''
+        if option == 'passwd':
+            secure = True
+        if secure:
+            newvalue = tob64(getpass.getpass(msg.format(
+                section, option)+'. Press <Enter> to skip: '))
         else:
-            newvalue = input(msg.format(section, option)+ '. Press <Enter> to keep '+ (value if (str(value) is not '') else 'empty') + ': ')
-        if newvalue != '' :
+            newvalue = input(msg.format(section, option) + '. Press <Enter> to keep ' +
+                             (value if (str(value) != '') else 'empty') + ': ')
+        if newvalue != '':
             super().set(section, option, newvalue)
 
     def iset(self, section, option=None, secure=False):
         """
-        Will interactively set the specified section/optionby asking the user the input.
+        Will interactively set the specified section/optionby asking the
+        user the input.
         If option stays None, all section's option will be interactively set.
         """
-        if option is None :
+        if option is None:
             for key in self.options(section):
                 self._iset(section, key, secure)
-        else :
+        else:
             self._iset(section, option, secure)
 
     @property
@@ -166,7 +173,7 @@ class NitroConfig(configparser.ConfigParser):
     @property
     def async_rule(self):
         """
-        Wether to split the query based on a time, a delta, or a fixed 
+        Wether to split the query based on a time, a delta, or a fixed
         number of slots in order to run them asynchronously
         """
         return self.get('performance', 'async_rule')
@@ -193,25 +200,24 @@ class NitroConfig(configparser.ConfigParser):
         If your system doesn't have any of the above environment varibles,
             will return './.msiem/conf.ini'
         '''
-        conf_path_dir=None
+        conf_path_dir = None
 
         if os.path.isdir('./'+NitroConfig.CONF_DIR):
-            conf_path_dir='./'
+            conf_path_dir = './'
 
         elif 'APPDATA' in os.environ:
-                conf_path_dir = os.environ['APPDATA']
+            conf_path_dir = os.environ['APPDATA']
 
-        elif 'XDG_CONFIG_HOME' in os.environ:  
+        elif 'XDG_CONFIG_HOME' in os.environ:
             conf_path_dir = os.environ['XDG_CONFIG_HOME']
 
-        elif 'HOME' in os.environ:  
+        elif 'HOME' in os.environ:
             conf_path_dir = os.path.join(os.environ['HOME'])
-            
+
         else:
-            conf_path_dir='./'
-        
-        #Join configuartion filename with supposed parent directory
-        conf_path=(os.path.join(conf_path_dir, NitroConfig.CONFIG_FILE_NAME))
+            conf_path_dir = './'
+
+        # Join configuartion filename with supposed parent directory
+        conf_path = (os.path.join(conf_path_dir, NitroConfig.CONFIG_FILE_NAME))
 
         return(conf_path)
-
