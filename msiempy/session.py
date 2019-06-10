@@ -197,7 +197,8 @@ class NitroSession():
 
         if data :
             data =  data % params
-            data = ast.literal_eval(''.join(data.split()))
+            data = ast.literal_eval((data.replace('\n','').replace('\t','').replace("'",'"')))
+           
         
         if method :
             method = method % params
