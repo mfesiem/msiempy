@@ -363,9 +363,12 @@ class QueryManager(Manager):
 
         #self.filters=filters filter property setter should be called in the concrete class
         self.load_async=load_async
-        self.start_time=start_time
-        self.end_time=end_time
-        self.time_range=time_range
+
+        if start_time is not None and end_time is not None :
+            self.start_time=start_time
+            self.end_time=end_time
+        else :
+            self.time_range=time_range
 
         self.load_async=load_async
         self.query_depth=query_depth
@@ -374,7 +377,10 @@ class QueryManager(Manager):
 
     @property
     def time_range(self):
-        return self._time_range.upper()
+        if self.start_time is not None and self.end_time is not None :
+            return('CUSTOM')
+        else :
+            return self._time_range.upper()
 
     @property
     def start_time(self):
@@ -397,6 +403,9 @@ class QueryManager(Manager):
         elif isinstance(time_range, str):
             time_range=time_range.upper()
             if time_range in self.POSSIBLE_TIME_RANGE :
+                if time_range != 'CUSTOM':
+                    self.start_time=None
+                    self.end_time=None
                 self._time_range=time_range
             else:
                 raise ValueError("The time range must be in "+str(self.POSSIBLE_TIME_RANGE))
@@ -514,6 +523,7 @@ class QueryManager(Manager):
 
                 for time in times :
                     sub_query = copy.copy(self)
+
                     sub_query.compute_time_range=False
                     sub_query.time_range='CUSTOM'
                     sub_query.start_time=time[0].isoformat()
