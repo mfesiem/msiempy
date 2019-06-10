@@ -1,10 +1,11 @@
 import collections
+import datetime
 import logging
 log = logging.getLogger('msiempy')
 
 from .base import Item, QueryManager, Manager
 from .event import EventManager
-from .utils import regex_match
+from .utils import regex_match, convert_to_time_obj
 
 class AlarmManager(QueryManager):
     """
@@ -159,8 +160,6 @@ class AlarmManager(QueryManager):
                 break
         return match
         
-    
-
 class Alarm(Item):
     """
     Alarm
@@ -227,6 +226,31 @@ class Alarm(Item):
     def refresh(self):
         super().refresh()
 
+    def load_events_details(self):
+        """
+        
+        """
+        events=self.data['events']
+        filters = list()
+
+        for event in events:
+            if len(event['sourceIp']) >= 7 :
+                filters.append(('SrcIP', [str(event['sourceIp'])]))
+            if len(event['destIp']) >= 7 :
+                filters.append(('SrcIP', [str(event['destIp'])]))
+
+        log.debug("Filters : "+str(filters))
+        events = EventManager(
+            start_time=convert_to_time_obj(events[0]['lastTime'])-datetime.timedelta(seconds=2),
+            end_time=convert_to_time_obj(events[-1]['lastTime'])+datetime.timedelta(seconds=2),
+            filters=filters
+        ).load_data()
+
+        match='|'.join([event['eventId'].split('|')[1] for event in self.data['events']])
+        events = events.search(match)
+        self.data['events']=events
+        return events
+
     @staticmethod
     def action_delete(alarm):
         return alarm.delete()
@@ -246,6 +270,10 @@ class Alarm(Item):
     @staticmethod
     def action_load_details(alarm):
         return alarm.load_details()
+
+    @staticmethod
+    def action_load_events_details(alarm):
+        return alarm.load_events_details()
 
     """
     def _hasID(self):

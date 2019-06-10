@@ -6,17 +6,23 @@ class T(unittest.TestCase):
 
     def test(self):
 
-        events = msiempy.alarm.AlarmManager(
+        alarms = msiempy.alarm.AlarmManager(
                     start_time='2019-05-20',
                     end_time='2019-05-22'
                 )
+        print(alarms.filters)
+        alarms.load_data()
+        #print(alarms.text)
 
+        print(alarms.json)
 
-        print(events.filters)
-        events.load_data()
-        print(events.text)
-        print(events.json)
-        print('Len events : {}'.format(len(events)))
+        print('Len alarms : {}'.format(len(alarms)))
+        #just the first alarms's events details
 
-        #for e in events :
-        #    self.assertRegex(e['Alert.SrcIP'],'^10.|^207.','sub_query filtering is problematic')
+        alarms.perform(
+            msiempy.alarm.Alarm.action_load_events_details,
+            pattern=list(alarms),
+            asynch=True,
+            progress=True)
+
+        print(alarms.json)

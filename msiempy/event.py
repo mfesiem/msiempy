@@ -84,8 +84,8 @@ class EventManager(QueryManager):
         return([f.config_dict for f in self._filters])
 
     def add_filter(self, fil):
-        if type(fil) is tuple :
-            self._filters.append(FieldFilter(*fil))
+        if isinstance(fil, tuple) :
+            self._filters.append(FieldFilter(fil[0], fil[1]))
 
         elif isinstance(fil, QueryFilter) :
             self._filters.append(fil)
@@ -258,7 +258,8 @@ class Event(Item):
         "IPSID",
         "AlertID",
         "UserIDSrc",
-        "UserIDDst"
+        "UserIDDst",
+        "CommandID"
         ]
 
     def __getitem__(self, key):

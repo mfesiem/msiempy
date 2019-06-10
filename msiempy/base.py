@@ -308,7 +308,7 @@ class Manager(collections.UserList, NitroObject):
                     else:
                         if progress==True:
                             returned=list(tqdm.tqdm(NitroSession().executor.map(
-                                func, datalist)))
+                                func, datalist), desc='Loading...', total=len(datalist)))
                         else:
                             returned=list(NitroSession().executor.map(
                                 func, datalist))
