@@ -142,7 +142,7 @@ class NitroSession():
                     if callback:
                         result = callback(result)
 
-                    #log.debug('Result '+str(result))
+                    log.debug('Result '+str(result)[:100]+'[...]')
 
                     return result
 

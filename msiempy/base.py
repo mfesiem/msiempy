@@ -71,13 +71,13 @@ class Item(collections.UserDict, NitroObject):
     Exemple : Event, Alarm, etc...
     Inherits from dict
     """
-    def __init__(self, other_dict=None):
+    def __init__(self, adict=None):
         NitroObject.__init__(self)
-        collections.UserDict.__init__(self, other_dict)
+        collections.UserDict.__init__(self, adict)
         
         for key in self.data :
             if isinstance(self.data[key], list):
-                self.data[key]=Manager(self.data[key])
+                self.data[key]=Manager(alist=self.data[key])
                 
         self.selected=False
 
@@ -132,7 +132,7 @@ class Manager(collections.UserList, NitroObject):
             alist=[]
         if isinstance(alist , (list, Manager)):
             collections.UserList.__init__(
-                self, [Item(item) for item in alist if isinstance(item, (dict, Item))])
+                self, [Item(adict=item) for item in alist if isinstance(item, (dict, Item))])
         else :
             raise ValueError('Manager can only be initiated based on a list')
 
@@ -142,7 +142,10 @@ class Manager(collections.UserList, NitroObject):
         fields=set()
 
         for item in self.data :
-            fields=fields.union(dict(item).keys())
+            if item is not None :
+                fields=fields.union(dict(item).keys())
+            else :
+                log.warning('Having trouble with listing dicts')
 
         fields=sorted(fields)
         table.field_names=fields
@@ -295,9 +298,6 @@ class Manager(collections.UserList, NitroObject):
         if isinstance(datalist, (list, )):
                 returned=list()
 
-                if progress==True:
-                    datalist=tqdm.tqdm(datalist)
-
                 if asynch == True :
 
                     #Throws error if recursive asynchronous jobs are requested
@@ -306,9 +306,16 @@ class Manager(collections.UserList, NitroObject):
                         datalist list can only contains dict or Item obects if asynch=True''')
 
                     else:
-                        returned=list(NitroSession().executor.map(
-                            func, datalist))
+                        if progress==True:
+                            returned=list(tqdm.tqdm(NitroSession().executor.map(
+                                func, datalist)))
+                        else:
+                            returned=list(NitroSession().executor.map(
+                                func, datalist))
                 else :
+                    if progress==True:
+                        datalist=tqdm.tqdm(datalist)
+
                     for index_or_item in datalist:
                         returned.append(func(index_or_item))
 
