@@ -8,7 +8,7 @@ class T(unittest.TestCase):
 
         events = msiempy.event.EventManager(
                     time_range='LAST_24_HOURS',
-                    filters=('SrcIP', ['0.0.0.0/0',]),
+                    filters=('SrcIP', ['207.0.0.0/8',]),
                 )
 
         print(events.filters)

@@ -30,12 +30,13 @@ class NitroConfig(configparser.ConfigParser):
     DEFAULT_SSL_VERIFY=False
     DEFAULT_OUTPUT='text'
 
-    DEFAULT_MAX_WORKERS=15
+    DEFAULT_MAX_WORKERS=10
     DEFAULT_MAX_ROWS=200000
-    DEFAULT_DEFAULT_ROWS=5000
-    DEFAULT_ASYNC_RULE='slots'
+    DEFAULT_DEFAULT_ROWS=500
+    DEFAULT_ASYNC_RULE='delta'
     DEFAULT_SLOTS=5
-    DEFAULT_DELTA='5mn'
+    DEFAULT_DELTA='5h'
+    DEFAULT_MAX_QUERY_DEPTH=1
 
     DEFAULT_CONF_DICT={'esm':{'host':'', 
             'user':'',
@@ -50,7 +51,8 @@ class NitroConfig(configparser.ConfigParser):
             'default_rows':DEFAULT_DEFAULT_ROWS, 
             'async_rule':DEFAULT_ASYNC_RULE,
             'slots':DEFAULT_SLOTS,
-            'delta':DEFAULT_DELTA}}
+            'delta':DEFAULT_DELTA,
+            'max_query_depth':DEFAULT_MAX_QUERY_DEPTH}}
 
     def __str__(self):
         return(self.CONFIG_FILE_DISCLAMER+'\nConfiguration file : '+
@@ -178,7 +180,7 @@ class NitroConfig(configparser.ConfigParser):
 
     @property
     def delta(self):
-        return self.get('performance', 'elta')
+        return self.get('performance', 'delta')
 
     @staticmethod
     def _find_ini_location():
