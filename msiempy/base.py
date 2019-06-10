@@ -117,7 +117,7 @@ class Manager(collections.UserList, NitroObject):
 
     SELECTED='b8c0a7c5b307eeee30039343e6f23e9e4f1d325bbc2ffaf1c2b7b583af160124'
     """
-    Just a random constant represents all the selectec items. Juste to make sure we don't interfer with regex matching
+    Random constant represents all selected items to avoid regex matching interference.
     """
 
     def __init__(self, alist=None):
@@ -209,7 +209,7 @@ class Manager(collections.UserList, NitroObject):
     def perform(self, func, pattern=None, search=None, *args, **kwargs):
         """
             func : callable stateless function
-            if data_or_pattern stays None, will perform the action on the seleted rows,
+            if pattern stays None, will perform the action on the seleted rows,
                 if no rows are selected, wil perform on all rows
             pattern can be :
                 - string regex pattern match using search
@@ -218,29 +218,30 @@ class Manager(collections.UserList, NitroObject):
                 - a list of lists of dict
                     However, only list of dict can be passed if asynch=True
                 - Manager.SELECTED
-            search : dict that will be passed as extra **arguments to search method
+            search : dict passed as extra arguments to search method
                 i.e :
                     {invert=False, match_func='json'} or 
                     {time_range='CUSTOM', start_time='2019', end_time='2020'}
-            confirm : will ask interactively confirmation
-            asynch : execute the task asynchronously with NitroSession executor
-            progress : to show progress bar with ETA (tqdm)
+            
+            confirm : will ask interactively confirmation (1)
+            asynch : execute the task asynchronously with NitroSession executor (1)
+            progress : to show progress bar with ETA (tqdm) (1)
+
+            (1): passed as *args, **kwargs
 
         Returns a list of returned results
         """
-        #if confirm : self.__ask(func, data_or_pattern)
+        #if confirm : self.__ask(func, pattern)
         
         # If pattern is left None, apply the action to selected rows if any else everything
-        # Recursion +1
         if pattern is None :
             return self.perform_static(func, 
                 self, *args, **kwargs)
 
-        #pattern is a string
+        #Pattern is a string
         if isinstance(pattern, str) :
 
             # Selected items only
-            # +1 Recursion
             if pattern == self.SELECTED :
                 return self.perform_static(func, 
                     self.selected_items,
@@ -248,13 +249,12 @@ class Manager(collections.UserList, NitroObject):
             else:
                 # Regex search when pattern is String.
                 # search method returns a list 
-                # +1 Recursion
                 return self.perform_static(
                     func,
                     self.search(pattern, **(search if search is not None else {})),
                     *args, **kwargs)
 
-        # If passed other object type 
+        # Else, data is probably passed,
         #   use static perform_static directly
         return self.perform_static(func,
                 datalist=pattern,
@@ -267,29 +267,22 @@ class Manager(collections.UserList, NitroObject):
             raise InterruptedError
 
     @staticmethod
-    def perform_static(func, datalist, confirm=False, asynch=False, progress=False, _recursions_=1):
+    def perform_static(func, datalist, confirm=False, asynch=False, progress=False):
         """
         Static helper perform method
+            confirm : will ask interactively confirmation
+            asynch : execute the task asynchronously with NitroSession executor
+            progress : to show progress bar with ETA (tqdm)
         """
-        log.debug('Calling perform func='+str(func)+' with pattern :'+str(datalist)+' asynch='+str(asynch))
+        log.debug('Calling perform func='+str(func)+' with pattern :'+str(datalist)+'confirm='+str(confirm)+' asynch='+str(asynch)+' progress='+str(progress))
 
         if not callable(func) :
             raise ValueError('func must be callable')
 
         if not isinstance(datalist, (list, dict, Manager, Item)):
-            raise ValueError('datalist can only be : (list, dict, Manager, Item) not '+str(type(datalist)))
+            raise ValueError('Datalist can only be : (list, dict, Manager, Item) not '+str(type(datalist)))
 
         if confirm : Manager.__ask(func, datalist)
-        
-        
-
-        #End of the recursion potential
-        _recursions_-=1
-        if _recursions_ < 0 :
-            log.warning(RecursionError('''maximum perform recursion reached :/ 
-                try a data structure more simple. recursions=1 implies that only list of dict are supported.
-                Increase recursions argument to support list of lists ...'''))
-            return []
 
         # The acual object last Recusion +0
         if isinstance(datalist, (dict, Item, Manager)):
@@ -477,7 +470,6 @@ class QueryManager(Manager):
         Must return a tuple (items, completed)
         completed = True if all the data that should be load is loaded
         """
-       
         pass
 
     @staticmethod
@@ -487,11 +479,11 @@ class QueryManager(Manager):
     @abc.abstractmethod
     def load_data(self):
         """
-        Method that load the data from the SIEM
+        Method to load the data from the SIEM
         Split the query in defferents time slots if the query apprears not to be completed.
-        Splitting is done by duplicating current object, setting different times and re-loading results.
-        Use async_slots of config file to control in how many queries your request is gonna be split.
-        Only async_slots configuration fields is taken into account for now.
+        Splitting is done by duplicating current object, setting different times,
+        and re-loading results.
+        Use async_slots in config file to control how many queries to use.
         Will automatically execute asynchronously on the 
         Returns a QueryManager.
         """
@@ -504,7 +496,7 @@ class QueryManager(Manager):
             if self.sub_query > 0 :
                 log.info("The query couldn't be executed in one request, separating it in sub-queries...")
 
-                times=divide_times(first=self.start_time, last=self.end_time, slots=self.nitro.config.async_slots)
+                times=divide_times(first=self.start_time, last=self.end_time, slots=self.nitro.config.slots)
                 sub_queries=list()
 
                 for time in times :

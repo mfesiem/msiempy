@@ -34,8 +34,8 @@ class NitroConfig(configparser.ConfigParser):
     DEFAULT_MAX_ROWS=200000
     DEFAULT_DEFAULT_ROWS=5000
     DEFAULT_ASYNC_RULE='slots'
-    DEFAULT_ASYNC_SLOTS=5
-    DEFAULT_ASYNC_DELTA='5mn'
+    DEFAULT_SLOTS=5
+    DEFAULT_DELTA='5mn'
 
     DEFAULT_CONF_DICT={'esm':{'host':'', 
             'user':'',
@@ -49,8 +49,8 @@ class NitroConfig(configparser.ConfigParser):
             'max_rows':DEFAULT_MAX_ROWS,
             'default_rows':DEFAULT_DEFAULT_ROWS, 
             'async_rule':DEFAULT_ASYNC_RULE,
-            'async_slots':DEFAULT_ASYNC_SLOTS,
-            'async_delta':DEFAULT_ASYNC_DELTA}}
+            'slots':DEFAULT_SLOTS,
+            'delta':DEFAULT_DELTA}}
 
     def __str__(self):
         return(self.CONFIG_FILE_DISCLAMER+'\nConfiguration file : '+
@@ -58,7 +58,8 @@ class NitroConfig(configparser.ConfigParser):
 
     def __init__(self, path=None, config=None, *arg, **kwarg):
         """
-        Initialize the Config instance. If path is left None, will automatically look for it :
+        Initialize the Config instance.
+        If path is left None, will automatically look for it.
 
         """
 
@@ -172,12 +173,12 @@ class NitroConfig(configparser.ConfigParser):
         return self.get('performance', 'async_rule')
 
     @property
-    def async_slots(self):
-        return self.getint('performance', 'async_slots')
+    def slots(self):
+        return self.getint('performance', 'slots')
 
     @property
-    def async_delta(self):
-        return self.get('performance', 'async_delta')
+    def delta(self):
+        return self.get('performance', 'elta')
 
     @staticmethod
     def _find_ini_location():

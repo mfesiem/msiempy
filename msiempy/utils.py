@@ -100,7 +100,7 @@ def timerange_gettimes(time_range):
 
     elif t is 'PREVIOUS_DAY':
         yesterday=now-timedelta(hours=24)
-        times=(yesterday.replace(hour=0, minute=0, second=0), yesterday.replace(hour=24, minute=59, second=59))
+        times=(yesterday.replace(hour=0, minute=0, second=0), yesterday.replace(hour=23, minute=59, second=59))
 
     elif t is 'LAST_24_HOURS':
         times=(now-timedelta(hours=24), now)

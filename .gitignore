@@ -1,6 +1,10 @@
 # msiem CONFIGURATION FILE
 .msiem/
 
+# vscode
+	.vscode
+	.vscode/settings.json
+    
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
