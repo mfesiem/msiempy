@@ -62,8 +62,7 @@ class EventManager(QueryManager):
                 }]
             self.order=order #if a tuple is passed , will set the first order according to (direction, fields)
 
-        #self.filters=filters
-        ##https://bugs.python.org/issue14965
+        #callign super().filters=filters #https://bugs.python.org/issue14965
         super(self.__class__, self.__class__).filters.__set__(self, filters)
 
     @property
@@ -82,7 +81,7 @@ class EventManager(QueryManager):
 
     @property
     def filters(self):
-        return([f.config_dict() for f in self._filters])
+        return([f.config_dict for f in self._filters])
 
     def add_filter(self, fil):
         if type(fil) is tuple :
@@ -96,8 +95,8 @@ class EventManager(QueryManager):
 
     def clear_filters(self):
         ##https://bugs.python.org/issue14965
-        super(self.__class__, self.__class__).filters.__set__(self, #[])
-            [FieldFilter(name='DSIDSigID', operator='DOES_NOT_EQUAL' , values=['0'])])
+        super(self.__class__, self.__class__).filters.__set__(self,
+            [FieldFilter(name='SrcIp', values=['0.0.0.0/0'])])
 
     @property
     def time_range(self):
@@ -245,8 +244,8 @@ class Event(Item):
         ]
 
     DEFAULTS_EVENT_FIELDS=[
-        "DSIDSigID",
-        "msg",
+       
+        "Rule.msg",
         "SrcPort",
         "DstPort", 
         "SrcIP", 
@@ -254,6 +253,12 @@ class Event(Item):
         "SrcMac",
         "DstMac", 
         "LastTime",
+        "NormID",
+        "DSIDSigID",
+        "IPSID",
+        "AlertID",
+        "UserIDSrc",
+        "UserIDDst"
         ]
 
     def __getitem__(self, key):
@@ -291,14 +296,14 @@ class GroupFilter(QueryFilter):
         super().__init__()
         
         #Declaring attributes
-        self._filters=filters
-        self._logic=logic
+        self.filters=filters
+        self.logic=logic
 
     def config_dict(self):
         return({
             "type": "EsmFilterGroup",
-            "filters": [f.config_dict() for f in self._filters],
-            "logic":self._logic
+            "filters": [f.config_dict() for f in self.filters],
+            "logic":self.logic
             })
         
 class FieldFilter(QueryFilter):
@@ -338,12 +343,13 @@ class FieldFilter(QueryFilter):
         self.operator = operator
         self.values = values
 
+    @property
     def config_dict(self):
         return ({
             "type": "EsmFieldFilter",
-            "field": {"name": self._name},
-            "operator": self._operator,
-            "values": self._values
+            "field": {"name": self.name},
+            "operator": self.operator,
+            "values": self.values
             })
 
     @property
@@ -379,35 +385,44 @@ class FieldFilter(QueryFilter):
         
     def add_value(self, type, **args):
         """
-        Please refer to the EsmFilterValue documentation
+        Args could be :
+            {'type':'EsmWatchlistValue',    'watchlist':1},
+            {'type':'EsmVariableValue',     'variable':1},
+            {'type':'EsmBasicValue',        'value':'a value'},
+            {'type':'EsmCompoundValue',     'values':['']}]
         """
         try:
             type_template=None
+            
             for possible_value_type in self.POSSIBLE_VALUE_TYPES :
                 if possible_value_type['type'] == type :
                     type_template=possible_value_type
+                    if type != 'EsmBasicValue' :
+                        log.warning("Filtering query with other type of filter than 'EsmBasicValue' is not tested.")                            
                     break
 
             if type_template is not None :
                 if type_template['key'] in args :
-                    self._values.append({'type':type, type_template['key']:args[type_template['key']]})
+                    value = args[type_template['key']]
+                    if type == 'EsmBasicValue' :
+                        value=str(value)
+                       # log.debug('Adding a basic value to filter ('+self.text+') : '+value)
 
-                else:
-                    raise AttributeError("You must provide a valid named parameter containing the value(s). The key must be in "+str(self.POSSIBLE_VALUE_TYPES))
-
-            else:
-                raise AttributeError("Illegal value type for the value filter. The type must be in "+str(self.POSSIBLE_VALUE_TYPES))
-        except:
-            raise
+                    self._values.append({'type':type, type_template['key']:value})
+                    #log.debug('The value was appended to the list: '+str(self))
+                else: raise KeyError ('The valid key value parameter is not present')
+            else: raise KeyError ('Impossible filter')
+        except KeyError as err:
+            raise AttributeError("You must provide a valid named parameters containing the type and values for this filter. The type/keys must be in "+str(self.POSSIBLE_VALUE_TYPES)+"Can't be type="+str(type)+' '+str(args)+". Additionnal indicator :"+str(err) )
 
     def add_basic_value(self, value):
-        self.add_value(type='EsmBasicValue', value=str(value))
+        self.add_value(type='EsmBasicValue', value=value)
 
     @values.setter
     def values(self, values):
-        for v in values :
-            if isinstance(v, dict):
-                self.add_value(**v)
+        for val in values :
+            if isinstance(val, dict):
+                self.add_value(**val)
 
-            elif isinstance(v, (int, float, str)) :
-                self.add_basic_value(v)
+            elif isinstance(val, (int, float, str)) :
+                self.add_basic_value(val)

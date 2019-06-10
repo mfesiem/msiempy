@@ -10,7 +10,7 @@ log = logging.getLogger('msiempy')
 
 from .session import NitroSession
 from .error import NitroError
-from .utils import regex_match, convert_to_time_obj, divide_times, format_esm_time, timerange_gettimes
+from .utils import regex_match, convert_to_time_obj, divide_times, format_esm_time, timerange_gettimes, parse_timedelta
 
 class NitroObject(abc.ABC):
     """
@@ -505,20 +505,25 @@ class QueryManager(Manager):
         if not completed :
             #If not completed the query is split and items aren't actually used
 
-            if self.query_depth <= self.nitro.config.max_query_depth :
+            if self.query_depth < self.nitro.config.max_query_depth :
                 #log.info("The query data couldn't be loaded in one request, separating it in sub-queries...")
 
                 if self.time_range != 'CUSTOM': #can raise a NotImplementedError if unsupported time_range
-                    start, last = timerange_gettimes(self.time_range)
+                    start, end = timerange_gettimes(self.time_range)
                 else :
-                    start, last = self.start_time, self.end_time
+                    start, end = self.start_time, self.end_time
 
-                if self.split_strategy == 'delta'  :
-                    division = {'delta':self.nitro.config.delta} 
-                elif self.split_strategy == 'slots':
+                
+                if self.split_strategy == 'delta' :
+                    division = {'delta':self.nitro.config.delta}
+                    #If the query is alrealt smaller than the delta, directly use slots
+                    if (convert_to_time_obj(end)-convert_to_time_obj(start))<parse_timedelta(division['delta']):
+                        self.split_strategy='slots'
+
+                if self.split_strategy == 'slots':
                     division = {'slots':self.nitro.config.slots}
 
-                times=divide_times(start, last, **division)
+                times=divide_times(start, end, **division)
                 sub_queries=list()
 
                 for time in times :

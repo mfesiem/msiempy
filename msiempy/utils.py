@@ -141,8 +141,8 @@ def divide_times(first, last, time=0, slots=0, delta=0, min_slots=0):
     """
 
     #parse the dates
-    t1=dateutil.parser.parse(first) if not isinstance(first, datetime) else first
-    t2=dateutil.parser.parse(last) if not isinstance(last, datetime) else last
+    t1=convert_to_time_obj(first) if not isinstance(first, datetime) else first
+    t2=convert_to_time_obj(last) if not isinstance(last, datetime) else last
     
     duration=t2-t1
 
@@ -151,7 +151,7 @@ def divide_times(first, last, time=0, slots=0, delta=0, min_slots=0):
             if time==0 :
                 raise AttributeError('Either time, slots or delta must be specified')
             else :
-                div=dateutil.parser.parse(time)-t1
+                div=convert_to_time_obj(time)-t1
 
         elif(isinstance(delta, timedelta)):
             div = delta
