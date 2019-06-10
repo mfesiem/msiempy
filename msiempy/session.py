@@ -160,7 +160,7 @@ class NitroSession():
         Throws NitroError if login fails
         """
         userb64 = tob64(self.config.user)
-        passb64 = self.config.passwd
+        passb64 = tob64(self.config.passwd)
         
         resp = self.request('login', username=userb64, password=passb64, raw=True, secure=True)
         
