@@ -8,13 +8,10 @@ class T(unittest.TestCase):
 
         events = msiempy.event.EventManager(
                     time_range='LAST_24_HOURS',
-                    #compute_time_range=False,
-                    #fields=['SrcIP', 'DstIP', 'SigID', 'LastTime'],
-                    #limit=5,
                     filters=('SrcIP', ['0.0.0.0/0',]),
-                    #sub_query=1
                 )
 
+        print(events.filters)
         events.load_data()
         print(events.text)
         print('Len events : {}'.format(len(events)))

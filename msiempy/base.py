@@ -10,7 +10,7 @@ log = logging.getLogger('msiempy')
 
 from .session import NitroSession
 from .error import NitroError
-from .utils import regex_match, convert_to_time_obj, divide_times, format_esm_time
+from .utils import regex_match, convert_to_time_obj, divide_times, format_esm_time, timerange_gettimes
 
 class NitroObject(abc.ABC):
     """
@@ -267,7 +267,7 @@ class Manager(collections.UserList, NitroObject):
             raise InterruptedError
 
     @staticmethod
-    def perform_static(func, datalist, confirm=False, asynch=False, progress=False, _recursions_=1):
+    def perform_static(func, datalist, confirm=False, asynch=False, progress=False):
         """
         Static helper perform method
         """
@@ -280,17 +280,7 @@ class Manager(collections.UserList, NitroObject):
             raise ValueError('datalist can only be : (list, dict, Manager, Item) not '+str(type(datalist)))
 
         if confirm : Manager.__ask(func, datalist)
-        
-        
-
-        #End of the recursion potential
-        _recursions_-=1
-        if _recursions_ < 0 :
-            log.warning(RecursionError('''maximum perform recursion reached :/ 
-                try a data structure more simple. recursions=1 implies that only list of dict are supported.
-                Increase recursions argument to support list of lists ...'''))
-            return []
-
+    
         # The acual object last Recusion +0
         if isinstance(datalist, (dict, Item, Manager)):
             return(func(datalist))
@@ -353,7 +343,7 @@ class QueryManager(Manager):
         ]
 
     def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
-        sub_query=1, *arg, **kwargs):
+        load_async=True, query_depth=0, split_strategy='delta', *arg, **kwargs):
         """
         Base class that handles the time ranges operations, loading data from the SIEM
         """
@@ -368,14 +358,16 @@ class QueryManager(Manager):
         self._start_time=None
         self._end_time=None
 
-        #self.filters=filters
-
-        self.sub_query=sub_query
-
+        #self.filters=filters filter property setter should be called in the concrete class
+        self.load_async=load_async
         self.start_time=start_time
         self.end_time=end_time
-
         self.time_range=time_range
+
+        self.load_async=load_async
+        self.query_depth=query_depth
+        self.split_strategy=split_strategy
+
 
     @property
     def time_range(self):
@@ -501,10 +493,20 @@ class QueryManager(Manager):
         if not completed :
             #If not completed the query is split and items aren't actually used
 
-            if self.sub_query > 0 :
-                log.info("The query couldn't be executed in one request, separating it in sub-queries...")
+            if self.query_depth <= self.nitro.config.max_query_depth :
+                #log.info("The query data couldn't be loaded in one request, separating it in sub-queries...")
 
-                times=divide_times(first=self.start_time, last=self.end_time, slots=self.nitro.config.async_slots)
+                if self.time_range != 'CUSTOM': #can raise a NotImplementedError if unsupported time_range
+                    start, last = timerange_gettimes(self.time_range)
+                else :
+                    start, last = self.start_time, self.end_time
+
+                if self.split_strategy == 'delta'  :
+                    division = {'delta':self.nitro.config.split_delta} 
+                elif self.split_strategy == 'slots':
+                    division = {'slots':self.nitro.config.split_slots}
+
+                times=divide_times(start, last, **division)
                 sub_queries=list()
 
                 for time in times :
@@ -513,20 +515,22 @@ class QueryManager(Manager):
                     sub_query.time_range='CUSTOM'
                     sub_query.start_time=time[0].isoformat()
                     sub_query.end_time=time[1].isoformat()
-                    sub_query.sub_query-=1
+                    sub_query.load_async=False
+                    sub_query.query_depth=self.query_depth+1
+                    sub_query.split_strategy='slots'
                     sub_queries.append(sub_query)
 
-                [log.info('sub-query : start='+sub_query.start_time+', end='+sub_query.end_time) for sub_query in sub_queries]
+                if self.load_async :
+                    log.info('Loading data from '+self.start_time+' to '+self.end_time+'. Spliting query in '+str(division)+' ...')
 
                 results = Manager.perform_static(QueryManager.action_load_data, sub_queries, 
-                    asynch=(self.sub_query==1), progress=True)
-
-                
+                    asynch=self.load_async, progress=(self.query_depth==1))
 
                 #Flatten the list of lists in a list
                 items=[item for sublist in results for item in sublist]
+                
             else :
-                log.warning("The query couldn't be fully executed after the maximum number of sub_queries.")
+                log.debug("The query couldn't be fully executed, reached maximum query_depth :"+str(self.query_depth))
 
         self.data=items
         return(Manager(alist=items))

@@ -112,7 +112,7 @@ def timerange_gettimes(time_range):
         times=(now-timedelta(days=3), now)
 
     else :
-        raise AttributeError("Timerange "+t+" is not supported yet")
+        raise NotImplementedError("Timerange "+t+" is not supported yet")
     
     return(times[0].isoformat(), times[1].isoformat())
     
@@ -134,7 +134,7 @@ def timerange_gettimes(time_range):
     elif t is 'PREVIOUS_YEAR':
         pass"""
 
-def divide_times(first, last, time=0, slots=0, delta=0, min_slots=2):
+def divide_times(first, last, time=0, slots=0, delta=0, min_slots=0):
     """"
         Divide the time range based on another time, a delta or on a number of slots
         Return list of tuple 
@@ -147,18 +147,21 @@ def divide_times(first, last, time=0, slots=0, delta=0, min_slots=2):
     duration=t2-t1
 
     if slots==0 :
-        if time==0 :
-            if delta==0 :
+        if delta==0 :
+            if time==0 :
                 raise AttributeError('Either time, slots or delta must be specified')
-            elif(isinstance(delta, timedelta)):
-                raise NotImplementedError('todo')
-            else:
-                raise AttributeError('delta Must be timedelta object')
+            else :
+                div=dateutil.parser.parse(time)-t1
 
-        else :
-            tSlot=dateutil.parser.parse(time)
-            div=tSlot-t1
-            slots=int(duration.total_seconds()/div.total_seconds())
+        elif(isinstance(delta, timedelta)):
+            div = delta
+        elif isinstance(delta, str):
+            div = parse_timedelta(delta)
+        else:
+            raise AttributeError('delta Must be timedelta or str object')
+
+        
+        slots=int(duration.total_seconds()/div.total_seconds())
 
     slots+=min_slots
     timeSlot=timedelta(seconds=duration.total_seconds()/slots)
@@ -246,3 +249,21 @@ def format_fields_for_query(fields):
     ]
     """
     return([{'name':value} for value in list(fields)])
+
+
+
+
+def parse_timedelta(time_str):
+    """
+    Parse a time string e.g. (2h13m) into a timedelta object.
+
+    Modified from virhilo's answer at https://stackoverflow.com/a/4628148/851699
+
+    :param time_str: A string identifying a duration.  (eg. 2h13m)
+    :return datetime.timedelta: A datetime.timedelta object
+    """
+    regex = re.compile(r'^((?P<days>[\.\d]+?)d)?((?P<hours>[\.\d]+?)h)?((?P<minutes>[\.\d]+?)m)?((?P<seconds>[\.\d]+?)s)?$')
+    parts = regex.match(time_str)
+    assert parts is not None, "Could not parse any time information from '{}'.  Examples of valid strings: '8h', '2d8h5m20s', '2m4s'".format(time_str)
+    time_params = {name: float(param) for name, param in parts.groupdict().items() if param}
+    return timedelta(**time_params)

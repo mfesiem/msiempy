@@ -33,9 +33,9 @@ class NitroConfig(configparser.ConfigParser):
     DEFAULT_MAX_WORKERS=15
     DEFAULT_MAX_ROWS=200000
     DEFAULT_DEFAULT_ROWS=5000
-    DEFAULT_ASYNC_RULE='slots'
-    DEFAULT_ASYNC_SLOTS=5
-    DEFAULT_ASYNC_DELTA='5mn'
+    DEFAULT_MAX_QUERY_DEPTH=2
+    DEFAULT_ASYNC_SLOTS=60
+    DEFAULT_ASYNC_DELTA='5hr'
 
     DEFAULT_CONF_DICT={'esm':{'host':'', 
             'user':'',
@@ -48,9 +48,9 @@ class NitroConfig(configparser.ConfigParser):
         'performance':{'max_workers':DEFAULT_MAX_WORKERS,
             'max_rows':DEFAULT_MAX_ROWS,
             'default_rows':DEFAULT_DEFAULT_ROWS, 
-            'async_rule':DEFAULT_ASYNC_RULE,
-            'async_slots':DEFAULT_ASYNC_SLOTS,
-            'async_delta':DEFAULT_ASYNC_DELTA}}
+            'max_query_depth':DEFAULT_MAX_QUERY_DEPTH,
+            'split_slots':DEFAULT_ASYNC_SLOTS,
+            'split_delta':DEFAULT_ASYNC_DELTA}}
 
     def __str__(self):
         return(self.CONFIG_FILE_DISCLAMER+'\nConfiguration file : '+
@@ -164,20 +164,20 @@ class NitroConfig(configparser.ConfigParser):
         return self.getint('performance', 'default_rows')
 
     @property
-    def async_rule(self):
+    def max_query_depth(self):
         """
         Wether to split the query based on a time, a delta, or a fixed 
         number of slots in order to run them asynchronously
         """
-        return self.get('performance', 'async_rule')
+        return self.getint('performance', 'max_query_depth')
 
     @property
-    def async_slots(self):
-        return self.getint('performance', 'async_slots')
+    def split_slots(self):
+        return self.getint('performance', 'split_slots')
 
     @property
-    def async_delta(self):
-        return self.get('performance', 'async_delta')
+    def split_delta(self):
+        return self.get('performance', 'split_delta')
 
     @staticmethod
     def _find_ini_location():
