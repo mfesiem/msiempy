@@ -10,7 +10,7 @@ log = logging.getLogger('msiempy')
 
 from .session import NitroSession
 from .error import NitroError
-from .utils import regex_match, convert_to_time_obj, divide_times, format_esm_time, timerange_gettimes
+from .utils import regex_match, convert_to_time_obj, divide_times, format_esm_time, timerange_gettimes, parse_timedelta
 
 class NitroObject(abc.ABC):
     """
@@ -71,13 +71,13 @@ class Item(collections.UserDict, NitroObject):
     Exemple : Event, Alarm, etc...
     Inherits from dict
     """
-    def __init__(self, other_dict=None):
+    def __init__(self, adict=None):
         NitroObject.__init__(self)
-        collections.UserDict.__init__(self, other_dict)
+        collections.UserDict.__init__(self, adict)
         
         for key in self.data :
             if isinstance(self.data[key], list):
-                self.data[key]=Manager(self.data[key])
+                self.data[key]=Manager(alist=self.data[key])
                 
         self.selected=False
 
@@ -132,7 +132,7 @@ class Manager(collections.UserList, NitroObject):
             alist=[]
         if isinstance(alist , (list, Manager)):
             collections.UserList.__init__(
-                self, [Item(item) for item in alist if isinstance(item, (dict, Item))])
+                self, [Item(adict=item) for item in alist if isinstance(item, (dict, Item))])
         else :
             raise ValueError('Manager can only be initiated based on a list')
 
@@ -142,7 +142,10 @@ class Manager(collections.UserList, NitroObject):
         fields=set()
 
         for item in self.data :
-            fields=fields.union(dict(item).keys())
+            if item is not None :
+                fields=fields.union(dict(item).keys())
+            else :
+                log.warning('Having trouble with listing dicts')
 
         fields=sorted(fields)
         table.field_names=fields
@@ -295,9 +298,6 @@ class Manager(collections.UserList, NitroObject):
         if isinstance(datalist, (list, )):
                 returned=list()
 
-                if progress==True:
-                    datalist=tqdm.tqdm(datalist)
-
                 if asynch == True :
 
                     #Throws error if recursive asynchronous jobs are requested
@@ -306,9 +306,16 @@ class Manager(collections.UserList, NitroObject):
                         datalist list can only contains dict or Item obects if asynch=True''')
 
                     else:
-                        returned=list(NitroSession().executor.map(
-                            func, datalist))
+                        if progress==True:
+                            returned=list(tqdm.tqdm(NitroSession().executor.map(
+                                func, datalist), desc='Loading...', total=len(datalist)))
+                        else:
+                            returned=list(NitroSession().executor.map(
+                                func, datalist))
                 else :
+                    if progress==True:
+                        datalist=tqdm.tqdm(datalist)
+
                     for index_or_item in datalist:
                         returned.append(func(index_or_item))
 
@@ -363,9 +370,12 @@ class QueryManager(Manager):
 
         #self.filters=filters filter property setter should be called in the concrete class
         self.load_async=load_async
-        self.start_time=start_time
-        self.end_time=end_time
-        self.time_range=time_range
+
+        if start_time is not None and end_time is not None :
+            self.start_time=start_time
+            self.end_time=end_time
+        else :
+            self.time_range=time_range
 
         self.load_async=load_async
         self.query_depth=query_depth
@@ -374,7 +384,10 @@ class QueryManager(Manager):
 
     @property
     def time_range(self):
-        return self._time_range.upper()
+        if self.start_time is not None and self.end_time is not None :
+            return('CUSTOM')
+        else :
+            return self._time_range.upper()
 
     @property
     def start_time(self):
@@ -397,6 +410,9 @@ class QueryManager(Manager):
         elif isinstance(time_range, str):
             time_range=time_range.upper()
             if time_range in self.POSSIBLE_TIME_RANGE :
+                if time_range != 'CUSTOM':
+                    self.start_time=None
+                    self.end_time=None
                 self._time_range=time_range
             else:
                 raise ValueError("The time range must be in "+str(self.POSSIBLE_TIME_RANGE))
@@ -496,24 +512,30 @@ class QueryManager(Manager):
         if not completed :
             #If not completed the query is split and items aren't actually used
 
-            if self.query_depth <= self.nitro.config.max_query_depth :
+            if self.query_depth < self.nitro.config.max_query_depth :
                 #log.info("The query data couldn't be loaded in one request, separating it in sub-queries...")
 
                 if self.time_range != 'CUSTOM': #can raise a NotImplementedError if unsupported time_range
-                    start, last = timerange_gettimes(self.time_range)
+                    start, end = timerange_gettimes(self.time_range)
                 else :
-                    start, last = self.start_time, self.end_time
+                    start, end = self.start_time, self.end_time
 
-                if self.split_strategy == 'delta'  :
-                    division = {'delta':self.nitro.config.delta} 
-                elif self.split_strategy == 'slots':
+                
+                if self.split_strategy == 'delta' :
+                    division = {'delta':self.nitro.config.delta}
+                    #If the query is alrealt smaller than the delta, directly use slots
+                    if (convert_to_time_obj(end)-convert_to_time_obj(start))<parse_timedelta(division['delta']):
+                        self.split_strategy='slots'
+
+                if self.split_strategy == 'slots':
                     division = {'slots':self.nitro.config.slots}
 
-                times=divide_times(start, last, **division)
+                times=divide_times(start, end, **division)
                 sub_queries=list()
 
                 for time in times :
                     sub_query = copy.copy(self)
+
                     sub_query.compute_time_range=False
                     sub_query.time_range='CUSTOM'
                     sub_query.start_time=time[0].isoformat()

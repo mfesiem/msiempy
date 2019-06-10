@@ -142,7 +142,7 @@ class NitroSession():
                     if callback:
                         result = callback(result)
 
-                    #log.debug('Result '+str(result))
+                    log.debug('Result '+str(result)[:100]+'[...]')
 
                     return result
 
@@ -197,7 +197,8 @@ class NitroSession():
 
         if data :
             data =  data % params
-            data = ast.literal_eval(''.join(data.split()))
+            data = ast.literal_eval((data.replace('\n','').replace('\t','').replace("'",'"')))
+           
         
         if method :
             method = method % params

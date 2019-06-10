@@ -216,27 +216,27 @@ PARAMS = {
 
     'get_user_locale' : ( """getUserLocale""", None ),
 
-    'event_query_custom_time' : ("""qryExecuteDetail?type=EVENT&reverse=false""", """
-        {"config": {
-            "timeRange": "%(time_range)s",
-            "customStart": "%(start_time)s",
-            "customEnd": "%(end_time)s",
-            "fields": %(fields)s,
-            "filters": %(filters)s,
-            "limit": %(limit)s,
-            "offset": %(offset)s
-            }
-        }"""),
+    'event_query_custom_time' : ("""qryExecuteDetail?type=EVENT&reverse=false""", """{
+            "config": {
+                "timeRange": "%(time_range)s",
+                "customStart": "%(start_time)s",
+                "customEnd": "%(end_time)s",
+                "fields":%(fields)s,
+                "filters":%(filters)s,
+                "limit":%(limit)s,
+                "offset":%(offset)s
+                }
+                }"""),
 
-    'event_query' : ("""qryExecuteDetail?type=EVENT&reverse=false""", """
-        {"config": {
-            "timeRange": "%(time_range)s",
-            "fields": %(fields)s,
-            "filters": %(filters)s,
-            "limit": %(limit)s,
-            "offset": %(offset)s
-            }
-        }"""),
+    'event_query' : ("""qryExecuteDetail?type=EVENT&reverse=false""", """{
+            "config": {
+                "timeRange":"%(time_range)s",
+                "fields":%(fields)s,
+                "filters":%(filters)s,
+                "limit":%(limit)s,
+                "offset":%(offset)s
+                }
+                }"""),
 
     'query_status' : ("""qryGetStatus""", """{"resultID": %(resultID)s}"""),
 
