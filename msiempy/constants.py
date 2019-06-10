@@ -28,52 +28,12 @@ POSSIBLE_FIELD_TYPES = [ 'BOOLEAN',
             'AGG',
             'TIME4',
             'TIME8']
-            
-POSSIBLE_OPERATORS=['IN',
-        'NOT_IN',
-        'GREATER_THAN',
-        'LESS_THAN',
-        'GREATER_OR_EQUALS_THAN',
-        'LESS_OR_EQUALS_THAN',
-        'NUMERIC_EQUALS',
-        'NUMERIC_NOT_EQUALS',
-        'DOES_NOT_EQUAL',
-        'EQUALS',
-        'CONTAINS',
-        'DOES_NOT_CONTAIN',
-        'REGEX']
-
-POSSIBLE_VALUE_TYPES=[
-        {'type':'EsmWatchlistValue',    'key':'watchlist'},
-        {'type':'EsmVariableValue',     'key':'variable'},
-        {'type':'EsmBasicValue',        'key':'value'},
-        {'type':'EsmCompoundValue',     'key':'values'}]
-
-
-
 
 POSSIBLE_ALARM_STATUS=[
         ('acknowledged', 'ack',),
         ('unacknowledged', 'unack',),
         ('', None, 'all', 'both')
     ]
-
-POSSBILE_ROW_ORDER=[
-        'ASCENDING',
-        'DESCENDING'
-]
-
-DEFAULTS_EVENT_FIELDS=[
- "DSIDSigID",
- "msg",
- "SrcPort",
- "DstPort", 
- "SrcIP", 
- "DstIP", 
- "SrcMac",
- "DstMac", 
- "LastTime",
-]
 
 ALARM_FILTER_FIELDS = [('id',),
 ('summary','sum'),
@@ -97,40 +57,3 @@ ALARM_EVENT_FILTER_FIELDS=[("eventId",),
 ("eventSubType",'subtype')]
 
 ALARM_DEFAULT_FIELDS=['triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage']
-
-FIELDS_TABLES=["ADGroup",
- "Action",
- "Alert",
- "Asset",
- "AssetGroup",
- "AssetThreat",
- "CaseMgt",
- "CaseOrg",
- "CaseStatus",
- "Class",
- "Connection",
- "DataEnrichment",
- "GeoLoc_ASNGeoDst",
- "GeoLoc_ASNGeoSrc",
- "IOC",
- "IPS",
- "IPSCheck",
- "NDDeviceInterface_NDDevIFDst",
- "NDDeviceInterface_NDDevIFSrc",
- "NDDevice_NDDevIDDst",
- "NDDevice_NDDevIDSrc",
- "OS",
- "Rule",
- "Rule_NDSNormSigID",
- "Tag",
- "TagAsset",
- "ThirdPartyType",
- "Threat",
- "ThreatVendor",
- "TriggeredAlarm",
- "Users",
- "Vulnerability",
- "Zone_ZoneDst",
- "Zone_ZoneSrc",
-]
-
