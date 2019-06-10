@@ -166,23 +166,32 @@ class EventManager(QueryManager):
         events_raw=self._get_events(query_infos['resultID'])
 
         events=EventManager(alist=events_raw)
-        log.debug("Data loaded : "+str(events))
+        #log.debug("Data loaded : "+str(events))
+        
         self.data=events
         return((events,len(events)<self.limit))
 
     def load_data(self):
         return EventManager(alist=super().load_data())
 
-    def _wait_for(self, resultID):
+    def _wait_for(self, resultID, sleep_time=0.35):
+        """
+        Wait and sleep - for `sleep_time` duration in seconds - until the query is completed
+        #TODO handle SIEM ResultUnavailable error
+        """
         log.debug("Waiting for the query to be executed on the SIEM...")
         while True:
             status = self.nitro.request('query_status', resultID=resultID)
             if status['complete'] is True :
                 return True
             else :
-                time.sleep(0.35)
+                time.sleep(sleep_time)
 
     def _get_events(self, resultID, startPos=0, numRows=None):
+        """
+        Internal method that will get the query events.
+        numRows correspond to limit/page_size
+        """
         if not numRows :
             numRows=self.limit
                 

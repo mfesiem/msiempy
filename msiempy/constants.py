@@ -35,19 +35,6 @@ POSSIBLE_ALARM_STATUS=[
         ('', None, 'all', 'both')
     ]
 
-
-DEFAULTS_EVENT_FIELDS=[
- "DSIDSigID",
- "msg",
- "SrcPort",
- "DstPort", 
- "SrcIP", 
- "DstIP", 
- "SrcMac",
- "DstMac", 
- "LastTime",
-]
-
 ALARM_FILTER_FIELDS = [('id',),
 ('summary','sum'),
 ('assignee','user'),
@@ -70,40 +57,3 @@ ALARM_EVENT_FILTER_FIELDS=[("eventId",),
 ("eventSubType",'subtype')]
 
 ALARM_DEFAULT_FIELDS=['triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage']
-
-FIELDS_TABLES=["ADGroup",
- "Action",
- "Alert",
- "Asset",
- "AssetGroup",
- "AssetThreat",
- "CaseMgt",
- "CaseOrg",
- "CaseStatus",
- "Class",
- "Connection",
- "DataEnrichment",
- "GeoLoc_ASNGeoDst",
- "GeoLoc_ASNGeoSrc",
- "IOC",
- "IPS",
- "IPSCheck",
- "NDDeviceInterface_NDDevIFDst",
- "NDDeviceInterface_NDDevIFSrc",
- "NDDevice_NDDevIDDst",
- "NDDevice_NDDevIDSrc",
- "OS",
- "Rule",
- "Rule_NDSNormSigID",
- "Tag",
- "TagAsset",
- "ThirdPartyType",
- "Threat",
- "ThreatVendor",
- "TriggeredAlarm",
- "Users",
- "Vulnerability",
- "Zone_ZoneDst",
- "Zone_ZoneSrc",
-]
-

@@ -165,12 +165,12 @@ class NitroConfig(configparser.ConfigParser):
         return self.getint('performance', 'default_rows')
 
     @property
-    def async_rule(self):
+    def max_query_depth(self):
         """
         Wether to split the query based on a time, a delta, or a fixed 
         number of slots in order to run them asynchronously
         """
-        return self.get('performance', 'async_rule')
+        return self.getint('performance', 'max_query_depth')
 
     @property
     def slots(self):
