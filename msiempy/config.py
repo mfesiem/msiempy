@@ -30,12 +30,13 @@ class NitroConfig(configparser.ConfigParser):
     DEFAULT_SSL_VERIFY=False
     DEFAULT_OUTPUT='text'
 
-    DEFAULT_MAX_WORKERS=15
+    DEFAULT_MAX_WORKERS=10
     DEFAULT_MAX_ROWS=200000
-    DEFAULT_DEFAULT_ROWS=5000
-    DEFAULT_ASYNC_RULE='slots'
-    DEFAULT_ASYNC_SLOTS=5
-    DEFAULT_ASYNC_DELTA='5mn'
+    DEFAULT_DEFAULT_ROWS=500
+    DEFAULT_ASYNC_RULE='delta'
+    DEFAULT_SLOTS=5
+    DEFAULT_DELTA='5h'
+    DEFAULT_MAX_QUERY_DEPTH=1
 
     DEFAULT_CONF_DICT={'esm':{'host':'', 
             'user':'',
@@ -49,8 +50,9 @@ class NitroConfig(configparser.ConfigParser):
             'max_rows':DEFAULT_MAX_ROWS,
             'default_rows':DEFAULT_DEFAULT_ROWS, 
             'async_rule':DEFAULT_ASYNC_RULE,
-            'async_slots':DEFAULT_ASYNC_SLOTS,
-            'async_delta':DEFAULT_ASYNC_DELTA}}
+            'slots':DEFAULT_SLOTS,
+            'delta':DEFAULT_DELTA,
+            'max_query_depth':DEFAULT_MAX_QUERY_DEPTH}}
 
     def __str__(self):
         return(self.CONFIG_FILE_DISCLAMER+'\nConfiguration file : '+
@@ -58,7 +60,8 @@ class NitroConfig(configparser.ConfigParser):
 
     def __init__(self, path=None, config=None, *arg, **kwarg):
         """
-        Initialize the Config instance. If path is left None, will automatically look for it :
+        Initialize the Config instance.
+        If path is left None, will automatically look for it.
 
         """
 
@@ -164,20 +167,20 @@ class NitroConfig(configparser.ConfigParser):
         return self.getint('performance', 'default_rows')
 
     @property
-    def async_rule(self):
+    def max_query_depth(self):
         """
         Wether to split the query based on a time, a delta, or a fixed 
         number of slots in order to run them asynchronously
         """
-        return self.get('performance', 'async_rule')
+        return self.getint('performance', 'max_query_depth')
 
     @property
-    def async_slots(self):
-        return self.get('performance', 'async_slots')
+    def slots(self):
+        return self.getint('performance', 'slots')
 
     @property
-    def async_delta(self):
-        return self.get('performance', 'async_delta')
+    def delta(self):
+        return self.get('performance', 'delta')
 
     @staticmethod
     def _find_ini_location():
