@@ -18,7 +18,7 @@ class T(unittest.TestCase):
                     #time_range='LAST_24_HOURS',
                     #filters=[
                         #('DSIDSigID', ['143-2317843039',]),]
-                        #('Description', ["""51: Retrieve File"""]),]
+                        #('Description', ["51: Retrieve File"]),]
                         #msiempy.event.FieldFilter('LastTime', [format_esm_time('06-10-2019T12:02:56')], operator='GREATER_THAN')],
                 )"""
 
