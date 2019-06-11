@@ -8,7 +8,9 @@ from .utils import timerange_gettimes, parse_query_result, format_fields_for_que
 
 class EventManager(QueryManager):
     """
-    EventManage
+    EventManager object.
+    Interface to query and manage events.
+    Inherits from QueryManager.
     """ 
 
     #Constants
@@ -27,37 +29,47 @@ class EventManager(QueryManager):
 
     def __init__(self, fields=None, order=None, limit=None, filters=None, compute_time_range=True, *args, **kwargs):
         """
-        fields = list of str of fields name
-        order = tuple (direction, field)
-            if a dict is passed for the prder, will replace the whole param 
-            if a tuple is passed , will set the first order according to (direction, fields)
-
+            fields : list of strings representing all fields you want to apprear in the Events records.
+                Get the list of possible fields by calling EventManager.get_possible_fields() method.
+                Some defaults fields will always be present unless removed.
+            order : NOT WORKING FOR NOW tuple (direction, field) or a list of filters in the SIEM format.
+                will set the first order according to (direction, fields).
+                    -> same as using the property setter.
+                if you pass a list here, will use the this raw list as the SIEM `order` field.
+                    -> same as setting _order property directly.
+            limit : max number of rows per query, by default takes the value in config `default_rows` option.
+            filters : list of tuple (field [values])
+            compute_time_range : False if you want to send the actualy time_range in parameter for the initial query.
+                Defaulted to True cause the query splitting implies computing the time_range anyway
         """
 
         #Declaring attributes
         self._filters=list()
         self._order=dict()
 
+        #Setting the default fields
         self.fields=Event.DEFAULTS_EVENT_FIELDS
+        
+        #Adds the specified fields and make sure there is no duplicates
         if fields :
-            pass #self.fields+=fields
+            self.fields=list(set(self.fields+fields))
 
-        self.reverse=bool()
+        #Set the compute_time_range propertir that is going to be used when time_range setter is called
         self.compute_time_range=compute_time_range
 
-        #Calling constructor
+        #Calling super constructor : time_range set etc...
         super().__init__(*args, **kwargs)
 
         #Setting limit according to config
         self.limit=self.nitro.config.default_rows if limit is None else int(limit)
 
-        if isinstance(order, dict): #if a dict is passed for the prder, will replace the whole param
+        if isinstance(order, list): #if a list is passed for the prder, will replace the whole param
             self._order=order
         else:
             self._order=[{
-                "direction": None,
+                "direction": 'DESCENDING',
                 "field": {
-                    "name": None
+                    "name": 'LastTime'
                     }
                 }]
             self.order=order #if a tuple is passed , will set the first order according to (direction, fields)
@@ -67,20 +79,31 @@ class EventManager(QueryManager):
 
     @property
     def order(self):
-        return((self._order[0]['direction'],self._order[0]['field']['name']))
+        """
+        Will return a list of orders representing the what the SIEM is expecting as the 'order'
+        """
+        return(self._order)
 
     @order.setter
     def order(self, order):
-        #tuple (direction, field)
+        """
+        The order must be tuple (direction, field)
+        """
+        
         if type(order) is tuple :
             if order[0] in self.POSSBILE_ROW_ORDER:
                 self._order[0]['direction']=order[0]
                 self._order[0]['field']['name']=order[1]
             else:
                 raise AttributeError("Illegal order value : "+str(order[0])+". The order must be in :"+str(self.POSSBILE_ROW_ORDER))
+        else :
+            raise AttributeError("Illegal type for argument order. Can onyl be a tuple is using the property setter. You can diretly specify a list of orders (SIEM format) by setting _order property.")
 
     @property
     def filters(self):
+        """
+        
+        """
         return([f.config_dict for f in self._filters])
 
     def add_filter(self, fil):
@@ -97,7 +120,7 @@ class EventManager(QueryManager):
         ##https://bugs.python.org/issue14965
         super(self.__class__, self.__class__).filters.__set__(self,
             [FieldFilter(name='SrcIp', values=['0.0.0.0/0'])])
-
+    
     @property
     def time_range(self):
         return(super().time_range)
@@ -125,6 +148,9 @@ class EventManager(QueryManager):
                 raise
         else :
             super(self.__class__, self.__class__).time_range.__set__(self, time_range)
+
+    def get_possible_fields(self):
+        return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
 
     def _load_data(self):
         """"
@@ -202,6 +228,7 @@ class EventManager(QueryManager):
         events=parse_query_result(result['columns'], result['rows'])
         return events
         
+    
 class Event(Item):
     """
     Event
