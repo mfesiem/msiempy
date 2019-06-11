@@ -237,7 +237,7 @@ class Alarm(Item):
             if len(event['sourceIp']) >= 7 :
                 filters.append(('SrcIP', [str(event['sourceIp'])]))
             if len(event['destIp']) >= 7 :
-                filters.append(('SrcIP', [str(event['destIp'])]))
+                filters.append(('DstIP', [str(event['destIp'])]))
 
         log.debug("Filters : "+str(filters))
         events = EventManager(
