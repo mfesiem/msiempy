@@ -29,18 +29,43 @@ class EventManager(QueryManager):
 
     def __init__(self, fields=None, order=None, limit=None, filters=None, compute_time_range=True, *args, **kwargs):
         """
+           Params
+           ======
+           
             fields : list of strings representing all fields you want to apprear in the Events records.
                 Get the list of possible fields by calling EventManager.get_possible_fields() method.
                 Some defaults fields will always be present unless removed.
-            order : NOT WORKING FOR NOW tuple (direction, field) or a list of filters in the SIEM format.
+            order : Not implemented yet. 
+                tuple (direction, field) or a list of filters in the SIEM format.
                 will set the first order according to (direction, fields).
                     -> same as using the property setter.
-                if you pass a list here, will use the this raw list as the SIEM `order` field.
+                If you pass a list here, will use the this raw list as the SIEM `order` field.
+                Structure must be in correct format
+                
                     -> same as setting _order property directly.
             limit : max number of rows per query, by default takes the value in config `default_rows` option.
             filters : list of tuple (field [values])
             compute_time_range : False if you want to send the actualy time_range in parameter for the initial query.
-                Defaulted to True cause the query splitting implies computing the time_range anyway
+                Defaulted to True cause the query splitting implies computing the time_range anyway.
+            
+            Examples
+            ========
+            
+            Every init parameters are also properties. E.g. :
+            ```
+                >>>em=EventManager(fields=['SrcIP','DstIP'],
+                        order=('DESCENDING''LastTime'),
+                        filters=[('DstIP','4.4.0.0/16','8.8.0.0/16')])
+                >>>em.load_data()```
+            Equlas :
+            ```
+                >>>em=EventManager()
+                >>>em.fields=['SrcIP','DstIP'],
+                >>>em._order=[{  "direction": 'DESCENDING',
+                                "field": { "name": 'LastTime' }  }]
+                >>>em.filters=[('DstIP','4.4.0.0/16','8.8.0.0/16')]
+                >>>em.load_data()```
+                
         """
 
         #Declaring attributes
@@ -60,10 +85,12 @@ class EventManager(QueryManager):
         #Calling super constructor : time_range set etc...
         super().__init__(*args, **kwargs)
 
-        #Setting limit according to config
+        #Setting limit according to config or limit argument
+        #TODO Try to load queries with a limit of 10k and get result as chucks of 500 with starPost nbRows
+        #   and compare efficiency
         self.limit=self.nitro.config.default_rows if limit is None else int(limit)
 
-        if isinstance(order, list): #if a list is passed for the prder, will replace the whole param
+        if isinstance(order, list): #if a list is passed for the prder, will replace the whole param supposed in correct SIEM format
             self._order=order
         else:
             self._order=[{
@@ -74,6 +101,7 @@ class EventManager(QueryManager):
                 }]
             self.order=order #if a tuple is passed , will set the first order according to (direction, fields)
 
+        #TODO : find a soltuion not to use this stinky tric
         #callign super().filters=filters #https://bugs.python.org/issue14965
         super(self.__class__, self.__class__).filters.__set__(self, filters)
 
@@ -87,7 +115,8 @@ class EventManager(QueryManager):
     @order.setter
     def order(self, order):
         """
-        The order must be tuple (direction, field)
+        The order must be tuple (direction, field).
+        Use _order to set with SIEM format.
         """
         
         if type(order) is tuple :
@@ -102,34 +131,47 @@ class EventManager(QueryManager):
     @property
     def filters(self):
         """
-        
+        Generates the json SIEM formatted filters for the query by calling reccursive getter : config_dict .
         """
         return([f.config_dict for f in self._filters])
 
-    def add_filter(self, fil):
-        if isinstance(fil, tuple) :
-            self._filters.append(FieldFilter(fil[0], fil[1]))
+    def add_filter(self, afilter):
+        """
+        Concrete description of the QueryManager method.
+        It can take a tuple(fiels, [values]) or a QueryFilter sub class.
+        """
+        if isinstance(afilter, tuple) :
+            self._filters.append(FieldFilter(afilter[0], afilter[1]))
 
-        elif isinstance(fil, QueryFilter) :
-            self._filters.append(fil)
+        elif isinstance(afilter, QueryFilter) :
+            self._filters.append(afilter)
         
         else :
             raise NitroError("Sorry the filters must be either a tuple(fiels, [values]) or a QueryFilter sub class.")
 
     def clear_filters(self):
+        """
+        Replace all filters by a non filtering rule.
+        Acts like the is not filters.
+        """
+        #TODO : find a soltuion not to use this stinky tric
         ##https://bugs.python.org/issue14965
         super(self.__class__, self.__class__).filters.__set__(self,
             [FieldFilter(name='SrcIp', values=['0.0.0.0/0'])])
     
     @property
     def time_range(self):
+        """ Same as super class.
+            Need to re-declare the time_range getter to be able to define setter.
+        """
         return(super().time_range)
 
     @time_range.setter
     def time_range(self, time_range):
         """
         Set the time range of the query to the specified string value.
-        Trys by default to cut get a start and a end time with timerange_gettimes
+        Trys if compute_time_range is True - by default it is - to get a 
+            start and a end time with utils.timerange_gettimes()
         """
         if time_range and self.compute_time_range :
             try :
@@ -141,25 +183,32 @@ class EventManager(QueryManager):
             # all timeranges are supported
             except AttributeError as err:
                 log.warning(err)
+                #TODO : find a soltuion not to use this stinky tric
                 #Calling super().time_range=time_range
                 #https://bugs.python.org/issue14965
                 super(self.__class__, self.__class__).time_range.__set__(self, time_range)
             except :
                 raise
         else :
+            #TODO : find a soltuion not to use this stinky tric
             super(self.__class__, self.__class__).time_range.__set__(self, time_range)
 
     def get_possible_fields(self):
+        """
+        Indicate a list of possible fields that you can request in a query.
+        The list is loaded from the SIEM.
+        """
         return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
 
     def _load_data(self):
         """"
-            Execute the query.
+            Internal helper method to execute the query and load the data.
             Returns a list of Events, the status of the query.
-            return a tuple (items, completed)
+            return a tuple (items, completed).
         """
         query_infos=dict()
 
+        #Queries api calls are very different if the time range is custom.
         if self.time_range == 'CUSTOM' :
             query_infos=self.nitro.request(
                 'event_query_custom_time',
@@ -414,10 +463,10 @@ class FieldFilter(QueryFilter):
     def add_value(self, type, **args):
         """
         Args could be :
-            {'type':'EsmWatchlistValue',    'watchlist':1},
-            {'type':'EsmVariableValue',     'variable':1},
-            {'type':'EsmBasicValue',        'value':'a value'},
-            {'type':'EsmCompoundValue',     'values':['']}]
+            **{'type':'EsmWatchlistValue',    'watchlist':1}
+            **{'type':'EsmVariableValue',     'variable':1}
+            **{'type':'EsmBasicValue',        'value':'a value'}
+            **{'type':'EsmCompoundValue',     'values':['']}
         """
         try:
             type_template=None
