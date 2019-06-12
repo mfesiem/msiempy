@@ -14,16 +14,15 @@ class EventManager(QueryManager):
     """ 
 
     #Constants
+    #TODO Try grouped queries !
     TYPE='EVENT'
     GROUPTYPE='NO_GROUP'
-
-
     POSSBILE_ROW_ORDER=[
             'ASCENDING',
             'DESCENDING'
     ]
 
-    #Declaring static value containing all the possibles
+    # Declaring static value containing all the possibles
     # event fields, should be loaded once (when the session start ?)
     _possible_fields = []
 
@@ -34,7 +33,7 @@ class EventManager(QueryManager):
            
             fields : list of strings representing all fields you want to apprear in the Events records.
                 Get the list of possible fields by calling EventManager.get_possible_fields() method.
-                Some defaults fields will always be present unless removed.
+                Some defaults fields will always be present unless removed, see (1).
             order : Not implemented yet. 
                 tuple (direction, field) or a list of filters in the SIEM format.
                 will set the first order according to (direction, fields).
@@ -48,8 +47,16 @@ class EventManager(QueryManager):
             compute_time_range : False if you want to send the actualy time_range in parameter for the initial query.
                 Defaulted to True cause the query splitting implies computing the time_range anyway.
             
+           
+            
             Examples
             ========
+            
+            (1) To delete a default field
+            ```
+                >>>em=EventManager()
+                >>>del em.fields['SrcIP']
+            ```
             
             Every init parameters are also properties. E.g. :
             ```
@@ -108,7 +115,7 @@ class EventManager(QueryManager):
     @property
     def order(self):
         """
-        Will return a list of orders representing the what the SIEM is expecting as the 'order'
+        Return a list of orders representing the what the SIEM is expecting as the 'order'
         """
         return(self._order)
 
@@ -131,7 +138,7 @@ class EventManager(QueryManager):
     @property
     def filters(self):
         """
-        Generates the json SIEM formatted filters for the query by calling reccursive getter : config_dict .
+        Generates the json SIEM formatted filters for the query by calling reccursive getter : config_dict.
         """
         return([f.config_dict for f in self._filters])
 
@@ -202,9 +209,13 @@ class EventManager(QueryManager):
 
     def _load_data(self):
         """"
-            Internal helper method to execute the query and load the data.
-            Returns a list of Events, the status of the query.
-            return a tuple (items, completed).
+            Helper method to execute the query and load the data : 
+                Implies -> submit the query -> wait -> get the events -> parse -
+                            -> convert to EventManager ->  set self.data and return 
+            Returns a tuple ( list of Events(1) ,the status of the query )
+                      tuple (items, completed).
+            
+            (1) aka EventManager
         """
         query_infos=dict()
 
@@ -246,11 +257,20 @@ class EventManager(QueryManager):
         return((events,len(events)<self.limit))
 
     def load_data(self):
+        """
+        Specialized EventManager load_data method.
+        Use super load_data implementation.
+        You could decide not to use the splitting feature by 
+            calling directly _load_data() 
+        """
         return EventManager(alist=super().load_data())
 
     def _wait_for(self, resultID, sleep_time=0.35):
         """
-        Wait and sleep - for `sleep_time` duration in seconds - until the query is completed
+        Internal method called by _load_data
+        Wait and sleep - for `sleep_time` duration in seconds -
+            until the query is completed
+        
         #TODO handle SIEM ResultUnavailable error
         """
         log.debug("Waiting for the query to be executed on the SIEM...")
@@ -263,8 +283,9 @@ class EventManager(QueryManager):
 
     def _get_events(self, resultID, startPos=0, numRows=None):
         """
-        Internal method that will get the query events.
-        numRows correspond to limit/page_size
+        Internal method that will get the query events, 
+            called by _load_data
+        by default, numRows correspond to limit
         """
         if not numRows :
             numRows=self.limit
@@ -274,15 +295,22 @@ class EventManager(QueryManager):
             numRows=numRows,
             resultID=resultID)
 
+        #Calls a utils function to parse the [columns][rows]
+        #   to format into list of dict
         events=parse_query_result(result['columns'], result['rows'])
         return events
         
     
 class Event(Item):
     """
-    Event
+    Event.
+    You can see all the requested fields and have some 
+        interaction - note only - with the events
     """
 
+    """
+        
+        """
     FIELDS_TABLES=["ADGroup",
         "Action",
         "Alert",
@@ -319,6 +347,8 @@ class Event(Item):
         "Zone_ZoneSrc",
         ]
 
+    """Relatively common event fields that could be useful to have.
+    """
     DEFAULTS_EVENT_FIELDS=[
        
         "Rule.msg",
@@ -342,6 +372,8 @@ class Event(Item):
         """
         Automatically adding the table name of the field 
             if no '.' is present in the key
+            Not working properly i think
+            #TODO try with collections.UserDict.__getitem__(self, key)
         """
         if '.' not in key :
             for table in self.FIELDS_TABLES :
@@ -359,35 +391,55 @@ class Event(Item):
                 raise
 
     def clear_notes(self):
+        """
+        Desctructive action.
+        Replace the notes by an empty string. 
+        """
         NotImplementedError()
 
     def add_note(self, note):
+        """
+        Add a new note in the note field.
+        """
         NotImplementedError()
 
 class GroupFilter(QueryFilter):
     """
-        Based on EsmFilterGroup
+        Based on EsmFilterGroup. See SIEM api doc.
+        Used to dump groups of filters in the right format.
     """
 
     def __init__(self, *filters, logic='AND') :
+        """
+        filter : a list of filters, it can be FieldFilter or GroupFilter aka -  base.QueryFilter
+        logic : 'AND' or 'OR' (i think)
+        """
         super().__init__()
         
         #Declaring attributes
         self.filters=filters
         self.logic=logic
 
+    @property
     def config_dict(self):
+        """
+        Could call recursively if there is other GroupFilter(s) object nested.
+        Dump a filter in the right format.
+        """
         return({
             "type": "EsmFilterGroup",
-            "filters": [f.config_dict() for f in self.filters],
+            "filters": [f.config_dict for f in self.filters],
             "logic":self.logic
             })
         
 class FieldFilter(QueryFilter):
     """
-    Based on EsmFieldFilter
+    Based on EsmFieldFilter. See SIEM api doc.
+    Used to dump a filter in the right format.
     """
 
+    """List of possibles operators        
+        """
     POSSIBLE_OPERATORS=['IN',
         'NOT_IN',
         'GREATER_THAN',
@@ -402,6 +454,9 @@ class FieldFilter(QueryFilter):
         'DOES_NOT_CONTAIN',
         'REGEX']
 
+    """List of possible type of value and the associated keyword to pass
+        to
+        """
     POSSIBLE_VALUE_TYPES=[
             {'type':'EsmWatchlistValue',    'key':'watchlist'},
             {'type':'EsmVariableValue',     'key':'variable'},
@@ -410,18 +465,26 @@ class FieldFilter(QueryFilter):
 
 
     def __init__(self, name, values, operator='IN') :
+        """
+        name : field name as string
+        values : list of values the field is going 
+                 to be tested againts with the specified orperator
+        orperator : string representing 
+        """
         super().__init__()
         #Declaring attributes
         self._name=str()
         self._operator=str()
         self._values=list()
-
         self.name = name
         self.operator = operator
         self.values = values
 
     @property
     def config_dict(self):
+        """
+        Dump a filter in the right format.
+        """
         return ({
             "type": "EsmFieldFilter",
             "field": {"name": self.name},
@@ -431,20 +494,32 @@ class FieldFilter(QueryFilter):
 
     @property
     def name(self):
+        """
+        Field name property getter.
+        """
         return (self._name)
     
     @property
     def operator(self):
+        """
+        Field operator property getter.
+        """
         return (self._operator)
 
     @property
     def values(self):
+        """
+        Field values property getter.
+        """
         return (self._values)
 
     @name.setter
     def name(self, name):
-        
-        if True : # Not checking dynamically the velidity of the fields cause makes too much of unecessary requests any(f.get('name', None) == name for f in self._possible_filters):
+        """
+        Could checking dynamically the validity of the fields but turned off cause it was loading to much 
+        #TODO add the list of fields check in better way and STORE the list one time only. Use class property ?
+        """
+        if True : # Not checking dynamically the validity of the fields cause makes too much of unecessary requests any(f.get('name', None) == name for f in self._possible_filters):
             self._name = name
         else:
             raise AttributeError("Illegal value for the "+name+" field. The filter must be in :"+str([f['name'] for f in self._possible_filters]))
@@ -452,6 +527,9 @@ class FieldFilter(QueryFilter):
 
     @operator.setter
     def operator(self, operator):
+        """
+        Check the value against the list of possible operators and trow error if not present.
+        """
         try:
             if operator in self.POSSIBLE_OPERATORS :
                 self._operator = operator
@@ -462,15 +540,19 @@ class FieldFilter(QueryFilter):
         
     def add_value(self, type, **args):
         """
+        Add a new value to the field filter.
+        
         Args could be :
-            **{'type':'EsmWatchlistValue',    'watchlist':1}
-            **{'type':'EsmVariableValue',     'variable':1}
-            **{'type':'EsmBasicValue',        'value':'a value'}
-            **{'type':'EsmCompoundValue',     'values':['']}
+            (type='EsmBasicValue',      value='a value'}. or
+            (type='EsmWatchlistValue',  watchlist=1)   or 
+            (type='EsmVariableValue',   variable=1}  or
+            (type='EsmCompoundValue',   values=['.*']}
         """
         try:
             type_template=None
             
+            #Look for the type of the object ex EsmBasicValue
+            # it' used to know the type and name of value parameter we should receive next
             for possible_value_type in self.POSSIBLE_VALUE_TYPES :
                 if possible_value_type['type'] == type :
                     type_template=possible_value_type
@@ -478,25 +560,38 @@ class FieldFilter(QueryFilter):
                         log.warning("Filtering query with other type of filter than 'EsmBasicValue' is not tested.")                            
                     break
 
+            #Error throwing
             if type_template is not None :
                 if type_template['key'] in args :
+                    
+                    # Adds a new value to a fields filter
+                    # Filtering query with other type of filter than 'EsmBasicValue' is not tested.
                     value = args[type_template['key']]
                     if type == 'EsmBasicValue' :
                         value=str(value)
-                       # log.debug('Adding a basic value to filter ('+self.text+') : '+value)
-
+                        #log.debug('Adding a basic value to filter ('+self.text+') : '+value)
                     self._values.append({'type':type, type_template['key']:value})
                     #log.debug('The value was appended to the list: '+str(self))
+                    
+                #Error throwing
                 else: raise KeyError ('The valid key value parameter is not present')
             else: raise KeyError ('Impossible filter')
         except KeyError as err:
             raise AttributeError("You must provide a valid named parameters containing the type and values for this filter. The type/keys must be in "+str(self.POSSIBLE_VALUE_TYPES)+"Can't be type="+str(type)+' '+str(args)+". Additionnal indicator :"+str(err) )
 
     def add_basic_value(self, value):
+        """
+        Wrapper arround add_value to add a EsmBasicValue
+        """
         self.add_value(type='EsmBasicValue', value=value)
 
     @values.setter
     def values(self, values):
+        """
+        Set a list of values calls add_value if value is a 
+            dict or calls add_basic_value if int, float or str
+        
+        """
         for val in values :
             if isinstance(val, dict):
                 self.add_value(**val)
