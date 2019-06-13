@@ -8,7 +8,7 @@ from .utils import timerange_gettimes, parse_query_result, format_fields_for_que
 
 class EventManager(QueryManager):
     """
-    EventManager object.
+    EventManager class.
     Interface to query and manage events.
     Inherits from QueryManager.
     """ 
@@ -46,7 +46,7 @@ class EventManager(QueryManager):
             filters : list of tuple (field [values])
             compute_time_range : False if you want to send the actualy time_range in parameter for the initial query.
                 Defaulted to True cause the query splitting implies computing the time_range anyway.
-            
+            *args, **kwargs : Parameters passed to `msiempy.base.QueryManager.__init__()`
            
             
             Examples
@@ -209,9 +209,9 @@ class EventManager(QueryManager):
 
     def _load_data(self):
         """"
-            Helper method to execute the query and load the data : 
-                Implies -> submit the query -> wait -> get the events -> parse -
-                            -> convert to EventManager ->  set self.data and return 
+            Concrete helper method to execute the query and load the data : 
+                -> Submit the query -> wait -> get the events -> parse -
+                    -> convert to EventManager ->  set self.data and return 
             Returns a tuple ( list of Events(1) ,the status of the query )
                       tuple (items, completed).
             
