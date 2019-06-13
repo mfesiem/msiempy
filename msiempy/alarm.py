@@ -9,13 +9,28 @@ from .utils import regex_match, convert_to_time_obj
 
 class AlarmManager(QueryManager):
     """
-    AlarmManager
+    AlarmManager class.
+    Interface to query and manage Alarms.
+    Inherits from QueryManager.
     """
     def __init__(self, status_filter='all', page_size=None, page_number=None, filters=None, *args, **kwargs):
 
         """
-        filters : [(field, [values]), (field, [values])]
-        field can be an EsmTriggeredAlarm or an EsmTriggeredAlarmEvent field
+        Params
+        ======
+            status_filter : status of the alarms to query
+            page_size : max number of rows per query, by default takes the value in config `default_rows` option.
+            page_number : defaulted to 1.
+            filters : [(field, [values]), (field, [values])]
+            fields : list of strings. Can be an EsmTriggeredAlarm or an EsmTriggeredAlarmEvent field, or any synonims. See 
+            *args, **kwargs : Parameters passed to `msiempy.base.QueryManager.__init__()`
+            
+        Examples
+        ========
+            ```
+            >>>em=AlarmManager(status_filter='unacknowledged',
+                filters=[('sourceIp','^10.*'), ('ruleMessage','Wordpress')]).load_data()
+            ```
         """
 
         super().__init__(*args, **kwargs)
@@ -31,16 +46,26 @@ class AlarmManager(QueryManager):
         self.page_number=page_number if page_number is not None else 1
 
         #uses the parent filter setter
+        #TODO : find a soltuion not to use this stinky tric
+        #callign super().filters=filters #https://bugs.python.org/issue14965
         super(self.__class__, self.__class__).filters.__set__(self, filters)
 
+        #Casting all data to Alarms objects, better way to do it ?
         collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, Item))])
 
     @property
     def filters(self):
+        """
+        Returns the addition of alarm related filters and event related filters.
+        """
         return self._alarm_filters + self._event_filters
     
     @property
     def status_filter(self):
+        """
+        Return the status of the alarms in the query. `status_filter` is not a filter like other cause it's computed on the SIEM side.
+        Other filters are computed locally - Unlike EventManager filters.
+        """
         return self._status_filter
         """
         for synonims in Alarm.POSSIBLE_ALARM_STATUS :
@@ -50,7 +75,8 @@ class AlarmManager(QueryManager):
     @status_filter.setter
     def status_filter(self, status_filter):
         """
-        Set the status filter of the alarm query. 'acknowledged', 'unacknowledged', 'all', '' or null -> all (default is '')
+        Set the status filter of the alarm query. 'acknowledged', 'unacknowledged', 'all', '' or null -> all (default is '').
+        You can pass synonims of each status. See `msiempy.alarm.Alarm.POSSIBLE_ALARM_STATUS`.
         """
         status_found=False
         if type(status_filter) is str : 
@@ -64,8 +90,8 @@ class AlarmManager(QueryManager):
 
     def add_filter(self, afilter):
         """
-            Make sure the filters format is tuple(field, list(values in string))
-            Takes also care of the differents synonims fields can have
+            Make sure the filters format is tuple(field, list(values in string)).
+            Takes also care of the differents synonims fields can have.
         """
 
         if isinstance(afilter,str):
@@ -92,13 +118,25 @@ class AlarmManager(QueryManager):
             raise AttributeError("Illegal filter field value : "+afilter[0]+". The filter field must be in :"+str(Alarm.ALARM_FILTER_FIELDS + Alarm.ALARM_EVENT_FILTER_FIELDS))
 
     def clear_filters(self):
+        """
+        Reset local alarm and event filters.
+        """
         self._alarm_filters = list(tuple())
         self._event_filters = list(tuple())
 
     def load_data(self):
+        """
+        Specialized load_data() method that convert the `msiempy.base.QueryManager.load_data()` result to AlarmManager object.
+        """
         return AlarmManager(alist=super().load_data())
 
     def _load_data(self):
+        """
+        Concrete helper method that loads the data.
+            -> Fetch the complete list of alarms -> Filter
+            
+        #TODO move filtering part somewhere else
+        """
         alarms=list()
         if self.time_range == 'CUSTOM' :
             alarms=self.nitro.request(
@@ -123,7 +161,13 @@ class AlarmManager(QueryManager):
         return (( self._filter(alarms), len(alarms)<self.page_size ))
 
     def _filter(self, alarms, alarmonly=False):
-        
+        """
+        Helper method that filters the alarms depending on alarm and event filters.
+            -> Filter dependinf on alarms related filters -> load events details
+                -> Filter depending on event related filters
+        Returns a AlarmsManager
+    
+        """
         alarms = AlarmManager(alist=[a for a in alarms if self._alarm_match(a)])
 
         if not alarmonly :
@@ -135,6 +179,9 @@ class AlarmManager(QueryManager):
         return alarms
 
     def _alarm_match(self, alarm):
+        """
+        Filter method that is going to return True if the passed alarm match any alarm related filters.
+        """
         match=True
         for alarm_filter in self._alarm_filters :
             match=False
@@ -148,6 +195,9 @@ class AlarmManager(QueryManager):
         return match
         
     def _event_match(self, alarm):
+        """
+        Filter method that is going to return True if the passed alarm match any event related filters.
+        """
         match=True
         for event_filter in self._event_filters :
             match=False
@@ -175,7 +225,8 @@ class Alarm(Item):
         ['acknowledged', 'ack',],
         ['unacknowledged', 'unack',],
         ['', 'all', 'both']
-    ]
+    ]"""Possible alarm statuses
+        """
 
     ALARM_FILTER_FIELDS = [('id',),
     ('summary','sum'),
@@ -185,7 +236,8 @@ class Alarm(Item):
     ('acknowledgedDate','ackdate'),
     ('acknowledgedUsername','ackuser'),
     ('alarmName','name'),
-    ]
+    ]"""Possible fields usable in a alarm filter
+    """
 
     ALARM_EVENT_FILTER_FIELDS=[("eventId",),
     #"severity", duplicated in ALARM_FILTER_FIELD
@@ -196,39 +248,67 @@ class Alarm(Item):
     ("destIp",'dstip'),
     ("protocol",'prot'),
     ("lastTime",'date'),
-    ("eventSubType",'subtype')]
+    ("eventSubType",'subtype')]"""Possible fields usable in a event filter
+    """
 
-    ALARM_DEFAULT_FIELDS=['triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage']
+    ALARM_DEFAULT_FIELDS=['triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage']"""
+    
+    """
 
     def __init__(self, *arg, **kwargs):
+        """
+    
+        """
         super().__init__(*arg, **kwargs)
 
     def acknowledge(self):
+        """
+    
+        """
         self.nitro.request('ack_alarms', ids=[self.data['id']['value']])
 
     def unacknowledge(self):
+        """
+    
+        """
         self.nitro.request('unack_alarms', ids=[self.data['id']['value']])
 
     def delete(self):
+        """
+    
+        """
         self.nitro.request('delete_alarms', ids=[self.data['id']['value']])
 
     def ceate_case(self):
+        """
+    
+        """
         raise NotImplementedError()
 
     def load_details(self):
+        """
+        Recreate the alarm with detailled data loaded from the SIEM.
+        """
         details = self.nitro.request('get_alarm_details', id=self.data['id'])
         super().__init__(adict=details)
         return self
 
     def create_case(self):
+        """
+    
+        """
         raise NotImplementedError()
 
     def refresh(self):
+        """
+    
+        """
         super().refresh()
 
     def load_events_details(self):
         """
-        
+        This is clearly a workarround to retreive the genuine Event object from an Alarm.
+        @TODO find a better way to do it.
         """
         events=self.data['events']
         filters = list()
@@ -253,26 +333,44 @@ class Alarm(Item):
 
     @staticmethod
     def action_delete(alarm):
+        """
+    
+        """
         return alarm.delete()
 
     @staticmethod
     def action_acknowloedge(alarm):
+        """
+    
+        """
         return alarm.acknowledge()
 
     @staticmethod
     def action_unacknowloedge(alarm):
+        """
+    
+        """
         return alarm.unacknowledge()
 
     @staticmethod
     def action_create_case(alarm, case):
+        """
+    
+        """
         return alarm.create_case(case)
 
     @staticmethod
     def action_load_details(alarm):
+        """
+    
+        """
         return alarm.load_details()
 
     @staticmethod
     def action_load_events_details(alarm):
+        """
+    
+        """
         return alarm.load_events_details()
 
     """
