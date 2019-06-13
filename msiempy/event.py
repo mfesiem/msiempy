@@ -2,7 +2,8 @@ import time
 import logging
 log = logging.getLogger('msiempy')
 
-from .base import Item, QueryManager, QueryFilter
+from .base import Item
+from .query import QueryManager, FieldFilter, GroupFilter, QueryFilter
 from .error import NitroError
 from .utils import timerange_gettimes, parse_query_result, format_fields_for_query
 
@@ -125,8 +126,14 @@ class EventManager(QueryManager):
         The order must be tuple (direction, field).
         Use _order to set with SIEM format.
         """
-        
-        if type(order) is tuple :
+        if order is None :
+            self._order=[{
+                "direction": 'DESCENDING',
+                "field": {
+                    "name": 'LastTime'
+                    }
+                }]
+        elif isinstance(order, tuple) :
             if order[0] in self.POSSBILE_ROW_ORDER:
                 self._order[0]['direction']=order[0]
                 self._order[0]['field']['name']=order[1]
@@ -299,8 +306,7 @@ class EventManager(QueryManager):
         #   to format into list of dict
         events=parse_query_result(result['columns'], result['rows'])
         return events
-        
-    
+          
 class Event(Item):
     """
     Event.
@@ -402,199 +408,3 @@ class Event(Item):
         Add a new note in the note field.
         """
         NotImplementedError()
-
-class GroupFilter(QueryFilter):
-    """
-        Based on EsmFilterGroup. See SIEM api doc.
-        Used to dump groups of filters in the right format.
-    """
-
-    def __init__(self, *filters, logic='AND') :
-        """
-        filter : a list of filters, it can be FieldFilter or GroupFilter aka -  base.QueryFilter
-        logic : 'AND' or 'OR' (i think)
-        """
-        super().__init__()
-        
-        #Declaring attributes
-        self.filters=filters
-        self.logic=logic
-
-    @property
-    def config_dict(self):
-        """
-        Could call recursively if there is other GroupFilter(s) object nested.
-        Dump a filter in the right format.
-        """
-        return({
-            "type": "EsmFilterGroup",
-            "filters": [f.config_dict for f in self.filters],
-            "logic":self.logic
-            })
-        
-class FieldFilter(QueryFilter):
-    """
-    Based on EsmFieldFilter. See SIEM api doc.
-    Used to dump a filter in the right format.
-    """
-
-    """List of possibles operators        
-        """
-    POSSIBLE_OPERATORS=['IN',
-        'NOT_IN',
-        'GREATER_THAN',
-        'LESS_THAN',
-        'GREATER_OR_EQUALS_THAN',
-        'LESS_OR_EQUALS_THAN',
-        'NUMERIC_EQUALS',
-        'NUMERIC_NOT_EQUALS',
-        'DOES_NOT_EQUAL',
-        'EQUALS',
-        'CONTAINS',
-        'DOES_NOT_CONTAIN',
-        'REGEX']
-
-    """List of possible type of value and the associated keyword to pass
-        to
-        """
-    POSSIBLE_VALUE_TYPES=[
-            {'type':'EsmWatchlistValue',    'key':'watchlist'},
-            {'type':'EsmVariableValue',     'key':'variable'},
-            {'type':'EsmBasicValue',        'key':'value'},
-            {'type':'EsmCompoundValue',     'key':'values'}]
-
-
-    def __init__(self, name, values, operator='IN') :
-        """
-        name : field name as string
-        values : list of values the field is going 
-                 to be tested againts with the specified orperator
-        orperator : string representing 
-        """
-        super().__init__()
-        #Declaring attributes
-        self._name=str()
-        self._operator=str()
-        self._values=list()
-        self.name = name
-        self.operator = operator
-        self.values = values
-
-    @property
-    def config_dict(self):
-        """
-        Dump a filter in the right format.
-        """
-        return ({
-            "type": "EsmFieldFilter",
-            "field": {"name": self.name},
-            "operator": self.operator,
-            "values": self.values
-            })
-
-    @property
-    def name(self):
-        """
-        Field name property getter.
-        """
-        return (self._name)
-    
-    @property
-    def operator(self):
-        """
-        Field operator property getter.
-        """
-        return (self._operator)
-
-    @property
-    def values(self):
-        """
-        Field values property getter.
-        """
-        return (self._values)
-
-    @name.setter
-    def name(self, name):
-        """
-        Could checking dynamically the validity of the fields but turned off cause it was loading to much 
-        #TODO add the list of fields check in better way and STORE the list one time only. Use class property ?
-        """
-        if True : # Not checking dynamically the validity of the fields cause makes too much of unecessary requests any(f.get('name', None) == name for f in self._possible_filters):
-            self._name = name
-        else:
-            raise AttributeError("Illegal value for the "+name+" field. The filter must be in :"+str([f['name'] for f in self._possible_filters]))
-       
-
-    @operator.setter
-    def operator(self, operator):
-        """
-        Check the value against the list of possible operators and trow error if not present.
-        """
-        try:
-            if operator in self.POSSIBLE_OPERATORS :
-                self._operator = operator
-            else:
-                raise AttributeError("Illegal value for the filter operator "+operator+". The operator must be in "+str(self.POSSIBLE_OPERATORS))
-        except:
-            raise
-        
-    def add_value(self, type, **args):
-        """
-        Add a new value to the field filter.
-        
-        Args could be :
-            (type='EsmBasicValue',      value='a value'}. or
-            (type='EsmWatchlistValue',  watchlist=1)   or 
-            (type='EsmVariableValue',   variable=1}  or
-            (type='EsmCompoundValue',   values=['.*']}
-        """
-        try:
-            type_template=None
-            
-            #Look for the type of the object ex EsmBasicValue
-            # it' used to know the type and name of value parameter we should receive next
-            for possible_value_type in self.POSSIBLE_VALUE_TYPES :
-                if possible_value_type['type'] == type :
-                    type_template=possible_value_type
-                    if type != 'EsmBasicValue' :
-                        log.warning("Filtering query with other type of filter than 'EsmBasicValue' is not tested.")                            
-                    break
-
-            #Error throwing
-            if type_template is not None :
-                if type_template['key'] in args :
-                    
-                    # Adds a new value to a fields filter
-                    # Filtering query with other type of filter than 'EsmBasicValue' is not tested.
-                    value = args[type_template['key']]
-                    if type == 'EsmBasicValue' :
-                        value=str(value)
-                        #log.debug('Adding a basic value to filter ('+self.text+') : '+value)
-                    self._values.append({'type':type, type_template['key']:value})
-                    #log.debug('The value was appended to the list: '+str(self))
-                    
-                #Error throwing
-                else: raise KeyError ('The valid key value parameter is not present')
-            else: raise KeyError ('Impossible filter')
-        except KeyError as err:
-            raise AttributeError("You must provide a valid named parameters containing the type and values for this filter. The type/keys must be in "+str(self.POSSIBLE_VALUE_TYPES)+"Can't be type="+str(type)+' '+str(args)+". Additionnal indicator :"+str(err) )
-
-    def add_basic_value(self, value):
-        """
-        Wrapper arround add_value to add a EsmBasicValue
-        """
-        self.add_value(type='EsmBasicValue', value=value)
-
-    @values.setter
-    def values(self, values):
-        """
-        Set a list of values calls add_value if value is a 
-            dict or calls add_basic_value if int, float or str
-        
-        """
-        for val in values :
-            if isinstance(val, dict):
-                self.add_value(**val)
-
-            elif isinstance(val, (int, float, str)) :
-                self.add_basic_value(val)

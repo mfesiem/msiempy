@@ -3,7 +3,8 @@ import datetime
 import logging
 log = logging.getLogger('msiempy')
 
-from .base import Item, QueryManager, Manager
+from .base import Item, Manager
+from .query import QueryManager
 from .event import EventManager
 from .utils import regex_match, convert_to_time_obj
 
@@ -225,8 +226,10 @@ class Alarm(Item):
         ['acknowledged', 'ack',],
         ['unacknowledged', 'unack',],
         ['', 'all', 'both']
-    ]"""Possible alarm statuses
-        """
+    ]
+    """
+    Possible alarm statuses
+    """
 
     ALARM_FILTER_FIELDS = [('id',),
     ('summary','sum'),
@@ -236,7 +239,9 @@ class Alarm(Item):
     ('acknowledgedDate','ackdate'),
     ('acknowledgedUsername','ackuser'),
     ('alarmName','name'),
-    ]"""Possible fields usable in a alarm filter
+    ]
+    """
+    Possible fields usable in a alarm filter
     """
 
     ALARM_EVENT_FILTER_FIELDS=[("eventId",),
@@ -248,10 +253,13 @@ class Alarm(Item):
     ("destIp",'dstip'),
     ("protocol",'prot'),
     ("lastTime",'date'),
-    ("eventSubType",'subtype')]"""Possible fields usable in a event filter
+    ("eventSubType",'subtype')]
+    """
+    Possible fields usable in a event filter
     """
 
-    ALARM_DEFAULT_FIELDS=['triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage']"""
+    ALARM_DEFAULT_FIELDS=['triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage']
+    """
     
     """
 
