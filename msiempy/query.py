@@ -73,6 +73,8 @@ class QueryManager(Manager):
         self._end_time=None
 
         #self.filters=filters filter property setter should be called in the concrete class
+        #TODO find a better solution to integrate the filter propertie
+
         self.load_async=load_async
 
         if start_time is not None and end_time is not None :
@@ -89,7 +91,8 @@ class QueryManager(Manager):
     @property
     def time_range(self):
         """
-
+        Returns the query time range. See `msiempy.query.QueryManager.POSSIBLE_TIME_RANGE`.
+        Return 'CUSTOM' if internal _time_range is None and start_time annd end_time are set.
         """
         if self.start_time is not None and self.end_time is not None :
             return('CUSTOM')
@@ -99,14 +102,18 @@ class QueryManager(Manager):
     @property
     def start_time(self):
         """
-
+        Return the start time of the query in the right SIEM format.
+            See `msiempy.utils.format_esm_time()`
+        Use _start_time to get the datetime object
         """
         return format_esm_time(self._start_time)
 
     @property
     def end_time(self):
         """
-
+        Return the end time of the query in the right SIEM format.
+            See `msiempy.utils.format_esm_time()`
+        Use _end_time to get the datetime object
         """
         return format_esm_time(self._end_time)
 
@@ -114,7 +121,9 @@ class QueryManager(Manager):
     def time_range(self, time_range):
         """
         Set the time range of the query to the specified string value. 
-        Defaulf QueryManager.DEFAULT_TIME_RANGE
+        Defaulf `msiempy.queryQueryManager.DEFAULT_TIME_RANGE`.
+        Note : the time range is upper cased automatically.
+        Throw VallueError if unrecognized time range.
         """
 
         if not time_range :
@@ -137,7 +146,9 @@ class QueryManager(Manager):
     def start_time(self, start_time):
         """
         Set the time start of the query.
-        If none : equivalent current_day start 00:00:00
+        start_time can be a string or a datetime.
+        If None, equivalent current_day start 00:00:00.
+        
         """
         
         if not start_time:
@@ -154,7 +165,8 @@ class QueryManager(Manager):
     def end_time(self, end_time):
         """
         Set the time end of the query.
-        If none : equivalent now
+        end_time can be a string or a datetime.
+        If None, equivalent now.
         """
        
         if not end_time:
@@ -168,15 +180,18 @@ class QueryManager(Manager):
 
     @abc.abstractproperty
     def filters(self):
-        """
-
+        """ 
+        Filter propertie getter. Returns a list of filters.
+        #TODO find a better solution to integrate the filter propertie
         """
         raise NotImplementedError()
 
     @filters.setter
     def filters(self, filters):
         """
-
+        Query filters property : can be a list of tuple(field, [values]) 
+            or just a tuple. None value will call `msiempy.query.QueryManager.clear_filters()`
+        Throws AttributeError if type not supported.
         """
         
         if isinstance(filters, list):
@@ -190,36 +205,33 @@ class QueryManager(Manager):
             self.clear_filters()
         
         else :
-            raise NitroError("Illegal type for the filter object, it must be a list, a tuple or None.")
+            raise AttributeError("Illegal type for the filter object, it must be a list, a tuple or None.")
 
     
     @abc.abstractmethod
     def add_filter(self, filter):
         """
-
+        Method that figures out the way to add a filter to the query.
         """
         pass
 
     @abc.abstractmethod
     def clear_filters(self):
         """
-
+        Method that fiures out the way to remove all filters to the query.
         """
         pass 
 
     @abc.abstractmethod
     def _load_data(self):
         """
-        Must return a tuple (items, completed)
-        completed = True if all the data that should be load is loaded
+        Rturn a tuple (items, completed).
+        completed = True if all the data that should be load is loaded.
         """
         pass
 
     @staticmethod
     def action_load_data(querymanager):
-        """
-
-        """
         return(querymanager.load_data())
 
     @abc.abstractmethod
@@ -307,34 +319,34 @@ class QueryFilter(NitroObject):
 
     def get_possible_filters(self):
         """
-
+        Return all the fields that you can filter on in a query.
         """
         return(self.nitro.request('get_possible_filters'))
 
     @abc.abstractproperty
     def config_dict(self):
         """
-
+        Dump a filter in the right format.
         """
         pass
 
     def refresh(self):
         """
-
+        Superclass method.
         """
         log.warning("Can't refresh filter "+str(self))
 
     @property
     def json(self):
         """
-
+        Dump the filter as a json
         """
         return (json.dumps(self, indent=4, cls=NitroObject.NitroJSONEncoder))
     
     @property
     def text(self):
         """
-
+        Text representation
         """
         return str(self.config_dict)
 

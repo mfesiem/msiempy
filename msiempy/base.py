@@ -147,7 +147,8 @@ class Manager(collections.UserList, NitroObject):
     @property
     def text(self):
         """
-
+        Returns a nice string table made with prettytable.
+        
         """
         table = prettytable.PrettyTable()
         fields=set()
