@@ -1,5 +1,8 @@
 import unittest
 import msiempy.base
+import csv
+import time
+import requests
 from msiempy.base import Item
 
 class T(unittest.TestCase):
@@ -47,13 +50,45 @@ class T(unittest.TestCase):
         print('search result manager')
         print(manager.search('George').text)
 
-        manager.perform(repr, '2042', confirm=True, asynch=False, search=dict(invert=True))
+        print(manager.perform(repr, '2042', confirm=True, asynch=False, search_args=dict(invert=True)))
 
-        manager.refresh()
+    def test_json(self):
+        pass
 
-        print(manager.selected_items)
+    def test_item(self):
+        pass
 
-        times=msiempy.session.NitroSession().request('time_zones')
-        print(times)
+    def test_manager(self):
+        manager = msiempy.base.Manager(alist=msiempy.base.Manager.download_testing_data())
+        sublist = manager.search('CLIM_RANK.*0','Eco_Name.*north')#.search('County.*GLENN') #len = 52
+        print(sublist.text)
+        print(sublist.perform(T.test_add_money_money, progress=True, asynch=True))
+        print(sublist.text)
+        print(sublist.perform(T.test_add_money_money, progress=True, asynch=True))
+        print(sublist.text)
+        print(sublist.perform(T.test_add_money_money,
+            progress=True,
+            asynch=True,
+            func_args=dict(how_much=5)))
 
-        print(msiempy.base.Manager(times))
+        print(sublist.text)
+
+        mycouty=sublist.search('County.*GLENN')
+        mycouty.perform(
+            T.test_add_money_money,
+            confirm=True,
+            progress=True,
+            asynch=True,
+            func_args=dict(how_much=500))
+
+        
+        print(mycouty.text)
+        print(sublist.text)
+
+    @staticmethod
+    def test_add_money_money(item, how_much=1):
+        item['pct_hex']=str(int(item['pct_hex'])+how_much)
+        
+        time.sleep(0.1)
+
+        return (int(item['\ufeffOBJECTID'])-int(item['pct_hex']))
