@@ -168,8 +168,12 @@ class Manager(collections.UserList, NitroObject):
                 for key in self.keys :
                     if key not in item :
                         item[key]=None
+
+        #Setting the columns to show in the prettytable string
+        self.table_colums=[]
+
     @property
-    def text(self):
+    def text(self)#, columns=None):
         """
         Returns a nice string table made with prettytable.
         It's an expesive thing to do on big ammount of data
@@ -178,7 +182,7 @@ class Manager(collections.UserList, NitroObject):
         fields=sorted(self.keys)
         table.field_names=fields
         [table.add_row([str(item[field]) for field in fields]) for item in self.data]
-        return table.get_string()
+        return table.get_string()#fields=self.table_colums)
 
     @property
     def json(self):

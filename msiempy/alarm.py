@@ -54,6 +54,8 @@ class AlarmManager(QueryManager):
         #Casting all data to Alarms objects, better way to do it ?
         collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, Item))])
 
+        self.table_colums=['alarmName', 'triggeredDate', 'events']
+
     @property
     def filters(self):
         """
@@ -323,25 +325,26 @@ class Alarm(Item):
         @TODO find a better way to do it.
         """
         events=self.data['events']
-        filters = list()
+        if len(events) >0:
+            filters = list()
 
-        for event in events:
-            if len(event['sourceIp']) >= 7 :
-                filters.append(('SrcIP', [str(event['sourceIp'])]))
-            if len(event['destIp']) >= 7 :
-                filters.append(('DstIP', [str(event['destIp'])]))
+            for event in events:
+                if len(event['sourceIp']) >= 7 :
+                    filters.append(('SrcIP', [str(event['sourceIp'])]))
+                if len(event['destIp']) >= 7 :
+                    filters.append(('DstIP', [str(event['destIp'])]))
 
-        log.debug("Filters : "+str(filters))
-        events = EventManager(
-            start_time=convert_to_time_obj(events[0]['lastTime'])-datetime.timedelta(seconds=2),
-            end_time=convert_to_time_obj(events[-1]['lastTime'])+datetime.timedelta(seconds=2),
-            filters=filters,
-            fields=fields
-        ).load_data()
+            log.debug("Filters : "+str(filters))
+            events = EventManager(
+                start_time=convert_to_time_obj(events[0]['lastTime'])-datetime.timedelta(seconds=2),
+                end_time=convert_to_time_obj(events[-1]['lastTime'])+datetime.timedelta(seconds=2),
+                filters=filters,
+                fields=fields
+            ).load_data()
 
-        match='|'.join([event['eventId'].split('|')[1] for event in self.data['events']])
-        events = events.search(match)
-        self.data['events']=events
+            match='|'.join([event['eventId'].split('|')[1] for event in self.data['events']])
+            events = events.search(match)
+            self.data['events']=events
         return events
 
     """

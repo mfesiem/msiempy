@@ -45,5 +45,7 @@ class T(unittest.TestCase):
                 event_genuine=alarms_with_genuine_events[i]['events'][0]
                 self.assertEqual(event_sum['ruleMessage'], event_genuine['Rule.msg'], 'getting event details is in trouble')
 
+        print(alarms)
+
 
 
