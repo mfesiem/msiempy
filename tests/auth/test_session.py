@@ -4,20 +4,11 @@ import msiempy.session
 class T(unittest.TestCase):
 
     def test(self):
-        
-        print('creating new instance')
+
         session=msiempy.session.NitroSession()
-
-        print('getting time_zones')
-        print(session.request('time_zones'))
-
-        print('printing session')
-        print(session)
-
-        session.logout()
-
-        print(session)
-
-        print('getting esm_time')
-        print(session.request('get_esm_time')) #The error is normal cause we just logged out
+        
+        tz=session.request('time_zones')
+        for t in tz :
+            if not 'offset' in t:
+                self.fail("Timezone object from the SIEM doesn't represent a offset attribute")
 

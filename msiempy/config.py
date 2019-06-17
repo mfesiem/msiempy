@@ -49,9 +49,9 @@ class NitroConfig(configparser.ConfigParser):
         'performance':{'max_workers':DEFAULT_MAX_WORKERS,
             'max_rows':DEFAULT_MAX_ROWS,
             'default_rows':DEFAULT_DEFAULT_ROWS, 
-            'async_rule':DEFAULT_ASYNC_RULE,
+            
             'slots':DEFAULT_SLOTS,
-            'delta':DEFAULT_DELTA,
+            
             'max_query_depth':DEFAULT_MAX_QUERY_DEPTH}}
 
     def __str__(self):
@@ -178,10 +178,7 @@ class NitroConfig(configparser.ConfigParser):
     def slots(self):
         return self.getint('performance', 'slots')
 
-    @property
-    def delta(self):
-        return self.get('performance', 'delta')
-
+   
     @staticmethod
     def _find_ini_location():
         '''

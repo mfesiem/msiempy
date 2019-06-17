@@ -117,6 +117,7 @@ class NitroSession():
             )
 
             if raw :
+                log.debug('Returning raw requests Response object :'+str(result))
                 return result
 
             else:
@@ -164,7 +165,7 @@ class NitroSession():
         
         resp = self.request('login', username=userb64, password=passb64, raw=True, secure=True)
         
-        if resp:
+        if resp is not None :
             if resp.status_code in [400, 401]:
                 raise NitroError('Invalid username or password for the ESM')
             elif 402 <= resp.status_code <= 600:
@@ -174,6 +175,8 @@ class NitroSession():
             self._headers['X-Xsrf-Token'] = resp.headers.get('Xsrf-Token')
     
             return True
+        else:
+            raise NitroError('ESM Login Error: Response empty')
 
     def request(self, request, http='post', callback=None, raw=False, secure=False, **params):
         """

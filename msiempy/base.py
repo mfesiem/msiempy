@@ -254,8 +254,7 @@ class Manager(collections.UserList, NitroObject):
         """
         self.perform(Item.action_refresh)
 
-    def perform(self, func, func_args=None,
-                    confirm=False, asynch=False, progress=False, message=None ):
+    def perform(self, func, data=None, func_args=None, confirm=False, asynch=False, progress=False, message=None ):
         """
         Wrapper arround executable and the data list of Manager object.
         Will execute the callable the local manager data list.
@@ -264,8 +263,7 @@ class Manager(collections.UserList, NitroObject):
             ======
             func : callable stateless function
                 funs is going to be called like func(item, **func_args) on all items in data patern
-            if pattern_or_list stays None, will perform the action on the seleted rows,
-                if no rows are selected, wil perform on all rows
+            if data stays None, will perform the action on all rows, else it will perfom the action on the data list
             func_args : dict that will be passed by default to func in all calls
             confirm : will ask interactively confirmation 
             asynch : execute the task asynchronously with NitroSession executor 
@@ -276,6 +274,7 @@ class Manager(collections.UserList, NitroObject):
         """
 
         log.debug('Calling perform func='+str(func)+
+            ' data='+str(data)[:100]+
             ' func_args='+str(func_args)+
             ' confirm='+str(confirm)+
             ' asynch='+str(asynch)+
@@ -293,13 +292,22 @@ class Manager(collections.UserList, NitroObject):
         #The data returned by function
         returned=list()
 
+        #Usethe self contained data if not speficed otherwise
+        elements=self.data
+        if isinstance(data, list) and data is not None:
+            elements=data
+        else :
+            AttributeError('data must be a list')
+
         #Printing message if specified.
         #The message will appear on loading bar if progress is True
         if progress is True :
-            tqdm_args=dict(desc='Loading...', total=len(self.data))
+            tqdm_args=dict(desc='Loading...', total=len(elements))
         if message is not None:
             log.info(message)
             tqdm_args['desc']=message
+
+        
 
         #Runs the callable on list on executor or by iterating
         if asynch == True :
@@ -308,15 +316,15 @@ class Manager(collections.UserList, NitroObject):
                 #Need to call tqdm to have better support for concurrent futures executor
                 # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
                 returned=list(tqdm.tqdm(self.nitro.executor.map(
-                    func, self.data), **tqdm_args))
+                    func, elements), **tqdm_args))
             else:
                 log.info()
                 returned=list(self.nitro.executor.map(
-                    func, self.data))
+                    func, elements))
         else :
 
             if progress==True:
-                elements=tqdm.tqdm(self.data, **tqdm_args)
+                elements=tqdm.tqdm(elements, **tqdm_args)
 
             for index_or_item in elements:
                 returned.append(func(index_or_item))
@@ -339,22 +347,3 @@ class Manager(collections.UserList, NitroObject):
         Returns a Manager
         """
         return(Manager(alist=[item for item in self.data if item.selected]))
-
-    @staticmethod
-    def download_testing_data():
-        """
-        Terrestrial Climate Change Resilience - ACE [ds2738]
-
-        California Department of Natural Resources — For more information, 
-        see the Terrestrial Climate Change Resilience Factsheet 
-        at http://nrm.dfg.ca.gov/FileHandler.ashx?DocumentID=150836.
-        
-        The California Department...
-        """
-        url='http://data-cdfw.opendata.arcgis.com/datasets/7c55dd27cb6b4f739091edfb1c681e70_0.csv'
-
-        with requests.Session() as s:
-            download = s.get(url)
-            content = download.content.decode('utf-8')
-            data = list(csv.DictReader(content.splitlines(), delimiter=','))
-            return data

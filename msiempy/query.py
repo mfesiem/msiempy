@@ -44,7 +44,7 @@ class QueryManager(Manager):
     """
 
     def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
-        query_depth=0, load_async=True, split_strategy='delta', *arg, **kwargs):
+        query_rec=None, load_async=True, split_strategy='delta', *arg, **kwargs):
         """
         Abstract base class that handles the time ranges operations, loading data from the SIEM.
 
@@ -84,7 +84,7 @@ class QueryManager(Manager):
             self.time_range=time_range
 
         self.load_async=load_async
-        self.query_depth=query_depth
+        self.query_rec=query_rec if query_rec is not None else self.nitro.config.max_query_depth
         self.split_strategy=split_strategy
 
 
@@ -230,10 +230,6 @@ class QueryManager(Manager):
         """
         pass
 
-    @staticmethod
-    def action_load_data(querymanager):
-        return(querymanager.load_data())
-
     @abc.abstractmethod
     def load_data(self):
         """
@@ -254,7 +250,7 @@ class QueryManager(Manager):
         if not completed :
             #If not completed the query is split and items aren't actually used
 
-            if self.query_depth < self.nitro.config.max_query_depth :
+            if self.query_rec > 0 :
                 #log.info("The query data couldn't be loaded in one request, separating it in sub-queries...")
 
                 if self.time_range != 'CUSTOM': #can raise a NotImplementedError if unsupported time_range
@@ -262,17 +258,7 @@ class QueryManager(Manager):
                 else :
                     start, end = self.start_time, self.end_time
 
-                
-                if self.split_strategy == 'delta' :
-                    division = {'delta':self.nitro.config.delta}
-                    #If the query is alrealt smaller than the delta, directly use slots
-                    if (convert_to_time_obj(end)-convert_to_time_obj(start))<parse_timedelta(division['delta']):
-                        self.split_strategy='slots'
-
-                if self.split_strategy == 'slots':
-                    division = {'slots':self.nitro.config.slots}
-
-                times=divide_times(start, end, **division)
+                times=divide_times(start, end, slots=self.nitro.config.slots)
                 sub_queries=list()
 
                 for time in times :
@@ -283,21 +269,18 @@ class QueryManager(Manager):
                     sub_query.start_time=time[0].isoformat()
                     sub_query.end_time=time[1].isoformat()
                     sub_query.load_async=False
-                    sub_query.query_depth=self.query_depth+1
+                    sub_query.query_rec=self.query_rec-1
                     sub_query.split_strategy='slots'
                     sub_queries.append(sub_query)
 
-                if self.load_async :
-                    log.info('Loading data from '+self.start_time+' to '+self.end_time+'. Spliting query in '+str(division)+' ...')
-
-                results = Manager.perform_static(QueryManager.action_load_data, sub_queries, 
-                    asynch=self.load_async, progress=(self.query_depth==0))
+                results = self.perform(QueryManager.load_data, sub_queries, 
+                    asynch=self.load_async, progress=True, message='Loading data from '+self.start_time+' to '+self.end_time+'. Spliting query in {} slots'.format(self.nitro.config.slots))
 
                 #Flatten the list of lists in a list
                 items=[item for sublist in results for item in sublist]
                 
             else :
-                log.warning("The query couldn't be fully executed, reached maximum query_depth :"+str(self.query_depth))
+                log.warning("The query couldn't be fully executed")
 
         self.data=items
         return(Manager(alist=items))

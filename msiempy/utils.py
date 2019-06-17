@@ -137,7 +137,7 @@ def timerange_gettimes(time_range):
 def divide_times(first, last, time=0, slots=0, delta=0, min_slots=0):
     """"
         Divide the time range based on another time, a delta or on a number of slots
-        Return list of tuple 
+        Return list of tuple
     """
 
     #parse the dates
