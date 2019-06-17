@@ -8,7 +8,8 @@ class T(unittest.TestCase):
 
         alarms = msiempy.alarm.AlarmManager(
                     start_time='2019-05-20',
-                    end_time='2019-05-22'
+                    end_time='2019-05-20T12:00',
+                    query_depth=0
                 )
         print(alarms.filters)
         alarms.load_data()

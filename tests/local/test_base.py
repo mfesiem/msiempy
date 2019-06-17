@@ -47,7 +47,7 @@ class T(unittest.TestCase):
         print('search result manager')
         print(manager.search('George').text)
 
-        manager.perform(print, '2042', confirm=True, asynch=False, search=dict(invert=True))
+        manager.perform(repr, '2042', confirm=True, asynch=False, search=dict(invert=True))
 
         manager.refresh()
 
