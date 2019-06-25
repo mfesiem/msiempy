@@ -7,4 +7,4 @@ requests
 six
 tqdm
 urllib3
-pdoc3
+sphinx
