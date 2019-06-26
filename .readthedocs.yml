@@ -19,5 +19,5 @@ python:
         extra_requirements:
             - docs
       - method: setuptools
-        path: package
+        path: .
    system_packages: true
