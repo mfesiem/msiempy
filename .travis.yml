@@ -8,4 +8,4 @@ install:
 script: 
   #We'll need to find a way to provide a server for the authenticated tests
   #- python -m unittest discover --verbose --start-directory tests
-  - python -m unittest discover --verbose --start-directory tests.local.test_config
+  - python -m unittest tests.local.test_configg
