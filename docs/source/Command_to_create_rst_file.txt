@@ -1,0 +1,3 @@
+#https://docs-python2readthedocs.readthedocs.io/en/master/code-doc.html
+
+sphinx-apidoc -f -o source/ ../msiempy/

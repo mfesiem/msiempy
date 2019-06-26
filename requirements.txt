@@ -8,3 +8,5 @@ six
 tqdm
 urllib3
 sphinx
+sphinx_rtd_theme
+recommonmark
