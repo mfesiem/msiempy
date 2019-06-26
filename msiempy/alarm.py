@@ -313,7 +313,7 @@ class Alarm(Item):
         """
         super().refresh()
 
-    def load_events_details(self):
+    def load_events_details(self, extra_fields):
         """
         This is clearly a workarround to retreive the genuine Event object from an Alarm.
         @TODO find a better way to do it.
@@ -331,7 +331,8 @@ class Alarm(Item):
         events = EventManager(
             start_time=convert_to_time_obj(events[0]['lastTime'])-datetime.timedelta(seconds=2),
             end_time=convert_to_time_obj(events[-1]['lastTime'])+datetime.timedelta(seconds=2),
-            filters=filters
+            filters=filters,
+            fields=extra_fields
         ).load_data()
 
         match='|'.join([event['eventId'].split('|')[1] for event in self.data['events']])
