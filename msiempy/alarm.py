@@ -226,6 +226,39 @@ class AlarmManager(QueryManager):
 class Alarm(Item):
     """
     Alarm
+
+        id Description: The ID of the triggered alarm
+        summary  Description: The summary of the triggered alarm
+        assignee Description: The assignee for this triggered alarm
+        severity Description: The severity for this triggered alarm
+        triggeredDate Description: The date this alarm was triggered
+        acknowledgedDate Description: The date this triggered alarm was acknowledged
+        acknowledgedUsername Description: The user that acknowledged this triggered alarm
+        alarmName Description: The name of the alarm that was triggered
+        conditionType Description: The condition type of the alarm
+        filters Description: The filters for this user
+        queryId Description: The queryId for this user
+        alretRateMin Description: The alretRateMin for this user
+        alertRateCount Description: The alertRateCount for this user
+        percentAbove Description: The percentAbove for this user
+        percentBelow Description: The percentBelow for this user
+        offsetMinutes Description: The offsetMinutes for this user
+        timeFilter Description: The timeFilter for this user
+        maximumConditionTriggerFrequency Description: The maximumConditionTriggerFrequency for this user
+        useWatchlist Description: The useWatchlist for this user
+        matchField Description: The matchField for this user
+        matchValue  Description: The matchValue for this user
+        healthMonStatus Description: The healthMonStatus for this user
+        assigneeId Description: The assigneeId for this user
+        escalatedDate Description: The escalatedDate for this user
+        caseId Description: The caseId for this user
+        caseName Description: The caseName for this user
+        iocName Description: The iocName for this user
+        iocId Description: The iocId for this user
+        description Description: The description for this user
+        actions Description: The actions for this user
+        events Description: The events for this user
+
     """
     """@property
     def status(self):
