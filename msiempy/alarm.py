@@ -54,6 +54,8 @@ class AlarmManager(QueryManager):
         #Casting all data to Alarms objects, better way to do it ?
         collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, Item))])
 
+        self.table_colums=['alarmName', 'triggeredDate', 'events']
+
     @property
     def filters(self):
         """
@@ -131,6 +133,16 @@ class AlarmManager(QueryManager):
         """
         return AlarmManager(alist=super().load_data())
 
+    def load_events(self):
+        """
+        Returns a new Manager with full detailled events fields
+        """
+        self.perform(
+            Alarm.load_events_details,
+            asynch=True,
+            progress=True)
+        return AlarmManager(alist=self)
+
     def _load_data(self):
         """
         Concrete helper method that loads the data.
@@ -173,7 +185,7 @@ class AlarmManager(QueryManager):
 
         if not alarmonly :
             log.info("Getting alarms infos... Please be patient.")
-            detailed = self.perform(Alarm.action_load_details, list(alarms), asynch=True, progress=True)
+            detailed = self.perform(Alarm.load_details, list(alarms), asynch=True, progress=True)
             alarms = AlarmManager(alist=[a for a in detailed if self._event_match(a)])
 
         log.info(str(len(alarms)) + " alarms matching your filter(s)")
@@ -301,19 +313,13 @@ class Alarm(Item):
         super().__init__(adict=details)
         return self
 
-    def create_case(self):
-        """
-    
-        """
-        raise NotImplementedError()
-
     def refresh(self):
         """
     
         """
         super().refresh()
 
-    def load_events_details(self, extra_fields):
+    def load_events_details(self, extra_fields=None):
         """
         This is clearly a workarround to retreive the genuine Event object from an Alarm.
         @TODO find a better way to do it.
@@ -339,48 +345,6 @@ class Alarm(Item):
         events = events.search(match)
         self.data['events']=events
         return events
-
-    @staticmethod
-    def action_delete(alarm):
-        """
-    
-        """
-        return alarm.delete()
-
-    @staticmethod
-    def action_acknowloedge(alarm):
-        """
-    
-        """
-        return alarm.acknowledge()
-
-    @staticmethod
-    def action_unacknowloedge(alarm):
-        """
-    
-        """
-        return alarm.unacknowledge()
-
-    @staticmethod
-    def action_create_case(alarm, case):
-        """
-    
-        """
-        return alarm.create_case(case)
-
-    @staticmethod
-    def action_load_details(alarm):
-        """
-    
-        """
-        return alarm.load_details()
-
-    @staticmethod
-    def action_load_events_details(alarm):
-        """
-    
-        """
-        return alarm.load_events_details()
 
     """
     def _hasID(self):

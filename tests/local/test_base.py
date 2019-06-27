@@ -1,61 +1,76 @@
 import unittest
 import msiempy.base
+import csv
+import time
+import json
+import requests
 from msiempy.base import Item
+
+def test_add_money_money(item, how_much=1):
+    item['pct_hex']=str(int(item['pct_hex'])+how_much)
+    time.sleep(0.02)
+    return (int(item['\ufeffOBJECTID'])-int(item['pct_hex']))
+
+def download_testing_data():
+    """
+    Terrestrial Climate Change Resilience - ACE [ds2738]
+
+    California Department of Natural Resources — For more information, 
+    see the Terrestrial Climate Change Resilience Factsheet 
+    at http://nrm.dfg.ca.gov/FileHandler.ashx?DocumentID=150836.
+    
+    The California Department...
+    """
+    url='http://data-cdfw.opendata.arcgis.com/datasets/7c55dd27cb6b4f739091edfb1c681e70_0.csv'
+
+    with requests.Session() as s:
+        download = s.get(url)
+        content = download.content.decode('utf-8')
+        data = list(csv.DictReader(content.splitlines(), delimiter=','))
+        return data
 
 class T(unittest.TestCase):
 
-    def test(self):
-        
-        print('creating new items')
-        items = [
-            {'first':'John', 'last':'Lennon','born':1940,'role':'guitar'},
-            {'first':'Paul', 'last':'McCartney','born':1942,'role':'bass'},
-            {'first':'George','last':'Harrison','born':1943,'role':'guitar'},
-            {'first':'Ringo','last':'Starr','born':1940,'role':'drums'},
-            {'first':'George','last':'Martin','born':1926,'role':'producer', 'extra':'producer', 
-            'a_list':[
-                {'first':'user1', 'last':'non','born':1950,'role':'guitar'},
-                {'first':'user2', 'last':'neyney','born':2042,'role':'basser'},
-                {'first':'user3','last':'heris','born':1999,'role':'bloom'},
-                {'first':'user55','last':'was','born':1946,'role':'core'},
-                {'first':'me','last':'nono','born':1726,'role':'dancer', 'extra':'producer', 
-            }
-            ]}
-        ]
+    manager = msiempy.base.Manager(alist=download_testing_data())
 
-        print('printing items')
-        print(items)
+    def test_json(self):
 
-        print('creating manager')
-        manager=msiempy.base.Manager(items)
+        json_dump = T.manager.json
+        try :
+            loaded = json.loads(json_dump)
+            self.assertEqual(len(T.manager), len(loaded), "Json dump doesn't have the same lengh as manger object")
+            for i in range(len(loaded)):
+                self.assertEqual(dict(T.manager[i]), loaded[i], "Json dump doesn't present the same info in the same order")
+        except Exception as e:
+            self.fail("Can't load json object :"+str(e))
 
-        print('printing text of manager[0]')
-        print(manager[0].text)
+    def test_item(self):
+        pass
 
-        print('printing json of manager[0]')
-        print(str(manager[0].json))
-
-        print('printing text of manager')
-        print(manager.text)
-
-        print('printing json of manager')
-        print(manager.json)
-
-        print('printing repr of manager')
-        print(repr(manager))
-
-        print('search result manager')
-        print(manager.search('George').text)
-
+<<<<<<< HEAD
         print("PERFORM")
         manager.perform(repr, '2042', confirm=False, asynch=False, search=dict(invert=True))
 
         print("REFRESH")
         manager.refresh()
+=======
+    def test_manager(self):
+        sublist = T.manager.search('CLIM_RANK.*0','Eco_Name.*north')#.search('County.*GLENN') #len = 52
+        
+        sublist.perform(test_add_money_money, progress=True, asynch=True)
+        for item in sublist :
+            self.assertEqual(item['pct_hex'], '1', "Perform method issue ")
+        
+        sublist.perform(test_add_money_money, progress=True, asynch=True, func_args=dict(how_much=2))
+        for item in sublist :
+            self.assertEqual(item['pct_hex'], '3', "Perform method issue ")
 
-        print(manager.selected_items)
+        mycouty=sublist.search('County.*GLENN')
+        self.assertEqual(len(mycouty), 52, 'Search method issue')
+>>>>>>> comment
 
-        times=msiempy.session.NitroSession().request('time_zones')
-        print(times)
+        mycouty.perform(test_add_money_money, progress=True, asynch=True, func_args=dict(how_much=500))
+        for item in mycouty :
+            self.assertEqual(item['pct_hex'], '503', "Perform method issue ")
 
-        print(msiempy.base.Manager(times))
+

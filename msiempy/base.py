@@ -3,9 +3,12 @@ import collections
 import json
 import tqdm
 import copy
+import csv
 import prettytable
 import datetime
+import functools
 import logging
+import requests
 log = logging.getLogger('msiempy')
 
 from .session import NitroSession
@@ -137,62 +140,91 @@ class Manager(collections.UserList, NitroObject):
         """
         NitroObject.__init__(self)
         if alist is None:
-            alist=[]
-        if isinstance(alist , (list, Manager)):
+            collections.UserList.__init__(self, [])
+        
+        elif isinstance(alist , (list, Manager)):
             collections.UserList.__init__(
-                self, [Item(adict=item) for item in alist if isinstance(item, (dict, Item))])
+                self, [Item(adict=item) for item in alist if isinstance(item, (dict, Item))]
+                )
         else :
             raise ValueError('Manager can only be initiated based on a list')
+        
+        #Unique set of keys for all dict
+        #If new fields are added it won't show on text repr. Only json.
+        
+        self.keys=set()
 
-    @property
-    def text(self):
-        """
-
-        """
-        table = prettytable.PrettyTable()
-        fields=set()
-
+        #Normalizing the list of dict
+        #Finding the unique set
         for item in self.data :
             if item is not None :
-                fields=fields.union(dict(item).keys())
+                self.keys=self.keys.union(dict(item).keys())
             else :
                 log.warning('Having trouble with listing dicts')
-
-        fields=sorted(fields)
-        table.field_names=fields
-
+        #This means that all dict have the same set of keys
+        #Creating keys in dicts
         for item in self.data :
             if isinstance(item, NitroObject):
-                for key in fields :
+                for key in self.keys :
                     if key not in item :
-                        item[key]='-'
-                table.add_row([str(item[field]) for field in fields])
+                        item[key]=None
 
-        return table.get_string()
+        #Setting the columns to show in the prettytable string
+        self.table_colums=[]
+
+    @property
+    def text(self)#, columns=None):
+        """
+        Returns a nice string table made with prettytable.
+        It's an expesive thing to do on big ammount of data
+        """
+        table = prettytable.PrettyTable()
+        fields=sorted(self.keys)
+        table.field_names=fields
+        [table.add_row([str(item[field]) for field in fields]) for item in self.data]
+        return table.get_string()#fields=self.table_colums)
 
     @property
     def json(self):
         return(json.dumps([dict(item) for item in self.data], indent=4, cls=NitroObject.NitroJSONEncoder))
 
-    def search(self, pattern=None, invert=False, match_prop='json'):
+    def search(self, *pattern, invert=False, match_prop='json'):
         """
-        Return a list of elements that matches regex pattern
-        See https://docs.python.org/3/library/re.html#re.Pattern.search
-        """
-        if isinstance(pattern, str):
-            try :
-                matching_items=list()
-                for item in self.data :
-                    if regex_match(pattern, getattr(item, match_prop)) is not invert :
-                        matching_items.append(item)
-                return Manager(alist=matching_items)
+        Return a list of elements that matches regex patterns.
+        Patterns are applied one after another. It's a logic AND.
+        Use `|` inside patterns to search with logic OR.
+        This method will return a new Manager with matching data. Items in the returned Manager do not
+        references the items in the original Manager.
 
-            except Exception as err:
-                raise err
-        elif pattern is None :
+        If you wish to apply more specific filters to Manager list, please
+        use filter(), list comprehension, or other filtering method.
+            i.e. : `[item for item in manager if item['cost'] > 50]`
+
+        More on regex https://docs.python.org/3/library/re.html#re.Pattern.search
+        """
+        if pattern is None :
             return self
+        elif len(pattern) == 0 :
+            return self
+        else :
+            pattern=list(pattern)
+            apattern=pattern.pop()
+        
+        matching_items=list()
+        
+        if isinstance(apattern, str):
+            for item in self.data :
+                if regex_match(apattern, getattr(item, match_prop)) is not invert :
+                    matching_items.append(item)
+            log.debug("You're search returned {} rows : {}".format(
+                len(matching_items),
+                str(matching_items)[:100]+'...'))
+            #Apply AND reccursively
+            return Manager(alist=matching_items).search(*pattern, invert=invert, match_prop=match_prop)
         else:
-            raise ValueError('pattern must be str or None')
+            raise ValueError('pattern must be str')
+
+        
 
     ''' This code has been commented cause it adds unecessary complexity.
     But it's a good example of how we could perform() method to do anything
@@ -213,136 +245,109 @@ class Manager(collections.UserList, NitroObject):
         '''
     
     def clear(self):
+        """
+        Unselect all items.
+        """
         for item in self.data :
             item.selected=False
         #self.perform(Item.action_unselect, '.*') : 
 
     def refresh(self):
+        """
+        Execute refresh function on all items.
+        """
         self.perform(Item.action_refresh)
 
-    def perform(self, func, pattern=None, search=None, *args, **kwargs):
+    def perform(self, func, data=None, func_args=None, confirm=False, asynch=False, progress=False, message=None ):
         """
-        Wrapper arround executable and group of object.
-        Will execute the callable on specfied data (by `pattern`) and return a list of results
+        Wrapper arround executable and the data list of Manager object.
+        Will execute the callable the local manager data list.
 
             Params
             ======
             func : callable stateless function
-            if pattern stays None, will perform the action on the seleted rows,
-                if no rows are selected, wil perform on all rows
-            pattern can be :
-                - string regex pattern match using search
-                - a child Item object
-                - a Manager(list) of Item(dict)
-                - a list of lists of dict
-                    However, only list of dict can be passed if asynch=True
-                - Manager.SELECTED
-            search : dict passed as extra arguments to search method
-                i.e :
-                    {invert=False, match_func='json'} or 
-                    {time_range='CUSTOM', start_time='2019', end_time='2020'}
-            
-            confirm : will ask interactively confirmation (1)
-            asynch : execute the task asynchronously with NitroSession executor (1)
-            progress : to show progress bar with ETA (tqdm) (1)
-
-            (1): passed as *args, **kwargs
+                funs is going to be called like func(item, **func_args) on all items in data patern
+            if data stays None, will perform the action on all rows, else it will perfom the action on the data list
+            func_args : dict that will be passed by default to func in all calls
+            confirm : will ask interactively confirmation 
+            asynch : execute the task asynchronously with NitroSession executor 
+            progress : to show progress bar with ETA (tqdm) 
+            message : To show to the user
 
         Returns a list of returned results
         """
-        #if confirm : self.__ask(func, pattern)
-        
-        # If pattern is left None, apply the action to everything
-        if pattern is None :
-            return self.perform_static(func, 
-                list(self), *args, **kwargs)
 
-        #Pattern is a string
-        if isinstance(pattern, str) :
-
-            # Apply the action to selected items
-            if pattern == self.SELECTED :
-                return self.perform_static(func, 
-                    self.selected_items,
-                    *args, **kwargs)
-            else:
-                # Regex search when pattern is String.
-                # search method returns a list 
-                return self.perform_static(
-                    func,
-                    self.search(pattern, **(search if search is not None else {})),
-                    *args, **kwargs)
-
-        # Else, data is probably passed
-        return self.perform_static(func, pattern,
-                *args, **kwargs)
-
-    @staticmethod
-    def __ask(func, data):
-        """
-        Ask user inut to confirm the calling of `func` on `data`.
-        """
-        if not 'y' in input('Are you sure you want to do this '+str(func)+' on '+
-        ('\n'+str(data) if data is not None else 'all data')+'? [y/n]: '):
-            raise InterruptedError
-
-    @staticmethod
-    def perform_static(func, data, confirm=False, asynch=False, progress=False):
-        """
-        Static helper perform method
-            confirm : will ask interactively confirmation
-            asynch : execute the task asynchronously with
-                NitroSession asynchronous executor
-            progress : to show progress bar with ETA (tqdm)
-
-        Important data type note :
-            If data is a dict, Item or Manager : The callable will be execute on the obect itself.
-            If data is a list, The callable will be execute on list's items.
-        """
-        log.debug('Calling perform func='+str(func)+' with pattern :'+str(data)[:100]+'... confirm='+str(confirm)+' asynch='+str(asynch)+' progress='+str(progress))
+        log.debug('Calling perform func='+str(func)+
+            ' data='+str(data)[:100]+
+            ' func_args='+str(func_args)+
+            ' confirm='+str(confirm)+
+            ' asynch='+str(asynch)+
+            ' progress='+str(progress))
 
         if not callable(func) :
             raise ValueError('func must be callable')
 
-        if not isinstance(data, (list, dict, Manager, Item)):
-            raise ValueError('Datalist can only be : (list, dict, Manager, Item) not '+str(type(data)))
+        #Confirming with user if asked
+        if confirm : self._confirm_func(func, str(self))
 
-        if confirm : Manager.__ask(func, data)
-    
-        # The acual object last Recusion +0
-        if isinstance(data, (dict, Item, Manager)):
-            return(func(data))
-    
-        # A list of data is passed to perform()
-        #   this includes the possibility of being a Manager object
-        #   If iterative mode (default) : iterates
-        #   If asynch : use executor
-        if isinstance(data, (list, )):
-                returned=list()
+        #Setting the arguments on the function
+        func = functools.partial(func, **(func_args if func_args is not None else {}))
+        
+        #The data returned by function
+        returned=list()
 
-                if asynch == True :
+        #Usethe self contained data if not speficed otherwise
+        elements=self.data
+        if isinstance(data, list) and data is not None:
+            elements=data
+        else :
+            AttributeError('data must be a list')
 
-                    #Throws error if recursive asynchronous jobs are requested
-                    if any([not isinstance(data, (dict, Item, Manager)) for data in data]):
-                        raise ValueError('''recursive asynchronous jobs are not supported. 
-                        data list can only contains dict or Item obects if asynch=True''')
+        #Printing message if specified.
+        #The message will appear on loading bar if progress is True
+        if progress is True :
+            tqdm_args=dict(desc='Loading...', total=len(elements))
+        if message is not None:
+            log.info(message)
+            tqdm_args['desc']=message
 
-                    else:
-                        if progress==True:
-                            returned=list(tqdm.tqdm(NitroSession().executor.map(
-                                func, data), desc='Loading...', total=len(data)))
-                        else:
-                            returned=list(NitroSession().executor.map(
-                                func, data))
-                else :
-                    if progress==True:
-                        data=tqdm.tqdm(data, desc='Loading...', total=len(data))
+        
 
-                    for index_or_item in data:
-                        returned.append(func(index_or_item))
+        #Runs the callable on list on executor or by iterating
+        if asynch == True :
+            
+            if progress==True:
+                #Need to call tqdm to have better support for concurrent futures executor
+                # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
+                returned=list(tqdm.tqdm(self.nitro.executor.map(
+                    func, elements), **tqdm_args))
+            else:
+                log.info()
+                returned=list(self.nitro.executor.map(
+                    func, elements))
+        else :
 
-                return(returned)
+            if progress==True:
+                elements=tqdm.tqdm(elements, **tqdm_args)
+
+            for index_or_item in elements:
+                returned.append(func(index_or_item))
+
+        return(returned)
+
+    @staticmethod
+    def _confirm_func(func, elements):
+        """
+        Ask user inut to confirm the calling of `func` on `elements`.
+        """
+        if not 'y' in input('Are you sure you want to do this '+str(func)+' on '+
+        ('\n'+str(elements) if elements is not None else 'all elements')+'? [y/n]: '):
+            raise InterruptedError("The action was cancelled by the user.")
 
     @property
     def selected_items(self):
+        """
+        Selected items only.
+        Returns a Manager
+        """
         return(Manager(alist=[item for item in self.data if item.selected]))
