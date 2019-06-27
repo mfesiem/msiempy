@@ -109,9 +109,22 @@ class EventManager(QueryManager):
                 }]
             self.order=order #if a tuple is passed , will set the first order according to (direction, fields)
 
-        #TODO : find a soltuion not to use this stinky tric
+        #TODO : find a solution not to use this stinky tric
         #callign super().filters=filters #https://bugs.python.org/issue14965
         super(self.__class__, self.__class__).filters.__set__(self, filters)
+
+        #Type cast all items in the list "data" to events type objects
+        self.type_cast_items_to_events()
+
+    def type_cast_items_to_events(self):
+        """Type cast all items in the list "data" to events type objects"""
+        
+        events = []
+        for item in self.data:
+            event = Event(item)
+            events.append(event)
+
+        self.data = events
 
     @property
     def order(self):
@@ -406,7 +419,6 @@ class Event(Item):
     def add_note(self, note):
         """
         Add a new note in the note field.
-
-        This will use ipsAddAlertNote SIEM method
         """
-        NotImplementedError()
+        self.nitro.request("add_note_to_event", id=self.data["Alert.AlertID"], note=note)
+    

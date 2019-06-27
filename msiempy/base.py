@@ -173,7 +173,7 @@ class Manager(collections.UserList, NitroObject):
         self.table_colums=[]
 
     @property
-    def text(self)#, columns=None):
+    def text(self):#, columns=None):
         """
         Returns a nice string table made with prettytable.
         It's an expesive thing to do on big ammount of data

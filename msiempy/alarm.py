@@ -375,7 +375,7 @@ class Alarm(Item):
         ).load_data()
 
         match='|'.join([event['eventId'].split('|')[1] for event in self.data['events']])
-        events = events.search(match)
+        events = EventManager(alist=events.search(match))
         self.data['events']=events
         return events
 
