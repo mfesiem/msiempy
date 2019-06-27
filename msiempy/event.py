@@ -406,5 +406,7 @@ class Event(Item):
     def add_note(self, note):
         """
         Add a new note in the note field.
+
+        This will use ipsAddAlertNote SIEM method
         """
         NotImplementedError()
