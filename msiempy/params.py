@@ -246,7 +246,8 @@ PARAMS = {
 
     'logout' : ("""logout""", None),
     
-    'add_note_to_event' : ("""ipsAddAlertNote""", """{"id": %(id)s,"note": %(note)s}""")
-
+    'add_note_to_event' : ("""ipsAddAlertNote""", """{
+        "id": {"value": "%(id)s"},
+        "note": {"note": "%(note)s"}
+    }""")
 }
-
