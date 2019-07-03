@@ -622,11 +622,12 @@ class Event(Item):
         "LastTime",
         "NormID",
         "DSIDSigID",
-        "IPSID",
-        "AlertID",
+        "Alert.IPSID", #to remove if fix works
+        "Alert.AlertID", #to remove if fix works
+        "Alert.IPSIDAlertID",
         "UserIDSrc",
         "UserIDDst",
-        "CommandID"
+        "CommandID" #to remove because useless ?
         ]
 
     def __getitem__(self, key):
@@ -672,5 +673,9 @@ class Event(Item):
         self.nitro.request("add_note_to_event", id=self.data["Alert.AlertID"], note=note)
         print("Rule.NormID: " + self.data["Rule.NormID"])
         self.nitro.request("add_note_to_event", id=self.data["Rule.NormID"], note=note)
+        
+        print("But maybe this one works... Alert.IPSIDAlertID : " + str(self.data["Alert.IPSIDAlertID"]))
+        self.nitro.request("add_note_to_event", id=self.data["Alert.IPSIDAlertID"], note=note)
+        
         
     
