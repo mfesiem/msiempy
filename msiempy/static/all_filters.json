@@ -1,0 +1,1439 @@
+[
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "AppID"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "CommandID"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "DomainID"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "HostID"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "ObjectID"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "UserIDDst"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "UserIDSrc"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "URL"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Database_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Message_Text"
+    },
+    {
+        "types": [
+            "UINT32",
+            "UINT32"
+        ],
+        "name": "Response_Time"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Application_Protocol"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Object_Type"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Filename"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "From"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "To"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Cc"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Bcc"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Subject"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Method"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "User_Agent"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Cookie"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Referer"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "File_Operation"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "File_Operation_Succeeded"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Destination_Filename"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "User_Nickname"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Contact_Name"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Contact_Nickname"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Client_Version"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Job_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Language"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "SWF_URL"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "TC_URL"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "RTMP_Application"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Version"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Local_User_Name"
+    },
+    {
+        "types": [
+            "IPV4",
+            "UINT16",
+            "UINT16"
+        ],
+        "name": "NAT_Details"
+    },
+    {
+        "types": [
+            "SIGID"
+        ],
+        "name": "Network_Layer"
+    },
+    {
+        "types": [
+            "SIGID"
+        ],
+        "name": "Transport_Layer"
+    },
+    {
+        "types": [
+            "SIGID"
+        ],
+        "name": "Session_Layer"
+    },
+    {
+        "types": [
+            "SIGID"
+        ],
+        "name": "Application_Layer"
+    },
+    {
+        "types": [
+            "SIGID"
+        ],
+        "name": "HTTP_Layer"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "HTTP_Req_URL"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "HTTP_Req_Cookie"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "HTTP_Req_Referer"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "HTTP_Req_Host"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "HTTP_Req_Method"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "HTTP_User_Agent"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "DNS_Name"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "DNS_Type"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "DNS_Class"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Query_Response"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Authoritative_Answer"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "SNMP_Operation"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "SNMP_Item_Type"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "SNMP_Version"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "SNMP_Error_Code"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "NTP_Client_Mode"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "NTP_Server_Mode"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "NTP_Request"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "NTP_Opcode"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "SNMP_Item"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Interface"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Direction"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Sensor_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Sensor_UUID"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Sensor_Type"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Signature_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Threat_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Destination_Hostname"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Category"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Process_Name"
+    },
+    {
+        "types": [
+            "IP"
+        ],
+        "name": "Grid_Master_IP"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Response_Code"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "Device_Port"
+    },
+    {
+        "types": [
+            "IP"
+        ],
+        "name": "Device_IP"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "PID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Target_Context"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Source_Context"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Target_Class"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Policy_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Destination_Zone"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Source_Zone"
+    },
+    {
+        "types": [
+            "STRLIT"
+        ],
+        "name": "Queue_ID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Delivery_ID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Recipient_ID"
+    },
+    {
+        "types": [
+            "FLOAT"
+        ],
+        "name": "Spam_Score"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Mail_ID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "To_Address"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "From_Address"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Message_ID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Request_Type"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "SQL_Statement"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "External_EventID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Event_Class"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Description"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Access_Privileges"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Rule_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "App_Layer_Protocol"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Group_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Vulnerability_References"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Web_Domain"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Sub_Status"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Status"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Reputation_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "PCAP_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Search_Query"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Service_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "External_Device_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "External_Device_ID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "External_Device_Type"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Organizational_Unit"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Privileges"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Interface_Dest"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Datacenter_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Datacenter_ID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Virtual_Machine_ID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Virtual_Machine_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Detection_Method"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Target_Process_Name"
+    },
+    {
+        "types": [
+            "FLOAT"
+        ],
+        "name": "Analyzer_DAT_Version"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Forwarding_Status"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Reason"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Threat_Handled"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Threat_Category"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Device_Action"
+    },
+    {
+        "types": [
+            "GUID"
+        ],
+        "name": "Database_GUID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "SQL_Command"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Destination_Directory"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Directory"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Mailbox"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "Handheld_ID"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "Policy_ID"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "Server_ID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Registry_Value"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Registry_Key"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Caller_Process"
+    },
+    {
+        "types": [
+            "FLOAT"
+        ],
+        "name": "DAT_Version"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "Reputation"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "URL_Category"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Session_Status"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Destination_Logon_ID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Source_Logon_ID"
+    },
+    {
+        "types": [
+            "GUID"
+        ],
+        "name": "UUID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "External_SessionID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Management_Server"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Logon_Type"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Operating_System"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "File_Path"
+    },
+    {
+        "types": [
+            "GUID"
+        ],
+        "name": "Agent_GUID"
+    },
+    {
+        "types": [
+            "GUID"
+        ],
+        "name": "Instance_GUID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Privileged_User"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Facility"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Area"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "External_Hostname"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Incoming_ID"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "Handle_ID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Destination_Network"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Source_Network"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Malware_Insp_Result"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Malware_Insp_Action"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "Return_Code"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Database_ID"
+    },
+    {
+        "types": [
+            "GUID"
+        ],
+        "name": "File_Hash"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Mainframe_Job_Name"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "External_SubEventID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Destination_UserID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Source_UserID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Volume_ID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Step_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Step_Count"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "LPAR_DB2_Subsystem"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Logical_Unit_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Job_Type"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "FTP_Command"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "File_Type"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "DB2_Plan_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Catalog_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Access_Resource"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Table_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "External_DB2_Server"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "External_Application"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Creator_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Authentication_Type"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "New_Value"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Old_Value"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Security_ID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "VPN_Feature_Name"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Access_Mask"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Attribute_Type"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Engine_List"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Device_URL"
+    },
+    {
+        "types": [
+            "IPV4"
+        ],
+        "name": "Attacker_IP"
+    },
+    {
+        "types": [
+            "IPV4"
+        ],
+        "name": "Victim_IP"
+    },
+    {
+        "types": [
+            "INT64"
+        ],
+        "name": "Incident_ID"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "File_ID"
+    },
+    {
+        "types": [
+            "FLOAT"
+        ],
+        "name": "Reputation_Score"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "SHA1"
+    },
+    {
+        "types": [
+            "GUID"
+        ],
+        "name": "Parent_File_Hash"
+    },
+    {
+        "types": [
+            "GUID"
+        ],
+        "name": "Object_GUID"
+    },
+    {
+        "types": [
+            "IP"
+        ],
+        "name": "Reputation_Server_IP"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Hash_Type"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Hash"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Subcategory"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Wireless_SSID"
+    },
+    {
+        "types": [
+            "IP"
+        ],
+        "name": "DNS_Server_IP"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "CnC_Host"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Share_Name"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "Device_Confidence"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "Rule_Number"
+    },
+    {
+        "types": [
+            "SSTRING"
+        ],
+        "name": "SHA256"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "AppID"
+    },
+    {
+        "types": [
+            "STRING"
+        ],
+        "name": "CommandID"
+    },
+    {
+        "types": [
+            "SIGID"
+        ],
+        "name": "DSIDSigID"
+    },
+    {
+        "types": [
+            "UINT8"
+        ],
+        "name": "Action"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "ASNGeoDst"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "DSID"
+    },
+    {
+        "types": [
+            "UINT16"
+        ],
+        "name": "ZoneDst"
+    },
+    {
+        "types": [
+            "SIGID"
+        ],
+        "name": "SigID"
+    },
+    {
+        "types": [
+            "GUID"
+        ],
+        "name": "GUIDSrc"
+    },
+    {
+        "types": [
+            "UINT16"
+        ],
+        "name": "NDDevIDSrc"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "ID"
+    },
+    {
+        "types": [
+            "UINT8"
+        ],
+        "name": "Protocol"
+    },
+    {
+        "types": [
+            "UINT32"
+        ],
+        "name": "NormID"
+    },
+    {
+        "types": [
+            "UINT16"
+        ],
+        "name": "ZoneSrc"
+    },
+    {
+        "types": [
+            "UINT32"
+        ],
+        "name": "FirstTime"
+    },
+    {
+        "types": [
+            "UINT16"
+        ],
+        "name": "SrcPort"
+    },
+    {
+        "types": [
+            "FLOAT"
+        ],
+        "name": "AvgSeverity"
+    },
+    {
+        "types": [
+            "UINT16"
+        ],
+        "name": "DstPort"
+    },
+    {
+        "types": [
+            "IP"
+        ],
+        "name": "SrcIP"
+    },
+    {
+        "types": [
+            "GUID"
+        ],
+        "name": "GUIDDst"
+    },
+    {
+        "types": [
+            "IP"
+        ],
+        "name": "DstIP"
+    },
+    {
+        "types": [
+            "UINT16"
+        ],
+        "name": "NDDevIDDst"
+    },
+    {
+        "types": [
+            "MAC_ADDRESS"
+        ],
+        "name": "SrcMac"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "SessionID"
+    },
+    {
+        "types": [
+            "UINT64"
+        ],
+        "name": "ASNGeoSrc"
+    },
+    {
+        "types": [
+            "MAC_ADDRESS"
+        ],
+        "name": "DstMac"
+    },
+    {
+        "types": [
+            "UINT32"
+        ],
+        "name": "LastTime"
+    }
+]
