@@ -1,0 +1,11 @@
+dist: xenial   # required for Python >= 3.7
+language: python
+python:
+  - "3.7"
+install:
+  - pip install -r requirements.txt
+  - ./setup.py install
+script: 
+  #We'll need to find a way to provide a server for the authenticated tests
+  #- python -m unittest discover --verbose --start-directory tests
+  - python -m unittest tests.local.test_config
