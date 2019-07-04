@@ -147,30 +147,36 @@ class Manager(collections.UserList, NitroObject):
                 self, [Item(adict=item) for item in alist if isinstance(item, (dict, Item))]
                 )
         else :
-            raise ValueError('Manager can only be initiated based on a list')
-        
-        #Unique set of keys for all dict
-        #If new fields are added it won't show on text repr. Only json.
-        
-        self.keys=set()
+            raise ValueError('Manager can only be initiated based on a list')\
 
-        #Normalizing the list of dict
-        #Finding the unique set
-        for item in self.data :
-            if item is not None :
-                self.keys=self.keys.union(dict(item).keys())
-            else :
-                log.warning('Having trouble with listing dicts')
-        #This means that all dict have the same set of keys
-        #Creating keys in dicts
+        #Setting the columns to show in the prettytable string
+        self.table_colums=[]
+
+    def _norm_dicts(self):
+        """
+        Internal method
+        all dict should have the same set of keys
+        Creating keys in dicts
+        """
         for item in self.data :
             if isinstance(item, NitroObject):
                 for key in self.keys :
                     if key not in item :
                         item[key]=None
 
-        #Setting the columns to show in the prettytable string
-        self.table_colums=[]
+    @property
+    def keys(self):
+        #Unique set of keys for all dict
+        #If new fields are added it won't show on text repr. Only json.
+        keys=set()
+        #Normalizing the list of dict
+        #Finding the unique set
+        for item in self.data :
+            if item is not None :
+                keys=keys.union(dict(item).keys())
+            else :
+                log.warning('Having trouble with listing dicts')
+        return keys
 
     @property
     def text(self):#, columns=None):
@@ -181,6 +187,7 @@ class Manager(collections.UserList, NitroObject):
         table = prettytable.PrettyTable()
         fields=sorted(self.keys)
         table.field_names=fields
+        self._norm_dicts()
         [table.add_row([str(item[field]) for field in fields]) for item in self.data]
         return table.get_string()#fields=self.table_colums)
 
