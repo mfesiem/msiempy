@@ -1,4 +1,5 @@
 import time
+import datetime
 import logging
 log = logging.getLogger('msiempy')
 
@@ -307,6 +308,7 @@ class EventManager(QueryManager):
             called by _load_data
         by default, numRows correspond to limit
         """
+        
         if not numRows :
             numRows=self.limit
                 
@@ -317,7 +319,12 @@ class EventManager(QueryManager):
 
         #Calls a utils function to parse the [columns][rows]
         #   to format into list of dict
+        #log.debug("Parsing colums : "+str(result['columns']))
+        #log.debug("Parsing rows : "+str(result['rows']))
+        if len(result['columns']) != len(set([column['name'] for column in result['columns']])) :
+            log.error("You requested duplicated fields, the parsed fields/values results will be missmatched !")
         events=parse_query_result(result['columns'], result['rows'])
+        #log.debug("Events parsed : "+str(events))
         return events
           
 class Event(Item):
@@ -328,7 +335,7 @@ class Event(Item):
         
     Default event field keys :
         "Rule.msg",
-        "Alert.SrcPort"",
+        "Alert.SrcPort",
         "Alert.DstPort", 
         "Alert.SrcIP", 
         "Alert.DstIP", 
@@ -337,12 +344,9 @@ class Event(Item):
         "Alert.LastTime",
         "Rule.NormID",
         "Alert.DSIDSigID",
-        "Alert.IPSID", #to remove if fix works
-        "Alert.AlertID", #to remove if fix works
         "Alert.IPSIDAlertID",
         "UserIDSrc",
-        "UserIDDst",
-        "CommandID" #to remove because useless ?
+        "UserIDDst"
         
     See msiempy/static JSON files to browse complete list of fields and filters
     """
@@ -386,23 +390,19 @@ class Event(Item):
     """Relatively common event fields that could be useful to have.
     """
     DEFAULTS_EVENT_FIELDS=[
-       
         "Rule.msg",
-        "Alert.SrcPort"",
+        "Alert.SrcPort",
         "Alert.DstPort", 
         "Alert.SrcIP", 
         "Alert.DstIP", 
-        "SrcMac",
+        "Alert.SrcMac",
         "Alert.DstMac", 
         "Alert.LastTime",
         "Rule.NormID",
         "Alert.DSIDSigID",
-        "Alert.IPSID", #to remove if fix works
-        "Alert.AlertID", #to remove if fix works
-        "Alert.IPSIDAlertID",
-        "UserIDSrc",
-        "UserIDDst",
-        "CommandID" #to remove because useless ?
+        "Alert.IPSIDAlertID"
+        #"UserIDSrc",
+        #"UserIDDst"
         ]
 
     def __getitem__(self, key):
@@ -411,6 +411,8 @@ class Event(Item):
             if no '.' is present in the key
             Not working properly i think
             #TODO try with collections.UserDict.__getitem__(self, key)
+        """
+        return super().__getitem__(key)
         """
         if '.' not in key :
             for table in self.FIELDS_TABLES :
@@ -426,6 +428,7 @@ class Event(Item):
             else:
                 log.error('The SIEM dict keys are not always the same are the requested fields. check .keys()')
                 raise
+                """
 
     def clear_notes(self):
         """
@@ -438,19 +441,7 @@ class Event(Item):
         """
         Add a new note in the note field.
         """
-        #We've tried all of these parameters and none of them works...
-        print("We've tried all of these parameters and none of them works...")
-        print("Alert.DSIDSigID: " + self.data["Alert.DSIDSigID"])
-        self.nitro.request("add_note_to_event", id=self.data["Alert.DSIDSigID"], note=note)
-        print("Alert.IPSID: " + self.data["Alert.IPSID"])
-        self.nitro.request("add_note_to_event", id=self.data["Alert.IPSID"], note=note)
-        print("Alert.AlertID: " + self.data["Alert.AlertID"])
-        self.nitro.request("add_note_to_event", id=self.data["Alert.AlertID"], note=note)
-        print("Rule.NormID: " + self.data["Rule.NormID"])
-        self.nitro.request("add_note_to_event", id=self.data["Rule.NormID"], note=note)
-        
-        print("But maybe this one works... Alert.IPSIDAlertID : " + str(self.data["Alert.IPSIDAlertID"]))
-        self.nitro.request("add_note_to_event", id=self.data["Alert.IPSIDAlertID"], note=note)
+        self.nitro.request("add_note_to_event", id=self.data["Alert.IPSIDAlertID"], note="{} : {}".format(str(datetime.datetime.now()),note))
         
         
     
