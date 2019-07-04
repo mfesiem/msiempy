@@ -4,6 +4,13 @@ import unittest
 
 class T(unittest.TestCase):
 
+
+    def test_print(self):
+        alarms = msiempy.alarm.AlarmManager(time_range='LAST_24_HOURS').load_data()
+        
+        #print(alarms.json)
+        print(alarms)
+        print(alarms.keys)
    
     def test_query(self):
         for alarm in msiempy.alarm.AlarmManager(time_range='LAST_HOUR', status_filter='unacknowledged').load_data():
@@ -24,7 +31,6 @@ class T(unittest.TestCase):
             self.assertRegex(str(alarm['severity']), '80|85|90|95|100', 'Filtering alarms is not working')
             self.assertRegex(str(alarm['events'][0]['ruleMessage']), 'HTTP', 'Filtering alarms is not working')
             self.assertRegex(str(alarm['events'][0]['destIp']), '10.165', 'Filtering alarms is not working')
-
 
     def test_get_event_details(self):
 

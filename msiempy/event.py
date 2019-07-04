@@ -117,6 +117,10 @@ class EventManager(QueryManager):
         #Type cast all items in the list "data" to events type objects
         self.type_cast_items_to_events()
 
+    @property
+    def table_colums(self):
+        return Event.DEFAULTS_EVENT_FIELDS
+
     def type_cast_items_to_events(self):
         """Type cast all items in the list "data" to events type objects"""
         

@@ -147,10 +147,11 @@ class Manager(collections.UserList, NitroObject):
                 self, [Item(adict=item) for item in alist if isinstance(item, (dict, Item))]
                 )
         else :
-            raise ValueError('Manager can only be initiated based on a list')\
+            raise ValueError('Manager can only be initiated based on a list')
 
-        #Setting the columns to show in the prettytable string
-        self.table_colums=[]
+    @property
+    def table_colums(self):            
+        return []
 
     def _norm_dicts(self):
         """
@@ -189,7 +190,19 @@ class Manager(collections.UserList, NitroObject):
         table.field_names=fields
         self._norm_dicts()
         [table.add_row([str(item[field]) for field in fields]) for item in self.data]
-        return table.get_string()#fields=self.table_colums)
+        if len(self.table_colums) >0 :
+            try :
+                text =table.get_string(fields=self.table_colums)
+            except Exception as err :
+                if "Invalid field name" in str(err):
+                    text=table.get_string()
+                    log.warning("Inconsistent manager state, some fields aren't present {}".format(str(err)))
+                else :
+                    raise
+        else: 
+            text=table.get_string()
+        return text
+        
 
     @property
     def json(self):

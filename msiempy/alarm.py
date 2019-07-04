@@ -54,7 +54,9 @@ class AlarmManager(QueryManager):
         #Casting all data to Alarms objects, better way to do it ?
         collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, Item))])
 
-        self.table_colums=['alarmName', 'triggeredDate', 'events']
+    @property
+    def table_colums(self):
+        return ['id','alarmName', 'triggeredDate', 'events']
 
     @property
     def filters(self):
@@ -181,6 +183,7 @@ class AlarmManager(QueryManager):
         Returns a AlarmsManager
     
         """
+
         alarms = AlarmManager(alist=[a for a in alarms if self._alarm_match(a)])
 
         if not alarmonly :
@@ -340,10 +343,12 @@ class Alarm(Item):
 
     def load_details(self):
         """
-        Recreate the alarm with detailled data loaded from the SIEM.
+        Update the alarm with detailled data loaded from the SIEM.
         """
-        details = self.nitro.request('get_alarm_details', id=self.data['id'])
-        super().__init__(adict=details)
+        the_id = self.data['id']
+        details = self.nitro.request('get_alarm_details', id=the_id)
+        self.data.update(details)
+        self.data['id']=the_id
         return self
 
     def refresh(self):
