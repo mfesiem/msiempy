@@ -47,13 +47,6 @@ class T(unittest.TestCase):
     def test_item(self):
         pass
 
-<<<<<<< HEAD
-        print("PERFORM")
-        manager.perform(repr, '2042', confirm=False, asynch=False, search=dict(invert=True))
-
-        print("REFRESH")
-        manager.refresh()
-=======
     def test_manager(self):
         sublist = T.manager.search('CLIM_RANK.*0','Eco_Name.*north')#.search('County.*GLENN') #len = 52
         
@@ -67,7 +60,6 @@ class T(unittest.TestCase):
 
         mycouty=sublist.search('County.*GLENN')
         self.assertEqual(len(mycouty), 52, 'Search method issue')
->>>>>>> comment
 
         mycouty.perform(test_add_money_money, progress=True, asynch=True, func_args=dict(how_much=500))
         for item in mycouty :
