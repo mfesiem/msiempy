@@ -244,8 +244,10 @@ PARAMS = {
     
     'time_zones' : ("""userGetTimeZones""", None),
 
-    'logout' : ("""logout""", None)
+    'logout' : ("""logout""", None),
     
-
+    'add_note_to_event' : ("""ipsAddAlertNote""", """{
+        "id": {"value": "%(id)s"},
+        "note": {"note": "%(note)s"}
+    }""")
 }
-

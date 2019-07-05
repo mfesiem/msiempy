@@ -1,4 +1,5 @@
 import time
+import datetime
 import logging
 log = logging.getLogger('msiempy')
 
@@ -109,9 +110,26 @@ class EventManager(QueryManager):
                 }]
             self.order=order #if a tuple is passed , will set the first order according to (direction, fields)
 
-        #TODO : find a soltuion not to use this stinky tric
+        #TODO : find a solution not to use this stinky tric
         #callign super().filters=filters #https://bugs.python.org/issue14965
         super(self.__class__, self.__class__).filters.__set__(self, filters)
+
+        #Type cast all items in the list "data" to events type objects
+        self.type_cast_items_to_events()
+
+    @property
+    def table_colums(self):
+        return Event.DEFAULTS_EVENT_FIELDS
+
+    def type_cast_items_to_events(self):
+        """Type cast all items in the list "data" to events type objects"""
+        
+        events = []
+        for item in self.data:
+            event = Event(item)
+            events.append(event)
+
+        self.data = events
 
     @property
     def order(self):
@@ -294,6 +312,7 @@ class EventManager(QueryManager):
             called by _load_data
         by default, numRows correspond to limit
         """
+        
         if not numRows :
             numRows=self.limit
                 
@@ -304,7 +323,12 @@ class EventManager(QueryManager):
 
         #Calls a utils function to parse the [columns][rows]
         #   to format into list of dict
+        #log.debug("Parsing colums : "+str(result['columns']))
+        #log.debug("Parsing rows : "+str(result['rows']))
+        if len(result['columns']) != len(set([column['name'] for column in result['columns']])) :
+            log.error("You requested duplicated fields, the parsed fields/values results will be missmatched !")
         events=parse_query_result(result['columns'], result['rows'])
+        #log.debug("Events parsed : "+str(events))
         return events
           
 class Event(Item):
@@ -312,11 +336,25 @@ class Event(Item):
     Event.
     You can see all the requested fields and have some 
         interaction - note only - with the events
-    """
-
-    """
         
-        """
+    Default event field keys :
+        "Rule.msg",
+        "Alert.SrcPort",
+        "Alert.DstPort", 
+        "Alert.SrcIP", 
+        "Alert.DstIP", 
+        "SrcMac",
+        "Alert.DstMac", 
+        "Alert.LastTime",
+        "Rule.NormID",
+        "Alert.DSIDSigID",
+        "Alert.IPSIDAlertID",
+        "UserIDSrc",
+        "UserIDDst"
+        
+    See msiempy/static JSON files to browse complete list of fields and filters
+    """
+   
     FIELDS_TABLES=["ADGroup",
         "Action",
         "Alert",
@@ -356,22 +394,19 @@ class Event(Item):
     """Relatively common event fields that could be useful to have.
     """
     DEFAULTS_EVENT_FIELDS=[
-       
         "Rule.msg",
-        "SrcPort",
-        "DstPort", 
-        "SrcIP", 
-        "DstIP", 
-        "SrcMac",
-        "DstMac", 
-        "LastTime",
-        "NormID",
-        "DSIDSigID",
-        "IPSID",
-        "AlertID",
-        "UserIDSrc",
-        "UserIDDst",
-        "CommandID"
+        "Alert.SrcPort",
+        "Alert.DstPort", 
+        "Alert.SrcIP", 
+        "Alert.DstIP", 
+        "Alert.SrcMac",
+        "Alert.DstMac", 
+        "Alert.LastTime",
+        "Rule.NormID",
+        "Alert.DSIDSigID",
+        "Alert.IPSIDAlertID"
+        #"UserIDSrc",
+        #"UserIDDst"
         ]
 
     def __getitem__(self, key):
@@ -380,6 +415,8 @@ class Event(Item):
             if no '.' is present in the key
             Not working properly i think
             #TODO try with collections.UserDict.__getitem__(self, key)
+        """
+        return super().__getitem__(key)
         """
         if '.' not in key :
             for table in self.FIELDS_TABLES :
@@ -395,6 +432,7 @@ class Event(Item):
             else:
                 log.error('The SIEM dict keys are not always the same are the requested fields. check .keys()')
                 raise
+                """
 
     def clear_notes(self):
         """
@@ -407,4 +445,7 @@ class Event(Item):
         """
         Add a new note in the note field.
         """
-        NotImplementedError()
+        self.nitro.request("add_note_to_event", id=self.data["Alert.IPSIDAlertID"], note="{} : {}".format(str(datetime.datetime.now()),note))
+        
+        
+    

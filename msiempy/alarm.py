@@ -55,6 +55,10 @@ class AlarmManager(QueryManager):
         collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, Item))])
 
     @property
+    def table_colums(self):
+        return ['id','alarmName', 'triggeredDate', 'events']
+
+    @property
     def filters(self):
         """
         Returns the addition of alarm related filters and event related filters.
@@ -131,6 +135,16 @@ class AlarmManager(QueryManager):
         """
         return AlarmManager(alist=super().load_data())
 
+    def load_events(self):
+        """
+        Returns a new Manager with full detailled events fields
+        """
+        self.perform(
+            Alarm.load_events_details,
+            asynch=True,
+            progress=True)
+        return AlarmManager(alist=self)
+
     def _load_data(self):
         """
         Concrete helper method that loads the data.
@@ -169,11 +183,12 @@ class AlarmManager(QueryManager):
         Returns a AlarmsManager
     
         """
+
         alarms = AlarmManager(alist=[a for a in alarms if self._alarm_match(a)])
 
         if not alarmonly :
             log.info("Getting alarms infos... Please be patient.")
-            detailed = self.perform(Alarm.action_load_details, list(alarms), asynch=True, progress=True)
+            detailed = self.perform(Alarm.load_details, list(alarms), asynch=True, progress=True)
             alarms = AlarmManager(alist=[a for a in detailed if self._event_match(a)])
 
         log.info(str(len(alarms)) + " alarms matching your filter(s)")
@@ -214,6 +229,39 @@ class AlarmManager(QueryManager):
 class Alarm(Item):
     """
     Alarm
+
+        id Description: The ID of the triggered alarm
+        summary  Description: The summary of the triggered alarm
+        assignee Description: The assignee for this triggered alarm
+        severity Description: The severity for this triggered alarm
+        triggeredDate Description: The date this alarm was triggered
+        acknowledgedDate Description: The date this triggered alarm was acknowledged
+        acknowledgedUsername Description: The user that acknowledged this triggered alarm
+        alarmName Description: The name of the alarm that was triggered
+        conditionType Description: The condition type of the alarm
+        filters Description: The filters for this user
+        queryId Description: The queryId for this user
+        alretRateMin Description: The alretRateMin for this user
+        alertRateCount Description: The alertRateCount for this user
+        percentAbove Description: The percentAbove for this user
+        percentBelow Description: The percentBelow for this user
+        offsetMinutes Description: The offsetMinutes for this user
+        timeFilter Description: The timeFilter for this user
+        maximumConditionTriggerFrequency Description: The maximumConditionTriggerFrequency for this user
+        useWatchlist Description: The useWatchlist for this user
+        matchField Description: The matchField for this user
+        matchValue  Description: The matchValue for this user
+        healthMonStatus Description: The healthMonStatus for this user
+        assigneeId Description: The assigneeId for this user
+        escalatedDate Description: The escalatedDate for this user
+        caseId Description: The caseId for this user
+        caseName Description: The caseName for this user
+        iocName Description: The iocName for this user
+        iocId Description: The iocId for this user
+        description Description: The description for this user
+        actions Description: The actions for this user
+        events Description: The events for this user
+
     """
     """@property
     def status(self):
@@ -295,17 +343,13 @@ class Alarm(Item):
 
     def load_details(self):
         """
-        Recreate the alarm with detailled data loaded from the SIEM.
+        Update the alarm with detailled data loaded from the SIEM.
         """
-        details = self.nitro.request('get_alarm_details', id=self.data['id'])
-        super().__init__(adict=details)
+        the_id = self.data['id']
+        details = self.nitro.request('get_alarm_details', id=the_id)
+        self.data.update(details)
+        self.data['id']=the_id
         return self
-
-    def create_case(self):
-        """
-    
-        """
-        raise NotImplementedError()
 
     def refresh(self):
         """
@@ -313,7 +357,7 @@ class Alarm(Item):
         """
         super().refresh()
 
-    def load_events_details(self):
+    def load_events_details(self, extra_fields=None):
         """
         This is clearly a workarround to retreive the genuine Event object from an Alarm.
         @TODO find a better way to do it.
@@ -331,55 +375,14 @@ class Alarm(Item):
         events = EventManager(
             start_time=convert_to_time_obj(events[0]['lastTime'])-datetime.timedelta(seconds=2),
             end_time=convert_to_time_obj(events[-1]['lastTime'])+datetime.timedelta(seconds=2),
-            filters=filters
+            filters=filters,
+            fields=extra_fields
         ).load_data()
 
         match='|'.join([event['eventId'].split('|')[1] for event in self.data['events']])
-        events = events.search(match)
+        events = EventManager(alist=events.search(match))
         self.data['events']=events
         return events
-
-    @staticmethod
-    def action_delete(alarm):
-        """
-    
-        """
-        return alarm.delete()
-
-    @staticmethod
-    def action_acknowloedge(alarm):
-        """
-    
-        """
-        return alarm.acknowledge()
-
-    @staticmethod
-    def action_unacknowloedge(alarm):
-        """
-    
-        """
-        return alarm.unacknowledge()
-
-    @staticmethod
-    def action_create_case(alarm, case):
-        """
-    
-        """
-        return alarm.create_case(case)
-
-    @staticmethod
-    def action_load_details(alarm):
-        """
-    
-        """
-        return alarm.load_details()
-
-    @staticmethod
-    def action_load_events_details(alarm):
-        """
-    
-        """
-        return alarm.load_events_details()
 
     """
     def _hasID(self):
