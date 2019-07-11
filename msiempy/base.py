@@ -85,10 +85,16 @@ class Item(collections.UserDict, NitroObject):
     Exemple : Event, Alarm, etc...
     Inherits from dict
     """
-    def __init__(self, adict=None):
+    def __init__(self, adict=None, id=None):
         NitroObject.__init__(self)
         collections.UserDict.__init__(self, adict)
         
+        if id != None :
+            self.data=self.data_from_id(id)
+
+        if isinstance(adict, dict):
+            self.data=adict
+
         for key in self.data :
             if isinstance(self.data[key], list):
                 self.data[key]=Manager(alist=self.data[key])
@@ -104,7 +110,11 @@ class Item(collections.UserDict, NitroObject):
         return(', '.join([str(val) for val in self.values()]))
 
     def refresh(self):
-        log.debug('Refreshing item :'+str(self))
+        log.debug('NOT Refreshing item :'+str(self)+' '+str(NotImplementedError()))
+
+    @abc.abstractmethod
+    def data_from_id(self, id):
+        pass
 
     '''This code has been commented cause it adds unecessary complexity.
     But it's a good example of how we could perform() method to do anything
@@ -390,7 +400,7 @@ class Manager(collections.UserList, NitroObject):
                 max_workers=workers ).map(
                     func, elements), **tqdm_args))
             else:
-                log.info()
+                #log.info()
                 returned=list(concurrent.futures.ThreadPoolExecutor(
                 max_workers=workers ).map(
                     func, elements))
