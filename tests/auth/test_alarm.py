@@ -32,12 +32,12 @@ class T(unittest.TestCase):
 
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_YEAR',
-            filters=[('alarmName', 'High Severity Event'),
+            filters=[
                 ('severity', [80,85,90,95,100]),
                 ('ruleMessage', 'HTTP'),
-                ('destIp', '10.165')],
+                ('destIp', ['10','22','159'])],
             max_query_depth=0,
-            page_size=10
+            page_size=100
             ).load_data()
         self.assertGreater(len(alarms),0)
 
@@ -45,7 +45,7 @@ class T(unittest.TestCase):
             self.assertRegex(alarm['alarmName'], 'High Severity Event', 'Filtering alarms is not working')
             self.assertRegex(str(alarm['severity']), '80|85|90|95|100', 'Filtering alarms is not working')
             self.assertRegex(str(alarm['events'][0]['ruleMessage']), 'HTTP', 'Filtering alarms is not working')
-            self.assertRegex(str(alarm['events'][0]['destIp']), '10.165', 'Filtering alarms is not working')
+            self.assertRegex(str(alarm['events'][0]['destIp']), '10', 'Filtering alarms is not working')
 
     def test_get_event_details(self):
 

@@ -38,7 +38,7 @@ class T(unittest.TestCase):
             limit=5,
             max_query_depth=1
         )
-        events.load_data(delta='24h', slots=6)
+        events.load_data(delta='12h', slots=2)
 
         for e in events :
              self.assertNotEqual(e['Alert.SrcIP'],'')
@@ -48,7 +48,7 @@ class T(unittest.TestCase):
         self.assertGreater(len(events),0)
         print('EVENTS KEYS\n'+str(events.keys))
         print('EVENTS TEXT\n'+str(events))
-        print('EVENT JSON\n'+events.json)
+        #print('EVENT JSON\n'+events.json)
 
     def test_add_note(self):
         #to refactor

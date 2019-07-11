@@ -205,7 +205,7 @@ class Manager(collections.UserList, NitroObject):
                 if isinstance(item, (dict, Item)):
                     table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=120))
                         if not isinstance(item[field], Manager)
-                        else item[field].get_text(compact=True) for field in fields])
+                        else item[field].get_text() for field in fields])
                 else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
 
             if len(self.table_colums) >0 :
@@ -371,11 +371,11 @@ class Manager(collections.UserList, NitroObject):
             AttributeError('data must be a list')
 
         #Printing message if specified.
+        tqdm_args=dict()
         #The message will appear on loading bar if progress is True
         if progress is True :
             tqdm_args=dict(desc='Loading...', total=len(elements))
             if message is not None:
-                log.info(message)
                 tqdm_args['desc']=message
 
         

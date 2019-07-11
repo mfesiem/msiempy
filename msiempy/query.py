@@ -44,7 +44,7 @@ class QueryManager(Manager):
     """
 
     def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
-        load_async=True, split_strategy='delta', requests_size=500, max_query_depth=1,
+        load_async=True, requests_size=500, max_query_depth=0,
             __parent__=None, *arg, **kwargs):
         """
         Abstract base class that handles the time ranges operations, loading data from the SIEM.
@@ -60,8 +60,7 @@ class QueryManager(Manager):
                 Meaning, if requests_size=500, slots=5 and max_query_depth=3, then the maximum capacity of 
                 the list is (500*5)*(500*5)*(500*5) = 15625000000
             load_async : Load asynchonously the sub-queries. Defaulted to True.
-            split_strategy : Sub-queries can be genrated by splitting the time range in a fixed number of slots (`slots`)
-                or by dividing the time range in equals duration slots (`delta`).
+            
            
         """
 
@@ -95,8 +94,14 @@ class QueryManager(Manager):
         self.requests_size=requests_size
         self.__init_max_query_depth__=max_query_depth
         self.query_depth_ttl=max_query_depth
-        self.split_strategy=split_strategy
 
+
+    @property
+    def __root_parent__(self):
+        if self.__parent__==None:
+            return self
+        else :
+            return self.__parent__.__root_parent__
 
     @property
     def time_range(self):
@@ -299,7 +304,6 @@ class QueryManager(Manager):
                     sub_query.end_time=time[1].isoformat()
                     sub_query.load_async=False
                     sub_query.query_depth_ttl=self.query_depth_ttl-1
-                    sub_query.split_strategy='slots'
                     #sub_query.requests_size=requests_size
                     sub_queries.append(sub_query)
 
@@ -307,6 +311,7 @@ class QueryManager(Manager):
                 results = self.perform(QueryManager.load_data, sub_queries, 
                     asynch=False if not self.load_async else (self.__parent__==None), progress=self.__parent__==None, 
                     message='Loading data from '+self.start_time+' to '+self.end_time+'. In {} slots'.format(len(times)),
+                    func_args=dict(slots=slots),
                         #IGONORING THE CONFIG ### : self.nitro.config.slots)
                     workers=workers)
 
@@ -314,9 +319,9 @@ class QueryManager(Manager):
                 items=[item for sublist in results for item in sublist]
                 
             else :
-                if self.__parent__ == None or not self.__parent__.not_completed :
-                    log.warning("""The query couldn't be fully completed. Current capacity : {}""".format(len(items)))
-                    if self.__parent__ != None : self.__parent__.not_completed=True
+                if not self.__root_parent__.not_completed :
+                    log.warning("The query won't fully complete. Try to divide in more slots or increase the requests_size")
+                    self.__root_parent__.not_completed=True
 
         self.data=items
         return(Manager(alist=items)) #return self ?
