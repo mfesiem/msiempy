@@ -5,7 +5,7 @@ log = logging.getLogger('msiempy')
 
 from .base import Item, Manager
 from .query import QueryManager
-from .event import EventManager
+from .event import EventManager, Event
 from .utils import regex_match, convert_to_time_obj
 
 class AlarmManager(QueryManager):
@@ -137,17 +137,19 @@ class AlarmManager(QueryManager):
         """
         return AlarmManager(alist=super().load_data(**kwargs))
 
-    def load_events(self):
+    def load_events(self, workers=20, extra_fields=None, by_id=False):
         """
         Returns a new Manager with full detailled events fields
         """
         self.perform(
-            Alarm.load_events_details,
+            Alarm.load_events,
             asynch=True,
-            progress=True)
+            workers=workers,
+            progress=True,
+            func_args=dict(extra_fields=extra_fields, by_id=by_id))
         return AlarmManager(alist=self)
 
-    def _load_data(self):
+    def _load_data(self, workers):
         """
         Concrete helper method that loads the data.
             -> Fetch the complete list of alarms -> Filter
@@ -175,9 +177,9 @@ class AlarmManager(QueryManager):
                 page_number=self.page_number
                 )
         #alarms = AlarmManager(alist=alarms)
-        return (( self._filter(alarms), len(alarms)<self.page_size ))
+        return (( self._filter(alarms, workers), len(alarms)<self.page_size ))
 
-    def _filter(self, alarms, alarmonly=False):
+    def _filter(self, alarms, workers, alarmonly=False):
         """
         Helper method that filters the alarms depending on alarm and event filters.
             -> Filter dependinf on alarms related filters -> load events details
@@ -190,7 +192,7 @@ class AlarmManager(QueryManager):
 
         if not alarmonly :
             log.info("Getting alarms infos... Please be patient.")
-            detailed = self.perform(Alarm.load_details, list(alarms), asynch=True, progress=True)
+            detailed = self.perform(Alarm.load_details, list(alarms), asynch=True, progress=True, workers=workers)
             alarms = AlarmManager(alist=[a for a in detailed if self._event_match(a)])
 
         log.info(str(len(alarms)) + " alarms matching your filter(s)")
@@ -348,8 +350,7 @@ class Alarm(Item):
         Update the alarm with detailled data loaded from the SIEM.
         """
         the_id = self.data['id']
-        details = self.nitro.request('get_alarm_details', id=the_id)
-        self.data.update(details)
+        self.data.update(self.data_from_id(the_id))
         self.data['id']=the_id
         return self
 
@@ -359,34 +360,49 @@ class Alarm(Item):
         """
         super().refresh()
 
-    def load_events_details(self, extra_fields=None):
+    def load_events(self, extra_fields=None, by_id=False):
         """
         This is clearly a workarround to retreive the genuine Event object from an Alarm.
         @TODO find a better way to do it.
         """
         events=self.data['events']
         filters = list()
+        
+        if by_id==True :
+            for event in events:
+                try :
+                    event.data=Event(id=event['Alert.IPSIDAlertID'])
+                except TypeError as err:
+                    #TODO Make it work !
+                    log.warning("The event could not be loaded from the id : {}".format(event))
+                    
 
-        for event in events:
-            if len(event['sourceIp']) >= 7 :
-                filters.append(('SrcIP', [str(event['sourceIp'])]))
-            if len(event['destIp']) >= 7 :
-                filters.append(('DstIP', [str(event['destIp'])]))
+        elif by_id==False:
 
-        log.debug("Filters : "+str(filters))
-        events = EventManager(
-            start_time=convert_to_time_obj(events[0]['lastTime'])-datetime.timedelta(seconds=1),
-            end_time=convert_to_time_obj(events[-1]['lastTime'])+datetime.timedelta(seconds=1),
-            filters=filters,
-            fields=extra_fields,
-            max_query_depth=0,
-            limit=100
-        ).load_data()
+            for event in events:
+                if len(event['sourceIp']) >= 7 :
+                    filters.append(('SrcIP', [str(event['sourceIp'])]))
+                if len(event['destIp']) >= 7 :
+                    filters.append(('DstIP', [str(event['destIp'])]))
 
-        match='|'.join([event['eventId'].split('|')[1] for event in self.data['events']])
-        events = EventManager(alist=events.search(match))
-        self.data['events']=events
+            log.debug("Filters : "+str(filters))
+            events = EventManager(
+                start_time=convert_to_time_obj(events[0]['lastTime'])-datetime.timedelta(seconds=1),
+                end_time=convert_to_time_obj(events[-1]['lastTime'])+datetime.timedelta(seconds=1),
+                filters=filters,
+                fields=extra_fields,
+                max_query_depth=0,
+                limit=100
+            ).load_data()
+
+            match='|'.join([event['eventId'].split('|')[1] for event in self.data['events']])
+            events = EventManager(alist=events.search(match))
+            self.data['events']=events
+
         return events
+
+    def data_from_id(self, id):
+        return self.nitro.request('get_alarm_details', id=str(id))
 
     """
     def _hasID(self):

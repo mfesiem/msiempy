@@ -12,7 +12,7 @@ class WatchlistManager(Manager):
         #Casting all data to Watchlist objects, better way to do it ?
         collections.UserList.__init__(self, [Watchlist(adict=item) for item in self.data if isinstance(item, (dict, Item))])
 
-        self.perform(Watchlist.load_details, asynch=True)
+        self.perform(Watchlist.load_details, asynch=True, workers=10)
 
 
 class Watchlist(Item):

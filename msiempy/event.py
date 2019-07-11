@@ -230,7 +230,7 @@ class EventManager(QueryManager):
         """
         return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
 
-    def _load_data(self):
+    def _load_data(self, workers):
         """"
             Concrete helper method to execute the query and load the data : 
                 -> Submit the query -> wait -> get the events -> parse -
@@ -446,5 +446,8 @@ class Event(Item):
         """
         self.nitro.request("add_note_to_event", id=self.data["Alert.IPSIDAlertID"], note="{} : {}".format(str(datetime.datetime.now()),note))
         
+    def data_from_id(self, id):
+        """EsmAlertData wrapper"""
+        return self.nitro.request('get_alert_data', id=id)
         
     

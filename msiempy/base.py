@@ -157,7 +157,8 @@ class Manager(collections.UserList, NitroObject):
         
         elif isinstance(alist , (list, Manager)):
             collections.UserList.__init__(
-                self, [Item(adict=item) for item in alist if isinstance(item, (dict, Item))]
+                self, alist #[Item(adict=item) for item in alist if isinstance(item, (dict, Item))] 
+                #Can't instanciate Item, so Concrete classes has to cast the items afterwards
                 )
         else :
             raise ValueError('Manager can only be initiated based on a list')
@@ -291,7 +292,7 @@ class Manager(collections.UserList, NitroObject):
         
         if isinstance(apattern, str):
             for item in self.data :
-                if regex_match(apattern, getattr(item, match_prop)) is not invert :
+                if regex_match(apattern, getattr(item, match_prop) if isinstance(item, Item) else str(item)) is not invert :
                     matching_items.append(item)
             log.debug("You're search returned {} rows : {}".format(
                 len(matching_items),
@@ -335,7 +336,7 @@ class Manager(collections.UserList, NitroObject):
         """
         self.perform(Item.action_refresh)
 
-    def perform(self, func, data=None, func_args=None, confirm=False, asynch=False, progress=False, message=None, workers=15 ):
+    def perform(self, func, data=None, func_args=None, confirm=False, asynch=False,  workers=None , progress=False, message=None):
         """
         Wrapper arround executable and the data list of Manager object.
         Will execute the callable the local manager data list.
@@ -347,7 +348,8 @@ class Manager(collections.UserList, NitroObject):
             if data stays None, will perform the action on all rows, else it will perfom the action on the data list
             func_args : dict that will be passed by default to func in all calls
             confirm : will ask interactively confirmation 
-            asynch : execute the task asynchronously with NitroSession executor 
+            asynch : execute the task asynchronously with NitroSession executor
+            workers : mandatory if asynch is true
             progress : to show progress bar with ETA (tqdm) 
             message : To show to the user
 
@@ -359,6 +361,7 @@ class Manager(collections.UserList, NitroObject):
             ' func_args='+str(func_args)+
             ' confirm='+str(confirm)+
             ' asynch='+str(asynch)+
+            ' workers='+str(workers)+
             ' progress='+str(progress))
 
         if not callable(func) :
@@ -392,18 +395,20 @@ class Manager(collections.UserList, NitroObject):
 
         #Runs the callable on list on executor or by iterating
         if asynch == True :
-            
-            if progress==True:
-                #Need to call tqdm to have better support for concurrent futures executor
-                # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
-                returned=list(tqdm.tqdm(concurrent.futures.ThreadPoolExecutor(
-                max_workers=workers ).map(
-                    func, elements), **tqdm_args))
+            if isinstance(workers, int) :
+                if progress==True:
+                    #Need to call tqdm to have better support for concurrent futures executor
+                    # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
+                    returned=list(tqdm.tqdm(concurrent.futures.ThreadPoolExecutor(
+                    max_workers=workers ).map(
+                        func, elements), **tqdm_args))
+                else:
+                    #log.info()
+                    returned=list(concurrent.futures.ThreadPoolExecutor(
+                    max_workers=workers ).map(
+                        func, elements))
             else:
-                #log.info()
-                returned=list(concurrent.futures.ThreadPoolExecutor(
-                max_workers=workers ).map(
-                    func, elements))
+                raise AttributeError('When asynch == True : You must specify a integer value for workers')
         else :
 
             if progress==True:

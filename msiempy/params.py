@@ -261,5 +261,7 @@ PARAMS = {
         "values": %(values)s,
         }"""),
 
-    'get_watchlist_values': ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}""")
+    'get_watchlist_values': ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}"""),
+
+    'get_alert_data': ("""ipsGetAlertData""", """{"id": "%(id)s"}""" )
 }

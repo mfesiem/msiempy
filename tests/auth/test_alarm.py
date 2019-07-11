@@ -23,7 +23,7 @@ class T(unittest.TestCase):
    
     def test_query(self):
 
-        alarms=msiempy.alarm.AlarmManager(time_range='CURRENT_YEAR', status_filter='unacknowledged', max_query_depth=0, page_size=500).load_data()
+        alarms=msiempy.alarm.AlarmManager(time_range='CURRENT_YEAR', status_filter='unacknowledged', max_query_depth=0, page_size=50).load_data()
         self.assertGreater(len(alarms),0)
 
         for alarm in alarms:
@@ -33,19 +33,20 @@ class T(unittest.TestCase):
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_YEAR',
             filters=[
-                ('severity', [80,85,90,95,100]),
-                ('ruleMessage', 'HTTP'),
-                ('destIp', ['10','22','159'])],
+                ('severity', [50, 80,85,90,95,100]),
+                #('ruleMessage', 'HTTP'),
+                ('sourceIp', ['1','2','3'])],
             max_query_depth=0,
-            page_size=100
-            ).load_data()
+            page_size=50
+            ).load_data(workers=20)
+
         self.assertGreater(len(alarms),0)
 
         for alarm in alarms :
-            self.assertRegex(alarm['alarmName'], 'High Severity Event', 'Filtering alarms is not working')
-            self.assertRegex(str(alarm['severity']), '80|85|90|95|100', 'Filtering alarms is not working')
-            self.assertRegex(str(alarm['events'][0]['ruleMessage']), 'HTTP', 'Filtering alarms is not working')
-            self.assertRegex(str(alarm['events'][0]['destIp']), '10', 'Filtering alarms is not working')
+            #self.assertRegex(alarm['alarmName'], 'High Severity Event', 'Filtering alarms is not working')
+            self.assertRegex(str(alarm['severity']), '10|25|50|80|85|90|95|100', 'Filtering alarms is not working')
+            #self.assertRegex(str(alarm['events'][0]['ruleMessage']), 'HTTP', 'Filtering alarms is not working')
+            self.assertRegex(str(alarm['events'][0]['sourceIp']), '1|2|3', 'Filtering alarms is not working')
 
     def test_get_event_details(self):
 
@@ -57,6 +58,7 @@ class T(unittest.TestCase):
         
         alarms_with_event_summary = alarms.load_data()
         alarms_with_genuine_events = alarms.load_events() #No need the re-call load_data() cause alrealy called on alarms
+        alarms_with_alert_data_events=alarms.load_events(by_id=True)
 
         self.assertGreater(len(alarms_with_event_summary),0)
    
@@ -70,6 +72,7 @@ class T(unittest.TestCase):
 
         print('ALARMS WITH EVENT SUM\n'+str(alarms_with_event_summary))
         print('ALARMS WITH GENUINE EVENTS\n'+str(alarms_with_genuine_events))
+        print('ALARMS WITH ALERT DATA EVENTS\n'+str(alarms_with_alert_data_events))
 
 
 

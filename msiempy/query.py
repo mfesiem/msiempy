@@ -238,7 +238,7 @@ class QueryManager(Manager):
         pass 
 
     @abc.abstractmethod
-    def _load_data(self):
+    def _load_data(self, workers):
         """
         Rturn a tuple (items, completed).
         completed = True if all the data that should be load is loaded.
@@ -246,7 +246,7 @@ class QueryManager(Manager):
         pass
 
     @abc.abstractmethod
-    def load_data(self, workers=10, slots=15, delta=None):
+    def load_data(self, workers=15, slots=24, delta=None):
         """
         Method to load the data from the SIEM
         Split the query in defferents time slots if the query apprears not to be completed.
@@ -272,7 +272,7 @@ class QueryManager(Manager):
         #
         """
 
-        items, completed = self._load_data()
+        items, completed = self._load_data(workers=workers)
 
         if not completed :
             #If not completed the query is split and items aren't actually used
