@@ -65,4 +65,24 @@ class T(unittest.TestCase):
         for item in mycouty :
             self.assertEqual(item['pct_hex'], '503', "Perform method issue ")
 
+    def test_print(self):
+        data=download_testing_data()
+        manager = msiempy.base.Manager(alist=data[:30])
+        manager[10]['County']=msiempy.base.Manager(alist=data[:5])
+        manager[20]['County']=data[:5]
+
+        print('COMPACT')
+        print(manager.get_text(compact=True))
+
+        print('NORMAL')
+        print(manager.text)
+
+        print('SPECIFIC FIELDS')
+        print(manager.get_text(fields=['County', 'Eco_Name']))
+
+        print(':)')
+    
+
+
+
 

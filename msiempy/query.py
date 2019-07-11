@@ -44,7 +44,7 @@ class QueryManager(Manager):
     """
 
     def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
-        query_rec=None, load_async=True, split_strategy='delta', *arg, **kwargs):
+        query_rec=None, load_async=True, split_strategy='delta', limit=500, *arg, **kwargs):
         """
         Abstract base class that handles the time ranges operations, loading data from the SIEM.
 
@@ -231,7 +231,7 @@ class QueryManager(Manager):
         pass
 
     @abc.abstractmethod
-    def load_data(self):
+    def load_data(self, limit=500, workers=10, max_query_depth=0, slots=5, delta=None):
         """
         Method to load the data from the SIEM
         Split the query in defferents time slots if the query apprears not to be completed.
@@ -274,7 +274,9 @@ class QueryManager(Manager):
                     sub_queries.append(sub_query)
 
                 results = self.perform(QueryManager.load_data, sub_queries, 
-                    asynch=self.load_async, progress=True, message='Loading data from '+self.start_time+' to '+self.end_time+'. Spliting query in {} slots'.format(self.nitro.config.slots))
+                    asynch=self.load_async, progress=True, 
+                    message='Loading data from '+self.start_time+' to '+self.end_time+'. Spliting query in {} slots'.format(self.nitro.config.slots),
+                    workers=workers)
 
                 #Flatten the list of lists in a list
                 items=[item for sublist in results for item in sublist]

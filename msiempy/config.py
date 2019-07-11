@@ -24,35 +24,20 @@ class NitroConfig(configparser.ConfigParser):
         # Use command line to setup authentication
         '''
 
-    DEFAULT_VERBOSE=False
-    DEFAULT_LOGFILE=''
-    DEFAULT_TIMEOUT=30
-    DEFAULT_SSL_VERIFY=False
-    DEFAULT_OUTPUT='text'
-
-    DEFAULT_MAX_WORKERS=10
-    DEFAULT_MAX_ROWS=200000
-    DEFAULT_DEFAULT_ROWS=500
-    DEFAULT_ASYNC_RULE='delta'
-    DEFAULT_SLOTS=5
-    DEFAULT_DELTA='5h'
-    DEFAULT_MAX_QUERY_DEPTH=1
-
     DEFAULT_CONF_DICT={'esm':{'host':'', 
             'user':'',
             'passwd':''},
-        'general':{'verbose':DEFAULT_VERBOSE,
-            'logfile':DEFAULT_LOGFILE,
-            'timeout':DEFAULT_TIMEOUT,
-            'ssl_verify':DEFAULT_SSL_VERIFY,
-            'output':DEFAULT_OUTPUT},
-        'performance':{'max_workers':DEFAULT_MAX_WORKERS,
-            'max_rows':DEFAULT_MAX_ROWS,
-            'default_rows':DEFAULT_DEFAULT_ROWS, 
-            
-            'slots':DEFAULT_SLOTS,
-            
-            'max_query_depth':DEFAULT_MAX_QUERY_DEPTH}}
+        'general':{'verbose':False,
+            'quiet':False,
+            'logfile':'',
+            'timeout':30,
+            'ssl_verify':False,
+            'output':'text'},
+        'performance':{'max_workers':10,
+            'max_rows':200000,
+            'default_rows':1000,
+            'slots':10,
+            'max_query_depth':1}}
 
     def __str__(self):
         return(self.CONFIG_FILE_DISCLAMER+'\nConfiguration file : '+

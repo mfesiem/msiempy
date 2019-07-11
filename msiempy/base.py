@@ -4,10 +4,13 @@ import json
 import tqdm
 import copy
 import csv
+import concurrent.futures
 import prettytable
+from prettytable import MSWORD_FRIENDLY
 import datetime
 import functools
 import logging
+import textwrap
 import requests
 log = logging.getLogger('msiempy')
 
@@ -160,50 +163,91 @@ class Manager(collections.UserList, NitroObject):
         Creating keys in dicts
         """
         for item in self.data :
-            if isinstance(item, NitroObject):
+            if isinstance(item, (dict, Item)):
                 for key in self.keys :
                     if key not in item :
                         item[key]=None
 
     @property
     def keys(self):
-        #Unique set of keys for all dict
+        #Set of keys for all dict
         #If new fields are added it won't show on text repr. Only json.
-        keys=set()
-        #Normalizing the list of dict
-        #Finding the unique set
-        for item in self.data :
-            if item is not None :
-                keys=keys.union(dict(item).keys())
-            else :
-                log.warning('Having trouble with listing dicts')
-        return keys
+        
+        manager_keys=set()
+        for item in self.data:
+            if isinstance(item, (dict,Item)):
+                manager_keys.update(item.keys())
+
+        return manager_keys
+
+
+    def get_text(self, compact=False, fields=None):
+        """
+        Returns a nice string table made with prettytable if not compact.
+        Else an '|' separated list.
+        Default fields are returned by .keys attribute and sorted.
+        It's an expesive thing to do on big ammount of data !
+        """
+        
+        if not fields :
+            fields=sorted(self.keys)
+
+        if not compact : #Table
+            table = prettytable.PrettyTable()
+            table.set_style(MSWORD_FRIENDLY)
+            table.field_names=fields
+            self._norm_dicts()
+
+            for item in self.data:
+                if isinstance(item, (dict, Item)):
+                    table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=120))
+                        if not isinstance(item[field], Manager)
+                        else item[field].get_text(compact=True) for field in fields])
+                else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
+
+            if len(self.table_colums) >0 :
+                try :
+                    text =table.get_string(fields=self.table_colums)
+                except Exception as err :
+                    if "Invalid field name" in str(err):
+                        text=table.get_string()
+                        log.warning("Inconsistent manager state, some fields aren't present {}".format(str(err)))
+                    else :
+                        raise
+            else: 
+                text=table.get_string()
+
+        elif compact is True :
+            text='|_'
+            for field in fields :
+                text+=field
+                text+='_|_'
+            text=text[0:len(text)-1]
+            text+='\n'
+            for item in self.data:
+                if isinstance(item, (dict, Item)):
+                    text+='| '
+                    for field in fields :
+                        if isinstance(item[field], Manager):
+                            text+=item[field].get_text(compact=True)
+                        else:
+                            text+=(str(item[field]))
+                            text+=' | '
+                    text=text[0:len(text)-1]
+                else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
+                    #text+=textwrap.wrap(str(item),width=80)
+
+                text+='\n'
+            text=text[0:len(text)-1]
+
+        return text
+
+
 
     @property
-    def text(self):#, columns=None):
-        """
-        Returns a nice string table made with prettytable.
-        It's an expesive thing to do on big ammount of data
-        """
-        table = prettytable.PrettyTable()
-        fields=sorted(self.keys)
-        table.field_names=fields
-        self._norm_dicts()
-        [table.add_row([str(item[field]) for field in fields]) for item in self.data]
-        if len(self.table_colums) >0 :
-            try :
-                text =table.get_string(fields=self.table_colums)
-            except Exception as err :
-                if "Invalid field name" in str(err):
-                    text=table.get_string()
-                    log.warning("Inconsistent manager state, some fields aren't present {}".format(str(err)))
-                else :
-                    raise
-        else: 
-            text=table.get_string()
-        return text
+    def text(self):
+        return self.get_text()
         
-
     @property
     def json(self):
         return(json.dumps([dict(item) for item in self.data], indent=4, cls=NitroObject.NitroJSONEncoder))
@@ -278,7 +322,7 @@ class Manager(collections.UserList, NitroObject):
         """
         self.perform(Item.action_refresh)
 
-    def perform(self, func, data=None, func_args=None, confirm=False, asynch=False, progress=False, message=None ):
+    def perform(self, func, data=None, func_args=None, confirm=False, asynch=False, progress=False, message=None, workers=15 ):
         """
         Wrapper arround executable and the data list of Manager object.
         Will execute the callable the local manager data list.
@@ -339,11 +383,13 @@ class Manager(collections.UserList, NitroObject):
             if progress==True:
                 #Need to call tqdm to have better support for concurrent futures executor
                 # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
-                returned=list(tqdm.tqdm(self.nitro.executor.map(
+                returned=list(tqdm.tqdm(concurrent.futures.ThreadPoolExecutor(
+                max_workers=workers ).map(
                     func, elements), **tqdm_args))
             else:
                 log.info()
-                returned=list(self.nitro.executor.map(
+                returned=list(concurrent.futures.ThreadPoolExecutor(
+                max_workers=workers ).map(
                     func, elements))
         else :
 
