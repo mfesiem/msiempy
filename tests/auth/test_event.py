@@ -1,4 +1,5 @@
 import msiempy.event
+import msiempy.query
 from msiempy.utils import format_esm_time
 import unittest
 
@@ -8,44 +9,60 @@ class T(unittest.TestCase):
     def test_query(self):
 
         events = msiempy.event.EventManager(
-                    time_range='LAST_24_HOURS',
-                    filters=('SrcIP', ['10.0.0.0/8',]),
-                    limit=100,
-                    query_rec=0
+                    time_range='LAST_3_DAYS',
+                    #filters=[('SrcIP', ['0.0.0.0/0',])],
+                    #filters=[msiempy.query.FieldFilter('SrcIP', ['0.0.0.0/0',])],
+                    limit=10,
+                    max_query_depth=0
                 )
         events.load_data()
+
         for e in events :
-            self.assertRegex(e['Alert.SrcIP'],'^10.','Filtering is problematic')
+            self.assertNotEqual(e['Alert.SrcIP'],'')
+            #self.assertRegex(e['Alert.SrcIP'],'^10.','Filtering is problematic')
+
+        self.assertGreater(len(events),0)
+
+        print('EVENTS KEYS\n'+str(events.keys))
+        print('EVENTS TEXT\n'+str(events))
+        print('EVENT JSON\n'+events.json)
 
     def test_query_splitted(self):
         events = msiempy.event.EventManager(
             filters=[msiempy.query.GroupFilter(
-                msiempy.event.FieldFilter('DstIP', ['10.0.0.0/8']),
-                msiempy.event.FieldFilter('SrcIP', ['10.0.0.0/8']),
+                msiempy.event.FieldFilter('DstIP', ['0.0.0.0/0']),
+                msiempy.event.FieldFilter('SrcIP', ['0.0.0.0/0']),
                 logic='AND'
                 )],
-            time_range='LAST_24_HOURS',
-            limit=50,
-            query_rec=2
+            time_range='LAST_3_DAYS',
+            limit=5,
+            max_query_depth=1
         )
-        events.load_data()
-        for e in events :
-            self.assertRegex(e['Alert.SrcIP'],'^10.','Filterring in a reccursive query is problematic')
-            self.assertRegex(e['Alert.DstIP'],'^10.','Filterring in a reccursive query is problematic')
+        events.load_data(delta='24h', slots=6)
 
-        print('\n\n\nList len : '+str(len(events)))
+        for e in events :
+             self.assertNotEqual(e['Alert.SrcIP'],'')
+            #self.assertRegex(e['Alert.SrcIP'],'^10.','Filterring in a reccursive query is problematic')
+            #self.assertRegex(e['Alert.DstIP'],'^10.','Filterring in a reccursive query is problematic')
+
+        self.assertGreater(len(events),0)
+        print('EVENTS KEYS\n'+str(events.keys))
+        print('EVENTS TEXT\n'+str(events))
+        print('EVENT JSON\n'+events.json)
 
     def test_add_note(self):
+        #to refactor
 
         events = msiempy.event.EventManager(
-            filters=[('SrcIP', ['10.176.129.119']), ('NormID', ['408944640'])],
-            time_range='LAST_24_HOURS',
-            limit=20,
-            query_rec=0
+            filters=[('SrcIP', ['0.0.0.0/0']),], # ('NormID', ['408944640'])],
+            time_range='LAST_3_DAYS',
+            limit=2,
+            max_query_depth=0
         )
         events.load_data()
-        print(events.keys)
-        print(events)
+        print('EVENTS KEYS\n'+str(events.keys))
+        print('EVENTS TEXT\n'+str(events))
+        print('EVENT JSON\n'+events.json)
 
         for event in events :
             event.add_note("Test note ! ")

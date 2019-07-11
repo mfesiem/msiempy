@@ -97,7 +97,8 @@ class EventManager(QueryManager):
         #Setting limit according to config or limit argument
         #TODO Try to load queries with a limit of 10k and get result as chucks of 500 with starPost nbRows
         #   and compare efficiency
-        self.limit=self.nitro.config.default_rows if limit is None else int(limit)
+        self.limit=self.requests_size if limit is None else int(limit) #IGNORE THE CONFIG 
+        self.requests_size=self.limit
 
         if isinstance(order, list): #if a list is passed for the prder, will replace the whole param supposed in correct SIEM format
             self._order=order
@@ -110,7 +111,7 @@ class EventManager(QueryManager):
                 }]
             self.order=order #if a tuple is passed , will set the first order according to (direction, fields)
 
-        #TODO : find a solution not to use this stinky tric
+        #TODO : find a solution not to use this
         #callign super().filters=filters #https://bugs.python.org/issue14965
         super(self.__class__, self.__class__).filters.__set__(self, filters)
 
@@ -185,11 +186,8 @@ class EventManager(QueryManager):
         """
         Replace all filters by a non filtering rule.
         Acts like the is not filters.
-        """
-        #TODO : find a soltuion not to use this stinky tric
-        ##https://bugs.python.org/issue14965
-        super(self.__class__, self.__class__).filters.__set__(self,
-            [FieldFilter(name='SrcIp', values=['0.0.0.0/0'])])
+        """ 
+        self._filters=[FieldFilter('SrcIP', ['0.0.0.0/0',])]
     
     @property
     def time_range(self):
@@ -205,7 +203,7 @@ class EventManager(QueryManager):
         Trys if compute_time_range is True - by default it is - to get a 
             start and a end time with utils.timerange_gettimes()
         """
-        if time_range and self.compute_time_range :
+        if time_range!=None and time_range!='CUSTOM' and self.compute_time_range :
             try :
                 times = timerange_gettimes(time_range)
                 self._time_range='CUSTOM'
@@ -215,14 +213,14 @@ class EventManager(QueryManager):
             # all timeranges are supported
             except AttributeError as err:
                 log.warning(err)
-                #TODO : find a soltuion not to use this stinky tric
+                #TODO : find a soltuion not to use this
                 #Calling super().time_range=time_range
                 #https://bugs.python.org/issue14965
                 super(self.__class__, self.__class__).time_range.__set__(self, time_range)
             except :
                 raise
         else :
-            #TODO : find a soltuion not to use this stinky tric
+            #TODO : find a soltuion not to use this
             super(self.__class__, self.__class__).time_range.__set__(self, time_range)
 
     def get_possible_fields(self):
@@ -281,14 +279,15 @@ class EventManager(QueryManager):
         self.data=events
         return((events,len(events)<self.limit))
 
-    def load_data(self):
+    def load_data(self, **kwargs):
         """
         Specialized EventManager load_data method.
         Use super load_data implementation.
         You could decide not to use the splitting feature by 
             calling directly _load_data() 
+            kwargs are passed to super().load_data()
         """
-        return EventManager(alist=super().load_data())
+        return EventManager(alist=super().load_data(**kwargs))
 
     def _wait_for(self, resultID, sleep_time=0.35):
         """

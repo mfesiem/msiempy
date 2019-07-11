@@ -24,7 +24,8 @@ class NitroConfig(configparser.ConfigParser):
         # Use command line to setup authentication
         '''
 
-    DEFAULT_CONF_DICT={'esm':{'host':'', 
+    DEFAULT_CONF_DICT={
+        'esm':{'host':'', 
             'user':'',
             'passwd':''},
         'general':{'verbose':False,
@@ -32,12 +33,14 @@ class NitroConfig(configparser.ConfigParser):
             'logfile':'',
             'timeout':30,
             'ssl_verify':False,
-            'output':'text'},
-        'performance':{'max_workers':10,
-            'max_rows':200000,
-            'default_rows':1000,
-            'slots':10,
-            'max_query_depth':1}}
+            'output':'text'}
+    }
+
+    """,'performance':{'max_workers':10,
+    'max_rows':200000,
+    'default_rows':1000,
+    'slots':10,
+    'max_query_depth':1}"""
 
     def __str__(self):
         return(self.CONFIG_FILE_DISCLAMER+'\nConfiguration file : '+
@@ -124,6 +127,10 @@ class NitroConfig(configparser.ConfigParser):
         return self.getboolean('general', 'verbose')
 
     @property
+    def quiet(self):
+        return self.getboolean('general', 'quiet')
+
+    @property
     def logfile(self):
         return self.get('general', 'logfile')
 
@@ -138,30 +145,6 @@ class NitroConfig(configparser.ConfigParser):
     @property
     def output(self):
         return self.get('general', 'output')
-
-    @property
-    def max_workers(self):
-        return self.getint('performance', 'max_workers')
-
-    @property
-    def max_rows(self):
-        return self.getint('performance', 'max_rows')
-
-    @property
-    def default_rows(self):
-        return self.getint('performance', 'default_rows')
-
-    @property
-    def max_query_depth(self):
-        """
-        Wether to split the query based on a time, a delta, or a fixed 
-        number of slots in order to run them asynchronously
-        """
-        return self.getint('performance', 'max_query_depth')
-
-    @property
-    def slots(self):
-        return self.getint('performance', 'slots')
 
    
     @staticmethod

@@ -192,6 +192,9 @@ class Manager(collections.UserList, NitroObject):
         if not fields :
             fields=sorted(self.keys)
 
+        if len(self) == 0 :
+            return('The list is empty')
+
         if not compact : #Table
             table = prettytable.PrettyTable()
             table.set_style(MSWORD_FRIENDLY)
@@ -371,9 +374,9 @@ class Manager(collections.UserList, NitroObject):
         #The message will appear on loading bar if progress is True
         if progress is True :
             tqdm_args=dict(desc='Loading...', total=len(elements))
-        if message is not None:
-            log.info(message)
-            tqdm_args['desc']=message
+            if message is not None:
+                log.info(message)
+                tqdm_args['desc']=message
 
         
 

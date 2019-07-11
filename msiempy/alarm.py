@@ -43,7 +43,8 @@ class AlarmManager(QueryManager):
 
         #Setting attributes
         self.status_filter=status_filter
-        self.page_size=page_size if page_size is not None else self.nitro.config.default_rows
+        self.page_size=page_size if page_size is not None else self.requests_size #IGNORE THE CONFIG
+        self.requests_size=self.page_size
         self.page_number=page_number if page_number is not None else 1
 
         #uses the parent filter setter
@@ -129,11 +130,12 @@ class AlarmManager(QueryManager):
         self._alarm_filters = list(tuple())
         self._event_filters = list(tuple())
 
-    def load_data(self):
+    def load_data(self, **kwargs):
         """
         Specialized load_data() method that convert the `msiempy.base.QueryManager.load_data()` result to AlarmManager object.
+        kwargs are passed to super().load_data()
         """
-        return AlarmManager(alist=super().load_data())
+        return AlarmManager(alist=super().load_data(**kwargs))
 
     def load_events(self):
         """
@@ -373,10 +375,12 @@ class Alarm(Item):
 
         log.debug("Filters : "+str(filters))
         events = EventManager(
-            start_time=convert_to_time_obj(events[0]['lastTime'])-datetime.timedelta(seconds=2),
-            end_time=convert_to_time_obj(events[-1]['lastTime'])+datetime.timedelta(seconds=2),
+            start_time=convert_to_time_obj(events[0]['lastTime'])-datetime.timedelta(seconds=1),
+            end_time=convert_to_time_obj(events[-1]['lastTime'])+datetime.timedelta(seconds=1),
             filters=filters,
-            fields=extra_fields
+            fields=extra_fields,
+            max_query_depth=0,
+            limit=100
         ).load_data()
 
         match='|'.join([event['eventId'].split('|')[1] for event in self.data['events']])
