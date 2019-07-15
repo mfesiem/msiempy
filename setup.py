@@ -21,10 +21,10 @@ setup(
         'console_scripts': ['msiempy=msiempy.cli:main'],
     },
     install_requires=[
-          'requests','tqdm','PTable','python-dateutil','certifi','chardet','idna', 'six', 'urllib3'
+          'requests','tqdm','PTable','python-dateutil', 'urllib3'
     ],
     tests_require=[
-          'pylint','pytest','pdoc','sphinx','sphinx_rtd_theme','recommonmark'
+          'pylint','pytest','pdoc3'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
