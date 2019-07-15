@@ -12,7 +12,8 @@ class WatchlistManager(Manager):
         #Casting all data to Watchlist objects, better way to do it ?
         collections.UserList.__init__(self, [Watchlist(adict=item) for item in self.data if isinstance(item, (dict, Item))])
 
-        self.perform(Watchlist.load_details, asynch=True, workers=10)
+    def load_details(self):
+        self.perform(Watchlist.load_details, asynch=False, progress=True)
 
 
 class Watchlist(Item):
@@ -80,5 +81,8 @@ class Watchlist(Item):
         self.data['id']=the_id
 
     def load_values(self, count=50):
+        """
+        Doesn't work yet
+        """
         self.data['values']=self.nitro.request('get_watchlist_values', id=self.data['id'], pos=0, count=count)
 
