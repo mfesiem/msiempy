@@ -79,36 +79,36 @@ def fromb64(s):
         return base64.b64decode(s.encode('utf-8')).encode()
 
 def timerange_gettimes(time_range):
-    t=time_range
+    t=time_range.upper()
     now=datetime.now()
     times=tuple()
 
-    if t is 'LAST_MINUTE' :
+    if t == 'LAST_MINUTE' :
         times=(now-timedelta(seconds=60), now)
         
-    elif t is 'LAST_10_MINUTES':
+    elif t == 'LAST_10_MINUTES':
         times=(now-timedelta(minutes=10), now)
 
-    elif t is 'LAST_30_MINUTES':
+    elif t == 'LAST_30_MINUTES':
         times=(now-timedelta(minutes=30), now)
 
-    elif t is 'LAST_HOUR':
+    elif t == 'LAST_HOUR':
         times=(now-timedelta(minutes=60), now)
 
-    elif t is 'CURRENT_DAY':
+    elif t == 'CURRENT_DAY':
         times=(now.replace(hour=0, minute=0, second=0), now.replace(hour=23, minute=59, second=59))
 
-    elif t is 'PREVIOUS_DAY':
+    elif t == 'PREVIOUS_DAY':
         yesterday=now-timedelta(hours=24)
         times=(yesterday.replace(hour=0, minute=0, second=0), yesterday.replace(hour=23, minute=59, second=59))
 
-    elif t is 'LAST_24_HOURS':
+    elif t == 'LAST_24_HOURS':
         times=(now-timedelta(hours=24), now)
 
-    elif t is 'LAST_2_DAYS':
+    elif t == 'LAST_2_DAYS':
         times=(now-timedelta(days=2), now)
 
-    elif t is 'LAST_3_DAYS':
+    elif t == 'LAST_3_DAYS':
         times=(now-timedelta(days=3), now)
 
     else :
