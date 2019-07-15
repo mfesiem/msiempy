@@ -6,8 +6,6 @@ import re
 
 import urllib.parse
 
-import concurrent.futures
-
 import urllib3
 
 from .error import NitroError
@@ -71,10 +69,6 @@ class NitroSession():
             #Set the logging configuration
             self._init_log(verbose=self.config.verbose,
                 logfile=self.config.logfile)
-            
-            self.executor = concurrent.futures.ThreadPoolExecutor(
-                max_workers=self.config.max_workers )
-            NitroSession.executor=self.executor
 
     def _request(self, method, http, data=None, callback=None, raw=False, secure=False):
         """

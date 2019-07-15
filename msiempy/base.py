@@ -4,10 +4,13 @@ import json
 import tqdm
 import copy
 import csv
+import concurrent.futures
 import prettytable
+from prettytable import MSWORD_FRIENDLY
 import datetime
 import functools
 import logging
+import textwrap
 import requests
 log = logging.getLogger('msiempy')
 
@@ -82,10 +85,16 @@ class Item(collections.UserDict, NitroObject):
     Exemple : Event, Alarm, etc...
     Inherits from dict
     """
-    def __init__(self, adict=None):
+    def __init__(self, adict=None, id=None):
         NitroObject.__init__(self)
         collections.UserDict.__init__(self, adict)
         
+        if id != None :
+            self.data=self.data_from_id(id)
+
+        if isinstance(adict, dict):
+            self.data=adict
+
         for key in self.data :
             if isinstance(self.data[key], list):
                 self.data[key]=Manager(alist=self.data[key])
@@ -101,7 +110,11 @@ class Item(collections.UserDict, NitroObject):
         return(', '.join([str(val) for val in self.values()]))
 
     def refresh(self):
-        log.debug('Refreshing item :'+str(self))
+        log.debug('NOT Refreshing item :'+str(self)+' '+str(NotImplementedError()))
+
+    @abc.abstractmethod
+    def data_from_id(self, id):
+        pass
 
     '''This code has been commented cause it adds unecessary complexity.
     But it's a good example of how we could perform() method to do anything
@@ -144,7 +157,8 @@ class Manager(collections.UserList, NitroObject):
         
         elif isinstance(alist , (list, Manager)):
             collections.UserList.__init__(
-                self, [Item(adict=item) for item in alist if isinstance(item, (dict, Item))]
+                self, alist #[Item(adict=item) for item in alist if isinstance(item, (dict, Item))] 
+                #Can't instanciate Item, so Concrete classes has to cast the items afterwards
                 )
         else :
             raise ValueError('Manager can only be initiated based on a list')
@@ -160,50 +174,94 @@ class Manager(collections.UserList, NitroObject):
         Creating keys in dicts
         """
         for item in self.data :
-            if isinstance(item, NitroObject):
+            if isinstance(item, (dict, Item)):
                 for key in self.keys :
                     if key not in item :
                         item[key]=None
 
     @property
     def keys(self):
-        #Unique set of keys for all dict
+        #Set of keys for all dict
         #If new fields are added it won't show on text repr. Only json.
-        keys=set()
-        #Normalizing the list of dict
-        #Finding the unique set
-        for item in self.data :
-            if item is not None :
-                keys=keys.union(dict(item).keys())
-            else :
-                log.warning('Having trouble with listing dicts')
-        return keys
+        
+        manager_keys=set()
+        for item in self.data:
+            if isinstance(item, (dict,Item)):
+                manager_keys.update(item.keys())
+
+        return manager_keys
+
+
+    def get_text(self, compact=False, fields=None):
+        """
+        Returns a nice string table made with prettytable if not compact.
+        Else an '|' separated list.
+        Default fields are returned by .keys attribute and sorted.
+        It's an expesive thing to do on big ammount of data !
+        """
+        
+        if not fields :
+            fields=sorted(self.keys)
+
+        if len(self) == 0 :
+            return('The list is empty')
+
+        if not compact : #Table
+            table = prettytable.PrettyTable()
+            table.set_style(MSWORD_FRIENDLY)
+            table.field_names=fields
+            self._norm_dicts()
+
+            for item in self.data:
+                if isinstance(item, (dict, Item)):
+                    table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=120))
+                        if not isinstance(item[field], Manager)
+                        else item[field].get_text() for field in fields])
+                else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
+
+            if len(self.table_colums) >0 :
+                try :
+                    text =table.get_string(fields=self.table_colums)
+                except Exception as err :
+                    if "Invalid field name" in str(err):
+                        text=table.get_string()
+                        log.warning("Inconsistent manager state, some fields aren't present {}".format(str(err)))
+                    else :
+                        raise
+            else: 
+                text=table.get_string()
+
+        elif compact is True :
+            text='|_'
+            for field in fields :
+                text+=field
+                text+='_|_'
+            text=text[0:len(text)-1]
+            text+='\n'
+            for item in self.data:
+                if isinstance(item, (dict, Item)):
+                    text+='| '
+                    for field in fields :
+                        if isinstance(item[field], Manager):
+                            text+=item[field].get_text(compact=True)
+                        else:
+                            text+=(str(item[field]))
+                            text+=' | '
+                    text=text[0:len(text)-1]
+                else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
+                    #text+=textwrap.wrap(str(item),width=80)
+
+                text+='\n'
+            text=text[0:len(text)-1]
+
+        return text
+
+
 
     @property
-    def text(self):#, columns=None):
-        """
-        Returns a nice string table made with prettytable.
-        It's an expesive thing to do on big ammount of data
-        """
-        table = prettytable.PrettyTable()
-        fields=sorted(self.keys)
-        table.field_names=fields
-        self._norm_dicts()
-        [table.add_row([str(item[field]) for field in fields]) for item in self.data]
-        if len(self.table_colums) >0 :
-            try :
-                text =table.get_string(fields=self.table_colums)
-            except Exception as err :
-                if "Invalid field name" in str(err):
-                    text=table.get_string()
-                    log.warning("Inconsistent manager state, some fields aren't present {}".format(str(err)))
-                else :
-                    raise
-        else: 
-            text=table.get_string()
-        return text
+    def text(self):
+        return self.get_text()
         
-
     @property
     def json(self):
         return(json.dumps([dict(item) for item in self.data], indent=4, cls=NitroObject.NitroJSONEncoder))
@@ -234,7 +292,7 @@ class Manager(collections.UserList, NitroObject):
         
         if isinstance(apattern, str):
             for item in self.data :
-                if regex_match(apattern, getattr(item, match_prop)) is not invert :
+                if regex_match(apattern, getattr(item, match_prop) if isinstance(item, Item) else str(item)) is not invert :
                     matching_items.append(item)
             log.debug("You're search returned {} rows : {}".format(
                 len(matching_items),
@@ -278,7 +336,7 @@ class Manager(collections.UserList, NitroObject):
         """
         self.perform(Item.action_refresh)
 
-    def perform(self, func, data=None, func_args=None, confirm=False, asynch=False, progress=False, message=None ):
+    def perform(self, func, data=None, func_args=None, confirm=False, asynch=False,  workers=None , progress=False, message=None):
         """
         Wrapper arround executable and the data list of Manager object.
         Will execute the callable the local manager data list.
@@ -290,7 +348,8 @@ class Manager(collections.UserList, NitroObject):
             if data stays None, will perform the action on all rows, else it will perfom the action on the data list
             func_args : dict that will be passed by default to func in all calls
             confirm : will ask interactively confirmation 
-            asynch : execute the task asynchronously with NitroSession executor 
+            asynch : execute the task asynchronously with NitroSession executor
+            workers : mandatory if asynch is true
             progress : to show progress bar with ETA (tqdm) 
             message : To show to the user
 
@@ -302,6 +361,7 @@ class Manager(collections.UserList, NitroObject):
             ' func_args='+str(func_args)+
             ' confirm='+str(confirm)+
             ' asynch='+str(asynch)+
+            ' workers='+str(workers)+
             ' progress='+str(progress))
 
         if not callable(func) :
@@ -324,27 +384,31 @@ class Manager(collections.UserList, NitroObject):
             AttributeError('data must be a list')
 
         #Printing message if specified.
+        tqdm_args=dict()
         #The message will appear on loading bar if progress is True
         if progress is True :
             tqdm_args=dict(desc='Loading...', total=len(elements))
-        if message is not None:
-            log.info(message)
-            tqdm_args['desc']=message
+            if message is not None:
+                tqdm_args['desc']=message
 
         
 
         #Runs the callable on list on executor or by iterating
         if asynch == True :
-            
-            if progress==True:
-                #Need to call tqdm to have better support for concurrent futures executor
-                # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
-                returned=list(tqdm.tqdm(self.nitro.executor.map(
-                    func, elements), **tqdm_args))
+            if isinstance(workers, int) :
+                if progress==True:
+                    #Need to call tqdm to have better support for concurrent futures executor
+                    # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
+                    returned=list(tqdm.tqdm(concurrent.futures.ThreadPoolExecutor(
+                    max_workers=workers ).map(
+                        func, elements), **tqdm_args))
+                else:
+                    #log.info()
+                    returned=list(concurrent.futures.ThreadPoolExecutor(
+                    max_workers=workers ).map(
+                        func, elements))
             else:
-                log.info()
-                returned=list(self.nitro.executor.map(
-                    func, elements))
+                raise AttributeError('When asynch == True : You must specify a integer value for workers')
         else :
 
             if progress==True:

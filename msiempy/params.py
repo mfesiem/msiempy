@@ -249,5 +249,19 @@ PARAMS = {
     'add_note_to_event' : ("""ipsAddAlertNote""", """{
         "id": {"value": "%(id)s"},
         "note": {"note": "%(note)s"}
-    }""")
+    }"""),
+
+    'get_watchlists_no_filters' : ("""sysGetWatchlists?hidden=%(hidden)s&dynamic=%(dynamic)s&writeOnly=%(writeOnly)s&indexedOnly=%(indexedOnly)s""", 
+          None),
+
+    'get_watchlist_details': ("""sysGetWatchlistDetails""","""{"id": %(id)s}"""),
+
+    'add_watchlist_values': ("""sysAddWatchlistValues""","""{
+        "watchlist": %(id)s,
+        "values": %(values)s,
+        }"""),
+
+    'get_watchlist_values': ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}"""),
+
+    'get_alert_data': ("""ipsGetAlertData""", """{"id": "%(id)s"}""" )
 }

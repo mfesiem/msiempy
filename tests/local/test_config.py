@@ -8,7 +8,7 @@ class T(unittest.TestCase):
         config = msiempy.config.NitroConfig()
         
         print('setting [esm]*')
-        config.iset('esm')
+        #config.iset('esm')
         config.write()
 
         print('printing config')

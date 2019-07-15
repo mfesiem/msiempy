@@ -44,7 +44,8 @@ class QueryManager(Manager):
     """
 
     def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
-        query_rec=None, load_async=True, split_strategy='delta', *arg, **kwargs):
+        load_async=True, requests_size=500, max_query_depth=0,
+            __parent__=None, *arg, **kwargs):
         """
         Abstract base class that handles the time ranges operations, loading data from the SIEM.
 
@@ -55,17 +56,22 @@ class QueryManager(Manager):
             start_time : Query starting time, can be a string or a datetime object. Parsed with dateutil.
             end_time : Query endding time, can be a string or a datetime object. Parsed with dateutil.
             filters : List of filters applied to the query
-            query_depth : Maximum number of splitting recursions. Defaulted to zéro,
-                meaning no sub-queries will be generated. 
+            max_query_depth : maximum number of supplement reccursions of division of the query times
+                Meaning, if requests_size=500, slots=5 and max_query_depth=3, then the maximum capacity of 
+                the list is (500*5)*(500*5)*(500*5) = 15625000000
             load_async : Load asynchonously the sub-queries. Defaulted to True.
-            split_strategy : Sub-queries can be genrated by splitting the time range in a fixed number of slots (`slots`)
-                or by dividing the time range in equals duration slots (`delta`).
+            
+           
         """
 
         super().__init__(*arg, **kwargs)
 
-        self.nitro.config.default_rows #nb rows per request : eq limit/page_size
-        self.nitro.config.max_rows #max nb rows 
+        #Store the query parent 
+        self.__parent__=__parent__
+        self.not_completed=False
+
+        #self.nitro.config.default_rows #nb rows per request : eq limit/page_size = requests_size
+        #self.nitro.config.max_rows #max nb rows 
 
         #Declaring attributes and types
         self._time_range=str()
@@ -80,13 +86,22 @@ class QueryManager(Manager):
         if start_time is not None and end_time is not None :
             self.start_time=start_time
             self.end_time=end_time
+            self.time_range='CUSTOM'
         else :
             self.time_range=time_range
 
         self.load_async=load_async
-        self.query_rec=query_rec if query_rec is not None else self.nitro.config.max_query_depth
-        self.split_strategy=split_strategy
+        self.requests_size=requests_size
+        self.__init_max_query_depth__=max_query_depth
+        self.query_depth_ttl=max_query_depth
 
+
+    @property
+    def __root_parent__(self):
+        if self.__parent__==None:
+            return self
+        else :
+            return self.__parent__.__root_parent__
 
     @property
     def time_range(self):
@@ -94,10 +109,10 @@ class QueryManager(Manager):
         Returns the query time range. See `msiempy.query.QueryManager.POSSIBLE_TIME_RANGE`.
         Return 'CUSTOM' if internal _time_range is None and start_time annd end_time are set.
         """
-        if self.start_time is not None and self.end_time is not None :
+        """if self.start_time is not None and self.end_time is not None :
             return('CUSTOM')
-        else :
-            return self._time_range.upper()
+        else :"""
+        return self._time_range.upper()
 
     @property
     def start_time(self):
@@ -148,15 +163,15 @@ class QueryManager(Manager):
         Set the time start of the query.
         start_time can be a string or a datetime.
         If None, equivalent current_day start 00:00:00.
-        
         """
         
-        if not start_time:
-            self.start_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        elif isinstance(start_time, str):
+        
+        if isinstance(start_time, str):
             self.start_time = convert_to_time_obj(start_time)
         elif isinstance(start_time, datetime.datetime):
             self._start_time = start_time
+        elif start_time==None:
+             self._start_time=None#raise ValueError("Time must be string or datetime object, not None")#self.start_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             raise ValueError("Time must be string or datetime object.")
                 
@@ -169,12 +184,12 @@ class QueryManager(Manager):
         If None, equivalent now.
         """
        
-        if not end_time:
-            self.end_time = datetime.datetime.now()
-        elif isinstance(end_time, str):
+        if isinstance(end_time, str):
             self.end_time = convert_to_time_obj(end_time)
         elif isinstance(end_time, datetime.datetime):
             self._end_time = end_time
+        elif end_time==None:
+             self._end_time=None#raise ValueError("Time must be string or datetime object, not None")
         else:
             raise ValueError("Time must be string or datetime object.")
 
@@ -201,7 +216,7 @@ class QueryManager(Manager):
         elif isinstance(filters, tuple):
             self.add_filter(filters)
 
-        elif filters is None :
+        elif filters == None :
             self.clear_filters()
         
         else :
@@ -223,7 +238,7 @@ class QueryManager(Manager):
         pass 
 
     @abc.abstractmethod
-    def _load_data(self):
+    def _load_data(self, workers):
         """
         Rturn a tuple (items, completed).
         completed = True if all the data that should be load is loaded.
@@ -231,7 +246,7 @@ class QueryManager(Manager):
         pass
 
     @abc.abstractmethod
-    def load_data(self):
+    def load_data(self, workers=15, slots=24, delta=None):
         """
         Method to load the data from the SIEM
         Split the query in defferents time slots if the query apprears not to be completed.
@@ -239,18 +254,30 @@ class QueryManager(Manager):
         and re-loading results. First your query time is split in slots of size `delta` 
         in [performance] section of the config and launch asynchronously in queue of length `max_workers`.
         Secondly, if the sub queries are not completed, divide them in the number of `slots`, this step is
-        executed recursively a maximum of `max_query_depth`.
+        If you're looking foe `max_query_depth`, it's define at the creation of the query manager
+
         Returns a QueryManager.
+
+        Params
+        -----
+            requests_size : size (in items) for the individual requests.
+            workers : numbre of parrallels task
+           
+            slots : number of time slots the query can be divided. The loading bar is 
+                divided according to the number of slots
+            delta : exemple : '24hrs', the query will be firstly divided in chuncks according to the time delta read
+                with dateutil.
+
 
         #
         """
 
-        items, completed = self._load_data()
+        items, completed = self._load_data(workers=workers)
 
         if not completed :
             #If not completed the query is split and items aren't actually used
 
-            if self.query_rec > 0 :
+            if self.query_depth_ttl > 0 :
                 #log.info("The query data couldn't be loaded in one request, separating it in sub-queries...")
 
                 if self.time_range != 'CUSTOM': #can raise a NotImplementedError if unsupported time_range
@@ -258,32 +285,46 @@ class QueryManager(Manager):
                 else :
                     start, end = self.start_time, self.end_time
 
-                times=divide_times(start, end, slots=self.nitro.config.slots)
+                if self.__parent__ == None and isinstance(delta, str) :
+                    times=divide_times(start, end, delta=parse_timedelta(delta))
+                else :times=divide_times(start, end, slots=slots)#  IGONORING THE CONFIG ### : self.nitro.config.slots)
+                
                 sub_queries=list()
 
-                for time in times :
-                    sub_query = copy.copy(self)
+                #self.
 
+                for time in times :
+                    """
+                    """
+                    sub_query = copy.copy(self)
+                    sub_query.__parent__=self
                     sub_query.compute_time_range=False
                     sub_query.time_range='CUSTOM'
                     sub_query.start_time=time[0].isoformat()
                     sub_query.end_time=time[1].isoformat()
                     sub_query.load_async=False
-                    sub_query.query_rec=self.query_rec-1
-                    sub_query.split_strategy='slots'
+                    sub_query.query_depth_ttl=self.query_depth_ttl-1
+                    #sub_query.requests_size=requests_size
                     sub_queries.append(sub_query)
 
+            
                 results = self.perform(QueryManager.load_data, sub_queries, 
-                    asynch=self.load_async, progress=True, message='Loading data from '+self.start_time+' to '+self.end_time+'. Spliting query in {} slots'.format(self.nitro.config.slots))
+                    asynch=False if not self.load_async else (self.__parent__==None), progress=self.__parent__==None, 
+                    message='Loading data from '+self.start_time+' to '+self.end_time+'. In {} slots'.format(len(times)),
+                    func_args=dict(slots=slots),
+                        #IGONORING THE CONFIG ### : self.nitro.config.slots)
+                    workers=workers)
 
                 #Flatten the list of lists in a list
                 items=[item for sublist in results for item in sublist]
                 
             else :
-                log.warning("The query couldn't be fully executed")
+                if not self.__root_parent__.not_completed :
+                    log.warning("The query won't fully complete. Try to divide in more slots or increase the requests_size")
+                    self.__root_parent__.not_completed=True
 
         self.data=items
-        return(Manager(alist=items))
+        return(Manager(alist=items)) #return self ?
 
 class TestQueryManager(QueryManager):
     pass
