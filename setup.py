@@ -15,7 +15,7 @@ setup(
     url='https://github.com/mfesiem/msiempy',
     maintainer='andywalden, tristanlatr, mathieubeland',
     maintainer_email='aw@krakencodes.com, tris.la.tr@gmail.com',
-    version='0.0.1',
+    version='0.1.0',
     packages=['msiempy',],
     entry_points = {
         'console_scripts': ['msiempy=msiempy.cli:main'],

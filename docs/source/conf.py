@@ -17,11 +17,11 @@
 # -- Project information -----------------------------------------------------
 
 project = 'McAfee SIEM Python Library'
-copyright = '2019, andywalden, tristanlatr'
-author = 'andywalden, tristanlatr'
+copyright = '2019, andywalden, tristanlatr, mathieubeland'
+author = 'andywalden, tristanlatr, mathieubeland'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.14'
+release = '0.1.0'
 
 
 # -- General configuration ---------------------------------------------------
