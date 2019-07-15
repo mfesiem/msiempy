@@ -349,8 +349,6 @@ class Event(Item):
         "Rule.NormID",
         "Alert.DSIDSigID",
         "Alert.IPSIDAlertID",
-        "UserIDSrc",
-        "UserIDDst"
         
     See msiempy/static JSON files to browse complete list of fields and filters
     """
@@ -405,8 +403,6 @@ class Event(Item):
         "Rule.NormID",
         "Alert.DSIDSigID",
         "Alert.IPSIDAlertID"
-        #"UserIDSrc",
-        #"UserIDDst"
         ]
 
     def __getitem__(self, key):

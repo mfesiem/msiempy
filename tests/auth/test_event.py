@@ -8,6 +8,7 @@ class T(unittest.TestCase):
     def test_query(self):
 
         events = msiempy.event.EventManager(
+                    fields=['HostID', 'UserIDSrc', 'Alert.HostIDCat', 'Alert.UserIDSrcCat'],
                     time_range='LAST_24_HOURS',
                     filters=('SrcIP', ['10.0.0.0/8',]),
                     limit=100,
@@ -16,6 +17,8 @@ class T(unittest.TestCase):
         events.load_data()
         for e in events :
             self.assertRegex(e['Alert.SrcIP'],'^10.','Filtering is problematic')
+        print(events.json)
+        
 
     def test_query_splitted(self):
         events = msiempy.event.EventManager(
