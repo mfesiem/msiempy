@@ -13,18 +13,18 @@ setup(
     name='msiempy',
     description="McAfee SIEM API Python wrapper",
     url='https://github.com/mfesiem/msiempy',
-    maintainer='andywalden, tristanlatr',
+    maintainer='andywalden, tristanlatr, mathieubeland',
     maintainer_email='aw@krakencodes.com, tris.la.tr@gmail.com',
-    version='0.0.1',
+    version='0.1.0',
     packages=['msiempy',],
     entry_points = {
         'console_scripts': ['msiempy=msiempy.cli:main'],
     },
     install_requires=[
-          'requests','tqdm','PTable','python-dateutil'
+          'requests','tqdm','PTable','python-dateutil', 'urllib3'
     ],
     tests_require=[
-          'pylint','pytest'
+          'pylint','pytest','pdoc3'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

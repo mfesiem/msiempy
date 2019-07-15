@@ -10,6 +10,7 @@ class T(unittest.TestCase):
 
         events = msiempy.event.EventManager(
                     time_range='LAST_3_DAYS',
+                    fields=['HostID', 'UserIDSrc', 'Alert.HostIDCat', 'Alert.UserIDSrcCat'],
                     #filters=[('SrcIP', ['0.0.0.0/0',])],
                     #filters=[msiempy.query.FieldFilter('SrcIP', ['0.0.0.0/0',])],
                     limit=10,
@@ -18,14 +19,15 @@ class T(unittest.TestCase):
         events.load_data()
 
         for e in events :
-            self.assertNotEqual(e['Alert.SrcIP'],'')
-            #self.assertRegex(e['Alert.SrcIP'],'^10.','Filtering is problematic')
+            self.assertNotEqual(e['Alert.SrcIP'],'',"An event doesn't have proper source IP")
 
         self.assertGreater(len(events),0)
 
         print('EVENTS KEYS\n'+str(events.keys))
         print('EVENTS TEXT\n'+str(events))
         print('EVENT JSON\n'+events.json)
+            
+        
 
     def test_query_splitted(self):
         events = msiempy.event.EventManager(
@@ -41,7 +43,7 @@ class T(unittest.TestCase):
         events.load_data(delta='12h', slots=2)
 
         for e in events :
-             self.assertNotEqual(e['Alert.SrcIP'],'')
+             self.assertNotEqual(e['Alert.SrcIP'],"An event doesn't have proper source IP")
             #self.assertRegex(e['Alert.SrcIP'],'^10.','Filterring in a reccursive query is problematic')
             #self.assertRegex(e['Alert.DstIP'],'^10.','Filterring in a reccursive query is problematic')
 
@@ -62,7 +64,7 @@ class T(unittest.TestCase):
         events.load_data()
         print('EVENTS KEYS\n'+str(events.keys))
         print('EVENTS TEXT\n'+str(events))
-        print('EVENT JSON\n'+events.json)
 
         for event in events :
             event.add_note("Test note ! ")
+            print("A test note has been added to the event : \n"+str(event.json))

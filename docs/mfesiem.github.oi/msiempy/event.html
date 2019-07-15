@@ -1,0 +1,1332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.6.3" />
+<title>msiempy.event API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase;cursor:pointer}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>msiempy.event</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">import time
+import datetime
+import logging
+log = logging.getLogger(&#39;msiempy&#39;)
+
+from .base import Item
+from .query import QueryManager, FieldFilter, GroupFilter, QueryFilter
+from .error import NitroError
+from .utils import timerange_gettimes, parse_query_result, format_fields_for_query
+
+class EventManager(QueryManager):
+    &#34;&#34;&#34;
+    EventManager class.
+    Interface to query and manage events.
+    Inherits from QueryManager.
+    &#34;&#34;&#34; 
+
+    #Constants
+    #TODO Try grouped queries !
+    TYPE=&#39;EVENT&#39;
+    GROUPTYPE=&#39;NO_GROUP&#39;
+    POSSBILE_ROW_ORDER=[
+            &#39;ASCENDING&#39;,
+            &#39;DESCENDING&#39;
+    ]
+
+    # Declaring static value containing all the possibles
+    # event fields, should be loaded once (when the session start ?)
+    _possible_fields = []
+
+    def __init__(self, fields=None, order=None, limit=None, filters=None, compute_time_range=True, *args, **kwargs):
+        &#34;&#34;&#34;
+           Params
+           ======
+           
+            fields : list of strings representing all fields you want to apprear in the Events records.
+                Get the list of possible fields by calling EventManager.get_possible_fields() method.
+                Some defaults fields will always be present unless removed, see (1).
+            order : Not implemented yet. 
+                tuple (direction, field) or a list of filters in the SIEM format.
+                will set the first order according to (direction, fields).
+                    -&gt; same as using the property setter.
+                If you pass a list here, will use the this raw list as the SIEM `order` field.
+                Structure must be in correct format
+                
+                    -&gt; same as setting _order property directly.
+            limit : max number of rows per query, by default takes the value in config `default_rows` option.
+            filters : list of tuple (field [values])
+            compute_time_range : False if you want to send the actualy time_range in parameter for the initial query.
+                Defaulted to True cause the query splitting implies computing the time_range anyway.
+            *args, **kwargs : Parameters passed to `msiempy.base.QueryManager.__init__()`
+           
+            
+            Examples
+            ========
+            
+            (1) To delete a default field
+            ```
+                &gt;&gt;&gt;em=EventManager()
+                &gt;&gt;&gt;del em.fields[&#39;SrcIP&#39;]
+            ```
+            
+            Every init parameters are also properties. E.g. :
+            ```
+                &gt;&gt;&gt;em=EventManager(fields=[&#39;SrcIP&#39;,&#39;DstIP&#39;],
+                        order=(&#39;DESCENDING&#39;&#39;LastTime&#39;),
+                        filters=[(&#39;DstIP&#39;,&#39;4.4.0.0/16&#39;,&#39;8.8.0.0/16&#39;)])
+                &gt;&gt;&gt;em.load_data()```
+            Equlas :
+            ```
+                &gt;&gt;&gt;em=EventManager()
+                &gt;&gt;&gt;em.fields=[&#39;SrcIP&#39;,&#39;DstIP&#39;],
+                &gt;&gt;&gt;em._order=[{  &#34;direction&#34;: &#39;DESCENDING&#39;,
+                                &#34;field&#34;: { &#34;name&#34;: &#39;LastTime&#39; }  }]
+                &gt;&gt;&gt;em.filters=[(&#39;DstIP&#39;,&#39;4.4.0.0/16&#39;,&#39;8.8.0.0/16&#39;)]
+                &gt;&gt;&gt;em.load_data()```
+                
+        &#34;&#34;&#34;
+
+        #Declaring attributes
+        self._filters=list()
+        self._order=dict()
+
+        #Setting the default fields
+        self.fields=Event.DEFAULTS_EVENT_FIELDS
+        
+        #Adds the specified fields and make sure there is no duplicates
+        if fields :
+            self.fields=list(set(self.fields+fields))
+
+        #Set the compute_time_range propertir that is going to be used when time_range setter is called
+        self.compute_time_range=compute_time_range
+
+        #Calling super constructor : time_range set etc...
+        super().__init__(*args, **kwargs)
+
+        #Setting limit according to config or limit argument
+        #TODO Try to load queries with a limit of 10k and get result as chucks of 500 with starPost nbRows
+        #   and compare efficiency
+        self.limit=self.requests_size if limit is None else int(limit) #IGNORE THE CONFIG 
+        self.requests_size=self.limit
+
+        if isinstance(order, list): #if a list is passed for the prder, will replace the whole param supposed in correct SIEM format
+            self._order=order
+        else:
+            self._order=[{
+                &#34;direction&#34;: &#39;DESCENDING&#39;,
+                &#34;field&#34;: {
+                    &#34;name&#34;: &#39;LastTime&#39;
+                    }
+                }]
+            self.order=order #if a tuple is passed , will set the first order according to (direction, fields)
+
+        #TODO : find a solution not to use this
+        #callign super().filters=filters #https://bugs.python.org/issue14965
+        super(self.__class__, self.__class__).filters.__set__(self, filters)
+
+        #Type cast all items in the list &#34;data&#34; to events type objects
+        self.type_cast_items_to_events()
+
+    @property
+    def table_colums(self):
+        return Event.DEFAULTS_EVENT_FIELDS
+
+    def type_cast_items_to_events(self):
+        &#34;&#34;&#34;Type cast all items in the list &#34;data&#34; to events type objects&#34;&#34;&#34;
+        
+        events = []
+        for item in self.data:
+            event = Event(item)
+            events.append(event)
+
+        self.data = events
+
+    @property
+    def order(self):
+        &#34;&#34;&#34;
+        Return a list of orders representing the what the SIEM is expecting as the &#39;order&#39;
+        &#34;&#34;&#34;
+        return(self._order)
+
+    @order.setter
+    def order(self, order):
+        &#34;&#34;&#34;
+        The order must be tuple (direction, field).
+        Use _order to set with SIEM format.
+        &#34;&#34;&#34;
+        if order is None :
+            self._order=[{
+                &#34;direction&#34;: &#39;DESCENDING&#39;,
+                &#34;field&#34;: {
+                    &#34;name&#34;: &#39;LastTime&#39;
+                    }
+                }]
+        elif isinstance(order, tuple) :
+            if order[0] in self.POSSBILE_ROW_ORDER:
+                self._order[0][&#39;direction&#39;]=order[0]
+                self._order[0][&#39;field&#39;][&#39;name&#39;]=order[1]
+            else:
+                raise AttributeError(&#34;Illegal order value : &#34;+str(order[0])+&#34;. The order must be in :&#34;+str(self.POSSBILE_ROW_ORDER))
+        else :
+            raise AttributeError(&#34;Illegal type for argument order. Can onyl be a tuple is using the property setter. You can diretly specify a list of orders (SIEM format) by setting _order property.&#34;)
+
+    @property
+    def filters(self):
+        &#34;&#34;&#34;
+        Generates the json SIEM formatted filters for the query by calling reccursive getter : config_dict.
+        &#34;&#34;&#34;
+        return([f.config_dict for f in self._filters])
+
+    def add_filter(self, afilter):
+        &#34;&#34;&#34;
+        Concrete description of the QueryManager method.
+        It can take a tuple(fiels, [values]) or a QueryFilter sub class.
+        &#34;&#34;&#34;
+        if isinstance(afilter, tuple) :
+            self._filters.append(FieldFilter(afilter[0], afilter[1]))
+
+        elif isinstance(afilter, QueryFilter) :
+            self._filters.append(afilter)
+        
+        else :
+            raise NitroError(&#34;Sorry the filters must be either a tuple(fiels, [values]) or a QueryFilter sub class.&#34;)
+
+    def clear_filters(self):
+        &#34;&#34;&#34;
+        Replace all filters by a non filtering rule.
+        Acts like the is not filters.
+        &#34;&#34;&#34; 
+        self._filters=[FieldFilter(&#39;SrcIP&#39;, [&#39;0.0.0.0/0&#39;,])]
+    
+    @property
+    def time_range(self):
+        &#34;&#34;&#34; Same as super class.
+            Need to re-declare the time_range getter to be able to define setter.
+        &#34;&#34;&#34;
+        return(super().time_range)
+
+    @time_range.setter
+    def time_range(self, time_range):
+        &#34;&#34;&#34;
+        Set the time range of the query to the specified string value.
+        Trys if compute_time_range is True - by default it is - to get a 
+            start and a end time with utils.timerange_gettimes()
+        &#34;&#34;&#34;
+        if time_range!=None and time_range!=&#39;CUSTOM&#39; and self.compute_time_range :
+            try :
+                times = timerange_gettimes(time_range)
+                self._time_range=&#39;CUSTOM&#39;
+                self._start_time=times[0]
+                self._end_time=times[1]
+            # timerange_gettimes raises AttributeError until
+            # all timeranges are supported
+            except AttributeError as err:
+                log.warning(err)
+                #TODO : find a soltuion not to use this
+                #Calling super().time_range=time_range
+                #https://bugs.python.org/issue14965
+                super(self.__class__, self.__class__).time_range.__set__(self, time_range)
+            except :
+                raise
+        else :
+            #TODO : find a soltuion not to use this
+            super(self.__class__, self.__class__).time_range.__set__(self, time_range)
+
+    def get_possible_fields(self):
+        &#34;&#34;&#34;
+        Indicate a list of possible fields that you can request in a query.
+        The list is loaded from the SIEM.
+        &#34;&#34;&#34;
+        return self.nitro.request(&#39;get_possible_fields&#39;, type=self.TYPE, groupType=self.GROUPTYPE)
+
+    def _load_data(self, workers):
+        &#34;&#34;&#34;&#34;
+            Concrete helper method to execute the query and load the data : 
+                -&gt; Submit the query -&gt; wait -&gt; get the events -&gt; parse -
+                    -&gt; convert to EventManager -&gt;  set self.data and return 
+            Returns a tuple ( list of Events(1) ,the status of the query )
+                      tuple (items, completed).
+            
+            (1) aka EventManager
+        &#34;&#34;&#34;
+        query_infos=dict()
+
+        #Queries api calls are very different if the time range is custom.
+        if self.time_range == &#39;CUSTOM&#39; :
+            query_infos=self.nitro.request(
+                &#39;event_query_custom_time&#39;,
+                time_range=self.time_range,
+                start_time=self.start_time,
+                end_time=self.end_time,
+                #order=self.order, TODO support order
+                fields=format_fields_for_query(self.fields),
+                filters=self.filters,
+                limit=self.limit,
+                offset=0, #TODO remove old ref that is useless
+                includeTotal=False
+                )
+
+        else :
+            query_infos=self.nitro.request(
+                &#39;event_query&#39;,
+                time_range=self.time_range,
+                #order=self.order, TODO support order
+                fields=format_fields_for_query(self.fields),
+                filters=self.filters,
+                limit=self.limit,
+                offset=0, #TODO remove old ref that is useless
+                includeTotal=False
+                )
+        
+        log.debug(&#34;Waiting for EsmRunningQuery object : &#34;+str(query_infos))
+        self._wait_for(query_infos[&#39;resultID&#39;])
+        events_raw=self._get_events(query_infos[&#39;resultID&#39;])
+
+        events=EventManager(alist=events_raw)
+        #log.debug(&#34;Data loaded : &#34;+str(events))
+        
+        self.data=events
+        return((events,len(events)&lt;self.limit))
+
+    def load_data(self, **kwargs):
+        &#34;&#34;&#34;
+        Specialized EventManager load_data method.
+        Use super load_data implementation.
+        You could decide not to use the splitting feature by 
+            calling directly _load_data() 
+            kwargs are passed to super().load_data()
+        &#34;&#34;&#34;
+        return EventManager(alist=super().load_data(**kwargs))
+
+    def _wait_for(self, resultID, sleep_time=0.35):
+        &#34;&#34;&#34;
+        Internal method called by _load_data
+        Wait and sleep - for `sleep_time` duration in seconds -
+            until the query is completed
+        
+        #TODO handle SIEM ResultUnavailable error
+        &#34;&#34;&#34;
+        log.debug(&#34;Waiting for the query to be executed on the SIEM...&#34;)
+        while True:
+            status = self.nitro.request(&#39;query_status&#39;, resultID=resultID)
+            if status[&#39;complete&#39;] is True :
+                return True
+            else :
+                time.sleep(sleep_time)
+
+    def _get_events(self, resultID, startPos=0, numRows=None):
+        &#34;&#34;&#34;
+        Internal method that will get the query events, 
+            called by _load_data
+        by default, numRows correspond to limit
+        &#34;&#34;&#34;
+        
+        if not numRows :
+            numRows=self.limit
+                
+        result=self.nitro.request(&#39;query_result&#39;,
+            startPos=startPos,
+            numRows=numRows,
+            resultID=resultID)
+
+        #Calls a utils function to parse the [columns][rows]
+        #   to format into list of dict
+        #log.debug(&#34;Parsing colums : &#34;+str(result[&#39;columns&#39;]))
+        #log.debug(&#34;Parsing rows : &#34;+str(result[&#39;rows&#39;]))
+        if len(result[&#39;columns&#39;]) != len(set([column[&#39;name&#39;] for column in result[&#39;columns&#39;]])) :
+            log.error(&#34;You requested duplicated fields, the parsed fields/values results will be missmatched !&#34;)
+        events=parse_query_result(result[&#39;columns&#39;], result[&#39;rows&#39;])
+        #log.debug(&#34;Events parsed : &#34;+str(events))
+        return events
+          
+class Event(Item):
+    &#34;&#34;&#34;
+    Event.
+    You can see all the requested fields and have some 
+        interaction - note only - with the events
+        
+    Default event field keys :
+        &#34;Rule.msg&#34;,
+        &#34;Alert.SrcPort&#34;,
+        &#34;Alert.DstPort&#34;, 
+        &#34;Alert.SrcIP&#34;, 
+        &#34;Alert.DstIP&#34;, 
+        &#34;SrcMac&#34;,
+        &#34;Alert.DstMac&#34;, 
+        &#34;Alert.LastTime&#34;,
+        &#34;Rule.NormID&#34;,
+        &#34;Alert.DSIDSigID&#34;,
+        &#34;Alert.IPSIDAlertID&#34;,
+        
+    See msiempy/static JSON files to browse complete list of fields and filters
+    &#34;&#34;&#34;
+   
+    FIELDS_TABLES=[&#34;ADGroup&#34;,
+        &#34;Action&#34;,
+        &#34;Alert&#34;,
+        &#34;Asset&#34;,
+        &#34;AssetGroup&#34;,
+        &#34;AssetThreat&#34;,
+        &#34;CaseMgt&#34;,
+        &#34;CaseOrg&#34;,
+        &#34;CaseStatus&#34;,
+        &#34;Class&#34;,
+        &#34;Connection&#34;,
+        &#34;DataEnrichment&#34;,
+        &#34;GeoLoc_ASNGeoDst&#34;,
+        &#34;GeoLoc_ASNGeoSrc&#34;,
+        &#34;IOC&#34;,
+        &#34;IPS&#34;,
+        &#34;IPSCheck&#34;,
+        &#34;NDDeviceInterface_NDDevIFDst&#34;,
+        &#34;NDDeviceInterface_NDDevIFSrc&#34;,
+        &#34;NDDevice_NDDevIDDst&#34;,
+        &#34;NDDevice_NDDevIDSrc&#34;,
+        &#34;OS&#34;,
+        &#34;Rule&#34;,
+        &#34;Rule_NDSNormSigID&#34;,
+        &#34;Tag&#34;,
+        &#34;TagAsset&#34;,
+        &#34;ThirdPartyType&#34;,
+        &#34;Threat&#34;,
+        &#34;ThreatVendor&#34;,
+        &#34;TriggeredAlarm&#34;,
+        &#34;Users&#34;,
+        &#34;Vulnerability&#34;,
+        &#34;Zone_ZoneDst&#34;,
+        &#34;Zone_ZoneSrc&#34;,
+        ]
+
+    &#34;&#34;&#34;Relatively common event fields that could be useful to have.
+    &#34;&#34;&#34;
+    DEFAULTS_EVENT_FIELDS=[
+        &#34;Rule.msg&#34;,
+        &#34;Alert.SrcPort&#34;,
+        &#34;Alert.DstPort&#34;, 
+        &#34;Alert.SrcIP&#34;, 
+        &#34;Alert.DstIP&#34;, 
+        &#34;Alert.SrcMac&#34;,
+        &#34;Alert.DstMac&#34;, 
+        &#34;Alert.LastTime&#34;,
+        &#34;Rule.NormID&#34;,
+        &#34;Alert.DSIDSigID&#34;,
+        &#34;Alert.IPSIDAlertID&#34;
+        ]
+
+    def __getitem__(self, key):
+        &#34;&#34;&#34;
+        Automatically adding the table name of the field 
+            if no &#39;.&#39; is present in the key
+            Not working properly i think
+            #TODO try with collections.UserDict.__getitem__(self, key)
+        &#34;&#34;&#34;
+        return super().__getitem__(key)
+        &#34;&#34;&#34;
+        if &#39;.&#39; not in key :
+            for table in self.FIELDS_TABLES :
+                try :
+                    return super().__getitem__(table+&#39;.&#39;+key)
+                except (AttributeError, KeyError) : pass
+        try :
+            return super().__getitem__(key)
+        except (AttributeError, KeyError) : 
+            if key in self.DEFAULTS_EVENT_FIELDS :
+                log.error(&#39;Some default event fields are missing from SIEM reponse.&#39;)
+                return &#39;missing&#39;
+            else:
+                log.error(&#39;The SIEM dict keys are not always the same are the requested fields. check .keys()&#39;)
+                raise
+                &#34;&#34;&#34;
+
+    def clear_notes(self):
+        &#34;&#34;&#34;
+        Desctructive action.
+        Replace the notes by an empty string. 
+        &#34;&#34;&#34;
+        NotImplementedError()
+
+    def add_note(self, note):
+        &#34;&#34;&#34;
+        Add a new note in the note field.
+        &#34;&#34;&#34;
+        self.nitro.request(&#34;add_note_to_event&#34;, id=self.data[&#34;Alert.IPSIDAlertID&#34;], note=&#34;{} : {}&#34;.format(str(datetime.datetime.now()),note))
+        
+    def data_from_id(self, id):
+        &#34;&#34;&#34;EsmAlertData wrapper&#34;&#34;&#34;
+        return self.nitro.request(&#39;get_alert_data&#39;, id=id)
+        
+    </code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="msiempy.event.Event"><code class="flex name class">
+<span>class <span class="ident">Event</span></span>
+<span>(</span><span>adict=None, id=None)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Event.
+You can see all the requested fields and have some
+interaction - note only - with the events</p>
+<p>Default event field keys :
+"Rule.msg",
+"Alert.SrcPort",
+"Alert.DstPort",
+"Alert.SrcIP",
+"Alert.DstIP",
+"SrcMac",
+"Alert.DstMac",
+"Alert.LastTime",
+"Rule.NormID",
+"Alert.DSIDSigID",
+"Alert.IPSIDAlertID",</p>
+<p>See msiempy/static JSON files to browse complete list of fields and filters</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">class Event(Item):
+    &#34;&#34;&#34;
+    Event.
+    You can see all the requested fields and have some 
+        interaction - note only - with the events
+        
+    Default event field keys :
+        &#34;Rule.msg&#34;,
+        &#34;Alert.SrcPort&#34;,
+        &#34;Alert.DstPort&#34;, 
+        &#34;Alert.SrcIP&#34;, 
+        &#34;Alert.DstIP&#34;, 
+        &#34;SrcMac&#34;,
+        &#34;Alert.DstMac&#34;, 
+        &#34;Alert.LastTime&#34;,
+        &#34;Rule.NormID&#34;,
+        &#34;Alert.DSIDSigID&#34;,
+        &#34;Alert.IPSIDAlertID&#34;,
+        
+    See msiempy/static JSON files to browse complete list of fields and filters
+    &#34;&#34;&#34;
+   
+    FIELDS_TABLES=[&#34;ADGroup&#34;,
+        &#34;Action&#34;,
+        &#34;Alert&#34;,
+        &#34;Asset&#34;,
+        &#34;AssetGroup&#34;,
+        &#34;AssetThreat&#34;,
+        &#34;CaseMgt&#34;,
+        &#34;CaseOrg&#34;,
+        &#34;CaseStatus&#34;,
+        &#34;Class&#34;,
+        &#34;Connection&#34;,
+        &#34;DataEnrichment&#34;,
+        &#34;GeoLoc_ASNGeoDst&#34;,
+        &#34;GeoLoc_ASNGeoSrc&#34;,
+        &#34;IOC&#34;,
+        &#34;IPS&#34;,
+        &#34;IPSCheck&#34;,
+        &#34;NDDeviceInterface_NDDevIFDst&#34;,
+        &#34;NDDeviceInterface_NDDevIFSrc&#34;,
+        &#34;NDDevice_NDDevIDDst&#34;,
+        &#34;NDDevice_NDDevIDSrc&#34;,
+        &#34;OS&#34;,
+        &#34;Rule&#34;,
+        &#34;Rule_NDSNormSigID&#34;,
+        &#34;Tag&#34;,
+        &#34;TagAsset&#34;,
+        &#34;ThirdPartyType&#34;,
+        &#34;Threat&#34;,
+        &#34;ThreatVendor&#34;,
+        &#34;TriggeredAlarm&#34;,
+        &#34;Users&#34;,
+        &#34;Vulnerability&#34;,
+        &#34;Zone_ZoneDst&#34;,
+        &#34;Zone_ZoneSrc&#34;,
+        ]
+
+    &#34;&#34;&#34;Relatively common event fields that could be useful to have.
+    &#34;&#34;&#34;
+    DEFAULTS_EVENT_FIELDS=[
+        &#34;Rule.msg&#34;,
+        &#34;Alert.SrcPort&#34;,
+        &#34;Alert.DstPort&#34;, 
+        &#34;Alert.SrcIP&#34;, 
+        &#34;Alert.DstIP&#34;, 
+        &#34;Alert.SrcMac&#34;,
+        &#34;Alert.DstMac&#34;, 
+        &#34;Alert.LastTime&#34;,
+        &#34;Rule.NormID&#34;,
+        &#34;Alert.DSIDSigID&#34;,
+        &#34;Alert.IPSIDAlertID&#34;
+        ]
+
+    def __getitem__(self, key):
+        &#34;&#34;&#34;
+        Automatically adding the table name of the field 
+            if no &#39;.&#39; is present in the key
+            Not working properly i think
+            #TODO try with collections.UserDict.__getitem__(self, key)
+        &#34;&#34;&#34;
+        return super().__getitem__(key)
+        &#34;&#34;&#34;
+        if &#39;.&#39; not in key :
+            for table in self.FIELDS_TABLES :
+                try :
+                    return super().__getitem__(table+&#39;.&#39;+key)
+                except (AttributeError, KeyError) : pass
+        try :
+            return super().__getitem__(key)
+        except (AttributeError, KeyError) : 
+            if key in self.DEFAULTS_EVENT_FIELDS :
+                log.error(&#39;Some default event fields are missing from SIEM reponse.&#39;)
+                return &#39;missing&#39;
+            else:
+                log.error(&#39;The SIEM dict keys are not always the same are the requested fields. check .keys()&#39;)
+                raise
+                &#34;&#34;&#34;
+
+    def clear_notes(self):
+        &#34;&#34;&#34;
+        Desctructive action.
+        Replace the notes by an empty string. 
+        &#34;&#34;&#34;
+        NotImplementedError()
+
+    def add_note(self, note):
+        &#34;&#34;&#34;
+        Add a new note in the note field.
+        &#34;&#34;&#34;
+        self.nitro.request(&#34;add_note_to_event&#34;, id=self.data[&#34;Alert.IPSIDAlertID&#34;], note=&#34;{} : {}&#34;.format(str(datetime.datetime.now()),note))
+        
+    def data_from_id(self, id):
+        &#34;&#34;&#34;EsmAlertData wrapper&#34;&#34;&#34;
+        return self.nitro.request(&#39;get_alert_data&#39;, id=id)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="msiempy.base.Item" href="base.html#msiempy.base.Item">Item</a></li>
+<li>collections.UserDict</li>
+<li>collections.abc.MutableMapping</li>
+<li>collections.abc.Mapping</li>
+<li>collections.abc.Collection</li>
+<li>collections.abc.Sized</li>
+<li>collections.abc.Iterable</li>
+<li>collections.abc.Container</li>
+<li><a title="msiempy.base.NitroObject" href="base.html#msiempy.base.NitroObject">NitroObject</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="msiempy.event.Event.DEFAULTS_EVENT_FIELDS"><code class="name">var <span class="ident">DEFAULTS_EVENT_FIELDS</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="msiempy.event.Event.FIELDS_TABLES"><code class="name">var <span class="ident">FIELDS_TABLES</span></code></dt>
+<dd>
+<section class="desc"><p>Relatively common event fields that could be useful to have.</p></section>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="msiempy.event.Event.add_note"><code class="name flex">
+<span>def <span class="ident">add_note</span></span>(<span>self, note)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Add a new note in the note field.</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def add_note(self, note):
+    &#34;&#34;&#34;
+    Add a new note in the note field.
+    &#34;&#34;&#34;
+    self.nitro.request(&#34;add_note_to_event&#34;, id=self.data[&#34;Alert.IPSIDAlertID&#34;], note=&#34;{} : {}&#34;.format(str(datetime.datetime.now()),note))</code></pre>
+</details>
+</dd>
+<dt id="msiempy.event.Event.clear_notes"><code class="name flex">
+<span>def <span class="ident">clear_notes</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Desctructive action.
+Replace the notes by an empty string.</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def clear_notes(self):
+    &#34;&#34;&#34;
+    Desctructive action.
+    Replace the notes by an empty string. 
+    &#34;&#34;&#34;
+    NotImplementedError()</code></pre>
+</details>
+</dd>
+<dt id="msiempy.event.Event.data_from_id"><code class="name flex">
+<span>def <span class="ident">data_from_id</span></span>(<span>self, id)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>EsmAlertData wrapper</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def data_from_id(self, id):
+    &#34;&#34;&#34;EsmAlertData wrapper&#34;&#34;&#34;
+    return self.nitro.request(&#39;get_alert_data&#39;, id=id)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="msiempy.base.Item" href="base.html#msiempy.base.Item">Item</a></b></code>:
+<ul class="hlist">
+<li><code><a title="msiempy.base.Item.NitroJSONEncoder" href="base.html#msiempy.base.NitroObject.NitroJSONEncoder">NitroJSONEncoder</a></code></li>
+<li><code><a title="msiempy.base.Item.action_refresh" href="base.html#msiempy.base.NitroObject.action_refresh">action_refresh</a></code></li>
+<li><code><a title="msiempy.base.Item.json" href="base.html#msiempy.base.NitroObject.json">json</a></code></li>
+<li><code><a title="msiempy.base.Item.refresh" href="base.html#msiempy.base.NitroObject.refresh">refresh</a></code></li>
+<li><code><a title="msiempy.base.Item.text" href="base.html#msiempy.base.NitroObject.text">text</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="msiempy.event.EventManager"><code class="flex name class">
+<span>class <span class="ident">EventManager</span></span>
+<span>(</span><span>fields=None, order=None, limit=None, filters=None, compute_time_range=True, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>EventManager class.
+Interface to query and manage events.
+Inherits from QueryManager.</p>
+<h1 id="params">Params</h1>
+<p>fields : list of strings representing all fields you want to apprear in the Events records.
+Get the list of possible fields by calling EventManager.get_possible_fields() method.
+Some defaults fields will always be present unless removed, see (1).
+order : Not implemented yet.
+tuple (direction, field) or a list of filters in the SIEM format.
+will set the first order according to (direction, fields).
+-&gt; same as using the property setter.
+If you pass a list here, will use the this raw list as the SIEM <code>order</code> field.
+Structure must be in correct format</p>
+<pre><code>     -&gt; same as setting _order property directly.
+</code></pre>
+<p>limit : max number of rows per query, by default takes the value in config <code>default_rows</code> option.
+filters : list of tuple (field [values])
+compute_time_range : False if you want to send the actualy time_range in parameter for the initial query.
+Defaulted to True cause the query splitting implies computing the time_range anyway.
+<em>args, </em>*kwargs : Parameters passed to <code>msiempy.base.QueryManager.__init__()</code></p>
+<p>Examples
+========</p>
+<p>(1) To delete a default field
+<code>&gt;&gt;&gt;em=EventManager()
+&gt;&gt;&gt;del em.fields['SrcIP']</code></p>
+<p>Every init parameters are also properties. E.g. :
+<code>&gt;&gt;&gt;em=EventManager(fields=['SrcIP','DstIP'],
+order=('DESCENDING''LastTime'),
+filters=[('DstIP','4.4.0.0/16','8.8.0.0/16')])
+&gt;&gt;&gt;em.load_data()</code>
+Equlas :
+<code>&gt;&gt;&gt;em=EventManager()
+&gt;&gt;&gt;em.fields=['SrcIP','DstIP'],
+&gt;&gt;&gt;em._order=[{
+"direction": 'DESCENDING',
+"field": { "name": 'LastTime' }
+}]
+&gt;&gt;&gt;em.filters=[('DstIP','4.4.0.0/16','8.8.0.0/16')]
+&gt;&gt;&gt;em.load_data()</code></p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">class EventManager(QueryManager):
+    &#34;&#34;&#34;
+    EventManager class.
+    Interface to query and manage events.
+    Inherits from QueryManager.
+    &#34;&#34;&#34; 
+
+    #Constants
+    #TODO Try grouped queries !
+    TYPE=&#39;EVENT&#39;
+    GROUPTYPE=&#39;NO_GROUP&#39;
+    POSSBILE_ROW_ORDER=[
+            &#39;ASCENDING&#39;,
+            &#39;DESCENDING&#39;
+    ]
+
+    # Declaring static value containing all the possibles
+    # event fields, should be loaded once (when the session start ?)
+    _possible_fields = []
+
+    def __init__(self, fields=None, order=None, limit=None, filters=None, compute_time_range=True, *args, **kwargs):
+        &#34;&#34;&#34;
+           Params
+           ======
+           
+            fields : list of strings representing all fields you want to apprear in the Events records.
+                Get the list of possible fields by calling EventManager.get_possible_fields() method.
+                Some defaults fields will always be present unless removed, see (1).
+            order : Not implemented yet. 
+                tuple (direction, field) or a list of filters in the SIEM format.
+                will set the first order according to (direction, fields).
+                    -&gt; same as using the property setter.
+                If you pass a list here, will use the this raw list as the SIEM `order` field.
+                Structure must be in correct format
+                
+                    -&gt; same as setting _order property directly.
+            limit : max number of rows per query, by default takes the value in config `default_rows` option.
+            filters : list of tuple (field [values])
+            compute_time_range : False if you want to send the actualy time_range in parameter for the initial query.
+                Defaulted to True cause the query splitting implies computing the time_range anyway.
+            *args, **kwargs : Parameters passed to `msiempy.base.QueryManager.__init__()`
+           
+            
+            Examples
+            ========
+            
+            (1) To delete a default field
+            ```
+                &gt;&gt;&gt;em=EventManager()
+                &gt;&gt;&gt;del em.fields[&#39;SrcIP&#39;]
+            ```
+            
+            Every init parameters are also properties. E.g. :
+            ```
+                &gt;&gt;&gt;em=EventManager(fields=[&#39;SrcIP&#39;,&#39;DstIP&#39;],
+                        order=(&#39;DESCENDING&#39;&#39;LastTime&#39;),
+                        filters=[(&#39;DstIP&#39;,&#39;4.4.0.0/16&#39;,&#39;8.8.0.0/16&#39;)])
+                &gt;&gt;&gt;em.load_data()```
+            Equlas :
+            ```
+                &gt;&gt;&gt;em=EventManager()
+                &gt;&gt;&gt;em.fields=[&#39;SrcIP&#39;,&#39;DstIP&#39;],
+                &gt;&gt;&gt;em._order=[{  &#34;direction&#34;: &#39;DESCENDING&#39;,
+                                &#34;field&#34;: { &#34;name&#34;: &#39;LastTime&#39; }  }]
+                &gt;&gt;&gt;em.filters=[(&#39;DstIP&#39;,&#39;4.4.0.0/16&#39;,&#39;8.8.0.0/16&#39;)]
+                &gt;&gt;&gt;em.load_data()```
+                
+        &#34;&#34;&#34;
+
+        #Declaring attributes
+        self._filters=list()
+        self._order=dict()
+
+        #Setting the default fields
+        self.fields=Event.DEFAULTS_EVENT_FIELDS
+        
+        #Adds the specified fields and make sure there is no duplicates
+        if fields :
+            self.fields=list(set(self.fields+fields))
+
+        #Set the compute_time_range propertir that is going to be used when time_range setter is called
+        self.compute_time_range=compute_time_range
+
+        #Calling super constructor : time_range set etc...
+        super().__init__(*args, **kwargs)
+
+        #Setting limit according to config or limit argument
+        #TODO Try to load queries with a limit of 10k and get result as chucks of 500 with starPost nbRows
+        #   and compare efficiency
+        self.limit=self.requests_size if limit is None else int(limit) #IGNORE THE CONFIG 
+        self.requests_size=self.limit
+
+        if isinstance(order, list): #if a list is passed for the prder, will replace the whole param supposed in correct SIEM format
+            self._order=order
+        else:
+            self._order=[{
+                &#34;direction&#34;: &#39;DESCENDING&#39;,
+                &#34;field&#34;: {
+                    &#34;name&#34;: &#39;LastTime&#39;
+                    }
+                }]
+            self.order=order #if a tuple is passed , will set the first order according to (direction, fields)
+
+        #TODO : find a solution not to use this
+        #callign super().filters=filters #https://bugs.python.org/issue14965
+        super(self.__class__, self.__class__).filters.__set__(self, filters)
+
+        #Type cast all items in the list &#34;data&#34; to events type objects
+        self.type_cast_items_to_events()
+
+    @property
+    def table_colums(self):
+        return Event.DEFAULTS_EVENT_FIELDS
+
+    def type_cast_items_to_events(self):
+        &#34;&#34;&#34;Type cast all items in the list &#34;data&#34; to events type objects&#34;&#34;&#34;
+        
+        events = []
+        for item in self.data:
+            event = Event(item)
+            events.append(event)
+
+        self.data = events
+
+    @property
+    def order(self):
+        &#34;&#34;&#34;
+        Return a list of orders representing the what the SIEM is expecting as the &#39;order&#39;
+        &#34;&#34;&#34;
+        return(self._order)
+
+    @order.setter
+    def order(self, order):
+        &#34;&#34;&#34;
+        The order must be tuple (direction, field).
+        Use _order to set with SIEM format.
+        &#34;&#34;&#34;
+        if order is None :
+            self._order=[{
+                &#34;direction&#34;: &#39;DESCENDING&#39;,
+                &#34;field&#34;: {
+                    &#34;name&#34;: &#39;LastTime&#39;
+                    }
+                }]
+        elif isinstance(order, tuple) :
+            if order[0] in self.POSSBILE_ROW_ORDER:
+                self._order[0][&#39;direction&#39;]=order[0]
+                self._order[0][&#39;field&#39;][&#39;name&#39;]=order[1]
+            else:
+                raise AttributeError(&#34;Illegal order value : &#34;+str(order[0])+&#34;. The order must be in :&#34;+str(self.POSSBILE_ROW_ORDER))
+        else :
+            raise AttributeError(&#34;Illegal type for argument order. Can onyl be a tuple is using the property setter. You can diretly specify a list of orders (SIEM format) by setting _order property.&#34;)
+
+    @property
+    def filters(self):
+        &#34;&#34;&#34;
+        Generates the json SIEM formatted filters for the query by calling reccursive getter : config_dict.
+        &#34;&#34;&#34;
+        return([f.config_dict for f in self._filters])
+
+    def add_filter(self, afilter):
+        &#34;&#34;&#34;
+        Concrete description of the QueryManager method.
+        It can take a tuple(fiels, [values]) or a QueryFilter sub class.
+        &#34;&#34;&#34;
+        if isinstance(afilter, tuple) :
+            self._filters.append(FieldFilter(afilter[0], afilter[1]))
+
+        elif isinstance(afilter, QueryFilter) :
+            self._filters.append(afilter)
+        
+        else :
+            raise NitroError(&#34;Sorry the filters must be either a tuple(fiels, [values]) or a QueryFilter sub class.&#34;)
+
+    def clear_filters(self):
+        &#34;&#34;&#34;
+        Replace all filters by a non filtering rule.
+        Acts like the is not filters.
+        &#34;&#34;&#34; 
+        self._filters=[FieldFilter(&#39;SrcIP&#39;, [&#39;0.0.0.0/0&#39;,])]
+    
+    @property
+    def time_range(self):
+        &#34;&#34;&#34; Same as super class.
+            Need to re-declare the time_range getter to be able to define setter.
+        &#34;&#34;&#34;
+        return(super().time_range)
+
+    @time_range.setter
+    def time_range(self, time_range):
+        &#34;&#34;&#34;
+        Set the time range of the query to the specified string value.
+        Trys if compute_time_range is True - by default it is - to get a 
+            start and a end time with utils.timerange_gettimes()
+        &#34;&#34;&#34;
+        if time_range!=None and time_range!=&#39;CUSTOM&#39; and self.compute_time_range :
+            try :
+                times = timerange_gettimes(time_range)
+                self._time_range=&#39;CUSTOM&#39;
+                self._start_time=times[0]
+                self._end_time=times[1]
+            # timerange_gettimes raises AttributeError until
+            # all timeranges are supported
+            except AttributeError as err:
+                log.warning(err)
+                #TODO : find a soltuion not to use this
+                #Calling super().time_range=time_range
+                #https://bugs.python.org/issue14965
+                super(self.__class__, self.__class__).time_range.__set__(self, time_range)
+            except :
+                raise
+        else :
+            #TODO : find a soltuion not to use this
+            super(self.__class__, self.__class__).time_range.__set__(self, time_range)
+
+    def get_possible_fields(self):
+        &#34;&#34;&#34;
+        Indicate a list of possible fields that you can request in a query.
+        The list is loaded from the SIEM.
+        &#34;&#34;&#34;
+        return self.nitro.request(&#39;get_possible_fields&#39;, type=self.TYPE, groupType=self.GROUPTYPE)
+
+    def _load_data(self, workers):
+        &#34;&#34;&#34;&#34;
+            Concrete helper method to execute the query and load the data : 
+                -&gt; Submit the query -&gt; wait -&gt; get the events -&gt; parse -
+                    -&gt; convert to EventManager -&gt;  set self.data and return 
+            Returns a tuple ( list of Events(1) ,the status of the query )
+                      tuple (items, completed).
+            
+            (1) aka EventManager
+        &#34;&#34;&#34;
+        query_infos=dict()
+
+        #Queries api calls are very different if the time range is custom.
+        if self.time_range == &#39;CUSTOM&#39; :
+            query_infos=self.nitro.request(
+                &#39;event_query_custom_time&#39;,
+                time_range=self.time_range,
+                start_time=self.start_time,
+                end_time=self.end_time,
+                #order=self.order, TODO support order
+                fields=format_fields_for_query(self.fields),
+                filters=self.filters,
+                limit=self.limit,
+                offset=0, #TODO remove old ref that is useless
+                includeTotal=False
+                )
+
+        else :
+            query_infos=self.nitro.request(
+                &#39;event_query&#39;,
+                time_range=self.time_range,
+                #order=self.order, TODO support order
+                fields=format_fields_for_query(self.fields),
+                filters=self.filters,
+                limit=self.limit,
+                offset=0, #TODO remove old ref that is useless
+                includeTotal=False
+                )
+        
+        log.debug(&#34;Waiting for EsmRunningQuery object : &#34;+str(query_infos))
+        self._wait_for(query_infos[&#39;resultID&#39;])
+        events_raw=self._get_events(query_infos[&#39;resultID&#39;])
+
+        events=EventManager(alist=events_raw)
+        #log.debug(&#34;Data loaded : &#34;+str(events))
+        
+        self.data=events
+        return((events,len(events)&lt;self.limit))
+
+    def load_data(self, **kwargs):
+        &#34;&#34;&#34;
+        Specialized EventManager load_data method.
+        Use super load_data implementation.
+        You could decide not to use the splitting feature by 
+            calling directly _load_data() 
+            kwargs are passed to super().load_data()
+        &#34;&#34;&#34;
+        return EventManager(alist=super().load_data(**kwargs))
+
+    def _wait_for(self, resultID, sleep_time=0.35):
+        &#34;&#34;&#34;
+        Internal method called by _load_data
+        Wait and sleep - for `sleep_time` duration in seconds -
+            until the query is completed
+        
+        #TODO handle SIEM ResultUnavailable error
+        &#34;&#34;&#34;
+        log.debug(&#34;Waiting for the query to be executed on the SIEM...&#34;)
+        while True:
+            status = self.nitro.request(&#39;query_status&#39;, resultID=resultID)
+            if status[&#39;complete&#39;] is True :
+                return True
+            else :
+                time.sleep(sleep_time)
+
+    def _get_events(self, resultID, startPos=0, numRows=None):
+        &#34;&#34;&#34;
+        Internal method that will get the query events, 
+            called by _load_data
+        by default, numRows correspond to limit
+        &#34;&#34;&#34;
+        
+        if not numRows :
+            numRows=self.limit
+                
+        result=self.nitro.request(&#39;query_result&#39;,
+            startPos=startPos,
+            numRows=numRows,
+            resultID=resultID)
+
+        #Calls a utils function to parse the [columns][rows]
+        #   to format into list of dict
+        #log.debug(&#34;Parsing colums : &#34;+str(result[&#39;columns&#39;]))
+        #log.debug(&#34;Parsing rows : &#34;+str(result[&#39;rows&#39;]))
+        if len(result[&#39;columns&#39;]) != len(set([column[&#39;name&#39;] for column in result[&#39;columns&#39;]])) :
+            log.error(&#34;You requested duplicated fields, the parsed fields/values results will be missmatched !&#34;)
+        events=parse_query_result(result[&#39;columns&#39;], result[&#39;rows&#39;])
+        #log.debug(&#34;Events parsed : &#34;+str(events))
+        return events</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="msiempy.query.QueryManager" href="query.html#msiempy.query.QueryManager">QueryManager</a></li>
+<li><a title="msiempy.base.Manager" href="base.html#msiempy.base.Manager">Manager</a></li>
+<li>collections.UserList</li>
+<li>collections.abc.MutableSequence</li>
+<li>collections.abc.Sequence</li>
+<li>collections.abc.Reversible</li>
+<li>collections.abc.Collection</li>
+<li>collections.abc.Sized</li>
+<li>collections.abc.Iterable</li>
+<li>collections.abc.Container</li>
+<li><a title="msiempy.base.NitroObject" href="base.html#msiempy.base.NitroObject">NitroObject</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="msiempy.event.EventManager.GROUPTYPE"><code class="name">var <span class="ident">GROUPTYPE</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="msiempy.event.EventManager.POSSBILE_ROW_ORDER"><code class="name">var <span class="ident">POSSBILE_ROW_ORDER</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt id="msiempy.event.EventManager.TYPE"><code class="name">var <span class="ident">TYPE</span></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="msiempy.event.EventManager.filters"><code class="name">var <span class="ident">filters</span></code></dt>
+<dd>
+<section class="desc"><p>Generates the json SIEM formatted filters for the query by calling reccursive getter : config_dict.</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">@property
+def filters(self):
+    &#34;&#34;&#34;
+    Generates the json SIEM formatted filters for the query by calling reccursive getter : config_dict.
+    &#34;&#34;&#34;
+    return([f.config_dict for f in self._filters])</code></pre>
+</details>
+</dd>
+<dt id="msiempy.event.EventManager.order"><code class="name">var <span class="ident">order</span></code></dt>
+<dd>
+<section class="desc"><p>Return a list of orders representing the what the SIEM is expecting as the 'order'</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">@property
+def order(self):
+    &#34;&#34;&#34;
+    Return a list of orders representing the what the SIEM is expecting as the &#39;order&#39;
+    &#34;&#34;&#34;
+    return(self._order)</code></pre>
+</details>
+</dd>
+<dt id="msiempy.event.EventManager.table_colums"><code class="name">var <span class="ident">table_colums</span></code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">@property
+def table_colums(self):
+    return Event.DEFAULTS_EVENT_FIELDS</code></pre>
+</details>
+</dd>
+<dt id="msiempy.event.EventManager.time_range"><code class="name">var <span class="ident">time_range</span></code></dt>
+<dd>
+<section class="desc"><p>Same as super class.
+Need to re-declare the time_range getter to be able to define setter.</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">@property
+def time_range(self):
+    &#34;&#34;&#34; Same as super class.
+        Need to re-declare the time_range getter to be able to define setter.
+    &#34;&#34;&#34;
+    return(super().time_range)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="msiempy.event.EventManager.add_filter"><code class="name flex">
+<span>def <span class="ident">add_filter</span></span>(<span>self, afilter)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Concrete description of the QueryManager method.
+It can take a tuple(fiels, [values]) or a QueryFilter sub class.</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def add_filter(self, afilter):
+    &#34;&#34;&#34;
+    Concrete description of the QueryManager method.
+    It can take a tuple(fiels, [values]) or a QueryFilter sub class.
+    &#34;&#34;&#34;
+    if isinstance(afilter, tuple) :
+        self._filters.append(FieldFilter(afilter[0], afilter[1]))
+
+    elif isinstance(afilter, QueryFilter) :
+        self._filters.append(afilter)
+    
+    else :
+        raise NitroError(&#34;Sorry the filters must be either a tuple(fiels, [values]) or a QueryFilter sub class.&#34;)</code></pre>
+</details>
+</dd>
+<dt id="msiempy.event.EventManager.clear_filters"><code class="name flex">
+<span>def <span class="ident">clear_filters</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Replace all filters by a non filtering rule.
+Acts like the is not filters.</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def clear_filters(self):
+    &#34;&#34;&#34;
+    Replace all filters by a non filtering rule.
+    Acts like the is not filters.
+    &#34;&#34;&#34; 
+    self._filters=[FieldFilter(&#39;SrcIP&#39;, [&#39;0.0.0.0/0&#39;,])]</code></pre>
+</details>
+</dd>
+<dt id="msiempy.event.EventManager.get_possible_fields"><code class="name flex">
+<span>def <span class="ident">get_possible_fields</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Indicate a list of possible fields that you can request in a query.
+The list is loaded from the SIEM.</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def get_possible_fields(self):
+    &#34;&#34;&#34;
+    Indicate a list of possible fields that you can request in a query.
+    The list is loaded from the SIEM.
+    &#34;&#34;&#34;
+    return self.nitro.request(&#39;get_possible_fields&#39;, type=self.TYPE, groupType=self.GROUPTYPE)</code></pre>
+</details>
+</dd>
+<dt id="msiempy.event.EventManager.load_data"><code class="name flex">
+<span>def <span class="ident">load_data</span></span>(<span>self, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Specialized EventManager load_data method.
+Use super load_data implementation.
+You could decide not to use the splitting feature by
+calling directly _load_data()
+kwargs are passed to super().load_data()</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def load_data(self, **kwargs):
+    &#34;&#34;&#34;
+    Specialized EventManager load_data method.
+    Use super load_data implementation.
+    You could decide not to use the splitting feature by 
+        calling directly _load_data() 
+        kwargs are passed to super().load_data()
+    &#34;&#34;&#34;
+    return EventManager(alist=super().load_data(**kwargs))</code></pre>
+</details>
+</dd>
+<dt id="msiempy.event.EventManager.type_cast_items_to_events"><code class="name flex">
+<span>def <span class="ident">type_cast_items_to_events</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Type cast all items in the list "data" to events type objects</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def type_cast_items_to_events(self):
+    &#34;&#34;&#34;Type cast all items in the list &#34;data&#34; to events type objects&#34;&#34;&#34;
+    
+    events = []
+    for item in self.data:
+        event = Event(item)
+        events.append(event)
+
+    self.data = events</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="msiempy.query.QueryManager" href="query.html#msiempy.query.QueryManager">QueryManager</a></b></code>:
+<ul class="hlist">
+<li><code><a title="msiempy.query.QueryManager.DEFAULT_TIME_RANGE" href="query.html#msiempy.query.QueryManager.DEFAULT_TIME_RANGE">DEFAULT_TIME_RANGE</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.NitroJSONEncoder" href="base.html#msiempy.base.NitroObject.NitroJSONEncoder">NitroJSONEncoder</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.POSSIBLE_TIME_RANGE" href="query.html#msiempy.query.QueryManager.POSSIBLE_TIME_RANGE">POSSIBLE_TIME_RANGE</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.SELECTED" href="base.html#msiempy.base.Manager.SELECTED">SELECTED</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.action_refresh" href="base.html#msiempy.base.NitroObject.action_refresh">action_refresh</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.clear" href="base.html#msiempy.base.Manager.clear">clear</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.end_time" href="query.html#msiempy.query.QueryManager.end_time">end_time</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.get_text" href="base.html#msiempy.base.Manager.get_text">get_text</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.json" href="base.html#msiempy.base.NitroObject.json">json</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.perform" href="base.html#msiempy.base.Manager.perform">perform</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.refresh" href="base.html#msiempy.base.Manager.refresh">refresh</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.search" href="base.html#msiempy.base.Manager.search">search</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.selected_items" href="base.html#msiempy.base.Manager.selected_items">selected_items</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.start_time" href="query.html#msiempy.query.QueryManager.start_time">start_time</a></code></li>
+<li><code><a title="msiempy.query.QueryManager.text" href="base.html#msiempy.base.NitroObject.text">text</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="msiempy" href="index.html">msiempy</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="msiempy.event.Event" href="#msiempy.event.Event">Event</a></code></h4>
+<ul class="">
+<li><code><a title="msiempy.event.Event.DEFAULTS_EVENT_FIELDS" href="#msiempy.event.Event.DEFAULTS_EVENT_FIELDS">DEFAULTS_EVENT_FIELDS</a></code></li>
+<li><code><a title="msiempy.event.Event.FIELDS_TABLES" href="#msiempy.event.Event.FIELDS_TABLES">FIELDS_TABLES</a></code></li>
+<li><code><a title="msiempy.event.Event.add_note" href="#msiempy.event.Event.add_note">add_note</a></code></li>
+<li><code><a title="msiempy.event.Event.clear_notes" href="#msiempy.event.Event.clear_notes">clear_notes</a></code></li>
+<li><code><a title="msiempy.event.Event.data_from_id" href="#msiempy.event.Event.data_from_id">data_from_id</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="msiempy.event.EventManager" href="#msiempy.event.EventManager">EventManager</a></code></h4>
+<ul class="">
+<li><code><a title="msiempy.event.EventManager.GROUPTYPE" href="#msiempy.event.EventManager.GROUPTYPE">GROUPTYPE</a></code></li>
+<li><code><a title="msiempy.event.EventManager.POSSBILE_ROW_ORDER" href="#msiempy.event.EventManager.POSSBILE_ROW_ORDER">POSSBILE_ROW_ORDER</a></code></li>
+<li><code><a title="msiempy.event.EventManager.TYPE" href="#msiempy.event.EventManager.TYPE">TYPE</a></code></li>
+<li><code><a title="msiempy.event.EventManager.add_filter" href="#msiempy.event.EventManager.add_filter">add_filter</a></code></li>
+<li><code><a title="msiempy.event.EventManager.clear_filters" href="#msiempy.event.EventManager.clear_filters">clear_filters</a></code></li>
+<li><code><a title="msiempy.event.EventManager.filters" href="#msiempy.event.EventManager.filters">filters</a></code></li>
+<li><code><a title="msiempy.event.EventManager.get_possible_fields" href="#msiempy.event.EventManager.get_possible_fields">get_possible_fields</a></code></li>
+<li><code><a title="msiempy.event.EventManager.load_data" href="#msiempy.event.EventManager.load_data">load_data</a></code></li>
+<li><code><a title="msiempy.event.EventManager.order" href="#msiempy.event.EventManager.order">order</a></code></li>
+<li><code><a title="msiempy.event.EventManager.table_colums" href="#msiempy.event.EventManager.table_colums">table_colums</a></code></li>
+<li><code><a title="msiempy.event.EventManager.time_range" href="#msiempy.event.EventManager.time_range">time_range</a></code></li>
+<li><code><a title="msiempy.event.EventManager.type_cast_items_to_events" href="#msiempy.event.EventManager.type_cast_items_to_events">type_cast_items_to_events</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.6.3</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

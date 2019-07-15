@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.6.3" />
+<title>msiempy.utils API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase;cursor:pointer}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>msiempy.utils</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python"># -*- coding: utf-8 -*-
+import time
+import base64
+import re
+from functools import wraps
+import logging
+from datetime import datetime, timedelta
+import dateutil.parser
+
+def dehexify(data):
+    &#34;&#34;&#34;
+    A URL and Hexadecimal Decoding Library.
+
+    Credit: Larry Dewey
+    &#34;&#34;&#34;
+
+    hexen = {
+        &#39;\x1c&#39;: &#39;,&#39;,  # Replacing Device Control 1 with a comma.
+        &#39;\x11&#39;: &#39;\n&#39;,  # Replacing Device Control 2 with a new line.
+        &#39;\x12&#39;: &#39; &#39;,  # Space
+        &#39;\x22&#39;: &#39;&#34;&#39;,  # Double Quotes
+        &#39;\x23&#39;: &#39;#&#39;,  # Number Symbol
+        &#39;\x27&#39;: &#39;\&#39;&#39;,  # Single Quote
+        &#39;\x28&#39;: &#39;(&#39;,  # Open Parenthesis
+        &#39;\x29&#39;: &#39;)&#39;,  # Close Parenthesis
+        &#39;\x2b&#39;: &#39;+&#39;,  # Plus Symbol
+        &#39;\x2d&#39;: &#39;-&#39;,  # Hyphen Symbol
+        &#39;\x2e&#39;: &#39;.&#39;,  # Period, dot, or full stop.
+        &#39;\x2f&#39;: &#39;/&#39;,  # Forward Slash or divide symbol.
+        &#39;\x7c&#39;: &#39;|&#39;,  # Vertical bar or pipe.
+    }
+
+    uri = {
+        &#39;%11&#39;: &#39;,&#39;,  # Replacing Device Control 1 with a comma.
+        &#39;%12&#39;: &#39;\n&#39;,  # Replacing Device Control 2 with a new line.
+        &#39;%20&#39;: &#39; &#39;,  # Space
+        &#39;%22&#39;: &#39;&#34;&#39;,  # Double Quotes
+        &#39;%23&#39;: &#39;#&#39;,  # Number Symbol
+        &#39;%27&#39;: &#39;\&#39;&#39;,  # Single Quote
+        &#39;%28&#39;: &#39;(&#39;,  # Open Parenthesis
+        &#39;%29&#39;: &#39;)&#39;,  # Close Parenthesis
+        &#39;%2B&#39;: &#39;+&#39;,  # Plus Symbol
+        &#39;%2D&#39;: &#39;-&#39;,  # Hyphen Symbol
+        &#39;%2E&#39;: &#39;.&#39;,  # Period, dot, or full stop.
+        &#39;%2F&#39;: &#39;/&#39;,  # Forward Slash or divide symbol.
+        &#39;%3A&#39;: &#39;:&#39;,  # Colon
+        &#39;%7C&#39;: &#39;|&#39;,  # Vertical bar or pipe.
+    }
+
+    for (enc, dec) in hexen.items():
+        data = data.replace(enc, dec)
+
+    for (enc, dec) in uri.items():
+        data = data.replace(enc, dec)
+
+    return data
+
+
+def timethis(func):
+    &#34;&#34;&#34;
+    Decorator that reports the execution time.
+    &#34;&#34;&#34;
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        &#34;&#34;&#34;Wrapper&#34;&#34;&#34;
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(func.__name__, end-start)
+        return result
+    return wrapper
+
+def tob64(s):
+    if type(s) is str:
+        return base64.b64encode(s.encode(&#39;utf-8&#39;)).decode()
+
+def fromb64(s):
+    if type(s) is str:
+        return base64.b64decode(s.encode(&#39;utf-8&#39;)).encode()
+
+def timerange_gettimes(time_range):
+    t=time_range.upper()
+    now=datetime.now()
+    times=tuple()
+
+    if t == &#39;LAST_MINUTE&#39; :
+        times=(now-timedelta(seconds=60), now)
+        
+    elif t == &#39;LAST_10_MINUTES&#39;:
+        times=(now-timedelta(minutes=10), now)
+
+    elif t == &#39;LAST_30_MINUTES&#39;:
+        times=(now-timedelta(minutes=30), now)
+
+    elif t == &#39;LAST_HOUR&#39;:
+        times=(now-timedelta(minutes=60), now)
+
+    elif t == &#39;CURRENT_DAY&#39;:
+        times=(now.replace(hour=0, minute=0, second=0), now.replace(hour=23, minute=59, second=59))
+
+    elif t == &#39;PREVIOUS_DAY&#39;:
+        yesterday=now-timedelta(hours=24)
+        times=(yesterday.replace(hour=0, minute=0, second=0), yesterday.replace(hour=23, minute=59, second=59))
+
+    elif t == &#39;LAST_24_HOURS&#39;:
+        times=(now-timedelta(hours=24), now)
+
+    elif t == &#39;LAST_2_DAYS&#39;:
+        times=(now-timedelta(days=2), now)
+
+    elif t == &#39;LAST_3_DAYS&#39;:
+        times=(now-timedelta(days=3), now)
+
+    else :
+        raise NotImplementedError(&#34;Timerange &#34;+t+&#34; is not supported yet&#34;)
+    
+    return(times[0].isoformat(), times[1].isoformat())
+    
+    &#34;&#34;&#34; #TODO Support other time ranges
+    elif t is &#39;CURRENT_WEEK&#39;:
+        pass
+    elif t is &#39;PREVIOUS_WEEK&#39;:
+        pass
+    elif t is &#39;CURRENT_MONTH&#39;:
+        pass
+    elif t is &#39;PREVIOUS_MONTH&#39;:
+        pass
+    elif t is &#39;CURRENT_QUARTER&#39;:
+        pass
+    elif t is &#39;PREVIOUS_QUARTER&#39;:
+        pass
+    elif t is &#39;CURRENT_YEAR&#39;:
+        pass
+    elif t is &#39;PREVIOUS_YEAR&#39;:
+        pass&#34;&#34;&#34;
+
+def divide_times(first, last, time=0, slots=0, delta=0, min_slots=0):
+    &#34;&#34;&#34;&#34;
+        Divide the time range based on another time, a delta or on a number of slots
+        Return list of tuple
+    &#34;&#34;&#34;
+
+    #parse the dates
+    t1=convert_to_time_obj(first) if not isinstance(first, datetime) else first
+    t2=convert_to_time_obj(last) if not isinstance(last, datetime) else last
+    
+    duration=t2-t1
+
+    if slots==0 :
+        if delta==0 :
+            if time==0 :
+                raise AttributeError(&#39;Either time, slots or delta must be specified&#39;)
+            else :
+                div=convert_to_time_obj(time)-t1
+
+        elif(isinstance(delta, timedelta)):
+            div = delta
+        elif isinstance(delta, str):
+            div = parse_timedelta(delta)
+        else:
+            raise AttributeError(&#39;delta Must be timedelta or str object&#39;)
+
+        
+        slots=int(duration.total_seconds()/div.total_seconds())
+
+    slots+=min_slots
+    timeSlot=timedelta(seconds=duration.total_seconds()/slots)
+
+    #print(locals())
+
+    times=list()
+
+    for i in range(slots):
+        times.append( (t1, t1+timeSlot) )
+        t1+=timeSlot
+
+    return(times)
+
+def regex_match(regex, string):
+    if re.search(regex, string):
+        return True
+    else:
+        return False
+
+def format_esm_time(esm_time):
+    &#34;&#34;&#34;Converts time object to ESM time string.
+    
+    Arguments:
+        time_obj {[type]} -- [description]
+    Returns:
+        time string in format: 2019-04-08T19:35:02.971Z
+    &#34;&#34;&#34;
+    _esm_out_time_fmt = &#39;%m/%d/%Y %H:%M:%S&#39;
+    _esm_in_time_fmt = &#39;%Y-%m-%dT%H:%M:%S.000Z&#39;
+    if isinstance(esm_time, str):
+        esm_time = convert_to_time_obj(esm_time)#, _esm_out_time_fmt)
+    return datetime.strftime(esm_time, _esm_in_time_fmt)
+
+def convert_to_time_obj(time_str):
+    &#34;&#34;&#34;
+    Converts given timestamp string to datetime object
+    
+    Args:
+        time_str: timestamp in format &#39;YYYY/MM/DD HH:MM:SS&#39;,
+                         &#39;MM/DD/YYYY HH:MM:SS&#39;, or &#39;DD/MM/YYYY HH:MM:SS&#39;
+                         
+    Returns:
+        datetime object or None if no format matches
+    &#34;&#34;&#34;
+    return dateutil.parser.parse(time_str)
+
+def parse_query_result(columns, rows):
+    &#34;&#34;&#34;
+    For input :
+        columns = [&#39;key1&#39;,&#39;name&#39;,&#39;password&#39;]
+        rows = [
+            [&#39;67&#39;,&#39;bob&#39;,&#39;b08b&#39;],
+            [&#39;68&#39;,&#39;mike&#39;,&#39;kaas&#39;],
+            [&#39;69&#39;,&#39;jean&#39;,&#39;p992&#39;],
+        ]
+    Returns :
+    [
+        {key1=67, name=bob, password=b08b},
+        {...},
+        {},
+    ]
+
+    &#34;&#34;&#34;
+    events=list()
+    for row in rows :
+        event=dict()
+        for i in range(len(columns)):
+            event.update({columns[i][&#39;name&#39;]:row[&#39;values&#39;][i]})
+
+        events.append(event)
+
+    return(events)
+
+
+def format_fields_for_query(fields):
+    &#34;&#34;&#34;
+    [&#39;field1&#39;,&#39;name&#39;,&#39;user&#39;]
+
+    Returns :
+    [
+        {&#39;name&#39;:&#39;field1&#39;},
+        {...},
+        {},
+    ]
+    &#34;&#34;&#34;
+    return([{&#39;name&#39;:value} for value in list(fields)])
+
+
+
+
+def parse_timedelta(time_str):
+    &#34;&#34;&#34;
+    Parse a time string e.g. (2h13m) into a timedelta object.
+
+    Modified from virhilo&#39;s answer at https://stackoverflow.com/a/4628148/851699
+
+    :param time_str: A string identifying a duration.  (eg. 2h13m)
+    :return datetime.timedelta: A datetime.timedelta object
+    &#34;&#34;&#34;
+    regex = re.compile(r&#39;^((?P&lt;days&gt;[\.\d]+?)d)?((?P&lt;hours&gt;[\.\d]+?)h)?((?P&lt;minutes&gt;[\.\d]+?)m)?((?P&lt;seconds&gt;[\.\d]+?)s)?$&#39;)
+    parts = regex.match(time_str)
+    assert parts is not None, &#34;Could not parse any time information from &#39;{}&#39;.  Examples of valid strings: &#39;8h&#39;, &#39;2d8h5m20s&#39;, &#39;2m4s&#39;&#34;.format(time_str)
+    time_params = {name: float(param) for name, param in parts.groupdict().items() if param}
+    return timedelta(**time_params)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="msiempy.utils.convert_to_time_obj"><code class="name flex">
+<span>def <span class="ident">convert_to_time_obj</span></span>(<span>time_str)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Converts given timestamp string to datetime object</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>time_str</code></strong></dt>
+<dd>timestamp in format 'YYYY/MM/DD HH:MM:SS',
+'MM/DD/YYYY HH:MM:SS', or 'DD/MM/YYYY HH:MM:SS'</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>datetime</code> <code>object</code> or <code>None</code> <code>if</code> <code>no</code> <code>format</code> <code>matches</code></dt>
+<dd>&nbsp;</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def convert_to_time_obj(time_str):
+    &#34;&#34;&#34;
+    Converts given timestamp string to datetime object
+    
+    Args:
+        time_str: timestamp in format &#39;YYYY/MM/DD HH:MM:SS&#39;,
+                         &#39;MM/DD/YYYY HH:MM:SS&#39;, or &#39;DD/MM/YYYY HH:MM:SS&#39;
+                         
+    Returns:
+        datetime object or None if no format matches
+    &#34;&#34;&#34;
+    return dateutil.parser.parse(time_str)</code></pre>
+</details>
+</dd>
+<dt id="msiempy.utils.dehexify"><code class="name flex">
+<span>def <span class="ident">dehexify</span></span>(<span>data)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>A URL and Hexadecimal Decoding Library.</p>
+<p>Credit: Larry Dewey</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def dehexify(data):
+    &#34;&#34;&#34;
+    A URL and Hexadecimal Decoding Library.
+
+    Credit: Larry Dewey
+    &#34;&#34;&#34;
+
+    hexen = {
+        &#39;\x1c&#39;: &#39;,&#39;,  # Replacing Device Control 1 with a comma.
+        &#39;\x11&#39;: &#39;\n&#39;,  # Replacing Device Control 2 with a new line.
+        &#39;\x12&#39;: &#39; &#39;,  # Space
+        &#39;\x22&#39;: &#39;&#34;&#39;,  # Double Quotes
+        &#39;\x23&#39;: &#39;#&#39;,  # Number Symbol
+        &#39;\x27&#39;: &#39;\&#39;&#39;,  # Single Quote
+        &#39;\x28&#39;: &#39;(&#39;,  # Open Parenthesis
+        &#39;\x29&#39;: &#39;)&#39;,  # Close Parenthesis
+        &#39;\x2b&#39;: &#39;+&#39;,  # Plus Symbol
+        &#39;\x2d&#39;: &#39;-&#39;,  # Hyphen Symbol
+        &#39;\x2e&#39;: &#39;.&#39;,  # Period, dot, or full stop.
+        &#39;\x2f&#39;: &#39;/&#39;,  # Forward Slash or divide symbol.
+        &#39;\x7c&#39;: &#39;|&#39;,  # Vertical bar or pipe.
+    }
+
+    uri = {
+        &#39;%11&#39;: &#39;,&#39;,  # Replacing Device Control 1 with a comma.
+        &#39;%12&#39;: &#39;\n&#39;,  # Replacing Device Control 2 with a new line.
+        &#39;%20&#39;: &#39; &#39;,  # Space
+        &#39;%22&#39;: &#39;&#34;&#39;,  # Double Quotes
+        &#39;%23&#39;: &#39;#&#39;,  # Number Symbol
+        &#39;%27&#39;: &#39;\&#39;&#39;,  # Single Quote
+        &#39;%28&#39;: &#39;(&#39;,  # Open Parenthesis
+        &#39;%29&#39;: &#39;)&#39;,  # Close Parenthesis
+        &#39;%2B&#39;: &#39;+&#39;,  # Plus Symbol
+        &#39;%2D&#39;: &#39;-&#39;,  # Hyphen Symbol
+        &#39;%2E&#39;: &#39;.&#39;,  # Period, dot, or full stop.
+        &#39;%2F&#39;: &#39;/&#39;,  # Forward Slash or divide symbol.
+        &#39;%3A&#39;: &#39;:&#39;,  # Colon
+        &#39;%7C&#39;: &#39;|&#39;,  # Vertical bar or pipe.
+    }
+
+    for (enc, dec) in hexen.items():
+        data = data.replace(enc, dec)
+
+    for (enc, dec) in uri.items():
+        data = data.replace(enc, dec)
+
+    return data</code></pre>
+</details>
+</dd>
+<dt id="msiempy.utils.divide_times"><code class="name flex">
+<span>def <span class="ident">divide_times</span></span>(<span>first, last, time=0, slots=0, delta=0, min_slots=0)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>"
+Divide the time range based on another time, a delta or on a number of slots
+Return list of tuple</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def divide_times(first, last, time=0, slots=0, delta=0, min_slots=0):
+    &#34;&#34;&#34;&#34;
+        Divide the time range based on another time, a delta or on a number of slots
+        Return list of tuple
+    &#34;&#34;&#34;
+
+    #parse the dates
+    t1=convert_to_time_obj(first) if not isinstance(first, datetime) else first
+    t2=convert_to_time_obj(last) if not isinstance(last, datetime) else last
+    
+    duration=t2-t1
+
+    if slots==0 :
+        if delta==0 :
+            if time==0 :
+                raise AttributeError(&#39;Either time, slots or delta must be specified&#39;)
+            else :
+                div=convert_to_time_obj(time)-t1
+
+        elif(isinstance(delta, timedelta)):
+            div = delta
+        elif isinstance(delta, str):
+            div = parse_timedelta(delta)
+        else:
+            raise AttributeError(&#39;delta Must be timedelta or str object&#39;)
+
+        
+        slots=int(duration.total_seconds()/div.total_seconds())
+
+    slots+=min_slots
+    timeSlot=timedelta(seconds=duration.total_seconds()/slots)
+
+    #print(locals())
+
+    times=list()
+
+    for i in range(slots):
+        times.append( (t1, t1+timeSlot) )
+        t1+=timeSlot
+
+    return(times)</code></pre>
+</details>
+</dd>
+<dt id="msiempy.utils.format_esm_time"><code class="name flex">
+<span>def <span class="ident">format_esm_time</span></span>(<span>esm_time)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Converts time object to ESM time string.</p>
+<h2 id="arguments">Arguments</h2>
+<p>time_obj {[type]} &ndash; [description]</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>time</code> <code>string</code> <code>in</code> <code>format</code>: <code>2019</code>-<code>04</code>-<code>08T19</code>:<code>35</code>:<code>02.971Z</code></dt>
+<dd>&nbsp;</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def format_esm_time(esm_time):
+    &#34;&#34;&#34;Converts time object to ESM time string.
+    
+    Arguments:
+        time_obj {[type]} -- [description]
+    Returns:
+        time string in format: 2019-04-08T19:35:02.971Z
+    &#34;&#34;&#34;
+    _esm_out_time_fmt = &#39;%m/%d/%Y %H:%M:%S&#39;
+    _esm_in_time_fmt = &#39;%Y-%m-%dT%H:%M:%S.000Z&#39;
+    if isinstance(esm_time, str):
+        esm_time = convert_to_time_obj(esm_time)#, _esm_out_time_fmt)
+    return datetime.strftime(esm_time, _esm_in_time_fmt)</code></pre>
+</details>
+</dd>
+<dt id="msiempy.utils.format_fields_for_query"><code class="name flex">
+<span>def <span class="ident">format_fields_for_query</span></span>(<span>fields)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>['field1','name','user']</p>
+<p>Returns :
+[
+{'name':'field1'},
+{&hellip;},
+{},
+]</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def format_fields_for_query(fields):
+    &#34;&#34;&#34;
+    [&#39;field1&#39;,&#39;name&#39;,&#39;user&#39;]
+
+    Returns :
+    [
+        {&#39;name&#39;:&#39;field1&#39;},
+        {...},
+        {},
+    ]
+    &#34;&#34;&#34;
+    return([{&#39;name&#39;:value} for value in list(fields)])</code></pre>
+</details>
+</dd>
+<dt id="msiempy.utils.fromb64"><code class="name flex">
+<span>def <span class="ident">fromb64</span></span>(<span>s)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def fromb64(s):
+    if type(s) is str:
+        return base64.b64decode(s.encode(&#39;utf-8&#39;)).encode()</code></pre>
+</details>
+</dd>
+<dt id="msiempy.utils.parse_query_result"><code class="name flex">
+<span>def <span class="ident">parse_query_result</span></span>(<span>columns, rows)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>For input :
+columns = ['key1','name','password']
+rows = [
+['67','bob','b08b'],
+['68','mike','kaas'],
+['69','jean','p992'],
+]
+Returns :
+[
+{key1=67, name=bob, password=b08b},
+{&hellip;},
+{},
+]</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def parse_query_result(columns, rows):
+    &#34;&#34;&#34;
+    For input :
+        columns = [&#39;key1&#39;,&#39;name&#39;,&#39;password&#39;]
+        rows = [
+            [&#39;67&#39;,&#39;bob&#39;,&#39;b08b&#39;],
+            [&#39;68&#39;,&#39;mike&#39;,&#39;kaas&#39;],
+            [&#39;69&#39;,&#39;jean&#39;,&#39;p992&#39;],
+        ]
+    Returns :
+    [
+        {key1=67, name=bob, password=b08b},
+        {...},
+        {},
+    ]
+
+    &#34;&#34;&#34;
+    events=list()
+    for row in rows :
+        event=dict()
+        for i in range(len(columns)):
+            event.update({columns[i][&#39;name&#39;]:row[&#39;values&#39;][i]})
+
+        events.append(event)
+
+    return(events)</code></pre>
+</details>
+</dd>
+<dt id="msiempy.utils.parse_timedelta"><code class="name flex">
+<span>def <span class="ident">parse_timedelta</span></span>(<span>time_str)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Parse a time string e.g. (2h13m) into a timedelta object.</p>
+<p>Modified from virhilo's answer at <a href="https://stackoverflow.com/a/4628148/851699">https://stackoverflow.com/a/4628148/851699</a></p>
+<p>:param time_str: A string identifying a duration.
+(eg. 2h13m)
+:return datetime.timedelta: A datetime.timedelta object</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def parse_timedelta(time_str):
+    &#34;&#34;&#34;
+    Parse a time string e.g. (2h13m) into a timedelta object.
+
+    Modified from virhilo&#39;s answer at https://stackoverflow.com/a/4628148/851699
+
+    :param time_str: A string identifying a duration.  (eg. 2h13m)
+    :return datetime.timedelta: A datetime.timedelta object
+    &#34;&#34;&#34;
+    regex = re.compile(r&#39;^((?P&lt;days&gt;[\.\d]+?)d)?((?P&lt;hours&gt;[\.\d]+?)h)?((?P&lt;minutes&gt;[\.\d]+?)m)?((?P&lt;seconds&gt;[\.\d]+?)s)?$&#39;)
+    parts = regex.match(time_str)
+    assert parts is not None, &#34;Could not parse any time information from &#39;{}&#39;.  Examples of valid strings: &#39;8h&#39;, &#39;2d8h5m20s&#39;, &#39;2m4s&#39;&#34;.format(time_str)
+    time_params = {name: float(param) for name, param in parts.groupdict().items() if param}
+    return timedelta(**time_params)</code></pre>
+</details>
+</dd>
+<dt id="msiempy.utils.regex_match"><code class="name flex">
+<span>def <span class="ident">regex_match</span></span>(<span>regex, string)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def regex_match(regex, string):
+    if re.search(regex, string):
+        return True
+    else:
+        return False</code></pre>
+</details>
+</dd>
+<dt id="msiempy.utils.timerange_gettimes"><code class="name flex">
+<span>def <span class="ident">timerange_gettimes</span></span>(<span>time_range)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def timerange_gettimes(time_range):
+    t=time_range.upper()
+    now=datetime.now()
+    times=tuple()
+
+    if t == &#39;LAST_MINUTE&#39; :
+        times=(now-timedelta(seconds=60), now)
+        
+    elif t == &#39;LAST_10_MINUTES&#39;:
+        times=(now-timedelta(minutes=10), now)
+
+    elif t == &#39;LAST_30_MINUTES&#39;:
+        times=(now-timedelta(minutes=30), now)
+
+    elif t == &#39;LAST_HOUR&#39;:
+        times=(now-timedelta(minutes=60), now)
+
+    elif t == &#39;CURRENT_DAY&#39;:
+        times=(now.replace(hour=0, minute=0, second=0), now.replace(hour=23, minute=59, second=59))
+
+    elif t == &#39;PREVIOUS_DAY&#39;:
+        yesterday=now-timedelta(hours=24)
+        times=(yesterday.replace(hour=0, minute=0, second=0), yesterday.replace(hour=23, minute=59, second=59))
+
+    elif t == &#39;LAST_24_HOURS&#39;:
+        times=(now-timedelta(hours=24), now)
+
+    elif t == &#39;LAST_2_DAYS&#39;:
+        times=(now-timedelta(days=2), now)
+
+    elif t == &#39;LAST_3_DAYS&#39;:
+        times=(now-timedelta(days=3), now)
+
+    else :
+        raise NotImplementedError(&#34;Timerange &#34;+t+&#34; is not supported yet&#34;)
+    
+    return(times[0].isoformat(), times[1].isoformat())
+    
+    &#34;&#34;&#34; #TODO Support other time ranges
+    elif t is &#39;CURRENT_WEEK&#39;:
+        pass
+    elif t is &#39;PREVIOUS_WEEK&#39;:
+        pass
+    elif t is &#39;CURRENT_MONTH&#39;:
+        pass
+    elif t is &#39;PREVIOUS_MONTH&#39;:
+        pass
+    elif t is &#39;CURRENT_QUARTER&#39;:
+        pass
+    elif t is &#39;PREVIOUS_QUARTER&#39;:
+        pass
+    elif t is &#39;CURRENT_YEAR&#39;:
+        pass
+    elif t is &#39;PREVIOUS_YEAR&#39;:
+        pass&#34;&#34;&#34;</code></pre>
+</details>
+</dd>
+<dt id="msiempy.utils.timethis"><code class="name flex">
+<span>def <span class="ident">timethis</span></span>(<span>func)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Decorator that reports the execution time.</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def timethis(func):
+    &#34;&#34;&#34;
+    Decorator that reports the execution time.
+    &#34;&#34;&#34;
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        &#34;&#34;&#34;Wrapper&#34;&#34;&#34;
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(func.__name__, end-start)
+        return result
+    return wrapper</code></pre>
+</details>
+</dd>
+<dt id="msiempy.utils.tob64"><code class="name flex">
+<span>def <span class="ident">tob64</span></span>(<span>s)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def tob64(s):
+    if type(s) is str:
+        return base64.b64encode(s.encode(&#39;utf-8&#39;)).decode()</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="msiempy" href="index.html">msiempy</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="msiempy.utils.convert_to_time_obj" href="#msiempy.utils.convert_to_time_obj">convert_to_time_obj</a></code></li>
+<li><code><a title="msiempy.utils.dehexify" href="#msiempy.utils.dehexify">dehexify</a></code></li>
+<li><code><a title="msiempy.utils.divide_times" href="#msiempy.utils.divide_times">divide_times</a></code></li>
+<li><code><a title="msiempy.utils.format_esm_time" href="#msiempy.utils.format_esm_time">format_esm_time</a></code></li>
+<li><code><a title="msiempy.utils.format_fields_for_query" href="#msiempy.utils.format_fields_for_query">format_fields_for_query</a></code></li>
+<li><code><a title="msiempy.utils.fromb64" href="#msiempy.utils.fromb64">fromb64</a></code></li>
+<li><code><a title="msiempy.utils.parse_query_result" href="#msiempy.utils.parse_query_result">parse_query_result</a></code></li>
+<li><code><a title="msiempy.utils.parse_timedelta" href="#msiempy.utils.parse_timedelta">parse_timedelta</a></code></li>
+<li><code><a title="msiempy.utils.regex_match" href="#msiempy.utils.regex_match">regex_match</a></code></li>
+<li><code><a title="msiempy.utils.timerange_gettimes" href="#msiempy.utils.timerange_gettimes">timerange_gettimes</a></code></li>
+<li><code><a title="msiempy.utils.timethis" href="#msiempy.utils.timethis">timethis</a></code></li>
+<li><code><a title="msiempy.utils.tob64" href="#msiempy.utils.tob64">tob64</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.6.3</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

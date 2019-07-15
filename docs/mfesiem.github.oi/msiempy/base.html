@@ -1,0 +1,1461 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.6.3" />
+<title>msiempy.base API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase;cursor:pointer}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>msiempy.base</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">import abc
+import collections
+import json
+import tqdm
+import copy
+import csv
+import concurrent.futures
+import prettytable
+from prettytable import MSWORD_FRIENDLY
+import datetime
+import functools
+import logging
+import textwrap
+import requests
+log = logging.getLogger(&#39;msiempy&#39;)
+
+from .session import NitroSession
+from .error import NitroError
+from .utils import regex_match
+
+class NitroObject(abc.ABC):
+    &#34;&#34;&#34;
+    Base class for all nitro objects. All objects have a reference the single 
+    NitroSession object that handle the esm requests
+    &#34;&#34;&#34;
+
+    class NitroJSONEncoder(json.JSONEncoder):
+        &#34;&#34;&#34;
+        Custom JSON encoder that will use the approprtiate propertie depending of the type of NitroObject.
+        #TODO return meta info about the Manager. Maybe create a section `manager` and `data`.
+        #TODO support json json dumping of QueryFilers, may be by making them inherits from Item.
+        &#34;&#34;&#34;
+        def default(self, obj): # pylint: disable=E0202
+            if isinstance(obj,(Item, Manager)):
+                return obj.data
+            #elif isinstance(obj, (QueryFilter)):
+                #return obj.config_dict
+            else:
+                return json.JSONEncoder.default(self, obj) 
+
+    @abc.abstractmethod
+    def __init__(self):
+        &#34;&#34;&#34;
+        self.nitro.request(&#39;esm-get-times&#39;)
+        &#34;&#34;&#34;
+        self.nitro=NitroSession()
+
+    def __str__(self):
+        return self.text
+
+    def __repr__(self):
+        return self.json
+
+    @abc.abstractproperty
+    def text(self):
+        &#34;&#34;&#34;
+        Returns str
+        &#34;&#34;&#34;
+        pass
+
+    @abc.abstractproperty
+    def json(self):
+        &#34;&#34;&#34;
+        Returns json representation
+        &#34;&#34;&#34;
+        pass
+
+    @abc.abstractmethod
+    def refresh(self):
+        &#34;&#34;&#34;
+        Refresh the state of the object
+        &#34;&#34;&#34;
+        pass
+
+    @staticmethod
+    def action_refresh(ntiro_object):
+        &#34;&#34;&#34;
+        Refrech callable to use with perform()
+        &#34;&#34;&#34;
+        return(ntiro_object.refresh())
+
+class Item(collections.UserDict, NitroObject):
+    &#34;&#34;&#34;
+    Base class that represent any SIEM data that can be represented as a item of a manager.
+    Exemple : Event, Alarm, etc...
+    Inherits from dict
+    &#34;&#34;&#34;
+    def __init__(self, adict=None, id=None):
+        NitroObject.__init__(self)
+        collections.UserDict.__init__(self, adict)
+        
+        if id != None :
+            self.data=self.data_from_id(id)
+
+        if isinstance(adict, dict):
+            self.data=adict
+
+        for key in self.data :
+            if isinstance(self.data[key], list):
+                self.data[key]=Manager(alist=self.data[key])
+                
+        self.selected=False
+
+    @property
+    def json(self):
+        return(json.dumps(dict(self), indent=4, cls=NitroObject.NitroJSONEncoder))
+
+    @property
+    def text(self):
+        return(&#39;, &#39;.join([str(val) for val in self.values()]))
+
+    def refresh(self):
+        log.debug(&#39;NOT Refreshing item :&#39;+str(self)+&#39; &#39;+str(NotImplementedError()))
+
+    @abc.abstractmethod
+    def data_from_id(self, id):
+        pass
+
+    &#39;&#39;&#39;This code has been commented cause it adds unecessary complexity.
+    But it&#39;s a good example of how we could perform() method to do anything
+
+    def select(self):
+        self.selected=False
+
+    def unselect(self):
+        self.selected=True
+
+    @staticmethod
+    def action_select(item):
+        item.select()
+
+    @staticmethod
+    def action_unselect(item):
+        item.unselect()&#39;&#39;&#39;
+
+class Manager(collections.UserList, NitroObject):
+    &#34;&#34;&#34;
+    Base class for Managers objects. 
+    Inherits from list
+    &#34;&#34;&#34;
+
+    SELECTED=&#39;b8c0a7c5b307eeee30039343e6f23e9e4f1d325bbc2ffaf1c2b7b583af160124&#39;
+    &#34;&#34;&#34;
+    Random constant represents all selected items to avoid regex matching interference.
+    &#34;&#34;&#34;
+
+    def __init__(self, alist=None):
+        &#34;&#34;&#34;
+        Ignore nested lists. Meaning that if alist if a list of lists 
+            it will we be ignored.
+        Nevertheless, if a list is present as a key value in a dict, 
+            it will be added as such.
+        &#34;&#34;&#34;
+        NitroObject.__init__(self)
+        if alist is None:
+            collections.UserList.__init__(self, [])
+        
+        elif isinstance(alist , (list, Manager)):
+            collections.UserList.__init__(
+                self, alist #[Item(adict=item) for item in alist if isinstance(item, (dict, Item))] 
+                #Can&#39;t instanciate Item, so Concrete classes has to cast the items afterwards
+                )
+        else :
+            raise ValueError(&#39;Manager can only be initiated based on a list&#39;)
+
+    @property
+    def table_colums(self):            
+        return []
+
+    def _norm_dicts(self):
+        &#34;&#34;&#34;
+        Internal method
+        all dict should have the same set of keys
+        Creating keys in dicts
+        &#34;&#34;&#34;
+        for item in self.data :
+            if isinstance(item, (dict, Item)):
+                for key in self.keys :
+                    if key not in item :
+                        item[key]=None
+
+    @property
+    def keys(self):
+        #Set of keys for all dict
+        #If new fields are added it won&#39;t show on text repr. Only json.
+        
+        manager_keys=set()
+        for item in self.data:
+            if isinstance(item, (dict,Item)):
+                manager_keys.update(item.keys())
+
+        return manager_keys
+
+
+    def get_text(self, compact=False, fields=None):
+        &#34;&#34;&#34;
+        Returns a nice string table made with prettytable if not compact.
+        Else an &#39;|&#39; separated list.
+        Default fields are returned by .keys attribute and sorted.
+        It&#39;s an expesive thing to do on big ammount of data !
+        &#34;&#34;&#34;
+        
+        if not fields :
+            fields=sorted(self.keys)
+
+        if len(self) == 0 :
+            return(&#39;The list is empty&#39;)
+
+        if not compact : #Table
+            table = prettytable.PrettyTable()
+            table.set_style(MSWORD_FRIENDLY)
+            table.field_names=fields
+            self._norm_dicts()
+
+            for item in self.data:
+                if isinstance(item, (dict, Item)):
+                    table.add_row([&#39;\n&#39;.join(textwrap.wrap(str(item[field]), width=120))
+                        if not isinstance(item[field], Manager)
+                        else item[field].get_text() for field in fields])
+                else : log.warning(&#34;Unnapropriate list element type, doesn&#39;t show on the list : {}&#34;.format(str(item)))
+
+            if len(self.table_colums) &gt;0 :
+                try :
+                    text =table.get_string(fields=self.table_colums)
+                except Exception as err :
+                    if &#34;Invalid field name&#34; in str(err):
+                        text=table.get_string()
+                        log.warning(&#34;Inconsistent manager state, some fields aren&#39;t present {}&#34;.format(str(err)))
+                    else :
+                        raise
+            else: 
+                text=table.get_string()
+
+        elif compact is True :
+            text=&#39;|_&#39;
+            for field in fields :
+                text+=field
+                text+=&#39;_|_&#39;
+            text=text[0:len(text)-1]
+            text+=&#39;\n&#39;
+            for item in self.data:
+                if isinstance(item, (dict, Item)):
+                    text+=&#39;| &#39;
+                    for field in fields :
+                        if isinstance(item[field], Manager):
+                            text+=item[field].get_text(compact=True)
+                        else:
+                            text+=(str(item[field]))
+                            text+=&#39; | &#39;
+                    text=text[0:len(text)-1]
+                else : log.warning(&#34;Unnapropriate list element type, doesn&#39;t show on the list : {}&#34;.format(str(item)))
+                    #text+=textwrap.wrap(str(item),width=80)
+
+                text+=&#39;\n&#39;
+            text=text[0:len(text)-1]
+
+        return text
+
+
+
+    @property
+    def text(self):
+        return self.get_text()
+        
+    @property
+    def json(self):
+        return(json.dumps([dict(item) for item in self.data], indent=4, cls=NitroObject.NitroJSONEncoder))
+
+    def search(self, *pattern, invert=False, match_prop=&#39;json&#39;):
+        &#34;&#34;&#34;
+        Return a list of elements that matches regex patterns.
+        Patterns are applied one after another. It&#39;s a logic AND.
+        Use `|` inside patterns to search with logic OR.
+        This method will return a new Manager with matching data. Items in the returned Manager do not
+        references the items in the original Manager.
+
+        If you wish to apply more specific filters to Manager list, please
+        use filter(), list comprehension, or other filtering method.
+            i.e. : `[item for item in manager if item[&#39;cost&#39;] &gt; 50]`
+
+        More on regex https://docs.python.org/3/library/re.html#re.Pattern.search
+        &#34;&#34;&#34;
+        if pattern is None :
+            return self
+        elif len(pattern) == 0 :
+            return self
+        else :
+            pattern=list(pattern)
+            apattern=pattern.pop()
+        
+        matching_items=list()
+        
+        if isinstance(apattern, str):
+            for item in self.data :
+                if regex_match(apattern, getattr(item, match_prop) if isinstance(item, Item) else str(item)) is not invert :
+                    matching_items.append(item)
+            log.debug(&#34;You&#39;re search returned {} rows : {}&#34;.format(
+                len(matching_items),
+                str(matching_items)[:100]+&#39;...&#39;))
+            #Apply AND reccursively
+            return Manager(alist=matching_items).search(*pattern, invert=invert, match_prop=match_prop)
+        else:
+            raise ValueError(&#39;pattern must be str&#39;)
+
+        
+
+    &#39;&#39;&#39; This code has been commented cause it adds unecessary complexity.
+    But it&#39;s a good example of how we could perform() method to do anything
+
+    def select(self, data_or_pattern, **search):
+        &#34;&#34;&#34;
+        Select the rows that match the pattern.
+        The patterm could be a index, list of index or list of rows
+        &#34;&#34;&#34;
+        self.perform(Item.action_select, data_or_pattern, **search)
+
+    def unselect(self, data_or_pattern, **search):
+        &#34;&#34;&#34;
+        Unselect the rows that match the pattern.
+        The patterm could be a index, list of index or list of rows
+        &#34;&#34;&#34;
+        self.perform(Item.action_unselect, data_or_pattern, **search)
+        &#39;&#39;&#39;
+    
+    def clear(self):
+        &#34;&#34;&#34;
+        Unselect all items.
+        &#34;&#34;&#34;
+        for item in self.data :
+            item.selected=False
+        #self.perform(Item.action_unselect, &#39;.*&#39;) : 
+
+    def refresh(self):
+        &#34;&#34;&#34;
+        Execute refresh function on all items.
+        &#34;&#34;&#34;
+        self.perform(Item.action_refresh)
+
+    def perform(self, func, data=None, func_args=None, confirm=False, asynch=False,  workers=None , progress=False, message=None):
+        &#34;&#34;&#34;
+        Wrapper arround executable and the data list of Manager object.
+        Will execute the callable the local manager data list.
+
+            Params
+            ======
+            func : callable stateless function
+                funs is going to be called like func(item, **func_args) on all items in data patern
+            if data stays None, will perform the action on all rows, else it will perfom the action on the data list
+            func_args : dict that will be passed by default to func in all calls
+            confirm : will ask interactively confirmation 
+            asynch : execute the task asynchronously with NitroSession executor
+            workers : mandatory if asynch is true
+            progress : to show progress bar with ETA (tqdm) 
+            message : To show to the user
+
+        Returns a list of returned results
+        &#34;&#34;&#34;
+
+        log.debug(&#39;Calling perform func=&#39;+str(func)+
+            &#39; data=&#39;+str(data)[:100]+
+            &#39; func_args=&#39;+str(func_args)+
+            &#39; confirm=&#39;+str(confirm)+
+            &#39; asynch=&#39;+str(asynch)+
+            &#39; workers=&#39;+str(workers)+
+            &#39; progress=&#39;+str(progress))
+
+        if not callable(func) :
+            raise ValueError(&#39;func must be callable&#39;)
+
+        #Confirming with user if asked
+        if confirm : self._confirm_func(func, str(self))
+
+        #Setting the arguments on the function
+        func = functools.partial(func, **(func_args if func_args is not None else {}))
+        
+        #The data returned by function
+        returned=list()
+
+        #Usethe self contained data if not speficed otherwise
+        elements=self.data
+        if isinstance(data, list) and data is not None:
+            elements=data
+        else :
+            AttributeError(&#39;data must be a list&#39;)
+
+        #Printing message if specified.
+        tqdm_args=dict()
+        #The message will appear on loading bar if progress is True
+        if progress is True :
+            tqdm_args=dict(desc=&#39;Loading...&#39;, total=len(elements))
+            if message is not None:
+                tqdm_args[&#39;desc&#39;]=message
+
+        
+
+        #Runs the callable on list on executor or by iterating
+        if asynch == True :
+            if isinstance(workers, int) :
+                if progress==True:
+                    #Need to call tqdm to have better support for concurrent futures executor
+                    # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
+                    returned=list(tqdm.tqdm(concurrent.futures.ThreadPoolExecutor(
+                    max_workers=workers ).map(
+                        func, elements), **tqdm_args))
+                else:
+                    #log.info()
+                    returned=list(concurrent.futures.ThreadPoolExecutor(
+                    max_workers=workers ).map(
+                        func, elements))
+            else:
+                raise AttributeError(&#39;When asynch == True : You must specify a integer value for workers&#39;)
+        else :
+
+            if progress==True:
+                elements=tqdm.tqdm(elements, **tqdm_args)
+
+            for index_or_item in elements:
+                returned.append(func(index_or_item))
+
+        return(returned)
+
+    @staticmethod
+    def _confirm_func(func, elements):
+        &#34;&#34;&#34;
+        Ask user inut to confirm the calling of `func` on `elements`.
+        &#34;&#34;&#34;
+        if not &#39;y&#39; in input(&#39;Are you sure you want to do this &#39;+str(func)+&#39; on &#39;+
+        (&#39;\n&#39;+str(elements) if elements is not None else &#39;all elements&#39;)+&#39;? [y/n]: &#39;):
+            raise InterruptedError(&#34;The action was cancelled by the user.&#34;)
+
+    @property
+    def selected_items(self):
+        &#34;&#34;&#34;
+        Selected items only.
+        Returns a Manager
+        &#34;&#34;&#34;
+        return(Manager(alist=[item for item in self.data if item.selected]))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="msiempy.base.Item"><code class="flex name class">
+<span>class <span class="ident">Item</span></span>
+<span>(</span><span>adict=None, id=None)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Base class that represent any SIEM data that can be represented as a item of a manager.
+Exemple : Event, Alarm, etc&hellip;
+Inherits from dict</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">class Item(collections.UserDict, NitroObject):
+    &#34;&#34;&#34;
+    Base class that represent any SIEM data that can be represented as a item of a manager.
+    Exemple : Event, Alarm, etc...
+    Inherits from dict
+    &#34;&#34;&#34;
+    def __init__(self, adict=None, id=None):
+        NitroObject.__init__(self)
+        collections.UserDict.__init__(self, adict)
+        
+        if id != None :
+            self.data=self.data_from_id(id)
+
+        if isinstance(adict, dict):
+            self.data=adict
+
+        for key in self.data :
+            if isinstance(self.data[key], list):
+                self.data[key]=Manager(alist=self.data[key])
+                
+        self.selected=False
+
+    @property
+    def json(self):
+        return(json.dumps(dict(self), indent=4, cls=NitroObject.NitroJSONEncoder))
+
+    @property
+    def text(self):
+        return(&#39;, &#39;.join([str(val) for val in self.values()]))
+
+    def refresh(self):
+        log.debug(&#39;NOT Refreshing item :&#39;+str(self)+&#39; &#39;+str(NotImplementedError()))
+
+    @abc.abstractmethod
+    def data_from_id(self, id):
+        pass
+
+    &#39;&#39;&#39;This code has been commented cause it adds unecessary complexity.
+    But it&#39;s a good example of how we could perform() method to do anything
+
+    def select(self):
+        self.selected=False
+
+    def unselect(self):
+        self.selected=True
+
+    @staticmethod
+    def action_select(item):
+        item.select()
+
+    @staticmethod
+    def action_unselect(item):
+        item.unselect()&#39;&#39;&#39;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>collections.UserDict</li>
+<li>collections.abc.MutableMapping</li>
+<li>collections.abc.Mapping</li>
+<li>collections.abc.Collection</li>
+<li>collections.abc.Sized</li>
+<li>collections.abc.Iterable</li>
+<li>collections.abc.Container</li>
+<li><a title="msiempy.base.NitroObject" href="#msiempy.base.NitroObject">NitroObject</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="msiempy.event.Event" href="event.html#msiempy.event.Event">Event</a></li>
+<li><a title="msiempy.alarm.Alarm" href="alarm.html#msiempy.alarm.Alarm">Alarm</a></li>
+<li><a title="msiempy.datasource.DataSource" href="datasource.html#msiempy.datasource.DataSource">DataSource</a></li>
+<li><a title="msiempy.watchlist.Watchlist" href="watchlist.html#msiempy.watchlist.Watchlist">Watchlist</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="msiempy.base.Item.data_from_id"><code class="name flex">
+<span>def <span class="ident">data_from_id</span></span>(<span>self, id)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">@abc.abstractmethod
+def data_from_id(self, id):
+    pass</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="msiempy.base.NitroObject" href="#msiempy.base.NitroObject">NitroObject</a></b></code>:
+<ul class="hlist">
+<li><code><a title="msiempy.base.NitroObject.NitroJSONEncoder" href="#msiempy.base.NitroObject.NitroJSONEncoder">NitroJSONEncoder</a></code></li>
+<li><code><a title="msiempy.base.NitroObject.action_refresh" href="#msiempy.base.NitroObject.action_refresh">action_refresh</a></code></li>
+<li><code><a title="msiempy.base.NitroObject.json" href="#msiempy.base.NitroObject.json">json</a></code></li>
+<li><code><a title="msiempy.base.NitroObject.refresh" href="#msiempy.base.NitroObject.refresh">refresh</a></code></li>
+<li><code><a title="msiempy.base.NitroObject.text" href="#msiempy.base.NitroObject.text">text</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="msiempy.base.Manager"><code class="flex name class">
+<span>class <span class="ident">Manager</span></span>
+<span>(</span><span>alist=None)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Base class for Managers objects.
+Inherits from list</p>
+<p>Ignore nested lists. Meaning that if alist if a list of lists
+it will we be ignored.
+Nevertheless, if a list is present as a key value in a dict,
+it will be added as such.</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">class Manager(collections.UserList, NitroObject):
+    &#34;&#34;&#34;
+    Base class for Managers objects. 
+    Inherits from list
+    &#34;&#34;&#34;
+
+    SELECTED=&#39;b8c0a7c5b307eeee30039343e6f23e9e4f1d325bbc2ffaf1c2b7b583af160124&#39;
+    &#34;&#34;&#34;
+    Random constant represents all selected items to avoid regex matching interference.
+    &#34;&#34;&#34;
+
+    def __init__(self, alist=None):
+        &#34;&#34;&#34;
+        Ignore nested lists. Meaning that if alist if a list of lists 
+            it will we be ignored.
+        Nevertheless, if a list is present as a key value in a dict, 
+            it will be added as such.
+        &#34;&#34;&#34;
+        NitroObject.__init__(self)
+        if alist is None:
+            collections.UserList.__init__(self, [])
+        
+        elif isinstance(alist , (list, Manager)):
+            collections.UserList.__init__(
+                self, alist #[Item(adict=item) for item in alist if isinstance(item, (dict, Item))] 
+                #Can&#39;t instanciate Item, so Concrete classes has to cast the items afterwards
+                )
+        else :
+            raise ValueError(&#39;Manager can only be initiated based on a list&#39;)
+
+    @property
+    def table_colums(self):            
+        return []
+
+    def _norm_dicts(self):
+        &#34;&#34;&#34;
+        Internal method
+        all dict should have the same set of keys
+        Creating keys in dicts
+        &#34;&#34;&#34;
+        for item in self.data :
+            if isinstance(item, (dict, Item)):
+                for key in self.keys :
+                    if key not in item :
+                        item[key]=None
+
+    @property
+    def keys(self):
+        #Set of keys for all dict
+        #If new fields are added it won&#39;t show on text repr. Only json.
+        
+        manager_keys=set()
+        for item in self.data:
+            if isinstance(item, (dict,Item)):
+                manager_keys.update(item.keys())
+
+        return manager_keys
+
+
+    def get_text(self, compact=False, fields=None):
+        &#34;&#34;&#34;
+        Returns a nice string table made with prettytable if not compact.
+        Else an &#39;|&#39; separated list.
+        Default fields are returned by .keys attribute and sorted.
+        It&#39;s an expesive thing to do on big ammount of data !
+        &#34;&#34;&#34;
+        
+        if not fields :
+            fields=sorted(self.keys)
+
+        if len(self) == 0 :
+            return(&#39;The list is empty&#39;)
+
+        if not compact : #Table
+            table = prettytable.PrettyTable()
+            table.set_style(MSWORD_FRIENDLY)
+            table.field_names=fields
+            self._norm_dicts()
+
+            for item in self.data:
+                if isinstance(item, (dict, Item)):
+                    table.add_row([&#39;\n&#39;.join(textwrap.wrap(str(item[field]), width=120))
+                        if not isinstance(item[field], Manager)
+                        else item[field].get_text() for field in fields])
+                else : log.warning(&#34;Unnapropriate list element type, doesn&#39;t show on the list : {}&#34;.format(str(item)))
+
+            if len(self.table_colums) &gt;0 :
+                try :
+                    text =table.get_string(fields=self.table_colums)
+                except Exception as err :
+                    if &#34;Invalid field name&#34; in str(err):
+                        text=table.get_string()
+                        log.warning(&#34;Inconsistent manager state, some fields aren&#39;t present {}&#34;.format(str(err)))
+                    else :
+                        raise
+            else: 
+                text=table.get_string()
+
+        elif compact is True :
+            text=&#39;|_&#39;
+            for field in fields :
+                text+=field
+                text+=&#39;_|_&#39;
+            text=text[0:len(text)-1]
+            text+=&#39;\n&#39;
+            for item in self.data:
+                if isinstance(item, (dict, Item)):
+                    text+=&#39;| &#39;
+                    for field in fields :
+                        if isinstance(item[field], Manager):
+                            text+=item[field].get_text(compact=True)
+                        else:
+                            text+=(str(item[field]))
+                            text+=&#39; | &#39;
+                    text=text[0:len(text)-1]
+                else : log.warning(&#34;Unnapropriate list element type, doesn&#39;t show on the list : {}&#34;.format(str(item)))
+                    #text+=textwrap.wrap(str(item),width=80)
+
+                text+=&#39;\n&#39;
+            text=text[0:len(text)-1]
+
+        return text
+
+
+
+    @property
+    def text(self):
+        return self.get_text()
+        
+    @property
+    def json(self):
+        return(json.dumps([dict(item) for item in self.data], indent=4, cls=NitroObject.NitroJSONEncoder))
+
+    def search(self, *pattern, invert=False, match_prop=&#39;json&#39;):
+        &#34;&#34;&#34;
+        Return a list of elements that matches regex patterns.
+        Patterns are applied one after another. It&#39;s a logic AND.
+        Use `|` inside patterns to search with logic OR.
+        This method will return a new Manager with matching data. Items in the returned Manager do not
+        references the items in the original Manager.
+
+        If you wish to apply more specific filters to Manager list, please
+        use filter(), list comprehension, or other filtering method.
+            i.e. : `[item for item in manager if item[&#39;cost&#39;] &gt; 50]`
+
+        More on regex https://docs.python.org/3/library/re.html#re.Pattern.search
+        &#34;&#34;&#34;
+        if pattern is None :
+            return self
+        elif len(pattern) == 0 :
+            return self
+        else :
+            pattern=list(pattern)
+            apattern=pattern.pop()
+        
+        matching_items=list()
+        
+        if isinstance(apattern, str):
+            for item in self.data :
+                if regex_match(apattern, getattr(item, match_prop) if isinstance(item, Item) else str(item)) is not invert :
+                    matching_items.append(item)
+            log.debug(&#34;You&#39;re search returned {} rows : {}&#34;.format(
+                len(matching_items),
+                str(matching_items)[:100]+&#39;...&#39;))
+            #Apply AND reccursively
+            return Manager(alist=matching_items).search(*pattern, invert=invert, match_prop=match_prop)
+        else:
+            raise ValueError(&#39;pattern must be str&#39;)
+
+        
+
+    &#39;&#39;&#39; This code has been commented cause it adds unecessary complexity.
+    But it&#39;s a good example of how we could perform() method to do anything
+
+    def select(self, data_or_pattern, **search):
+        &#34;&#34;&#34;
+        Select the rows that match the pattern.
+        The patterm could be a index, list of index or list of rows
+        &#34;&#34;&#34;
+        self.perform(Item.action_select, data_or_pattern, **search)
+
+    def unselect(self, data_or_pattern, **search):
+        &#34;&#34;&#34;
+        Unselect the rows that match the pattern.
+        The patterm could be a index, list of index or list of rows
+        &#34;&#34;&#34;
+        self.perform(Item.action_unselect, data_or_pattern, **search)
+        &#39;&#39;&#39;
+    
+    def clear(self):
+        &#34;&#34;&#34;
+        Unselect all items.
+        &#34;&#34;&#34;
+        for item in self.data :
+            item.selected=False
+        #self.perform(Item.action_unselect, &#39;.*&#39;) : 
+
+    def refresh(self):
+        &#34;&#34;&#34;
+        Execute refresh function on all items.
+        &#34;&#34;&#34;
+        self.perform(Item.action_refresh)
+
+    def perform(self, func, data=None, func_args=None, confirm=False, asynch=False,  workers=None , progress=False, message=None):
+        &#34;&#34;&#34;
+        Wrapper arround executable and the data list of Manager object.
+        Will execute the callable the local manager data list.
+
+            Params
+            ======
+            func : callable stateless function
+                funs is going to be called like func(item, **func_args) on all items in data patern
+            if data stays None, will perform the action on all rows, else it will perfom the action on the data list
+            func_args : dict that will be passed by default to func in all calls
+            confirm : will ask interactively confirmation 
+            asynch : execute the task asynchronously with NitroSession executor
+            workers : mandatory if asynch is true
+            progress : to show progress bar with ETA (tqdm) 
+            message : To show to the user
+
+        Returns a list of returned results
+        &#34;&#34;&#34;
+
+        log.debug(&#39;Calling perform func=&#39;+str(func)+
+            &#39; data=&#39;+str(data)[:100]+
+            &#39; func_args=&#39;+str(func_args)+
+            &#39; confirm=&#39;+str(confirm)+
+            &#39; asynch=&#39;+str(asynch)+
+            &#39; workers=&#39;+str(workers)+
+            &#39; progress=&#39;+str(progress))
+
+        if not callable(func) :
+            raise ValueError(&#39;func must be callable&#39;)
+
+        #Confirming with user if asked
+        if confirm : self._confirm_func(func, str(self))
+
+        #Setting the arguments on the function
+        func = functools.partial(func, **(func_args if func_args is not None else {}))
+        
+        #The data returned by function
+        returned=list()
+
+        #Usethe self contained data if not speficed otherwise
+        elements=self.data
+        if isinstance(data, list) and data is not None:
+            elements=data
+        else :
+            AttributeError(&#39;data must be a list&#39;)
+
+        #Printing message if specified.
+        tqdm_args=dict()
+        #The message will appear on loading bar if progress is True
+        if progress is True :
+            tqdm_args=dict(desc=&#39;Loading...&#39;, total=len(elements))
+            if message is not None:
+                tqdm_args[&#39;desc&#39;]=message
+
+        
+
+        #Runs the callable on list on executor or by iterating
+        if asynch == True :
+            if isinstance(workers, int) :
+                if progress==True:
+                    #Need to call tqdm to have better support for concurrent futures executor
+                    # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
+                    returned=list(tqdm.tqdm(concurrent.futures.ThreadPoolExecutor(
+                    max_workers=workers ).map(
+                        func, elements), **tqdm_args))
+                else:
+                    #log.info()
+                    returned=list(concurrent.futures.ThreadPoolExecutor(
+                    max_workers=workers ).map(
+                        func, elements))
+            else:
+                raise AttributeError(&#39;When asynch == True : You must specify a integer value for workers&#39;)
+        else :
+
+            if progress==True:
+                elements=tqdm.tqdm(elements, **tqdm_args)
+
+            for index_or_item in elements:
+                returned.append(func(index_or_item))
+
+        return(returned)
+
+    @staticmethod
+    def _confirm_func(func, elements):
+        &#34;&#34;&#34;
+        Ask user inut to confirm the calling of `func` on `elements`.
+        &#34;&#34;&#34;
+        if not &#39;y&#39; in input(&#39;Are you sure you want to do this &#39;+str(func)+&#39; on &#39;+
+        (&#39;\n&#39;+str(elements) if elements is not None else &#39;all elements&#39;)+&#39;? [y/n]: &#39;):
+            raise InterruptedError(&#34;The action was cancelled by the user.&#34;)
+
+    @property
+    def selected_items(self):
+        &#34;&#34;&#34;
+        Selected items only.
+        Returns a Manager
+        &#34;&#34;&#34;
+        return(Manager(alist=[item for item in self.data if item.selected]))</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>collections.UserList</li>
+<li>collections.abc.MutableSequence</li>
+<li>collections.abc.Sequence</li>
+<li>collections.abc.Reversible</li>
+<li>collections.abc.Collection</li>
+<li>collections.abc.Sized</li>
+<li>collections.abc.Iterable</li>
+<li>collections.abc.Container</li>
+<li><a title="msiempy.base.NitroObject" href="#msiempy.base.NitroObject">NitroObject</a></li>
+<li>abc.ABC</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="msiempy.query.QueryManager" href="query.html#msiempy.query.QueryManager">QueryManager</a></li>
+<li><a title="msiempy.datasource.DevTree" href="datasource.html#msiempy.datasource.DevTree">DevTree</a></li>
+<li><a title="msiempy.watchlist.WatchlistManager" href="watchlist.html#msiempy.watchlist.WatchlistManager">WatchlistManager</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="msiempy.base.Manager.SELECTED"><code class="name">var <span class="ident">SELECTED</span></code></dt>
+<dd>
+<section class="desc"><p>Random constant represents all selected items to avoid regex matching interference.</p></section>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="msiempy.base.Manager.keys"><code class="name">var <span class="ident">keys</span></code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">@property
+def keys(self):
+    #Set of keys for all dict
+    #If new fields are added it won&#39;t show on text repr. Only json.
+    
+    manager_keys=set()
+    for item in self.data:
+        if isinstance(item, (dict,Item)):
+            manager_keys.update(item.keys())
+
+    return manager_keys</code></pre>
+</details>
+</dd>
+<dt id="msiempy.base.Manager.selected_items"><code class="name">var <span class="ident">selected_items</span></code></dt>
+<dd>
+<section class="desc"><p>Selected items only.
+Returns a Manager</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">@property
+def selected_items(self):
+    &#34;&#34;&#34;
+    Selected items only.
+    Returns a Manager
+    &#34;&#34;&#34;
+    return(Manager(alist=[item for item in self.data if item.selected]))</code></pre>
+</details>
+</dd>
+<dt id="msiempy.base.Manager.table_colums"><code class="name">var <span class="ident">table_colums</span></code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">@property
+def table_colums(self):            
+    return []</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="msiempy.base.Manager.clear"><code class="name flex">
+<span>def <span class="ident">clear</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Unselect all items.</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def clear(self):
+    &#34;&#34;&#34;
+    Unselect all items.
+    &#34;&#34;&#34;
+    for item in self.data :
+        item.selected=False</code></pre>
+</details>
+</dd>
+<dt id="msiempy.base.Manager.get_text"><code class="name flex">
+<span>def <span class="ident">get_text</span></span>(<span>self, compact=False, fields=None)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Returns a nice string table made with prettytable if not compact.
+Else an '|' separated list.
+Default fields are returned by .keys attribute and sorted.
+It's an expesive thing to do on big ammount of data !</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def get_text(self, compact=False, fields=None):
+    &#34;&#34;&#34;
+    Returns a nice string table made with prettytable if not compact.
+    Else an &#39;|&#39; separated list.
+    Default fields are returned by .keys attribute and sorted.
+    It&#39;s an expesive thing to do on big ammount of data !
+    &#34;&#34;&#34;
+    
+    if not fields :
+        fields=sorted(self.keys)
+
+    if len(self) == 0 :
+        return(&#39;The list is empty&#39;)
+
+    if not compact : #Table
+        table = prettytable.PrettyTable()
+        table.set_style(MSWORD_FRIENDLY)
+        table.field_names=fields
+        self._norm_dicts()
+
+        for item in self.data:
+            if isinstance(item, (dict, Item)):
+                table.add_row([&#39;\n&#39;.join(textwrap.wrap(str(item[field]), width=120))
+                    if not isinstance(item[field], Manager)
+                    else item[field].get_text() for field in fields])
+            else : log.warning(&#34;Unnapropriate list element type, doesn&#39;t show on the list : {}&#34;.format(str(item)))
+
+        if len(self.table_colums) &gt;0 :
+            try :
+                text =table.get_string(fields=self.table_colums)
+            except Exception as err :
+                if &#34;Invalid field name&#34; in str(err):
+                    text=table.get_string()
+                    log.warning(&#34;Inconsistent manager state, some fields aren&#39;t present {}&#34;.format(str(err)))
+                else :
+                    raise
+        else: 
+            text=table.get_string()
+
+    elif compact is True :
+        text=&#39;|_&#39;
+        for field in fields :
+            text+=field
+            text+=&#39;_|_&#39;
+        text=text[0:len(text)-1]
+        text+=&#39;\n&#39;
+        for item in self.data:
+            if isinstance(item, (dict, Item)):
+                text+=&#39;| &#39;
+                for field in fields :
+                    if isinstance(item[field], Manager):
+                        text+=item[field].get_text(compact=True)
+                    else:
+                        text+=(str(item[field]))
+                        text+=&#39; | &#39;
+                text=text[0:len(text)-1]
+            else : log.warning(&#34;Unnapropriate list element type, doesn&#39;t show on the list : {}&#34;.format(str(item)))
+                #text+=textwrap.wrap(str(item),width=80)
+
+            text+=&#39;\n&#39;
+        text=text[0:len(text)-1]
+
+    return text</code></pre>
+</details>
+</dd>
+<dt id="msiempy.base.Manager.perform"><code class="name flex">
+<span>def <span class="ident">perform</span></span>(<span>self, func, data=None, func_args=None, confirm=False, asynch=False, workers=None, progress=False, message=None)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Wrapper arround executable and the data list of Manager object.
+Will execute the callable the local manager data list.</p>
+<pre><code>Params
+======
+func : callable stateless function
+    funs is going to be called like func(item, **func_args) on all items in data patern
+if data stays None, will perform the action on all rows, else it will perfom the action on the data list
+func_args : dict that will be passed by default to func in all calls
+confirm : will ask interactively confirmation 
+asynch : execute the task asynchronously with NitroSession executor
+workers : mandatory if asynch is true
+progress : to show progress bar with ETA (tqdm) 
+message : To show to the user
+</code></pre>
+<p>Returns a list of returned results</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def perform(self, func, data=None, func_args=None, confirm=False, asynch=False,  workers=None , progress=False, message=None):
+    &#34;&#34;&#34;
+    Wrapper arround executable and the data list of Manager object.
+    Will execute the callable the local manager data list.
+
+        Params
+        ======
+        func : callable stateless function
+            funs is going to be called like func(item, **func_args) on all items in data patern
+        if data stays None, will perform the action on all rows, else it will perfom the action on the data list
+        func_args : dict that will be passed by default to func in all calls
+        confirm : will ask interactively confirmation 
+        asynch : execute the task asynchronously with NitroSession executor
+        workers : mandatory if asynch is true
+        progress : to show progress bar with ETA (tqdm) 
+        message : To show to the user
+
+    Returns a list of returned results
+    &#34;&#34;&#34;
+
+    log.debug(&#39;Calling perform func=&#39;+str(func)+
+        &#39; data=&#39;+str(data)[:100]+
+        &#39; func_args=&#39;+str(func_args)+
+        &#39; confirm=&#39;+str(confirm)+
+        &#39; asynch=&#39;+str(asynch)+
+        &#39; workers=&#39;+str(workers)+
+        &#39; progress=&#39;+str(progress))
+
+    if not callable(func) :
+        raise ValueError(&#39;func must be callable&#39;)
+
+    #Confirming with user if asked
+    if confirm : self._confirm_func(func, str(self))
+
+    #Setting the arguments on the function
+    func = functools.partial(func, **(func_args if func_args is not None else {}))
+    
+    #The data returned by function
+    returned=list()
+
+    #Usethe self contained data if not speficed otherwise
+    elements=self.data
+    if isinstance(data, list) and data is not None:
+        elements=data
+    else :
+        AttributeError(&#39;data must be a list&#39;)
+
+    #Printing message if specified.
+    tqdm_args=dict()
+    #The message will appear on loading bar if progress is True
+    if progress is True :
+        tqdm_args=dict(desc=&#39;Loading...&#39;, total=len(elements))
+        if message is not None:
+            tqdm_args[&#39;desc&#39;]=message
+
+    
+
+    #Runs the callable on list on executor or by iterating
+    if asynch == True :
+        if isinstance(workers, int) :
+            if progress==True:
+                #Need to call tqdm to have better support for concurrent futures executor
+                # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
+                returned=list(tqdm.tqdm(concurrent.futures.ThreadPoolExecutor(
+                max_workers=workers ).map(
+                    func, elements), **tqdm_args))
+            else:
+                #log.info()
+                returned=list(concurrent.futures.ThreadPoolExecutor(
+                max_workers=workers ).map(
+                    func, elements))
+        else:
+            raise AttributeError(&#39;When asynch == True : You must specify a integer value for workers&#39;)
+    else :
+
+        if progress==True:
+            elements=tqdm.tqdm(elements, **tqdm_args)
+
+        for index_or_item in elements:
+            returned.append(func(index_or_item))
+
+    return(returned)</code></pre>
+</details>
+</dd>
+<dt id="msiempy.base.Manager.refresh"><code class="name flex">
+<span>def <span class="ident">refresh</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Execute refresh function on all items.</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def refresh(self):
+    &#34;&#34;&#34;
+    Execute refresh function on all items.
+    &#34;&#34;&#34;
+    self.perform(Item.action_refresh)</code></pre>
+</details>
+</dd>
+<dt id="msiempy.base.Manager.search"><code class="name flex">
+<span>def <span class="ident">search</span></span>(<span>self, *pattern, invert=False, match_prop='json')</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Return a list of elements that matches regex patterns.
+Patterns are applied one after another. It's a logic AND.
+Use <code>|</code> inside patterns to search with logic OR.
+This method will return a new Manager with matching data. Items in the returned Manager do not
+references the items in the original Manager.</p>
+<p>If you wish to apply more specific filters to Manager list, please
+use filter(), list comprehension, or other filtering method.
+i.e. : <code>[item for item in manager if item['cost'] &gt; 50]</code></p>
+<p>More on regex <a href="https://docs.python.org/3/library/re.html#re.Pattern.search">https://docs.python.org/3/library/re.html#re.Pattern.search</a></p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def search(self, *pattern, invert=False, match_prop=&#39;json&#39;):
+    &#34;&#34;&#34;
+    Return a list of elements that matches regex patterns.
+    Patterns are applied one after another. It&#39;s a logic AND.
+    Use `|` inside patterns to search with logic OR.
+    This method will return a new Manager with matching data. Items in the returned Manager do not
+    references the items in the original Manager.
+
+    If you wish to apply more specific filters to Manager list, please
+    use filter(), list comprehension, or other filtering method.
+        i.e. : `[item for item in manager if item[&#39;cost&#39;] &gt; 50]`
+
+    More on regex https://docs.python.org/3/library/re.html#re.Pattern.search
+    &#34;&#34;&#34;
+    if pattern is None :
+        return self
+    elif len(pattern) == 0 :
+        return self
+    else :
+        pattern=list(pattern)
+        apattern=pattern.pop()
+    
+    matching_items=list()
+    
+    if isinstance(apattern, str):
+        for item in self.data :
+            if regex_match(apattern, getattr(item, match_prop) if isinstance(item, Item) else str(item)) is not invert :
+                matching_items.append(item)
+        log.debug(&#34;You&#39;re search returned {} rows : {}&#34;.format(
+            len(matching_items),
+            str(matching_items)[:100]+&#39;...&#39;))
+        #Apply AND reccursively
+        return Manager(alist=matching_items).search(*pattern, invert=invert, match_prop=match_prop)
+    else:
+        raise ValueError(&#39;pattern must be str&#39;)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="msiempy.base.NitroObject" href="#msiempy.base.NitroObject">NitroObject</a></b></code>:
+<ul class="hlist">
+<li><code><a title="msiempy.base.NitroObject.NitroJSONEncoder" href="#msiempy.base.NitroObject.NitroJSONEncoder">NitroJSONEncoder</a></code></li>
+<li><code><a title="msiempy.base.NitroObject.action_refresh" href="#msiempy.base.NitroObject.action_refresh">action_refresh</a></code></li>
+<li><code><a title="msiempy.base.NitroObject.json" href="#msiempy.base.NitroObject.json">json</a></code></li>
+<li><code><a title="msiempy.base.NitroObject.text" href="#msiempy.base.NitroObject.text">text</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="msiempy.base.NitroObject"><code class="flex name class">
+<span>class <span class="ident">NitroObject</span></span>
+</code></dt>
+<dd>
+<section class="desc"><p>Base class for all nitro objects. All objects have a reference the single
+NitroSession object that handle the esm requests</p>
+<p>self.nitro.request('esm-get-times')</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">class NitroObject(abc.ABC):
+    &#34;&#34;&#34;
+    Base class for all nitro objects. All objects have a reference the single 
+    NitroSession object that handle the esm requests
+    &#34;&#34;&#34;
+
+    class NitroJSONEncoder(json.JSONEncoder):
+        &#34;&#34;&#34;
+        Custom JSON encoder that will use the approprtiate propertie depending of the type of NitroObject.
+        #TODO return meta info about the Manager. Maybe create a section `manager` and `data`.
+        #TODO support json json dumping of QueryFilers, may be by making them inherits from Item.
+        &#34;&#34;&#34;
+        def default(self, obj): # pylint: disable=E0202
+            if isinstance(obj,(Item, Manager)):
+                return obj.data
+            #elif isinstance(obj, (QueryFilter)):
+                #return obj.config_dict
+            else:
+                return json.JSONEncoder.default(self, obj) 
+
+    @abc.abstractmethod
+    def __init__(self):
+        &#34;&#34;&#34;
+        self.nitro.request(&#39;esm-get-times&#39;)
+        &#34;&#34;&#34;
+        self.nitro=NitroSession()
+
+    def __str__(self):
+        return self.text
+
+    def __repr__(self):
+        return self.json
+
+    @abc.abstractproperty
+    def text(self):
+        &#34;&#34;&#34;
+        Returns str
+        &#34;&#34;&#34;
+        pass
+
+    @abc.abstractproperty
+    def json(self):
+        &#34;&#34;&#34;
+        Returns json representation
+        &#34;&#34;&#34;
+        pass
+
+    @abc.abstractmethod
+    def refresh(self):
+        &#34;&#34;&#34;
+        Refresh the state of the object
+        &#34;&#34;&#34;
+        pass
+
+    @staticmethod
+    def action_refresh(ntiro_object):
+        &#34;&#34;&#34;
+        Refrech callable to use with perform()
+        &#34;&#34;&#34;
+        return(ntiro_object.refresh())</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>abc.ABC</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="msiempy.base.Item" href="#msiempy.base.Item">Item</a></li>
+<li><a title="msiempy.base.Manager" href="#msiempy.base.Manager">Manager</a></li>
+<li><a title="msiempy.query.QueryFilter" href="query.html#msiempy.query.QueryFilter">QueryFilter</a></li>
+<li><a title="msiempy.device.Device" href="device.html#msiempy.device.Device">Device</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="msiempy.base.NitroObject.NitroJSONEncoder"><code class="name">var <span class="ident">NitroJSONEncoder</span></code></dt>
+<dd>
+<section class="desc"><p>Custom JSON encoder that will use the approprtiate propertie depending of the type of NitroObject.</p>
+<h1 id="todo-return-meta-info-about-the-manager-maybe-create-a-section-manager-and-data">TODO return meta info about the Manager. Maybe create a section <code>manager</code> and <code>data</code>.</h1>
+<h1 id="todo-support-json-json-dumping-of-queryfilers-may-be-by-making-them-inherits-from-item">TODO support json json dumping of QueryFilers, may be by making them inherits from Item.</h1></section>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="msiempy.base.NitroObject.action_refresh"><code class="name flex">
+<span>def <span class="ident">action_refresh</span></span>(<span>ntiro_object)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Refrech callable to use with perform()</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">@staticmethod
+def action_refresh(ntiro_object):
+    &#34;&#34;&#34;
+    Refrech callable to use with perform()
+    &#34;&#34;&#34;
+    return(ntiro_object.refresh())</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="msiempy.base.NitroObject.json"><code class="name">var <span class="ident">json</span></code></dt>
+<dd>
+<section class="desc"><p>Returns json representation</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">@abc.abstractproperty
+def json(self):
+    &#34;&#34;&#34;
+    Returns json representation
+    &#34;&#34;&#34;
+    pass</code></pre>
+</details>
+</dd>
+<dt id="msiempy.base.NitroObject.text"><code class="name">var <span class="ident">text</span></code></dt>
+<dd>
+<section class="desc"><p>Returns str</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">@abc.abstractproperty
+def text(self):
+    &#34;&#34;&#34;
+    Returns str
+    &#34;&#34;&#34;
+    pass</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="msiempy.base.NitroObject.refresh"><code class="name flex">
+<span>def <span class="ident">refresh</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Refresh the state of the object</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">@abc.abstractmethod
+def refresh(self):
+    &#34;&#34;&#34;
+    Refresh the state of the object
+    &#34;&#34;&#34;
+    pass</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="msiempy" href="index.html">msiempy</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="msiempy.base.Item" href="#msiempy.base.Item">Item</a></code></h4>
+<ul class="">
+<li><code><a title="msiempy.base.Item.data_from_id" href="#msiempy.base.Item.data_from_id">data_from_id</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="msiempy.base.Manager" href="#msiempy.base.Manager">Manager</a></code></h4>
+<ul class="two-column">
+<li><code><a title="msiempy.base.Manager.SELECTED" href="#msiempy.base.Manager.SELECTED">SELECTED</a></code></li>
+<li><code><a title="msiempy.base.Manager.clear" href="#msiempy.base.Manager.clear">clear</a></code></li>
+<li><code><a title="msiempy.base.Manager.get_text" href="#msiempy.base.Manager.get_text">get_text</a></code></li>
+<li><code><a title="msiempy.base.Manager.keys" href="#msiempy.base.Manager.keys">keys</a></code></li>
+<li><code><a title="msiempy.base.Manager.perform" href="#msiempy.base.Manager.perform">perform</a></code></li>
+<li><code><a title="msiempy.base.Manager.refresh" href="#msiempy.base.Manager.refresh">refresh</a></code></li>
+<li><code><a title="msiempy.base.Manager.search" href="#msiempy.base.Manager.search">search</a></code></li>
+<li><code><a title="msiempy.base.Manager.selected_items" href="#msiempy.base.Manager.selected_items">selected_items</a></code></li>
+<li><code><a title="msiempy.base.Manager.table_colums" href="#msiempy.base.Manager.table_colums">table_colums</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="msiempy.base.NitroObject" href="#msiempy.base.NitroObject">NitroObject</a></code></h4>
+<ul class="">
+<li><code><a title="msiempy.base.NitroObject.NitroJSONEncoder" href="#msiempy.base.NitroObject.NitroJSONEncoder">NitroJSONEncoder</a></code></li>
+<li><code><a title="msiempy.base.NitroObject.action_refresh" href="#msiempy.base.NitroObject.action_refresh">action_refresh</a></code></li>
+<li><code><a title="msiempy.base.NitroObject.json" href="#msiempy.base.NitroObject.json">json</a></code></li>
+<li><code><a title="msiempy.base.NitroObject.refresh" href="#msiempy.base.NitroObject.refresh">refresh</a></code></li>
+<li><code><a title="msiempy.base.NitroObject.text" href="#msiempy.base.NitroObject.text">text</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.6.3</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
