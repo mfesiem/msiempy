@@ -121,22 +121,14 @@ PARAMS = {
                     'datasourceId': {'id': '%(ds_id)s'}}
                  """),
                  
-    'del_client': ("DS_DELETEDSCLIENTS",
-                    """{}
-                    """
+    'del_client': ("DS_DELETEDSCLIENTS",None
                     ),
                     
-    'ds_last_times': ("QRY%5FGETDEVICELASTALERTTIME",
-                      """{}
-                      """),
+    'ds_last_times': ("QRY%5FGETDEVICELASTALERTTIME","""{}"""),
                       
-    'zonetree': ("zoneGetZoneTree",
-                      """{}
-                      """),
+    'zonetree': ("zoneGetZoneTree",None),
                       
-    'ds_by_type': ("QRY_GETDEVICECOUNTBYTYPE",
-                      """{}
-                      """),
+    'ds_by_type': ("QRY_GETDEVICECOUNTBYTYPE",None),
 
    '_dev_types':  ("dev_type_map",
                     """{'1': 'zone',

@@ -266,7 +266,7 @@ class NitroSession():
     """API v2 base url.
     """
 
-    BASE_URL_PRIV = 'https://{}/ess'
+    BASE_URL_PRIV = 'https://{}/ess/'
     """Private API base URL.
     """
 
@@ -340,8 +340,8 @@ class NitroSession():
         if method == method.upper():
             privateApiCall=True
             url = self.BASE_URL_PRIV
-            if data :
-                data = self._format_params(method, **data)
+            data = self._format_params(method, **data)
+            log.debug('Private API call : '+str(method)+' Formatted params : '+str(data))
         
         #Normal API calls
         else:
@@ -445,13 +445,16 @@ class NitroSession():
 
         method, data = PARAMS.get(request)
 
-        if data :
+        if data is not None :
             data =  data % params
             data = ast.literal_eval((data.replace('\n','').replace('\t','').replace("'",'"')))
            
-        
-        if method :
-            method = method % params
+        if method is not None:
+            try :
+                method = method % params
+            except TypeError as err :
+                if ('must be real number, not dict' in str(err)):
+                    log.warning("Interpolation failed probably because of the private API calls formatting... Unexpected behaviours can happend.")
 
         if not self._logged and method != 'login':
             self._logged=self._login()

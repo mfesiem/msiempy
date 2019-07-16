@@ -74,15 +74,25 @@ class ESM(Device):
         venmod_to_type_id(vendor, model)    Returns string of matching type_id
         
     """
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """
-        Args:
-            host (str): IP or hostname of ESM.
-
         Returns:
             obj. ESM object
         """
-        super().__init__()
+        super().__init__(*args, **kwargs)
+
+    
+        
+    def refresh(self):
+        super().refresh()
+
+    @property
+    def text(self):
+        return str('ESM object')
+
+    @property
+    def json(self):
+        return (dict(self))
 
     def version(self):
         """
@@ -293,6 +303,7 @@ class ESM(Device):
         for self.venmod in self.ds_types:
             if str(self.venmod[0]) == str(self.type_id):
                 return (self.venmod[1], self.venmod[2])
+        return(('Unkown vendor for type_id {}'.format(type_id),'Unkown vendor'))
 
     def venmod_to_type_id(self, vendor, model):
         """
