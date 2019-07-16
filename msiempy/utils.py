@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""A few quick static util methods
+"""A few quick static util methods.
 """
 
 import time

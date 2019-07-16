@@ -1,4 +1,4 @@
-"""Event management, qryExecuteDetails wrapper, adding note, etc..
+"""Module for event management, qryExecuteDetails wrapper, adding note, etc..
 """
 
 import time
@@ -298,7 +298,7 @@ class EventManager(QueryManager):
         Wait and sleep - for `sleep_time` duration in seconds -
             until the query is completed
         
-        #TODO handle SIEM ResultUnavailable error
+        TODO handle SIEM ResultUnavailable error
         """
         log.debug("Waiting for the query to be executed on the SIEM...")
         while True:
@@ -391,8 +391,7 @@ class Event(Item):
         "Zone_ZoneSrc",
         ]
 
-    """Relatively common event fields that could be useful to have.
-    """
+   
     DEFAULTS_EVENT_FIELDS=[
         "Rule.msg",
         "Alert.SrcPort",
@@ -406,14 +405,17 @@ class Event(Item):
         "Alert.DSIDSigID",
         "Alert.IPSIDAlertID"
         ]
+    """Relatively common event fields that could be useful to have.
+    """
 
     def __getitem__(self, key):
         """
-        Automatically adding the table name of the field 
-            if no '.' is present in the key
-            Not working properly i think
-            #TODO try with collections.UserDict.__getitem__(self, key)
+        Automatically adding the table name of the field by iterating trought FIELDS_TABLES
+        if no '.' is present in the key
+        Not working. Skipping.
+        TODO try with collections.UserDict.__getitem__(self, key)
         """
+
         return super().__getitem__(key)
         """
         if '.' not in key :
@@ -430,7 +432,7 @@ class Event(Item):
             else:
                 log.error('The SIEM dict keys are not always the same are the requested fields. check .keys()')
                 raise
-                """
+        """
 
     def clear_notes(self):
         """

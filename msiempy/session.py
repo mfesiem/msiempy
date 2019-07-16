@@ -31,15 +31,35 @@ class NitroSession():
     '''
 
     BASE_URL = 'https://{}/rs/esm/'
+    """API v2 base url.
+    """
+
     BASE_URL_PRIV = 'https://{}/ess'
+    """Private API base URL.
+    """
 
     __initiated__ = False
+    """
+    Weither the session has been intaciated. It's supposed to be a singleton.
+    """
     __unique_state__ = {}
+    """
+    The singleton unique state.
+    """
     
     config = None
+    """
+    NitroConfig object.
+    """
+    
     executor = None
+    """
+    Executor object.
+    """
         
     def __str__(self):
+        """
+    """
         return repr(self.__unique_state__) 
 
     def __init__(self, conf_path=None, conf_dict=None):

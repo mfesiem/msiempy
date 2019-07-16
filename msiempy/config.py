@@ -26,6 +26,15 @@ class NitroConfig(configparser.ConfigParser):
         #        or :   $HOME/'''+CONFIG_FILE_NAME+'''
         # Use command line to setup authentication
         '''
+    """
+        # The configuration file should be located securely in your path since it 
+        # has credentials.
+        # For Windows:  %APPDATA%\\
+        # For Mac :     $HOME/
+        # For Linux :   $XDG_CONFIG_HOME/
+        #        or :   $HOME/
+        # Use command line to setup authentication
+    """
 
     DEFAULT_CONF_DICT={
         'esm':{'host':'', 
@@ -38,14 +47,24 @@ class NitroConfig(configparser.ConfigParser):
             'ssl_verify':False,
             'output':'text'}
     }
-
-    """,'performance':{'max_workers':10,
-    'max_rows':200000,
-    'default_rows':1000,
-    'slots':10,
-    'max_query_depth':1}"""
+    """
+    Default configuration. Authentication is left empty.
+    {
+        'esm':{'host':'', 
+            'user':'',
+            'passwd':''},
+        'general':{'verbose':False,
+            'quiet':False,
+            'logfile':'',
+            'timeout':30,
+            'ssl_verify':False,
+            'output':'text'}
+    }
+    """
 
     def __str__(self):
+        """Custom str() method that lists all config fields.
+        """
         return(self.CONFIG_FILE_DISCLAMER+'\nConfiguration file : '+
             self._path+'\n'+str({section: dict(self[section]) for section in self.sections()}))
 
@@ -53,7 +72,6 @@ class NitroConfig(configparser.ConfigParser):
         """
         Initialize the Config instance.
         If path is left None, will automatically look for it.
-
         """
 
         super().__init__(*arg, **kwarg)
@@ -90,6 +108,8 @@ class NitroConfig(configparser.ConfigParser):
             super().write(conf)
 
     def _iset(self, section, option, secure=False):
+        """Internal method to interactively set  a option in a section.
+        """
         msg='Enter [{}]{}'
         value = self.get(section, option)
         newvalue=''
@@ -115,38 +135,47 @@ class NitroConfig(configparser.ConfigParser):
 
     @property
     def user(self):
+        """ConfigParser.get('esm', 'user')"""
         return self.get('esm', 'user')
 
     @property
     def host(self):
+        """ConfigParser.get('esm', 'host')"""
         return self.get('esm', 'host')
 
     @property
     def passwd(self):
-        return self.get('esm', 'passwd')
+        """ConfigParser.get('esm', 'host')"""
+        return self.get('esm', 'host')
 
     @property
     def verbose(self):
+        """ConfigParser.getboolean('general', 'verbose')"""
         return self.getboolean('general', 'verbose')
 
     @property
     def quiet(self):
+        """ConfigParser.getboolean('general', 'quiet')"""
         return self.getboolean('general', 'quiet')
 
     @property
     def logfile(self):
+        """ConfigParser.get('general', 'logfile')"""
         return self.get('general', 'logfile')
 
     @property
     def timeout(self):
+        """ConfigParser.getint('general', 'timeout')"""
         return self.getint('general', 'timeout')
 
     @property
     def ssl_verify(self):
+        """ConfigParser.getboolean('general', 'ssl_verify')"""
         return self.getboolean('general', 'ssl_verify')
 
     @property
     def output(self):
+        """ConfigParser.get('general', 'output')"""
         return self.get('general', 'output')
 
    

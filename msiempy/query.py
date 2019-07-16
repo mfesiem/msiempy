@@ -43,7 +43,24 @@ class QueryManager(Manager):
             "PREVIOUS_YEAR"
     ]
     """
-    List of possible time ranges
+    List of possible time ranges : "CUSTOM",
+            "LAST_MINUTE",
+            "LAST_10_MINUTES",
+            "LAST_30_MINUTES",
+            "LAST_HOUR",
+            "CURRENT_DAY",
+            "PREVIOUS_DAY",
+            "LAST_24_HOURS",
+            "LAST_2_DAYS",
+            "LAST_3_DAYS",
+            "CURRENT_WEEK",
+            "PREVIOUS_WEEK",
+            "CURRENT_MONTH",
+            "PREVIOUS_MONTH",
+            "CURRENT_QUARTER",
+            "PREVIOUS_QUARTER",
+            "CURRENT_YEAR",
+            "PREVIOUS_YEAR"
     """
 
     def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
@@ -53,7 +70,7 @@ class QueryManager(Manager):
         Abstract base class that handles the time ranges operations, loading data from the SIEM.
 
         Params
-        ======
+        `
             time_range : Query time range. String representation of a time range. 
                 See `msiempy.base.QueryManager.POSSIBLE_TIME_RANGE`
             start_time : Query starting time, can be a string or a datetime object. Parsed with dateutil.
@@ -63,8 +80,7 @@ class QueryManager(Manager):
                 Meaning, if requests_size=500, slots=5 and max_query_depth=3, then the maximum capacity of 
                 the list is (500*5)*(500*5)*(500*5) = 15625000000
             load_async : Load asynchonously the sub-queries. Defaulted to True.
-            
-           
+        `
         """
 
         super().__init__(*arg, **kwargs)
@@ -101,6 +117,9 @@ class QueryManager(Manager):
 
     @property
     def __root_parent__(self):
+        """
+        Internal method that return the first query of the query tree
+        """
         if self.__parent__==None:
             return self
         else :
@@ -200,14 +219,13 @@ class QueryManager(Manager):
     def filters(self):
         """ 
         Filter propertie getter. Returns a list of filters.
-        #TODO find a better solution to integrate the filter propertie
+        TODO find a better solution to integrate the filter propertie
         """
         raise NotImplementedError()
 
     @filters.setter
     def filters(self, filters):
-        """
-        Query filters property : can be a list of tuple(field, [values]) 
+        """Query filters property : can be a list of tuple(field, [values]) 
             or just a tuple. None value will call `msiempy.query.QueryManager.clear_filters()`
         Throws AttributeError if type not supported.
         """
@@ -228,15 +246,13 @@ class QueryManager(Manager):
     
     @abc.abstractmethod
     def add_filter(self, filter):
-        """
-        Method that figures out the way to add a filter to the query.
+        """Method that figures out the way to add a filter to the query.
         """
         pass
 
     @abc.abstractmethod
     def clear_filters(self):
-        """
-        Method that fiures out the way to remove all filters to the query.
+        """Method that fiures out the way to remove all filters to the query.
         """
         pass 
 
@@ -249,7 +265,7 @@ class QueryManager(Manager):
         pass
 
     @abc.abstractmethod
-    def load_data(self, workers=15, slots=24, delta=None):
+    def load_data(self, workers=15, slots=4, delta='24h'):
         """
         Method to load the data from the SIEM
         Split the query in defferents time slots if the query apprears not to be completed.
@@ -260,18 +276,21 @@ class QueryManager(Manager):
         If you're looking foe `max_query_depth`, it's define at the creation of the query manager
 
         Returns a QueryManager.
+        
+        Note :
+            IF you looking for load_async = True/False, you should pass thid to the constructor method `msiempy.query.QueryManager`
+                or by setting the attribute manually like `manager.load_asynch=True`
+            Only the first query is loaded asynchronously.
 
         Params
-        -----
+        `
             requests_size : size (in items) for the individual requests.
             workers : numbre of parrallels task
-           
             slots : number of time slots the query can be divided. The loading bar is 
                 divided according to the number of slots
-            delta : exemple : '24hrs', the query will be firstly divided in chuncks according to the time delta read
+            delta : exemple : '24h', the query will be firstly divided in chuncks according to the time delta read
                 with dateutil.
-
-
+        `
         #
         """
 
@@ -289,8 +308,11 @@ class QueryManager(Manager):
                     start, end = self.start_time, self.end_time
 
                 if self.__parent__ == None and isinstance(delta, str) :
+                    #if it's the first query and delta is speficied, cut the time_range in slots according to the delta
                     times=divide_times(start, end, delta=parse_timedelta(delta))
-                else :times=divide_times(start, end, slots=slots)#  IGONORING THE CONFIG ### : self.nitro.config.slots)
+                    
+                else :times=divide_times(start, end, slots=slots)
+                        #IGONORING THE CONFIG ### : self.nitro.config.slots)
                 
                 sub_queries=list()
 
@@ -312,10 +334,11 @@ class QueryManager(Manager):
 
             
                 results = self.perform(QueryManager.load_data, sub_queries, 
-                    asynch=False if not self.load_async else (self.__parent__==None), progress=self.__parent__==None, 
+                    #The sub query is asynch only when it's set to True and it's the first query
+                    asynch=False if not self.load_async else (self.__parent__==None),
+                    progress=self.__parent__==None, 
                     message='Loading data from '+self.start_time+' to '+self.end_time+'. In {} slots'.format(len(times)),
                     func_args=dict(slots=slots),
-                        #IGONORING THE CONFIG ### : self.nitro.config.slots)
                     workers=workers)
 
                 #Flatten the list of lists in a list

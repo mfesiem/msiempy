@@ -24,15 +24,15 @@ from .utils import regex_match
 
 class NitroObject(abc.ABC):
     """
-    Base class for all nitro objects. All objects have a reference the single 
-    NitroSession object that handle the esm requests
+    Base class for all nitro objects. All objects have a reference the single
+    NitroSession object that handle the esm requests.
     """
 
     class NitroJSONEncoder(json.JSONEncoder):
         """
         Custom JSON encoder that will use the approprtiate propertie depending of the type of NitroObject.
-        #TODO return meta info about the Manager. Maybe create a section `manager` and `data`.
-        #TODO support json json dumping of QueryFilers, may be by making them inherits from Item.
+        TODO return meta info about the Manager. Maybe create a section `manager` and `data`.
+        TODO support json json dumping of QueryFilers, may be by making them inherits from Item.
         """
         def default(self, obj): # pylint: disable=E0202
             if isinstance(obj,(Item, Manager)):
@@ -44,52 +44,55 @@ class NitroObject(abc.ABC):
 
     @abc.abstractmethod
     def __init__(self):
-        """
-        self.nitro.request('esm-get-times')
+        """Creates the object session.
         """
         self.nitro=NitroSession()
 
     def __str__(self):
+        """
+        str(obj) -> return text string.
+        Can be a table if the object is a Manager.
+        """
         return self.text
 
     def __repr__(self):
+        """
+        repr(obj) -> return json string.
+        """
         return self.json
 
     @abc.abstractproperty
     def text(self):
         """
-        Returns str
+        Returns printable string.
         """
         pass
 
     @abc.abstractproperty
     def json(self):
         """
-        Returns json representation
+        Returns json string representation.
         """
         pass
 
     @abc.abstractmethod
     def refresh(self):
         """
-        Refresh the state of the object
+        Refresh the state of the object.
         """
         pass
-
-    @staticmethod
-    def action_refresh(ntiro_object):
-        """
-        Refrech callable to use with perform()
-        """
-        return(ntiro_object.refresh())
 
 class Item(collections.UserDict, NitroObject):
     """
     Base class that represent any SIEM data that can be represented as a item of a manager.
     Exemple : Event, Alarm, etc...
-    Inherits from dict
+    Inherits from dict.
     """
     def __init__(self, adict=None, id=None):
+        """
+        Initiate the NitroObject and UserDict objects, load the data if id is specified, use adict agument 
+        and update dict values accordingly.
+        """
         NitroObject.__init__(self)
         collections.UserDict.__init__(self, adict)
         
@@ -102,50 +105,34 @@ class Item(collections.UserDict, NitroObject):
         for key in self.data :
             if isinstance(self.data[key], list):
                 self.data[key]=Manager(alist=self.data[key])
-                
-        self.selected=False
 
     @property
     def json(self):
+        """JSON representation of a item. Basic dict.
+        """
         return(json.dumps(dict(self), indent=4, cls=NitroObject.NitroJSONEncoder))
 
     @property
     def text(self):
+        """A list of values. Not titles.
+        """
         return(', '.join([str(val) for val in self.values()]))
 
     def refresh(self):
+        """Not implemented here
+        """
         log.debug('NOT Refreshing item :'+str(self)+' '+str(NotImplementedError()))
 
     @abc.abstractmethod
     def data_from_id(self, id):
+        """This method figured out the way to retreive the item infos from an id.
+        """
         pass
-
-    '''This code has been commented cause it adds unecessary complexity.
-    But it's a good example of how we could perform() method to do anything
-
-    def select(self):
-        self.selected=False
-
-    def unselect(self):
-        self.selected=True
-
-    @staticmethod
-    def action_select(item):
-        item.select()
-
-    @staticmethod
-    def action_unselect(item):
-        item.unselect()'''
 
 class Manager(collections.UserList, NitroObject):
     """
     Base class for Managers objects. 
     Inherits from list
-    """
-
-    SELECTED='b8c0a7c5b307eeee30039343e6f23e9e4f1d325bbc2ffaf1c2b7b583af160124'
-    """
-    Random constant represents all selected items to avoid regex matching interference.
     """
 
     def __init__(self, alist=None):
@@ -168,7 +155,9 @@ class Manager(collections.UserList, NitroObject):
             raise ValueError('Manager can only be initiated based on a list')
 
     @property
-    def table_colums(self):            
+    def table_colums(self):
+        """Return the list of columns the table representation will have. This attribute is designed to overwritten.
+        """            
         return []
 
     def _norm_dicts(self):
@@ -185,7 +174,8 @@ class Manager(collections.UserList, NitroObject):
 
     @property
     def keys(self):
-        #Set of keys for all dict
+        """Set of keys for all dict
+        """
         #If new fields are added it won't show on text repr. Only json.
         
         manager_keys=set()
@@ -196,11 +186,14 @@ class Manager(collections.UserList, NitroObject):
         return manager_keys
 
 
-    def get_text(self, compact=False, fields=None):
+    def get_text(self, compact=False, fields=None, max_column_width=120):
         """
-        Returns a nice string table made with prettytable if not compact.
-        Else an '|' separated list.
-        Default fields are returned by .keys attribute and sorted.
+        Return a acsii table string representation of the manager list
+            compact : Returns a nice string table made with prettytable, else an '|' separated list.
+            fields : list of fields you want in the table
+                is None : default fields are returned by .keys attribute and sorted.
+            max_column_width when using prettytable (not compact)
+
         It's an expesive thing to do on big ammount of data !
         """
         
@@ -218,7 +211,7 @@ class Manager(collections.UserList, NitroObject):
 
             for item in self.data:
                 if isinstance(item, (dict, Item)):
-                    table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=120))
+                    table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=max_column_width))
                         if not isinstance(item[field], Manager)
                         else item[field].get_text() for field in fields])
                 else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
@@ -253,21 +246,23 @@ class Manager(collections.UserList, NitroObject):
                             text+=' | '
                     text=text[0:len(text)-1]
                 else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
-                    #text+=textwrap.wrap(str(item),width=80)
-
+                    #text+=textwrap.wrap(str(item),width=max_column_width)
                 text+='\n'
             text=text[0:len(text)-1]
-
         return text
 
 
 
     @property
     def text(self):
+        """The text properti is a shorcut to get_text() with no arguments.
+        """
         return self.get_text()
         
     @property
     def json(self):
+        """Dumps a JSON list of dicts.
+        """
         return(json.dumps([dict(item) for item in self.data], indent=4, cls=NitroObject.NitroJSONEncoder))
 
     def search(self, *pattern, invert=False, match_prop='json'):
@@ -306,39 +301,12 @@ class Manager(collections.UserList, NitroObject):
         else:
             raise ValueError('pattern must be str')
 
-        
-
-    ''' This code has been commented cause it adds unecessary complexity.
-    But it's a good example of how we could perform() method to do anything
-
-    def select(self, data_or_pattern, **search):
-        """
-        Select the rows that match the pattern.
-        The patterm could be a index, list of index or list of rows
-        """
-        self.perform(Item.action_select, data_or_pattern, **search)
-
-    def unselect(self, data_or_pattern, **search):
-        """
-        Unselect the rows that match the pattern.
-        The patterm could be a index, list of index or list of rows
-        """
-        self.perform(Item.action_unselect, data_or_pattern, **search)
-        '''
-    
-    def clear(self):
-        """
-        Unselect all items.
-        """
-        for item in self.data :
-            item.selected=False
-        #self.perform(Item.action_unselect, '.*') : 
-
     def refresh(self):
         """
         Execute refresh function on all items.
         """
-        self.perform(Item.action_refresh)
+        log.warning("The function Manager.refresh hasn't been correctly tested")
+        self.perform(Item.refresh)
 
     def perform(self, func, data=None, func_args=None, confirm=False, asynch=False,  workers=None , progress=False, message=None):
         """
@@ -346,7 +314,7 @@ class Manager(collections.UserList, NitroObject):
         Will execute the callable the local manager data list.
 
             Params
-            ======
+            
             func : callable stateless function
                 funs is going to be called like func(item, **func_args) on all items in data patern
             if data stays None, will perform the action on all rows, else it will perfom the action on the data list
@@ -366,7 +334,8 @@ class Manager(collections.UserList, NitroObject):
             ' confirm='+str(confirm)+
             ' asynch='+str(asynch)+
             ' workers='+str(workers)+
-            ' progress='+str(progress))
+            ' progress='+str(progress)+
+            ' message='+str(message))
 
         if not callable(func) :
             raise ValueError('func must be callable')
@@ -431,11 +400,3 @@ class Manager(collections.UserList, NitroObject):
         if not 'y' in input('Are you sure you want to do this '+str(func)+' on '+
         ('\n'+str(elements) if elements is not None else 'all elements')+'? [y/n]: '):
             raise InterruptedError("The action was cancelled by the user.")
-
-    @property
-    def selected_items(self):
-        """
-        Selected items only.
-        Returns a Manager
-        """
-        return(Manager(alist=[item for item in self.data if item.selected]))

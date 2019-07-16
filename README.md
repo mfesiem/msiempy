@@ -39,8 +39,9 @@ Enter [general]output. Press <Enter> to keep text:
         #        or :   $HOME/.msiem/conf.ini
         # Use command line to setup authentication
         
-Configuration file : /Users/landestt/.msiem/conf.ini
+Configuration file : /Users/username/.msiem/conf.ini
 {'esm': {'host': '***', 'user': '***', 'passwd': '***=='}, 'general': {'verbose': 'no', 'quiet': 'False', 'logfile': '', 'timeout': '60', 'ssl_verify': 'no', 'output': 'text'}}
+>>>config.write()
 ```
 
 ### Run tests

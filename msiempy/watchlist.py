@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Watchlist module offers a whatchlist manager and watchlist object.
-"""
+"""Watchlist module offers a whatchlist management."""
 
 import logging
 import collections

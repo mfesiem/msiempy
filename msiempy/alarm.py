@@ -1,4 +1,4 @@
-"""Concrete module that provide alarm management
+"""Module that provide alarm management, acknowledgement, filtering, etc...
 """
 
 import collections
@@ -237,39 +237,40 @@ class Alarm(Item):
     """
     Alarm
     `
-        id Description: The ID of the triggered alarm
-        summary  Description: The summary of the triggered alarm
-        assignee Description: The assignee for this triggered alarm
-        severity Description: The severity for this triggered alarm
-        triggeredDate Description: The date this alarm was triggered
-        acknowledgedDate Description: The date this triggered alarm was acknowledged
-        acknowledgedUsername Description: The user that acknowledged this triggered alarm
-        alarmName Description: The name of the alarm that was triggered
-        conditionType Description: The condition type of the alarm
-        filters Description: The filters for this user
-        queryId Description: The queryId for this user
-        alretRateMin Description: The alretRateMin for this user
-        alertRateCount Description: The alertRateCount for this user
-        percentAbove Description: The percentAbove for this user
-        percentBelow Description: The percentBelow for this user
-        offsetMinutes Description: The offsetMinutes for this user
-        timeFilter Description: The timeFilter for this user
-        maximumConditionTriggerFrequency Description: The maximumConditionTriggerFrequency for this user
-        useWatchlist Description: The useWatchlist for this user
-        matchField Description: The matchField for this user
-        matchValue  Description: The matchValue for this user
-        healthMonStatus Description: The healthMonStatus for this user
-        assigneeId Description: The assigneeId for this user
-        escalatedDate Description: The escalatedDate for this user
-        caseId Description: The caseId for this user
-        caseName Description: The caseName for this user
-        iocName Description: The iocName for this user
-        iocId Description: The iocId for this user
-        description Description: The description for this user
-        actions Description: The actions for this user
-        events Description: The events for this user
+        id : The ID of the triggered alarm
+        summary  : The summary of the triggered alarm
+        assignee : The assignee for this triggered alarm
+        severity : The severity for this triggered alarm
+        triggeredDate : The date this alarm was triggered
+        acknowledgedDate : The date this triggered alarm was acknowledged
+        acknowledgedUsername : The user that acknowledged this triggered alarm
+        alarmName : The name of the alarm that was triggered
+        conditionType : The condition type of the alarm
+        filters : The filters for this user
+        queryId : The queryId for this user
+        alretRateMin : The alretRateMin for this user
+        alertRateCount : The alertRateCount for this user
+        percentAbove : The percentAbove for this user
+        percentBelow : The percentBelow for this user
+        offsetMinutes : The offsetMinutes for this user
+        timeFilter : The timeFilter for this user
+        maximumConditionTriggerFrequency : The maximumConditionTriggerFrequency for this user
+        useWatchlist : The useWatchlist for this user
+        matchField : The matchField for this user
+        matchValue  : The matchValue for this user
+        healthMonStatus : The healthMonStatus for this user
+        assigneeId : The assigneeId for this user
+        escalatedDate : The escalatedDate for this user
+        caseId : The caseId for this user
+        caseName : The caseName for this user
+        iocName : The iocName for this user
+        iocId : The iocId for this user
+        description : The description for this user
+        actions : The actions for this user
+        events : The events for this user
     `
     """
+
     """@property
     def status(self):
         return('acknowledged' 
@@ -283,7 +284,7 @@ class Alarm(Item):
         ['', 'all', 'both']
     ]
     """
-    Possible alarm statuses
+    Possible alarm statuses : 'acknowledged', 'unacknowledged' or ''
     """
 
     ALARM_FILTER_FIELDS = [('id',),
@@ -296,7 +297,8 @@ class Alarm(Item):
     ('alarmName','name'),
     ]
     """
-    Possible fields usable in a alarm filter
+    Possible fields usable in a alarm filter : 'id', 'summary', 'assignee', 'severity', 'triggeredDate', 'acknowledgedDate', 'acknowledgedUsername', 'alarmName'.
+    Some synonims can also be used, see source code.
     """
 
     ALARM_EVENT_FILTER_FIELDS=[("eventId",),
@@ -310,47 +312,43 @@ class Alarm(Item):
     ("lastTime",'date'),
     ("eventSubType",'subtype')]
     """
-    Possible fields usable in a event filter
+    Possible fields usable in a event filter : 'eventID', 'ruleMessage', 'eventCount', 'sourceIp', 'destIp', 'protocol', 'lastTime', 'eventSubType'.
+    Some synonims can also be used, see source code.
+
     """
 
     ALARM_DEFAULT_FIELDS=['triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage']
-    """
-    
+    """Defaulfs fields : 'triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage' (not used, may be for printing ?)
     """
 
     def __init__(self, *arg, **kwargs):
-        """
-    
+        """Creates a empty AlarmManager.
         """
         super().__init__(*arg, **kwargs)
 
     def acknowledge(self):
-        """
-    
+        """Mark the alarm as acknowledged.
         """
         self.nitro.request('ack_alarms', ids=[self.data['id']['value']])
 
     def unacknowledge(self):
-        """
-    
+        """Mark the alarm as unacknowledge.    
         """
         self.nitro.request('unack_alarms', ids=[self.data['id']['value']])
 
     def delete(self):
-        """
-    
+        """Destructive action!
+        Delete the alarm.
         """
         self.nitro.request('delete_alarms', ids=[self.data['id']['value']])
 
     def ceate_case(self):
-        """
-    
+        """Not implemented : TODO
         """
         raise NotImplementedError()
 
     def load_details(self):
-        """
-        Update the alarm with detailled data loaded from the SIEM.
+        """Update the alarm with detailled data loaded from the SIEM.
         """
         the_id = self.data['id']
         self.data.update(self.data_from_id(the_id))
@@ -358,15 +356,16 @@ class Alarm(Item):
         return self
 
     def refresh(self):
+        """Update the alarm with detailled data loaded from the SIEM. Concrete NitroObject method.
         """
-    
-        """
-        super().refresh()
+        self.load_details()
 
     def load_events(self, extra_fields=None, by_id=False):
         """
-        This is clearly a workarround to retreive the genuine Event object from an Alarm.
-        @TODO find a better way to do it.
+        Retreive the genuine Event object from an Alarm.
+        extra_fields : list of extra fields. Reminder, defaul fields : `msiempy.event.Event.DEFAULTS_EVENT_FIELDS`
+        by_id : will seek for event data using the getAlertData SIEM api call. (doesn't work TODO )
+                If not, will use qryExecuteDetails and with a timedeal +-1second and some ip source/dest filter...
         """
         events=self.data['events']
         filters = list()
@@ -405,6 +404,9 @@ class Alarm(Item):
         return events
 
     def data_from_id(self, id):
+        """
+
+        """
         return self.nitro.request('get_alarm_details', id=str(id))
 
     """
