@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-    msiem.params
-    ~~~~~~~~~~~~~
-
-    This module imports a dict into the msiem core class to provide
+"""This module imports a dict into the msiem core class to provide
     a central place to aggregate methods and parameters. The params
     are stored as docstrings to support string replacement.
 
@@ -21,28 +17,6 @@
 
     Example:
         method, params = params['login'].format(username, password)
-
-    Attributes:
-        login: Function to login
-            vars:
-                username
-                password
-            callback vars:
-                Cookie
-                X-Xsrf-Token
-
-        devtree: Get top level device tree string
-
-        client_grp: Get clients for a specific group
-            vars:
-                id
-            callback vars:
-                ftoken
-
-        results: Get results from earlier call
-            vars:
-                ftoken
-
 """
 
 PARAMS = {

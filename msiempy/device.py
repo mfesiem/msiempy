@@ -1,3 +1,6 @@
+"""Module offering ESM and ERC management (TODO)
+"""
+
 import logging
 log = logging.getLogger('msiempy')
 

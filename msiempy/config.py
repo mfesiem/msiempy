@@ -1,3 +1,6 @@
+"""Configuration management, authentication, verbosity, logfile, general timeout, and others...
+"""
+
 import configparser
 import os
 import getpass

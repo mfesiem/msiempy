@@ -1,0 +1,3 @@
+[submodule "doc/mfesiem.github.io"]
+	path = doc/mfesiem.github.io
+	url = https://github.com/mfesiem/mfesiem.github.io

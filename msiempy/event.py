@@ -1,3 +1,6 @@
+"""Event management, qryExecuteDetails wrapper, adding note, etc..
+"""
+
 import time
 import datetime
 import logging
@@ -438,9 +441,10 @@ class Event(Item):
 
     def add_note(self, note):
         """
+        Desctructive action. It's actually going to replace the note !
         Add a new note in the note field.
         """
-        self.nitro.request("add_note_to_event", id=self.data["Alert.IPSIDAlertID"], note="{} : {}".format(str(datetime.datetime.now()),note))
+        self.nitro.request("add_note_to_event", id=self.data["Alert.IPSIDAlertID"], note="msiempy note at {} : {}".format(str(datetime.datetime.now()),note))
         
     def data_from_id(self, id):
         """EsmAlertData wrapper"""

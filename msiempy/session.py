@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
+"""The point of convergence of every request to the McFee ESM It provides standard dialogue with the esm.
+"""
+
 import logging
 import requests
 import json
 import ast
 import re
-
 import urllib.parse
-
 import urllib3
 
 from .error import NitroError
@@ -15,7 +17,6 @@ from .config import NitroConfig
 
 urllib3.disable_warnings()
 logging.getLogger("urllib3").setLevel(logging.WARNING)
-
 log = logging.getLogger('msiempy')
 
 class NitroSession():

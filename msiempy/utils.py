@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""A few quick static util methods
+"""
+
 import time
 import base64
 import re
@@ -6,6 +9,7 @@ from functools import wraps
 import logging
 from datetime import datetime, timedelta
 import dateutil.parser
+
 
 def dehexify(data):
     """

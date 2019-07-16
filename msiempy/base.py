@@ -1,3 +1,7 @@
+"""Basics of msiempy. 2 main type of classes are offered in this API : lists and dicts.
+Managers are lists and Items are dicts.
+"""
+
 import abc
 import collections
 import json

@@ -5,7 +5,7 @@ This project aims to provide a basic API wrapper around the McAfee SIEM API to h
 accessible and pythonic. 
 
 ### API Documentation
-https://mfesiem.github.io/msiempy/index.html
+https://mfesiem.github.io/docs/msiempy/index.html
 
 ### Installation 
 ```

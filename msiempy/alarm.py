@@ -1,3 +1,6 @@
+"""Concrete module that provide alarm management
+"""
+
 import collections
 import datetime
 import logging
@@ -18,7 +21,7 @@ class AlarmManager(QueryManager):
 
         """
         Params
-        ======
+        
             status_filter : status of the alarms to query
             page_size : max number of rows per query, by default takes the value in config `default_rows` option.
             page_number : defaulted to 1.
@@ -27,7 +30,7 @@ class AlarmManager(QueryManager):
             *args, **kwargs : Parameters passed to `msiempy.base.QueryManager.__init__()`
             
         Examples
-        ========
+        
             ```
             >>>em=AlarmManager(status_filter='unacknowledged',
                 filters=[('sourceIp','^10.*'), ('ruleMessage','Wordpress')]).load_data()
@@ -233,7 +236,7 @@ class AlarmManager(QueryManager):
 class Alarm(Item):
     """
     Alarm
-
+    `
         id Description: The ID of the triggered alarm
         summary  Description: The summary of the triggered alarm
         assignee Description: The assignee for this triggered alarm
@@ -265,7 +268,7 @@ class Alarm(Item):
         description Description: The description for this user
         actions Description: The actions for this user
         events Description: The events for this user
-
+    `
     """
     """@property
     def status(self):

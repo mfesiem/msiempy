@@ -1,3 +1,6 @@
+"""Module that provide time ranged filtered query wrapper
+"""
+
 import datetime
 import abc
 import copy
@@ -325,9 +328,6 @@ class QueryManager(Manager):
 
         self.data=items
         return(Manager(alist=items)) #return self ?
-
-class TestQueryManager(QueryManager):
-    pass
 
 class QueryFilter(NitroObject):
 
