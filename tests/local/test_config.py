@@ -1,11 +1,11 @@
 import unittest
-import msiempy.config
+import msiempy
 
 class T(unittest.TestCase):
 
     def test(self):
 
-        config = msiempy.config.NitroConfig()
+        config = msiempy.NitroConfig()
         
         print('setting [esm]*')
         #config.iset('esm')

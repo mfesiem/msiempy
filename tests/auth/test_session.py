@@ -1,11 +1,11 @@
 import unittest
-import msiempy.session
+import msiempy
 
 class T(unittest.TestCase):
 
     def test(self):
 
-        session=msiempy.session.NitroSession()
+        session=msiempy.NitroSession()
         
         tz=session.request('time_zones')
         for t in tz :

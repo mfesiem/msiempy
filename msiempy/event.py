@@ -6,9 +6,8 @@ import datetime
 import logging
 log = logging.getLogger('msiempy')
 
-from .base import Item
+from . import Item, NitroError
 from .query import QueryManager, FieldFilter, GroupFilter, QueryFilter
-from .error import NitroError
 from .utils import timerange_gettimes, parse_query_result, format_fields_for_query
 
 class EventManager(QueryManager):

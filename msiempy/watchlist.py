@@ -4,7 +4,7 @@
 import logging
 import collections
 log = logging.getLogger('msiempy')
-from .base import Item, Manager
+from . import Item, Manager
 
 class WatchlistManager(Manager):
 

@@ -1,4 +1,4 @@
-"""Module that provide time ranged filtered query wrapper
+"""Module that provide time ranged filtered query wrapper. QueryManager is an abstract object.
 """
 
 import datetime
@@ -8,7 +8,7 @@ import json
 import logging
 log = logging.getLogger('msiempy')
 
-from .base import Manager, NitroError, NitroObject
+from . import Manager, NitroError, NitroObject
 from .utils import format_esm_time, convert_to_time_obj, timerange_gettimes, parse_timedelta, divide_times
 
 class QueryManager(Manager):

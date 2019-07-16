@@ -6,7 +6,7 @@ import datetime
 import logging
 log = logging.getLogger('msiempy')
 
-from .base import Item, Manager
+from . import Item, Manager
 from .query import QueryManager
 from .event import EventManager, Event
 from .utils import regex_match, convert_to_time_obj
@@ -419,3 +419,4 @@ class Alarm(Item):
         
         except KeyError :
             return False"""
+
