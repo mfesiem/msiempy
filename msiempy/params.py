@@ -237,5 +237,9 @@ PARAMS = {
 
     'get_watchlist_values': ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}"""),
 
-    'get_alert_data': ("""ipsGetAlertData""", """{"id": "%(id)s"}""" )
+    'get_alert_data': ("""ipsGetAlertData""", """{"id": "%(id)s"}"""),
+    
+    'get_sys_info'  : ('sysGetSysInfo',None),
+    
+    'build_stamp' : ('essmgtGetBuildStamp',None)
 }
