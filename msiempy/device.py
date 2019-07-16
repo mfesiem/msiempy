@@ -13,7 +13,7 @@ import re
 import sys
 from itertools import chain
 from io import StringIO
-from functools import partial
+from functools import partial, lru_cache
 
 from . import Item, Manager, NitroError, NitroObject
 from .utils import dehexify
@@ -21,21 +21,341 @@ from .utils import dehexify
 class Device(NitroObject):
     pass
 
-class EntrepriseSecurityManager(Device):
+class ERC(Device):
     pass
 
-class EventReceiver(Device):
-    pass
+class ESM(Device):
+    """
+    ESM class
+    
+    Puvlic Methods:
+    
+        version()       Returns simple version string, '10.1.0'
+        
+        buildstamp()    Returns buildstamp string, '10.0.2 20170516001031'
+        
+        time()          Returns ESM time (GMT)
+        
+        disks()         Returns string of disk status
+        
+        ram()           Returns string of disk status
+        
+        backup_status()     Returns dict with keys:
+                             - autoBackupEnabled: bool
+                             - autoBackupDay: int
+                             - backupLastTime: str (timestamp)
+                             - backupNextTime: str (timestamp)
+        
+        callhome()      Returns True/False if callhome is active/not active
+        
+        rulestatus()    Returns dict with keys:
+                        - rulesAndSoftwareCheckEnabled: bool
+                        - rulesAndSoftLastCheck: str (timestamp)
+                        - rulesAndSoftNextCheck: str (timestamp)
 
-# -*- coding: utf-8 -*-
-"""
-    mfe_saw.datasource
-    ~~~~~~~~~~~~~
+        status()        Returns dict with the status outputs above plus a few
+                        other less interesting details.
+               
+        timezones()     Returns dict (str, str)
+                            timezone_id: timezone_name
+        
+        tz_name_to_id(id)         Returns timezone name matching given timezone ID.
+        
+        tz_id_to_name(tz_name)    Returns timezone ID matching given timezone name.
+        
+        tz_offsets()    Returns list of timezone tuples. 
+                        (tz_id, tz_name, tz_offset)
+                        [(1, 'Midway Island, Samoa', '-11:00'),
+                         (2, 'Hawaii', '-10:00'),
+            
+        type_id_to_venmod(type_id)     Returns tuple. (vendor, model) matching
+                                       provided type_id.
+        
+        venmod_to_type_id(vendor, model)    Returns string of matching type_id
+        
+    """
+    def __init__(self):
+        """
+        Args:
+            host (str): IP or hostname of ESM.
 
-    This module imports into the mfe_saw core class to
-    provide 'DevTree' and 'DataSource' objects.
-"""
+        Returns:
+            obj. ESM object
+        """
+        super().__init__()
 
+    def version(self):
+        """
+        Returns:
+            str. ESM short version.
+
+        Example:
+            '10.0.2'
+        """
+        return self.buildstamp().split()[0]
+
+    def buildstamp(self):
+        """
+        Returns:
+            str. ESM buildstamp.
+
+        Example:
+            '10.0.2 20170516001031'
+        """
+        #return self.post('essmgtGetBuildStamp')['buildStamp']
+        return self.nitro.request('build_stamp')['buildStamp']
+
+    def time(self):
+        """
+        Returns:
+            str. ESM time (GMT).
+
+        Example:
+            '2017-07-06T12:21:59.0+0000'
+        """
+        self._esmtime = self.nitro.request("get_esm_time")
+        return self._esmtime['value']
+
+
+    def status(self):
+        """
+        Returns:
+            dict. ESM stats.
+            including:
+                - processor status
+                - hdd status
+                - ram status
+                - rule update status
+                - backup status
+                - list of top level devices
+        Other functions exist to return subsets of this data also.
+        """
+        #return self.post("sysGetSysInfo")
+        return self.nitro.request("get_sys_info")
+
+    def disks(self):
+        """
+        Returns:
+            str. ESM disks and utilization.
+
+        Example:
+            'sda3     Size:  491GB, Used:   55GB(12%), Available:  413GB, Mount: /'
+        """
+        return self.status()['hdd']
+
+    def ram(self):
+        """
+        Returns:
+            str. ESM ram and utilization.
+
+        Example:
+            'Avail: 7977MB, Used: 7857MB, Free: 119MB'
+        """
+        return self.status()['ram']
+
+    def backup_status(self):
+        """
+        Returns:
+            dict. Backup status and timestamps.
+
+            {'autoBackupEnabled': True,
+                'autoBackupDay': 7,
+                'autoBackupHour': 0,
+                'backupLastTime': '07/03/2017 08:59:36',
+                'backupNextTime': '07/10/2017 08:59'}
+        """
+        self._fields = ['autoBackupEnabled',
+                        'autoBackupDay',
+                        'autoBackupHour',
+                        'autoBackupHour',
+                        'backupNextTime']
+
+        return {self.key: self.val for self.key, self.val in self.status().items()
+                if self.key in self._fields}
+
+    def callhome(self):
+        """
+        Returns:
+            bool. True/False if there is currently a callhome connection
+        """
+        self._callhome_ip = self.status()['callHomeIp']
+        if self._callhome_ip:
+            return True
+
+    def rules_status(self):
+        """
+        Returns:
+            dict. Rules autocheck status and timestamps.
+
+        Example:
+        { 'rulesAndSoftwareCheckEnabled': True
+          'rulesAndSoftLastCheck': '07/06/2017 10:28:43',
+          'rulesAndSoftNextCheck': '07/06/2017 22:28:43',}
+
+        """
+        self._fields = ['rulesAndSoftwareCheckEnabled',
+                        'rulesAndSoftLastCheck',
+                        'rulesAndSoftNextCheck']
+        return {self.key: self.val for self.key, self.val in self.status().items()
+                if self.key in self._fields}
+
+    @lru_cache(maxsize=None)    
+    def recs(self):
+        """
+        Returns: 
+            
+        """
+        #self.method, self.data = self._get_params('get_recs')
+        #self._rec_list = self.post(self.method, self.data)
+        self._rec_list=self.nitro.request('get_recs')
+
+        return [(_rec['name'], _rec['id']['id'])for _rec in self._rec_list]
+                
+    @lru_cache(maxsize=None)   
+    def _get_timezones(self):
+        """
+        Gets list of timezones from the ESM.
+        
+        Returns:
+            str. Raw return string from ESM including 
+        """
+        #return self.post('userGetTimeZones')
+        return self.nitro.request('')
+        
+    def tz_offsets(self):
+        """
+        Builds table of ESM timezones including offsets.
+        
+        Returns:
+            list. List of timezone tuples (name, id, offset)
+            
+        Example:
+            [(1, 'Midway Island, Samoa', '-11:00'),
+             (2, 'Hawaii', '-10:00'),
+             ...
+            ]
+        """
+        self.tz_resp = self._get_timezones()
+        return [(self.tz['id']['value'], self.tz['name'], self.tz['offset']) 
+                  for self.tz in self.tz_resp]
+                   
+        
+    def timezones(self):
+        """
+        Builds table of ESM timezones and names only. No offsets.
+        
+        Returns:
+            dict. {timezone_id, timezone_name}
+        """
+        self.tz_resp = self._get_timezones()
+        self.tz_table = {str(self.tz['id']['value']): self.tz['name']
+                            for self.tz in self.tz_resp}
+        return self.tz_table
+
+    def tz_name_to_id(self, tz_name):
+        """
+        Args:
+            tz_name (str): Case sensitive, exact match timezone name
+            
+        Returns:
+            str. Timezone id or None if there is no match
+        """
+        self.tz_reverse = {tz_name: tz_id 
+                            for tz_id, tz_name in self.timezones().items()}
+        try:
+            return self.tz_reverse[tz_name]
+        except KeyError:
+            return None
+    
+    def tz_id_to_name(self, tz_id):
+        """
+        Args:
+            td_id (str): Numerical string (Currently 1-74)
+        
+        Returns:
+            str. Timezone name or None if there is no match
+        """
+        try:
+            return self.timezones()[tz_id]
+        except KeyError:
+            return None
+    
+    def type_id_to_venmod(self, type_id):
+        """
+        Args:
+            type_id (str): Numerical string 
+        
+        Returns:
+            tuple. (vendor, model) or None if there is no match
+        """
+        self.type_id = type_id
+        self.ds_types = self._get_ds_types()
+        for self.venmod in self.ds_types:
+            if str(self.venmod[0]) == str(self.type_id):
+                return (self.venmod[1], self.venmod[2])
+
+    def venmod_to_type_id(self, vendor, model):
+        """
+        Args:
+            vendor (str): Exact vendor string including puncuation
+            model (str): Exact vendor string including puncuation
+        
+        Returns:
+            str. Matching type_id or None if there is no match
+        """
+        self.vendor = vendor
+        self.model = model
+        self.ds_types = self._get_ds_types()
+        for self.venmod in self.ds_types:
+            if self.vendor == self.venmod[1]:
+                if self.model == self.venmod[2]:
+                    return str(self.venmod[0])
+        
+     
+    @lru_cache(maxsize=None)   
+    def _get_ds_types(self):
+        """
+        Retrieves device table from ESM
+                    
+        Returns:
+            list. of tuples output from callback: _format_ds_types()
+
+        Note:
+            rec_id (str): self.rec_id assigned in method
+        """
+        self.rec_id = self.recs()[0][1]
+
+        #self.method, self.data = self._get_params('get_dstypes')
+        #self.venmods = self.post(self.method, self.data, self._format_ds_types)
+
+        self.venmods=self.nitro.request('get_dstypes', rec_id=self.rec_id)
+
+        return self.venmods
+                    
+    def _format_ds_types(self, venmods):
+        """
+        Callback to create type_id/vendor/model table
+        
+        Args:
+            venmods (obj): request object from _get_ds_types
+        
+        Returns:
+            list. of tuples 
+                
+           [(542, 'McAfee', 'SaaS Email Protection')
+            (326, 'McAfee', 'Web Gateway')
+            (406, 'Microsoft', 'ACS - SQL Pull')
+            (491, 'Microsoft', 'Endpoint Protection - SQL Pull')
+            (348, 'Microsoft', 'Exchange')]
+
+        Note: 
+            This is a callback for _get_ds_types.
+
+        """
+        self._venmods = venmods
+        return [(_mod['id']['id'], _ven['name'], _mod['name'],)
+                    for _ven in self._venmods['vendors']
+                    for _mod in _ven['models']]
 
 class DataSource(Item):
     """
@@ -164,7 +484,6 @@ class DataSource(Item):
         return {self._prop: self._pval
             for self._prop, self._pval in self.__dict__.items()
             if not self._prop.startswith('_')}
-
                     
     def add(self, client=False):
         """
@@ -192,7 +511,7 @@ class DataSource(Item):
                                     enabled=self.enabled, 
                                     ds_ip=self.ds_ip,
                                     hostname=self.hostname, 
-                                    type_id=self.type_id, 
+                                    type_id=self.data['type_id'], 
                                     tz_id=self.tz_id, 
                                     dorder=self.dorder, 
                                     maskflag=self.maskflag, 
@@ -202,8 +521,8 @@ class DataSource(Item):
             self._resp=self.nitro.request('add_ds', 
                                     parent_id=self.parent_id,
                                     name=self.name, 
-                                    ds_id=self._ds_id, 
-                                    type_id=self.type_id, 
+                                    ds_id=self.data['ds_id'], 
+                                    type_id=self.data['type_id'], 
                                     child_enabled=self.child_enabled, 
                                     child_count=self.child_count, 
                                     child_type=self.child_type, 
@@ -377,7 +696,7 @@ class DevTree(Manager):
         self._ds_desc_ids = ['3', '256']
         for self._ds in DevTree._DevTree:
             if self._ds['desc_id'] in self._ds_desc_ids:
-                yield DataSource(**self._ds)
+                yield DataSource(adict=self._ds)
 
     def __contains__(self, term):
         """
@@ -444,7 +763,7 @@ class DevTree(Manager):
         if not self._term:
             raise ValueError('DataSource field value required')
 
-        return (DataSource(self._ds) for self._ds in DevTree._DevTree
+        return (DataSource(adict=self._ds) for self._ds in DevTree._DevTree
                         if self._ds.get(self._field) == self._term)
                        
     def steptree(self):
@@ -491,7 +810,8 @@ class DevTree(Manager):
         """
         """
         self._last_times = self._get_last_event_times()
-        self._insert_ds_last_times(self._last_times)
+        self._insert_ds_last_times()#self._last_times)
+        return self._last_times
         
     def recs(self):
         """
@@ -560,7 +880,7 @@ class DevTree(Manager):
         """
         #self._method, self._data = self._get_params('get_devtree')
         #self._resp = self.post(self._method, self._data)
-        self._resp=self.nitro.request('get_devtree', **self.__dict__)
+        self._resp=self.nitro.request('get_devtree')
         return dehexify(self._resp['ITEMS'])
 
     def _devtree_to_lod(self):
@@ -815,7 +1135,7 @@ class DevTree(Manager):
         """
         for self._ds in self._devtree:
             if not self._ds['vendor'] and self._ds['desc_id'] == '3': 
-                self._ds['vendor'], self._ds['model'] = self._esm.type_id_to_venmod(self._ds['type_id'])
+                self._ds['vendor'], self._ds['model'] = ESM().type_id_to_venmod(self._ds['type_id'])
         return self._devtree_lod
     
     def _insert_desc_names(self):
@@ -847,7 +1167,7 @@ class DevTree(Manager):
                         '25': 'Enterprise Log Search (ELS)',
                         '254': 'client_group',
                         '256': 'client'}
-                        
+
         for self._ds in self._devtree:
             if self._ds['desc_id'] in self._type_map:
                 self._ds['desc'] = self._type_map[self._ds['desc_id']]
