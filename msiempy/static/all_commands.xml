@@ -1,0 +1,490 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<esmCommandList
+	xmlns="http://mcafee.com/siem/api/v3">
+	<esmCommand name="alarmAcknowledgeTriggeredAlarm">
+		<description>Mark a triggered alarm as acknowledged</description>
+	</esmCommand>
+	<esmCommand name="alarmDeleteTriggeredAlarm">
+		<description>Delete a triggered alarm</description>
+	</esmCommand>
+	<esmCommand name="alarmGetTriggeredAlarms">
+		<description>Retrieves a paged list of alarms that have been triggered</description>
+	</esmCommand>
+	<esmCommand name="alarmUnacknowledgeTriggeredAlarm">
+		<description>Mark a triggered alarm as unacknowledged</description>
+	</esmCommand>
+	<esmCommand name="assetGetAssetDetailsObject">
+		<description>Gets asset Details</description>
+	</esmCommand>
+	<esmCommand name="assetGetAssetThreats">
+		<description>Gets asset threats</description>
+	</esmCommand>
+	<esmCommand name="assetGetOSList">
+		<description>Gets all SOs</description>
+	</esmCommand>
+	<esmCommand name="blAddEditNSMBlacklistEntry">
+		<description>Adds or edits a blacklist entry</description>
+	</esmCommand>
+	<esmCommand name="blDeleteNSMBlacklistEntries">
+		<description>Deletes a list of blacklist entries</description>
+	</esmCommand>
+	<esmCommand name="blEnableGlobalBlacklistingForSensor">
+		<description>Sets the enabled state for global blacklisting on the specified sensor</description>
+	</esmCommand>
+	<esmCommand name="blGetAllUseGlobalBlacklist">
+		<description>Gets the list of blacklists</description>
+	</esmCommand>
+	<esmCommand name="blGetBlacklist">
+		<description>Gets the global blacklist entries</description>
+	</esmCommand>
+	<esmCommand name="blGetSensorBlacklistEntries">
+		<description>Gets the entries for the blacklist sensor</description>
+	</esmCommand>
+	<esmCommand name="blSetUseGlobalBlacklist">
+		<description>Updates the blacklists to use global blacklisting</description>
+	</esmCommand>
+	<esmCommand name="blSubmitGlobalBlacklist">
+		<description>Updates the entries for the global blacklist</description>
+	</esmCommand>
+	<esmCommand name="caseAddCase">
+		<description>Add a case to the system.</description>
+	</esmCommand>
+	<esmCommand name="caseAddCaseStatus">
+		<description>Add a case status</description>
+	</esmCommand>
+	<esmCommand name="caseAddOrganization">
+		<description>Add a case organization</description>
+	</esmCommand>
+	<esmCommand name="caseDeleteCaseStatus">
+		<description>Delete a case status.</description>
+	</esmCommand>
+	<esmCommand name="caseEditCase">
+		<description>Edit an existing case.</description>
+	</esmCommand>
+	<esmCommand name="caseEditCaseStatus">
+		<description>Edit a case status</description>
+	</esmCommand>
+	<esmCommand name="caseEditOrganization">
+		<description>Edit a case organization</description>
+	</esmCommand>
+	<esmCommand name="caseGetCaseDetail">
+		<description>Get detail on an existing case.</description>
+	</esmCommand>
+	<esmCommand name="caseGetCaseEventsDetail">
+		<description>Get case events details</description>
+	</esmCommand>
+	<esmCommand name="caseGetCaseList">
+		<description>Get a list of cases from the system</description>
+	</esmCommand>
+	<esmCommand name="caseGetCaseStatusList">
+		<description>Get a list of valid case statuses from the system</description>
+	</esmCommand>
+	<esmCommand name="caseGetCaseUsers">
+		<description>Get case users</description>
+	</esmCommand>
+	<esmCommand name="caseGetOrganizationList">
+		<description>Get case organizations</description>
+	</esmCommand>
+	<esmCommand name="devGetDeviceList">
+		<description>Get a list of all devices defined in the system.</description>
+	</esmCommand>
+	<esmCommand name="devGetDeviceListRaw">
+		<description>Get a list of all devices defined in the system. This was added to
+ accommodate the number precision limitations of JavaScript. (A BigInt will
+ round the last digit or two on IPSIDs)</description>
+	</esmCommand>
+	<esmCommand name="dsAddDataSource">
+		<description>Add a data source.</description>
+	</esmCommand>
+	<esmCommand name="dsAddDataSourceList">
+		<description>Add a list of data sources.</description>
+	</esmCommand>
+	<esmCommand name="dsDeleteDataSource">
+		<description>Delete a data source.</description>
+	</esmCommand>
+	<esmCommand name="dsEditDataSource">
+		<description>Edit a data source's properties.</description>
+	</esmCommand>
+	<esmCommand name="dsGetDataSourceDetail">
+		<description>Get the details for a specifc data sources.</description>
+	</esmCommand>
+	<esmCommand name="dsGetDataSourceList">
+		<description>Get a list of defined data sources.</description>
+	</esmCommand>
+	<esmCommand name="dsGetDataSourceTypes">
+		<description>Get all data source types.</description>
+	</esmCommand>
+	<esmCommand name="dsGetDataSourceXml">
+		<description>XML datasource list</description>
+	</esmCommand>
+	<esmCommand name="dsGetEpoList">
+		<description>Get a list of valid ePO servers for the given target IPs</description>
+	</esmCommand>
+	<esmCommand name="dsGetUserDefinedDataSources">
+		<description>Get user defined data sources.</description>
+	</esmCommand>
+	<esmCommand name="dsSetUserDefinedDataSources">
+		<description>Set user defined data sources.</description>
+	</esmCommand>
+	<esmCommand name="elmDeviceHasELM">
+		<description>Returns the ELM configuration for a device</description>
+	</esmCommand>
+	<esmCommand name="elmDownloadLogFileForEvent">
+		<description>Gets the download information for an ELM archive</description>
+	</esmCommand>
+	<esmCommand name="elmGetElmList">
+		<description>Get a list of ELM/ELS devices</description>
+	</esmCommand>
+	<esmCommand name="essmgtGetBuildStamp">
+		<description>Gets the ESM build Stamp</description>
+	</esmCommand>
+	<esmCommand name="essmgtGetESSTime">
+		<description>Get the system time of the ESM Device</description>
+	</esmCommand>
+	<esmCommand name="geoGetGeoLocRegionList">
+		<description>Get the top level geo locations</description>
+	</esmCommand>
+	<esmCommand name="geoGetGeoLocs">
+		<description>Get geo locations within the given location</description>
+	</esmCommand>
+	<esmCommand name="getActionList">
+		<description>Get actionsn</description>
+	</esmCommand>
+	<esmCommand name="getActiveResponseCollectors">
+		<description>Get a list of Active Response Collectors</description>
+	</esmCommand>
+	<esmCommand name="getUserLocale">
+		<description>Get user session locale</description>
+	</esmCommand>
+	<esmCommand name="getUsersInGroups">
+		<description>list of users that can be shared with</description>
+	</esmCommand>
+	<esmCommand name="grpFindDeviceInTree">
+		<description>Gets the parent for the specified device.</description>
+	</esmCommand>
+	<esmCommand name="grpGetDSAgents">
+		<description>Gets the datasource agents for a datasource</description>
+	</esmCommand>
+	<esmCommand name="grpGetDeviceProperties">
+		<description>gets details of a device</description>
+	</esmCommand>
+	<esmCommand name="grpGetDeviceTree">
+		<description>Gets the basic device tree structure with only basic properties loaded. Each
+ entry in the returned list is a root node in the tree.</description>
+	</esmCommand>
+	<esmCommand name="grpGetDeviceTreeEx">
+		<description>This version of the call returns more detail per device than getDeviceList, wrapped in an
+ esmDeviceList object.</description>
+	</esmCommand>
+	<esmCommand name="grpGetDisplayList">
+		<description>This method gets all of the diplays for the ESM</description>
+	</esmCommand>
+	<esmCommand name="grpGetSystemTree">
+		<description>This API returns the system tree as an array of root nodes.</description>
+	</esmCommand>
+	<esmCommand name="grpSearchDeviceNamesInTree">
+		<description>Searches the device tree for devices/groups/clients that match the name specified.</description>
+	</esmCommand>
+	<esmCommand name="ipsAddAlertNote">
+		<description>This function sets the note for the event</description>
+	</esmCommand>
+	<esmCommand name="ipsGetAFValues">
+		<description>This function gets the alert flow values</description>
+	</esmCommand>
+	<esmCommand name="ipsGetAlertData">
+		<description>Gets alert data</description>
+	</esmCommand>
+	<esmCommand name="ipsGetCorrRawEvents">
+		<description>Get the corr raw events</description>
+	</esmCommand>
+	<esmCommand name="ipsGetFlowData">
+		<description>Gets the flow data values</description>
+	</esmCommand>
+	<esmCommand name="ipsGetIpsNames">
+		<description>Get the names for ipsids entered</description>
+	</esmCommand>
+	<esmCommand name="ipsIsEventCorrelation">
+		<description>Get a list of all event correlations.</description>
+	</esmCommand>
+	<esmCommand name="miscGetRemedyEventEmailData">
+		<description>Gets the data to send to the remedy</description>
+	</esmCommand>
+	<esmCommand name="miscJobStatus">
+		<description>This gets the job status</description>
+	</esmCommand>
+	<esmCommand name="miscJobsDetails">
+		<description>Gets jobs details</description>
+	</esmCommand>
+	<esmCommand name="miscKeepAlive">
+		<description>Keeps the session alive.</description>
+	</esmCommand>
+	<esmCommand name="miscMaskIPAddress">
+		<description>This masks a given ip Address using the mask specified</description>
+	</esmCommand>
+	<esmCommand name="miscSendTestEmail">
+		<description>Send a test email with the Email Server Settings</description>
+	</esmCommand>
+	<esmCommand name="miscSetRemedyCaseID">
+		<description>Sets the remedy case id for the specified alert</description>
+	</esmCommand>
+	<esmCommand name="notifyAddAddress">
+		<description>Add a notification recipient address</description>
+	</esmCommand>
+	<esmCommand name="notifyAddCaseIDToTrigAlarm">
+		<description>Adds a case to a triggered alarm</description>
+	</esmCommand>
+	<esmCommand name="notifyAddGroup">
+		<description>Add a notification Email group</description>
+	</esmCommand>
+	<esmCommand name="notifyDeleteAddress">
+		<description>Remove notification recipient address(es)</description>
+	</esmCommand>
+	<esmCommand name="notifyDeleteGroup">
+		<description>Delete a group of email recipients</description>
+	</esmCommand>
+	<esmCommand name="notifyEditAddress">
+		<description>Edit a notification recipient address</description>
+	</esmCommand>
+	<esmCommand name="notifyEditGroup">
+		<description>Edit a group of email recipients</description>
+	</esmCommand>
+	<esmCommand name="notifyGetAddressList">
+		<description>Get list of recipient addresses by type</description>
+	</esmCommand>
+	<esmCommand name="notifyGetEmailGroupList">
+		<description>Get the list of Email Groups</description>
+	</esmCommand>
+	<esmCommand name="notifyGetNotificationSettings">
+		<description>Get the email server settings</description>
+	</esmCommand>
+	<esmCommand name="notifyGetTriggeredNotification">
+		<description>Get the triggered notification</description>
+	</esmCommand>
+	<esmCommand name="notifyGetTriggeredNotificationDetail">
+		<description>Gets the details for the triggered alarm</description>
+	</esmCommand>
+	<esmCommand name="notifyGetVisualTriggeredAlarms">
+		<description>Gets the list of triggered visual alarms</description>
+	</esmCommand>
+	<esmCommand name="notifySetNotificationSettings">
+		<description>Set the email server settings</description>
+	</esmCommand>
+	<esmCommand name="notifySetTriggeredAlarmAssignee">
+		<description>Assignes a user to a triggered alarm</description>
+	</esmCommand>
+	<esmCommand name="plcyGetAssetGroupsList">
+		<description>Get all asset groups defined in the system</description>
+	</esmCommand>
+	<esmCommand name="plcyGetAssetList">
+		<description>Get all assets defined in the system</description>
+	</esmCommand>
+	<esmCommand name="plcyGetNormalizedRules">
+		<description>Get all normalized rules based on display options given</description>
+	</esmCommand>
+	<esmCommand name="plcyGetPolicyList">
+		<description>Get the list of all policies defined in the ESM.</description>
+	</esmCommand>
+	<esmCommand name="plcyGetTagList">
+		<description>Get tags</description>
+	</esmCommand>
+	<esmCommand name="plcyGetVariableList">
+		<description>Get all variables defined in the system</description>
+	</esmCommand>
+	<esmCommand name="qryClose">
+		<description>Closes the query results, must be called after a query's results have been processed. If no
+ exception is thrown, the close operation completed normally.</description>
+	</esmCommand>
+	<esmCommand name="qryDeleteAlertFlowData">
+		<description>Deletes one or more events or flows.</description>
+	</esmCommand>
+	<esmCommand name="qryExecute">
+		<description>Execute a query against the database.</description>
+	</esmCommand>
+	<esmCommand name="qryExecuteDetail">
+		<description>Execute a standard detail (non-grouped) query.</description>
+	</esmCommand>
+	<esmCommand name="qryExecuteGrouped">
+		<description>Execute a grouped query on a field. The configuration's filter is required. In addition,
+ a filter of IPSID is required for the query to be valid.</description>
+	</esmCommand>
+	<esmCommand name="qryGetCorrEventDataForID">
+		<description>Get the source events and flows for a given correlated event ID</description>
+	</esmCommand>
+	<esmCommand name="qryGetFilterFields">
+		<description>Get all fields that can be used in query filters, with type information for each field.</description>
+	</esmCommand>
+	<esmCommand name="qryGetFilterSet">
+		<description>Returns a filter set by id.</description>
+	</esmCommand>
+	<esmCommand name="qryGetFilterSetList">
+		<description>This method returns all the folder structure of a filterSet</description>
+	</esmCommand>
+	<esmCommand name="qryGetIocData">
+		<description>Gets all relevant data about a specific IOC.</description>
+	</esmCommand>
+	<esmCommand name="qryGetResults">
+		<description>Get the results for a query.</description>
+	</esmCommand>
+	<esmCommand name="qryGetSelectFields">
+		<description>Get the fields available for selecting in queries. The groupType can be used to filter the fields to only ones that can be used
+ to group results in a particular way. For example, if you want all fields that can be grouped to count the number of events per group,
+ the groupType should be COUNT. If not provided, it is equivalent to passing NO_GROUP which returns all available select fields regardless
+ of whether they can be used in grouped queries. This is useful for getting available fields for detail queries. (qryExecuteDetail)</description>
+	</esmCommand>
+	<esmCommand name="qryGetStatus">
+		<description>Get the status for a query that has been executed.</description>
+	</esmCommand>
+	<esmCommand name="qryGetTrendTimeSlice">
+		<description>Qry get trend time slice.</description>
+	</esmCommand>
+	<esmCommand name="qryGetWmiTypes">
+		<description>Get a list of WMI Types</description>
+	</esmCommand>
+	<esmCommand name="qryMarkAsReviewed">
+		<description>Mark an event(s) as reviewed.</description>
+	</esmCommand>
+	<esmCommand name="qrySaveFilterSet">
+		<description>Save a new FilterSet or update it</description>
+	</esmCommand>
+	<esmCommand name="rskGetCorrelationTriggerInfo">
+		<description>Return Esm Correlation Trigger Info</description>
+	</esmCommand>
+	<esmCommand name="runActiveResponseSearch">
+		<description>Execute a ActiveResponse search and return the results</description>
+	</esmCommand>
+	<esmCommand name="sysAddWatchlist">
+		<description>Add a watchlist to the system.</description>
+	</esmCommand>
+	<esmCommand name="sysAddWatchlistValues">
+		<description>Add values to a watchlist. This call is not supported for hidden watchlists, for example GTI.</description>
+	</esmCommand>
+	<esmCommand name="sysCanEditItems">
+		<description>Gets the items that can or can't be edited</description>
+	</esmCommand>
+	<esmCommand name="sysEditWatchlist">
+		<description>Edit properties of a watchlist. (Watchlist Type will not be modified) This call is not supported for hidden watchlists, for example GTI.</description>
+	</esmCommand>
+	<esmCommand name="sysGetAllChanges">
+		<description>Returns all changes since the last check.</description>
+	</esmCommand>
+	<esmCommand name="sysGetDataAllocation">
+		<description>Returns the database allocation information for index and data drives.</description>
+	</esmCommand>
+	<esmCommand name="sysGetFilterFieldsList">
+		<description>This method returns the user filter list.</description>
+	</esmCommand>
+	<esmCommand name="sysGetMaxDays">
+		<description>Get the number of days that events and flows are stored and the time frame when new events and flows may be added to the database.</description>
+	</esmCommand>
+	<esmCommand name="sysGetSelectProfileList">
+		<description>Returns the selected profile type list</description>
+	</esmCommand>
+	<esmCommand name="sysGetSysInfo">
+		<description>This method returns all the overview system information.</description>
+	</esmCommand>
+	<esmCommand name="sysGetWatchlistDetails">
+		<description>Get detailed information about a watchlist.</description>
+	</esmCommand>
+	<esmCommand name="sysGetWatchlistFields">
+		<description>Get watchlist fields/types.</description>
+	</esmCommand>
+	<esmCommand name="sysGetWatchlistValues">
+		<description>Read the content of a watchlist value file. Note that the EsmFileData object will contain information on how many bytes were read, as well as the total size of the
+ file. The size of the data returned may be less than count, depending on the amount of file data available. Note that the watchlist file property on EsmWatchlistDetails
+ is used as a parameter to this call. The file will contain the values as they existed when the call to sysGetWatchlistDetails was made. If subsequent changes
+ were made to the watchlist after getting the details, another EsmWatchlistDetails object should be obtained by calling sysGetWatchlistDetails before using its
+ EsmWatchlistFile object to retrieve the updated list of watchlist values. This call is not supported for hidden watchlists, for example GTI.</description>
+	</esmCommand>
+	<esmCommand name="sysGetWatchlists">
+		<description>Return basic information on all watchlists in the system</description>
+	</esmCommand>
+	<esmCommand name="sysRemoveWatchlist">
+		<description>Remove watchlist/s from the system. This call is not supported for hidden watchlists, for example GTI.</description>
+	</esmCommand>
+	<esmCommand name="sysRemoveWatchlistValues">
+		<description>Remove values from a watchlist. This call is not supported for hidden watchlists, for example GTI.</description>
+	</esmCommand>
+	<esmCommand name="userAddAccessGroup">
+		<description>Add an access group</description>
+	</esmCommand>
+	<esmCommand name="userAddUser">
+		<description>Add a user to the system.</description>
+	</esmCommand>
+	<esmCommand name="userCaseList">
+		<description>Get a filtered list of cases from the system</description>
+	</esmCommand>
+	<esmCommand name="userDeleteAccessGroup">
+		<description>Delete an access group.</description>
+	</esmCommand>
+	<esmCommand name="userDeleteUser">
+		<description>Delete a user from the system.</description>
+	</esmCommand>
+	<esmCommand name="userEditAccessGroup">
+		<description>Edit properties of an access group.</description>
+	</esmCommand>
+	<esmCommand name="userEditUser">
+		<description>Used by the master user to update information about another user.</description>
+	</esmCommand>
+	<esmCommand name="userGetAccessGroupDetail">
+		<description>Get extended information about an access group.</description>
+	</esmCommand>
+	<esmCommand name="userGetAccessGroupList">
+		<description>Get all user access groups defined in the system.</description>
+	</esmCommand>
+	<esmCommand name="userGetRightsList">
+		<description>Get all rights defined in the system.</description>
+	</esmCommand>
+	<esmCommand name="userGetTimeZones">
+		<description>Get a list of timezones this system recognizes</description>
+	</esmCommand>
+	<esmCommand name="userGetUserList">
+		<description>Get a list of all users.</description>
+	</esmCommand>
+	<esmCommand name="userGetUserRights">
+		<description>Get all rights defined for the current user.</description>
+	</esmCommand>
+	<esmCommand name="userGetUserTimeFrame">
+		<description>User time frame</description>
+	</esmCommand>
+	<esmCommand name="userLogout">
+		<description>Log the user out of their SIEM session</description>
+	</esmCommand>
+	<esmCommand name="userModifyUser">
+		<description>Changes the user password</description>
+	</esmCommand>
+	<esmCommand name="userSetAutoGetPacket">
+		<description>This function sets the new state of the Auto-Get Packet for the current user.</description>
+	</esmCommand>
+	<esmCommand name="zoneAddSubZone">
+		<description>Add a new subzone under a zone</description>
+	</esmCommand>
+	<esmCommand name="zoneAddZone">
+		<description>Create a new zone.</description>
+	</esmCommand>
+	<esmCommand name="zoneDeleteSubZone">
+		<description>Delete the sub zone</description>
+	</esmCommand>
+	<esmCommand name="zoneDeleteZone">
+		<description>Delete the zone</description>
+	</esmCommand>
+	<esmCommand name="zoneEditSubZone">
+		<description>Edit the given sub zone. Note that ID must be set to an existing sub zone for this
+ to work properly. The ID value will be set if the zone was gotten from zoneGetSubZone().</description>
+	</esmCommand>
+	<esmCommand name="zoneEditZone">
+		<description>Edit the given zone. Note that ID must be set to an existing zone for this
+ to work properly. The ID value will be set if the zone was gotten from zoneGetZone().</description>
+	</esmCommand>
+	<esmCommand name="zoneGetSubZone">
+		<description>Get detailed information on a sub zone</description>
+	</esmCommand>
+	<esmCommand name="zoneGetTopLevelZones">
+		<description>Gets the top level zones</description>
+	</esmCommand>
+	<esmCommand name="zoneGetZone">
+		<description>Get extended detail on a zone.</description>
+	</esmCommand>
+	<esmCommand name="zoneGetZoneTree">
+		<description>Get the full tree of zones defined in the ESM.</description>
+	</esmCommand>
+</esmCommandList>

@@ -12,6 +12,4 @@ install:
 script: 
   # We'll need to find a way to provide a server for the authenticated tests
   - python -m unittest tests.local.test_base
-  # - ./make_diagrams.sh
-  #TODO : generate documentation
   

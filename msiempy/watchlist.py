@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
+"""Watchlist module offers a whatchlist management."""
+
 import logging
 import collections
 log = logging.getLogger('msiempy')
+from . import Item, Manager
 
-from .base import Item, Manager
 class WatchlistManager(Manager):
 
     def __init__(self, *args, **kwargs):
@@ -18,6 +21,9 @@ class WatchlistManager(Manager):
 
 class Watchlist(Item):
     """
+
+    Complete list of watchlist fields (not values) once load with load_details()
+    `
         name: The name of the watchlist
         type: The watchlist type
         customType: The watchlist custom type (custom field)
@@ -63,6 +69,7 @@ class Watchlist(Item):
         delimitRegex: If the watchlist is populated from an enrichment source, this will hold the enrichment delimit regex setting. See the enrichment configuration documentation for more details on this setting.
         groups: If the watchlist is populated from an enrichment source, this will hold the enrichment groups setting. See the enrichment configuration documentation for more details on this setting.
         values: values
+    `
     """
 
     def __init__(self, *args, **kwargs):

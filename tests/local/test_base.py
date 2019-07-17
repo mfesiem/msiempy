@@ -1,10 +1,10 @@
 import unittest
-import msiempy.base
+import msiempy
 import csv
 import time
 import json
 import requests
-from msiempy.base import Item
+from msiempy import Item
 
 def test_add_money_money(item, how_much=1):
     item['pct_hex']=str(float(item['pct_hex'])+how_much)
@@ -31,7 +31,7 @@ def download_testing_data():
 
 class T(unittest.TestCase):
 
-    manager = msiempy.base.Manager(alist=download_testing_data())
+    manager = msiempy.Manager(alist=download_testing_data())
 
     def test_json(self):
 
@@ -48,7 +48,7 @@ class T(unittest.TestCase):
         pass
 
     def test_manager(self):
-        sublist = msiempy.base.Manager(alist=[item for item in T.manager if item['CLIM_RANK']=='1']) #.search('CLIM_RANK.*0','Eco_Name.*north')#.search('County.*GLENN') #len = 52
+        sublist = msiempy.Manager(alist=[item for item in T.manager if item['CLIM_RANK']=='1']) #.search('CLIM_RANK.*0','Eco_Name.*north')#.search('County.*GLENN') #len = 52
         
         sublist.perform(test_add_money_money, progress=True, asynch=True, workers=500)
         for item in sublist :
@@ -67,8 +67,8 @@ class T(unittest.TestCase):
 
     def test_print(self):
         data=download_testing_data()
-        manager = msiempy.base.Manager(alist=data[:30])
-        manager[10]['County']=msiempy.base.Manager(alist=data[:5])
+        manager = msiempy.Manager(alist=data[:30])
+        manager[10]['County']=msiempy.Manager(alist=data[:5])
         manager[20]['County']=data[:5]
 
         print('COMPACT')

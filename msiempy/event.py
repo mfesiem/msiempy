@@ -1,11 +1,13 @@
+"""Module for event management, qryExecuteDetails wrapper, adding note, etc..
+"""
+
 import time
 import datetime
 import logging
 log = logging.getLogger('msiempy')
 
-from .base import Item
+from . import Item, NitroError
 from .query import QueryManager, FieldFilter, GroupFilter, QueryFilter
-from .error import NitroError
 from .utils import timerange_gettimes, parse_query_result, format_fields_for_query
 
 class EventManager(QueryManager):
@@ -295,7 +297,7 @@ class EventManager(QueryManager):
         Wait and sleep - for `sleep_time` duration in seconds -
             until the query is completed
         
-        #TODO handle SIEM ResultUnavailable error
+        TODO handle SIEM ResultUnavailable error
         """
         log.debug("Waiting for the query to be executed on the SIEM...")
         while True:
@@ -388,8 +390,7 @@ class Event(Item):
         "Zone_ZoneSrc",
         ]
 
-    """Relatively common event fields that could be useful to have.
-    """
+   
     DEFAULTS_EVENT_FIELDS=[
         "Rule.msg",
         "Alert.SrcPort",
@@ -403,14 +404,17 @@ class Event(Item):
         "Alert.DSIDSigID",
         "Alert.IPSIDAlertID"
         ]
+    """Relatively common event fields that could be useful to have.
+    """
 
     def __getitem__(self, key):
         """
-        Automatically adding the table name of the field 
-            if no '.' is present in the key
-            Not working properly i think
-            #TODO try with collections.UserDict.__getitem__(self, key)
+        Automatically adding the table name of the field by iterating trought FIELDS_TABLES
+        if no '.' is present in the key
+        Not working. Skipping.
+        TODO try with collections.UserDict.__getitem__(self, key)
         """
+
         return super().__getitem__(key)
         """
         if '.' not in key :
@@ -427,7 +431,7 @@ class Event(Item):
             else:
                 log.error('The SIEM dict keys are not always the same are the requested fields. check .keys()')
                 raise
-                """
+        """
 
     def clear_notes(self):
         """
@@ -438,9 +442,10 @@ class Event(Item):
 
     def add_note(self, note):
         """
+        Desctructive action. It's actually going to replace the note !
         Add a new note in the note field.
         """
-        self.nitro.request("add_note_to_event", id=self.data["Alert.IPSIDAlertID"], note="{} : {}".format(str(datetime.datetime.now()),note))
+        self.nitro.request("add_note_to_event", id=self.data["Alert.IPSIDAlertID"], note="msiempy note at {} : {}".format(str(datetime.datetime.now()),note))
         
     def data_from_id(self, id):
         """EsmAlertData wrapper"""

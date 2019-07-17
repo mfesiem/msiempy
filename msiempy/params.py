@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-    msiem.params
-    ~~~~~~~~~~~~~
-
-    This module imports a dict into the msiem core class to provide
+"""This module imports a dict into the msiem core class to provide
     a central place to aggregate methods and parameters. The params
     are stored as docstrings to support string replacement.
 
@@ -21,28 +17,6 @@
 
     Example:
         method, params = params['login'].format(username, password)
-
-    Attributes:
-        login: Function to login
-            vars:
-                username
-                password
-            callback vars:
-                Cookie
-                X-Xsrf-Token
-
-        devtree: Get top level device tree string
-
-        client_grp: Get clients for a specific group
-            vars:
-                id
-            callback vars:
-                ftoken
-
-        results: Get results from earlier call
-            vars:
-                ftoken
-
 """
 
 PARAMS = {
@@ -147,22 +121,14 @@ PARAMS = {
                     'datasourceId': {'id': '%(ds_id)s'}}
                  """),
                  
-    'del_client': ("DS_DELETEDSCLIENTS",
-                    """{}
-                    """
+    'del_client': ("DS_DELETEDSCLIENTS",None
                     ),
                     
-    'ds_last_times': ("QRY%5FGETDEVICELASTALERTTIME",
-                      """{}
-                      """),
+    'ds_last_times': ("QRY%5FGETDEVICELASTALERTTIME","""{}"""),
                       
-    'zonetree': ("zoneGetZoneTree",
-                      """{}
-                      """),
+    'zonetree': ("zoneGetZoneTree",None),
                       
-    'ds_by_type': ("QRY_GETDEVICECOUNTBYTYPE",
-                      """{}
-                      """),
+    'ds_by_type': ("QRY_GETDEVICECOUNTBYTYPE",None),
 
    '_dev_types':  ("dev_type_map",
                     """{'1': 'zone',
@@ -263,5 +229,9 @@ PARAMS = {
 
     'get_watchlist_values': ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}"""),
 
-    'get_alert_data': ("""ipsGetAlertData""", """{"id": "%(id)s"}""" )
+    'get_alert_data': ("""ipsGetAlertData""", """{"id": "%(id)s"}"""),
+    
+    'get_sys_info'  : ('sysGetSysInfo',None),
+    
+    'build_stamp' : ('essmgtGetBuildStamp',None)
 }
