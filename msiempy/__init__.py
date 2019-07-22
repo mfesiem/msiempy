@@ -17,7 +17,11 @@ import urllib3
 from .params import PARAMS
 from .utils import tob64
 
-urllib3.disable_warnings()
+try :
+    requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+except : pass
+
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 log = logging.getLogger('msiempy')
 
