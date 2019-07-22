@@ -18,3 +18,12 @@ class T(unittest.TestCase):
 
         watchlist.load_values()
         print(watchlist)
+
+    def test_add_value(self):
+        watchlist_manager = msiempy.watchlist.WatchlistManager()
+        if len(watchlist_manager.search('TEST-msiempy'))>0:
+            print(watchlist_manager)
+            watchlist_manager.search('TEST-msiempy')[0].add_values(['test :)'])
+        else :
+            self.failt("No TEST-msiempy watchlist found, please create one.")
+            pass
