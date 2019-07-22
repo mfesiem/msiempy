@@ -25,5 +25,5 @@ class T(unittest.TestCase):
             print(watchlist_manager)
             watchlist_manager.search('TEST-msiempy')[0].add_values(['test :)'])
         else :
-            self.failt("No TEST-msiempy watchlist found, please create one.")
+            self.fail("No TEST-msiempy watchlist found, please create one.")
             pass
