@@ -8,10 +8,10 @@ import json
 import logging
 log = logging.getLogger('msiempy')
 
-from . import Manager, NitroError, NitroObject
+from . import NitroList, NitroError, NitroObject
 from .utils import format_esm_time, convert_to_time_obj, timerange_gettimes, parse_timedelta, divide_times
 
-class QueryManager(Manager):
+class QueryManager(NitroList):
     """
     Base class for query based managers : AlarmManager, EventManager
     QueryManager object can handle time_ranges and time splitting.
@@ -350,7 +350,7 @@ class QueryManager(Manager):
                     self.__root_parent__.not_completed=True
 
         self.data=items
-        return(Manager(alist=items)) #return self ?
+        return(NitroList(alist=items)) #return self ?
 
 class QueryFilter(NitroObject):
 

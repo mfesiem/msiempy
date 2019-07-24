@@ -2,7 +2,7 @@
 """The point of convergence of every request to the McFee ESM It provides standard dialogue with the esm.
 Configuration management, authentication, verbosity, logfile, general timeout, and others...
 Two main type of classes are offered in this API : lists and dicts.
-Managers are lists and Items are dicts.
+NitroLists are lists and NitroDicts are dicts.
 """
 __version__ = '0.1.0'
 
@@ -13,22 +13,9 @@ import ast
 import re
 import urllib.parse
 import urllib3
-
-from .params import PARAMS
-from .utils import tob64
-
-try :
-    requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-except : pass
-
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-log = logging.getLogger('msiempy')
-
 import configparser
 import os
 import getpass
-
 import abc
 import collections
 import tqdm
@@ -41,7 +28,18 @@ import datetime
 import functools
 import textwrap
 
-from .utils import regex_match
+from .utils import regex_match, tob64
+from .params import PARAMS
+
+try :
+    requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+except : pass
+
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+log = logging.getLogger('msiempy')
+
+
 
 class NitroError(Exception):
     """
@@ -583,11 +581,11 @@ class NitroObject(abc.ABC):
     class NitroJSONEncoder(json.JSONEncoder):
         """
         Custom JSON encoder that will use the approprtiate propertie depending of the type of NitroObject.
-        TODO return meta info about the Manager. Maybe create a section `manager` and `data`.
-        TODO support json json dumping of QueryFilers, may be by making them inherits from Item.
+        TODO return meta info about the NitroList. Maybe create a section `manager` and `data`.
+        TODO support json json dumping of QueryFilers, may be by making them inherits from NitroDict.
         """
         def default(self, obj): # pylint: disable=E0202
-            if isinstance(obj,(Item, Manager)):
+            if isinstance(obj,(NitroDict, NitroList)):
                 return obj.data
             #elif isinstance(obj, (QueryFilter)):
                 #return obj.config_dict
@@ -603,7 +601,7 @@ class NitroObject(abc.ABC):
     def __str__(self):
         """
         str(obj) -> return text string.
-        Can be a table if the object is a Manager.
+        Can be a table if the object is a NitroList.
         """
         return self.text
 
@@ -634,7 +632,7 @@ class NitroObject(abc.ABC):
         """
         pass
 
-class Item(collections.UserDict, NitroObject):
+class NitroDict(collections.UserDict, NitroObject):
     """
     Base class that represent any SIEM data that can be represented as a item of a manager.
     Exemple : Event, Alarm, etc...
@@ -656,7 +654,7 @@ class Item(collections.UserDict, NitroObject):
 
         for key in self.data :
             if isinstance(self.data[key], list):
-                self.data[key]=Manager(alist=self.data[key])
+                self.data[key]=NitroList(alist=self.data[key])
 
     @property
     def json(self):
@@ -681,9 +679,9 @@ class Item(collections.UserDict, NitroObject):
         """
         pass
 
-class Manager(collections.UserList, NitroObject):
+class NitroList(collections.UserList, NitroObject):
     """
-    Base class for Managers objects. 
+    Base class for NitroLists objects. 
     Inherits from list
     """
 
@@ -698,13 +696,13 @@ class Manager(collections.UserList, NitroObject):
         if alist is None:
             collections.UserList.__init__(self, [])
         
-        elif isinstance(alist , (list, Manager)):
+        elif isinstance(alist , (list, NitroList)):
             collections.UserList.__init__(
-                self, alist #[Item(adict=item) for item in alist if isinstance(item, (dict, Item))] 
-                #Can't instanciate Item, so Concrete classes has to cast the items afterwards
+                self, alist #[NitroDict(adict=item) for item in alist if isinstance(item, (dict, NitroDict))] 
+                #Can't instanciate NitroDict, so Concrete classes has to cast the items afterwards
                 )
         else :
-            raise ValueError('Manager can only be initiated based on a list')
+            raise ValueError('NitroList can only be initiated based on a list')
 
     @property
     def table_colums(self):
@@ -719,7 +717,7 @@ class Manager(collections.UserList, NitroObject):
         Creating keys in dicts
         """
         for item in self.data :
-            if isinstance(item, (dict, Item)):
+            if isinstance(item, (dict, NitroDict)):
                 for key in self.keys :
                     if key not in item :
                         item[key]=None
@@ -732,7 +730,7 @@ class Manager(collections.UserList, NitroObject):
         
         manager_keys=set()
         for item in self.data:
-            if isinstance(item, (dict,Item)):
+            if isinstance(item, (dict,NitroDict)):
                 manager_keys.update(item.keys())
 
         return manager_keys
@@ -762,9 +760,9 @@ class Manager(collections.UserList, NitroObject):
             self._norm_dicts()
 
             for item in self.data:
-                if isinstance(item, (dict, Item)):
+                if isinstance(item, (dict, NitroDict)):
                     table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=max_column_width))
-                        if not isinstance(item[field], Manager)
+                        if not isinstance(item[field], NitroList)
                         else item[field].get_text() for field in fields])
                 else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
 
@@ -788,10 +786,10 @@ class Manager(collections.UserList, NitroObject):
             text=text[0:len(text)-1]
             text+='\n'
             for item in self.data:
-                if isinstance(item, (dict, Item)):
+                if isinstance(item, (dict, NitroDict)):
                     text+='| '
                     for field in fields :
-                        if isinstance(item[field], Manager):
+                        if isinstance(item[field], NitroList):
                             text+=item[field].get_text(compact=True)
                         else:
                             text+=(str(item[field]))
@@ -822,10 +820,10 @@ class Manager(collections.UserList, NitroObject):
         Return a list of elements that matches regex patterns.
         Patterns are applied one after another. It's a logic AND.
         Use `|` inside patterns to search with logic OR.
-        This method will return a new Manager with matching data. Items in the returned Manager do not
-        references the items in the original Manager.
+        This method will return a new NitroList with matching data. NitroDicts in the returned NitroList do not
+        references the items in the original NitroList.
 
-        If you wish to apply more specific filters to Manager list, please
+        If you wish to apply more specific filters to NitroList list, please
         use filter(), list comprehension, or other filtering method.
             i.e. : `[item for item in manager if item['cost'] > 50]`
 
@@ -843,13 +841,13 @@ class Manager(collections.UserList, NitroObject):
         
         if isinstance(apattern, str):
             for item in self.data :
-                if regex_match(apattern, getattr(item, match_prop) if isinstance(item, Item) else str(item)) is not invert :
+                if regex_match(apattern, getattr(item, match_prop) if isinstance(item, NitroDict) else str(item)) is not invert :
                     matching_items.append(item)
             log.debug("You're search returned {} rows : {}".format(
                 len(matching_items),
                 str(matching_items)[:100]+'...'))
             #Apply AND reccursively
-            return Manager(alist=matching_items).search(*pattern, invert=invert, match_prop=match_prop)
+            return NitroList(alist=matching_items).search(*pattern, invert=invert, match_prop=match_prop)
         else:
             raise ValueError('pattern must be str')
 
@@ -857,12 +855,12 @@ class Manager(collections.UserList, NitroObject):
         """
         Execute refresh function on all items.
         """
-        log.warning("The function Manager.refresh hasn't been correctly tested")
-        self.perform(Item.refresh)
+        log.warning("The function NitroList.refresh hasn't been correctly tested")
+        self.perform(NitroDict.refresh)
 
     def perform(self, func, data=None, func_args=None, confirm=False, asynch=False,  workers=None , progress=False, message=None):
         """
-        Wrapper arround executable and the data list of Manager object.
+        Wrapper arround executable and the data list of NitroList object.
         Will execute the callable the local manager data list.
 
             Params

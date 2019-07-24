@@ -4,9 +4,9 @@
 import logging
 import collections
 log = logging.getLogger('msiempy')
-from . import Item, Manager
+from . import Item, NitroList
 
-class WatchlistManager(Manager):
+class WatchlistManager(NitroList):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

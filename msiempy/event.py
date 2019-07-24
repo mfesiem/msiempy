@@ -6,7 +6,7 @@ import datetime
 import logging
 log = logging.getLogger('msiempy')
 
-from . import Item, NitroError
+from . import NitroDict, NitroError
 from .query import QueryManager, FieldFilter, GroupFilter, QueryFilter
 from .utils import timerange_gettimes, parse_query_result, format_fields_for_query
 
@@ -332,7 +332,7 @@ class EventManager(QueryManager):
         #log.debug("Events parsed : "+str(events))
         return events
           
-class Event(Item):
+class Event(NitroDict):
     """
     Event.
     You can see all the requested fields and have some 

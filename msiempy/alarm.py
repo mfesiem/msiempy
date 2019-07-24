@@ -6,7 +6,7 @@ import datetime
 import logging
 log = logging.getLogger('msiempy')
 
-from . import Item, Manager
+from . import NitroDict, NitroList
 from .query import QueryManager
 from .event import EventManager, Event
 from .utils import regex_match, convert_to_time_obj
@@ -56,7 +56,7 @@ class AlarmManager(QueryManager):
         super(self.__class__, self.__class__).filters.__set__(self, filters)
 
         #Casting all data to Alarms objects, better way to do it ?
-        collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, Item))])
+        collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, NitroDict))])
 
     @property
     def table_colums(self):
@@ -142,7 +142,7 @@ class AlarmManager(QueryManager):
 
     def load_events(self, workers=20, extra_fields=None, by_id=False):
         """
-        Returns a new Manager with full detailled events fields
+        Returns a new NitroList with full detailled events fields
         """
         self.perform(
             Alarm.load_events,
@@ -187,7 +187,7 @@ class AlarmManager(QueryManager):
         Helper method that filters the alarms depending on alarm and event filters.
             -> Filter dependinf on alarms related filters -> load events details
                 -> Filter depending on event related filters
-        Returns a AlarmsManager
+        Returns a AlarmsNitroList
     
         """
 
@@ -233,7 +233,7 @@ class AlarmManager(QueryManager):
                 break
         return match
         
-class Alarm(Item):
+class Alarm(NitroDict):
     """
     Alarm
     `
