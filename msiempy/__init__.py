@@ -447,7 +447,7 @@ class NitroSession():
 
         if data is not None :
             data =  data % params
-            data = ast.literal_eval((data.replace('\n','').replace('\t','').replace("'",'"')))
+            data = ast.literal_eval((data.replace('\n','').replace('\t','')))
            
         if method is not None:
             try :

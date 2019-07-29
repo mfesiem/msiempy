@@ -5,7 +5,7 @@
 
     Args:
         method (str): Dict key associated with desired function
-        Use normal dict access, ['method'], or .pop('method')
+        Use normal dict access, ["method"], or .pop("method")
 
     Returns:
         tuple: (string, string)
@@ -16,173 +16,175 @@
         interpolated as documented in the Attributes.
 
     Example:
-        method, params = params['login'].format(username, password)
+        method, params = params["login"].format(username, password)
+
+    Important note : Do not use sigle quotes (') to delimit data into the interpolated strings !
 """
 
 PARAMS = {
-    'login': ("login",
-              """{'username': '%(username)s',
-                 'password' : '%(password)s',
-                 'locale': 'en_US',
-                 'os': 'Win32'}
+    "login": ("login",
+              """{"username": "%(username)s",
+                 "password" : "%(password)s",
+                 "locale": "en_US",
+                 "os": "Win32"}
                  """),
 
-    'get_devtree': ("GRP_GETVIRTUALGROUPIPSLISTDATA",
-                    """{'ITEMS': '#{DC1 + DC2}',
-                        'DID': '1',
-                        'HD': 'F',
-                        'NS': '0'}
+    "get_devtree": ("GRP_GETVIRTUALGROUPIPSLISTDATA",
+                    """{"ITEMS": "#{DC1 + DC2}",
+                        "DID": "1",
+                        "HD": "F",
+                        "NS": "0"}
                     """),
 
-    'get_zones_devtree': ("GRP_GETVIRTUALGROUPIPSLISTDATA",
-                    """{'ITEMS': '#{DC1 + DC2}',
-                        'DID': '3',
-                        'HD': 'F',
-                        'NS': '0'}
+    "get_zones_devtree": ("GRP_GETVIRTUALGROUPIPSLISTDATA",
+                    """{"ITEMS": "#{DC1 + DC2}",
+                        "DID": "3",
+                        "HD": "F",
+                        "NS": "0"}
                     """),
 
-    'req_client_str': ("DS_GETDSCLIENTLIST",
-                          """{'DSID': '%(_ds_id)s',
-                              'SEARCH': ''}
+    "req_client_str": ("DS_GETDSCLIENTLIST",
+                          """{"DSID": "%(_ds_id)s",
+                              "SEARCH": ""}
                           """),
 
-    'get_rfile': ("MISC_READFILE",
-                 """{'FNAME': '%(_ftoken)s',
-                 'SPOS': '0',
-                 'NBYTES': '0'}
+    "get_rfile": ("MISC_READFILE",
+                 """{"FNAME": "%(_ftoken)s",
+                 "SPOS": "0",
+                 "NBYTES": "0"}
                  """),
 
-    'get_wfile': ("MISC_WRITEFILE",
-                 """{'DATA1': '%(_ds_id)s',
+    "get_wfile": ("MISC_WRITEFILE",
+                 """{"DATA1": "%(_ds_id)s",
                  """),
 
                  
                  
-    'map_dtree': ("map_dtree",
-                  """{'dev_type': '%(dev_type)s',
-                  'name': '%(ds_name)s',
-                  'ds_id': '%(ds_id)s',
-                  'enabled': '%(enabled)s',
-                  'ds_ip': '%(ds_ip)s',
-                  'hostname' : '%(hostname)s',
-                  'typeID': '%(type_id)s',
-                  'vendor': '',
-                  'model': '',
-                  'tz_id': '',
-                  'date_order': '',
-                  'port': '',
-                  'syslog_tls': '',
-                  'client_groups': '%(client_groups)s'
+    "map_dtree": ("map_dtree",
+                  """{"dev_type": "%(dev_type)s",
+                  "name": "%(ds_name)s",
+                  "ds_id": "%(ds_id)s",
+                  "enabled": "%(enabled)s",
+                  "ds_ip": "%(ds_ip)s",
+                  "hostname" : "%(hostname)s",
+                  "typeID": "%(type_id)s",
+                  "vendor": "",
+                  "model": "",
+                  "tz_id": "",
+                  "date_order": "",
+                  "port": "",
+                  "syslog_tls": "",
+                  "client_groups": "%(client_groups)s"
                   }
                   """),
                  
-    'add_ds': ("dsAddDataSource", 
-                """{'datasource': {
-                        'parentId': {'id': '%(parent_id)s'},
-                        'name': '%(name)s',
-                        'id': {'id': '%(ds_id)s'},
-                        'typeId': {'id': '%(type_id)s'},
-                        'childEnabled': '%(child_enabled)s',
-                        'childCount': '%(child_count)s',
-                        'childType': '%(child_type)s',
-                        'ipAddress': '%(ds_ip)s',
-                        'zoneId': '%(zone_id)s',
-                        'url': '%(url)s',
-                        'enabled': '%(enabled)s',
-                        'idmId': '%(idm_id)s',
-                        'parameters': %(parameters)s
+    "add_ds": ("dsAddDataSource", 
+                """{"datasource": {
+                        "parentId": {"id": "%(parent_id)s"},
+                        "name": "%(name)s",
+                        "id": {"id": "%(ds_id)s"},
+                        "typeId": {"id": "%(type_id)s"},
+                        "childEnabled": "%(child_enabled)s",
+                        "childCount": "%(child_count)s",
+                        "childType": "%(child_type)s",
+                        "ipAddress": "%(ds_ip)s",
+                        "zoneId": "%(zone_id)s",
+                        "url": "%(url)s",
+                        "enabled": "%(enabled)s",
+                        "idmId": "%(idm_id)s",
+                        "parameters": %(parameters)s
                     }}"""),
 
-    'add_client': ("DS_ADDDSCLIENT", 
-                     """{'PID': '%(parent_id)s',
-                     'NAME': '%(name)s',
-                     'ENABLED': '%(enabled)s',
-                     'IP': '%(ds_ip)s',
-                     'HOST': '%(hostname)s',
-                     'TYPE': '%(type_id)s',
-                     'TZID': '%(tz_id)s',
-                     'DORDER': '%(dorder)s',
-                     'MASKFLAG': '%(maskflag)s',
-                     'PORT': '%(port)s',
-                     'USETLS': '%(syslog_tls)s'
+    "add_client": ("DS_ADDDSCLIENT", 
+                     """{"PID": "%(parent_id)s",
+                     "NAME": "%(name)s",
+                     "ENABLED": "%(enabled)s",
+                     "IP": "%(ds_ip)s",
+                     "HOST": "%(hostname)s",
+                     "TYPE": "%(type_id)s",
+                     "TZID": "%(tz_id)s",
+                     "DORDER": "%(dorder)s",
+                     "MASKFLAG": "%(maskflag)s",
+                     "PORT": "%(port)s",
+                     "USETLS": "%(syslog_tls)s"
                     }"""),
                     
-    'get_recs': ("devGetDeviceList?filterByRights=false",
-                     """{'types': ['RECEIVER']}
+    "get_recs": ("devGetDeviceList?filterByRights=false",
+                     """{"types": ["RECEIVER"]}
                      """),
 
-    'get_dstypes': ("dsGetDataSourceTypes",
-                     """{'receiverId': {'id': '%(rec_id)s'}
+    "get_dstypes": ("dsGetDataSourceTypes",
+                     """{"receiverId": {"id": "%(rec_id)s"}
                         }
                      """),
                      
-    'del_ds': ("dsDeleteDataSource",
-                """{'receiverId': {'id': '%(parent_id)s'},
-                    'datasourceId': {'id': '%(ds_id)s'}}
+    "del_ds": ("dsDeleteDataSource",
+                """{"receiverId": {"id": "%(parent_id)s"},
+                    "datasourceId": {"id": "%(ds_id)s"}}
                  """),
                  
-    'del_client': ("DS_DELETEDSCLIENTS",None
+    "del_client": ("DS_DELETEDSCLIENTS",None
                     ),
                     
-    'ds_last_times': ("QRY%5FGETDEVICELASTALERTTIME","""{}"""),
+    "ds_last_times": ("QRY%5FGETDEVICELASTALERTTIME","""{}"""),
                       
-    'zonetree': ("zoneGetZoneTree",None),
+    "zonetree": ("zoneGetZoneTree",None),
                       
-    'ds_by_type': ("QRY_GETDEVICECOUNTBYTYPE",None),
+    "ds_by_type": ("QRY_GETDEVICECOUNTBYTYPE",None),
 
-   '_dev_types':  ("dev_type_map",
-                    """{'1': 'zone',
-                        '2': 'ERC',
-                        '3': 'datasource',
-                        '4': 'Database Event Monitor (DBM)',
-                        '5': 'DBM Database',
-                        '7': 'Policy Auditor',
-                        '10': 'Application Data Monitor (ADM)',
-                        '12': 'ELM',
-                        '14': 'Local ESM',
-                        '15': 'Advanced Correlation Engine (ACE)',
-                        '16': 'Asset datasource',
-                        '17': 'Score-based Correlation',
-                        '19': 'McAfee ePolicy Orchestrator (ePO)',
-                        '20': 'EPO',
-                        '21': 'McAfee Network Security Manager (NSM)',
-                        '22': 'McAfee Network Security Platform (NSP)',
-                        '23': 'NSP Port',
-                        '24': 'McAfee Vulnerability Manager (MVM)',
-                        '25': 'Enterprise Log Search (ELS)',
-                        '254': 'client_group',
-                        '256': 'client'}
+   "_dev_types":  ("dev_type_map",
+                    """{"1": "zone",
+                        "2": "ERC",
+                        "3": "datasource",
+                        "4": "Database Event Monitor (DBM)",
+                        "5": "DBM Database",
+                        "7": "Policy Auditor",
+                        "10": "Application Data Monitor (ADM)",
+                        "12": "ELM",
+                        "14": "Local ESM",
+                        "15": "Advanced Correlation Engine (ACE)",
+                        "16": "Asset datasource",
+                        "17": "Score-based Correlation",
+                        "19": "McAfee ePolicy Orchestrator (ePO)",
+                        "20": "EPO",
+                        "21": "McAfee Network Security Manager (NSM)",
+                        "22": "McAfee Network Security Platform (NSP)",
+                        "23": "NSP Port",
+                        "24": "McAfee Vulnerability Manager (MVM)",
+                        "25": "Enterprise Log Search (ELS)",
+                        "254": "client_group",
+                        "256": "client"}
                     """),
                     
-    'ds_details': ("dsGetDataSourceDetail",
-                    """{'datasourceId': 
-                        {'id': '%(ds_id)s'}}
+    "ds_details": ("dsGetDataSourceDetail",
+                    """{"datasourceId": 
+                        {"id": "%(ds_id)s"}}
                     """),
 
-    'get_alarms_custom_time': ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&customStart=%(start_time)s&customEnd=%(end_time)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""",
+    "get_alarms_custom_time": ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&customStart=%(start_time)s&customEnd=%(end_time)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""",
                    None),
 
-    'get_alarms': ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""", None),
+    "get_alarms": ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""", None),
 
-    'get_alarm_details': ("""notifyGetTriggeredNotification""", """{"id":%(id)s}"""),
+    "get_alarm_details": ("""notifyGetTriggeredNotification""", """{"id":%(id)s}"""),
 
-    'ack_alarms': ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
+    "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
 
-    'unack_alarms': ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
+    "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
 
-    'delete_alarms': ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
+    "delete_alarms": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
     
-    'get_possible_filters' : ( """qryGetFilterFields""", None ),
+    "get_possible_filters" : ( """qryGetFilterFields""", None ),
 
-    'get_possible_fields' : ( """qryGetSelectFields?type=%(type)s&groupType=%(groupType)s""", None ),
+    "get_possible_fields" : ( """qryGetSelectFields?type=%(type)s&groupType=%(groupType)s""", None ),
 
-    'get_esm_time' : ( """essmgtGetESSTime""",None),
+    "get_esm_time" : ( """essmgtGetESSTime""",None),
 
-    'logout' : ( """userLogout""", None ),
+    "logout" : ( """userLogout""", None ),
 
-    'get_user_locale' : ( """getUserLocale""", None ),
+    "get_user_locale" : ( """getUserLocale""", None ),
 
-    'event_query_custom_time' : ("""qryExecuteDetail?type=EVENT&reverse=false""", """{
+    "event_query_custom_time" : ("""qryExecuteDetail?type=EVENT&reverse=false""", """{
             "config": {
                 "timeRange": "%(time_range)s",
                 "customStart": "%(start_time)s",
@@ -194,7 +196,7 @@ PARAMS = {
                 }
                 }"""),
 
-    'event_query' : ("""qryExecuteDetail?type=EVENT&reverse=false""", """{
+    "event_query" : ("""qryExecuteDetail?type=EVENT&reverse=false""", """{
             "config": {
                 "timeRange":"%(time_range)s",
                 "fields":%(fields)s,
@@ -204,34 +206,34 @@ PARAMS = {
                 }
                 }"""),
 
-    'query_status' : ("""qryGetStatus""", """{"resultID": %(resultID)s}"""),
+    "query_status" : ("""qryGetStatus""", """{"resultID": %(resultID)s}"""),
 
-    'query_result' : ("""qryGetResults?startPos=%(startPos)s&numRows=%(numRows)s&reverse=false""", """{"resultID": %(resultID)s}"""),
+    "query_result" : ("""qryGetResults?startPos=%(startPos)s&numRows=%(numRows)s&reverse=false""", """{"resultID": %(resultID)s}"""),
     
-    'time_zones' : ("""userGetTimeZones""", None),
+    "time_zones" : ("""userGetTimeZones""", None),
 
-    'logout' : ("""logout""", None),
+    "logout" : ("""logout""", None),
     
-    'add_note_to_event' : ("""ipsAddAlertNote""", """{
+    "add_note_to_event" : ("""ipsAddAlertNote""", """{
         "id": {"value": "%(id)s"},
         "note": {"note": "%(note)s"}
     }"""),
 
-    'get_watchlists_no_filters' : ("""sysGetWatchlists?hidden=%(hidden)s&dynamic=%(dynamic)s&writeOnly=%(writeOnly)s&indexedOnly=%(indexedOnly)s""", 
+    "get_watchlists_no_filters" : ("""sysGetWatchlists?hidden=%(hidden)s&dynamic=%(dynamic)s&writeOnly=%(writeOnly)s&indexedOnly=%(indexedOnly)s""", 
           None),
 
-    'get_watchlist_details': ("""sysGetWatchlistDetails""","""{"id": %(id)s}"""),
+    "get_watchlist_details": ("""sysGetWatchlistDetails""","""{"id": %(id)s}"""),
 
-    'add_watchlist_values': ("""sysAddWatchlistValues""","""{
+    "add_watchlist_values": ("""sysAddWatchlistValues""","""{
         "watchlist": %(id)s,
         "values": %(values)s,
         }"""),
 
-    'get_watchlist_values': ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}"""),
+    "get_watchlist_values": ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}"""),
 
-    'get_alert_data': ("""ipsGetAlertData""", """{"id": "%(id)s"}"""),
+    "get_alert_data": ("""ipsGetAlertData""", """{"id": "%(id)s"}"""),
     
-    'get_sys_info'  : ('sysGetSysInfo',None),
+    "get_sys_info"  : ("sysGetSysInfo",None),
     
-    'build_stamp' : ('essmgtGetBuildStamp',None)
+    "build_stamp" : ("essmgtGetBuildStamp",None)
 }
