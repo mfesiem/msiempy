@@ -403,7 +403,7 @@ class GroupFilter(QueryFilter):
         Used to dump groups of filters in the right format.
     """
 
-    def __init__(self, *filters, logic='AND') :
+    def __init__(self, logic='AND', *filters) :
         """
         filter : a list of filters, it can be FieldFilter or GroupFilter aka -  base.QueryFilter
         logic : 'AND' or 'OR' (i think)
