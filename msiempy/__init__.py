@@ -820,7 +820,7 @@ class NitroList(collections.UserList, NitroObject):
         """
         return(json.dumps([dict(item) for item in self.data], indent=4, cls=NitroObject.NitroJSONEncoder))
 
-    def search(self, *pattern, invert=False, match_prop='json'):
+    def search(self, invert=False, match_prop='json', *pattern,):
         """
         Return a list of elements that matches regex patterns.
         Patterns are applied one after another. It's a logic AND.
