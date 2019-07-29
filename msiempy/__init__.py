@@ -62,7 +62,6 @@ class NitroConfig(configparser.ConfigParser):
         # For Mac :     $HOME/'''+CONFIG_FILE_NAME+'''
         # For Linux :   $XDG_CONFIG_HOME/'''+CONFIG_FILE_NAME+'''
         #        or :   $HOME/'''+CONFIG_FILE_NAME+'''
-        # Use command line to setup authentication
         '''
     """
         # The configuration file should be located securely in your path since it 
@@ -71,7 +70,6 @@ class NitroConfig(configparser.ConfigParser):
         # For Mac :     $HOME/
         # For Linux :   $XDG_CONFIG_HOME/
         #        or :   $HOME/
-        # Use command line to setup authentication
     """
 
     DEFAULT_CONF_DICT={
@@ -323,6 +321,7 @@ class NitroSession():
 
             #Set the logging configuration
             self._init_log(verbose=self.config.verbose,
+                quiet=self.config.quiet,
                 logfile=self.config.logfile)
 
     def _request(self, method, http, data=None, callback=None, raw=False, secure=False):
@@ -479,7 +478,7 @@ class NitroSession():
         NitroSession.__initiated__ = False
 
     @staticmethod
-    def _init_log(verbose=False, logfile=None):
+    def _init_log(verbose=False, quiet=False, logfile=None):
         """
         Private method. Inits the session's logger settings based on params
         All objects should be able to log stuff, so the logger is globaly accessible
@@ -495,8 +494,13 @@ class NitroSession():
 
         if verbose :
             std.setLevel(logging.DEBUG)
+        elif quiet :
+            std.setLevel(logging.CRITICAL)
         else :
             std.setLevel(logging.INFO)
+
+        
+            
             
         log.handlers=[]
         
@@ -507,6 +511,9 @@ class NitroSession():
             fh.setLevel(logging.DEBUG)
             fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
             log.addHandler(fh)
+
+        if verbose and quiet :
+            log.warning("Verbose and quiet values are both set to True. This is a very inconsistent state. By default, verbose value has priority.")
 
         return (log)
     
@@ -917,14 +924,19 @@ class NitroList(collections.UserList, NitroObject):
         #Runs the callable on list on executor or by iterating
         if asynch == True :
             if isinstance(workers, int) :
-                if progress==True:
-                    #Need to call tqdm to have better support for concurrent futures executor
-                    # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
-                    returned=list(tqdm.tqdm(concurrent.futures.ThreadPoolExecutor(
-                    max_workers=workers ).map(
-                        func, elements), **tqdm_args))
+                if progress==True :
+                    if not self.nitro.config.quiet:
+                        #Need to call tqdm to have better support for concurrent futures executor
+                        # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
+                        returned=list(tqdm.tqdm(concurrent.futures.ThreadPoolExecutor(
+                        max_workers=workers ).map(
+                            func, elements), **tqdm_args))
+                    else:
+                        log.warning("You requested to show perfrom progress but config's quiet value is True, not showing tqdm load bar.")
+                        returned=list(concurrent.futures.ThreadPoolExecutor(
+                        max_workers=workers ).map(
+                            func, elements))
                 else:
-                    #log.info()
                     returned=list(concurrent.futures.ThreadPoolExecutor(
                     max_workers=workers ).map(
                         func, elements))
@@ -933,7 +945,10 @@ class NitroList(collections.UserList, NitroObject):
         else :
 
             if progress==True:
-                elements=tqdm.tqdm(elements, **tqdm_args)
+                if not self.nitro.config.quiet:
+                    elements=tqdm.tqdm(elements, **tqdm_args)
+                else:
+                    log.warning("You requested to show perform progress but config's quiet value is True, not showing tqdm load bar.")
 
             for index_or_item in elements:
                 returned.append(func(index_or_item))
