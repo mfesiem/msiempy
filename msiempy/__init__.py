@@ -438,8 +438,6 @@ class NitroSession():
                 **params :  interpolation parameters that will be match to PARAMS templates
 
             Returns None if HTTP error, Timeout or TooManyRedirects if raw=False
-            Should be stable.
-
         """
         log.debug("Calling nitro request : {} params={} http={} raw={} secure={} callback={}".format(
             str(request), str(params) if not secure else '***', str(http), str(raw), str(secure), str(callback)

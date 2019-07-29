@@ -4,7 +4,7 @@
 import logging
 import collections
 log = logging.getLogger('msiempy')
-from . import Item, NitroList
+from . import NitroDict, NitroList
 
 class WatchlistManager(NitroList):
 
@@ -13,17 +13,17 @@ class WatchlistManager(NitroList):
         self.data=self.nitro.request('get_watchlists_no_filters', hidden=False, dynamic=False, writeOnly=False, indexedOnly=False)
 
         #Casting all data to Watchlist objects, better way to do it ?
-        collections.UserList.__init__(self, [Watchlist(adict=item) for item in self.data if isinstance(item, (dict, Item))])
+        collections.UserList.__init__(self, [Watchlist(adict=item) for item in self.data if isinstance(item, (dict, NitroDict))])
 
     def load_details(self):
         self.perform(Watchlist.load_details, asynch=False, progress=True)
 
 
-class Watchlist(Item):
+class Watchlist(NitroDict):
     """
 
     Complete list of watchlist fields (not values) once load with load_details()
-    `
+    Dict keys :
         name: The name of the watchlist
         type: The watchlist type
         customType: The watchlist custom type (custom field)
@@ -69,7 +69,7 @@ class Watchlist(Item):
         delimitRegex: If the watchlist is populated from an enrichment source, this will hold the enrichment delimit regex setting. See the enrichment configuration documentation for more details on this setting.
         groups: If the watchlist is populated from an enrichment source, this will hold the enrichment groups setting. See the enrichment configuration documentation for more details on this setting.
         values: values
-    `
+    
     """
 
     def __init__(self, *args, **kwargs):
@@ -89,7 +89,7 @@ class Watchlist(Item):
 
     def load_values(self, count=50):
         """
-        Doesn't work yet
+        Not properly tested yet.
         """
         self.data['values']=self.nitro.request('get_watchlist_values', id=self.data['id'], pos=0, count=count)
 

@@ -7,15 +7,15 @@ import logging
 log = logging.getLogger('msiempy')
 
 from . import NitroDict, NitroList
-from .query import QueryManager
+from .query import FilteredQueryList
 from .event import EventManager, Event
 from .utils import regex_match, convert_to_time_obj
 
-class AlarmManager(QueryManager):
+class AlarmManager(FilteredQueryList):
     """
     AlarmManager class.
     Interface to query and manage Alarms.
-    Inherits from QueryManager.
+    Inherits from FilteredQueryList.
     """
     def __init__(self, status_filter='all', page_size=None, page_number=None, filters=None, *args, **kwargs):
 
@@ -27,7 +27,7 @@ class AlarmManager(QueryManager):
             page_number : defaulted to 1.
             filters : [(field, [values]), (field, [values])]
             fields : list of strings. Can be an EsmTriggeredAlarm or an EsmTriggeredAlarmEvent field, or any synonims. See 
-            *args, **kwargs : Parameters passed to `msiempy.base.QueryManager.__init__()`
+            *args, **kwargs : Parameters passed to `msiempy.base.FilteredQueryList.__init__()`
             
         Examples
         
@@ -135,7 +135,7 @@ class AlarmManager(QueryManager):
 
     def load_data(self, **kwargs):
         """
-        Specialized load_data() method that convert the `msiempy.base.QueryManager.load_data()` result to AlarmManager object.
+        Specialized load_data() method that convert the `msiempy.base.FilteredQueryList.load_data()` result to AlarmManager object.
         kwargs are passed to super().load_data()
         """
         return AlarmManager(alist=super().load_data(**kwargs))
@@ -236,7 +236,7 @@ class AlarmManager(QueryManager):
 class Alarm(NitroDict):
     """
     Alarm
-    `
+    Dict keys :
         id : The ID of the triggered alarm
         summary  : The summary of the triggered alarm
         assignee : The assignee for this triggered alarm
@@ -268,7 +268,7 @@ class Alarm(NitroDict):
         description : The description for this user
         actions : The actions for this user
         events : The events for this user
-    `
+    
     """
 
     """@property

@@ -7,14 +7,14 @@ import logging
 log = logging.getLogger('msiempy')
 
 from . import NitroDict, NitroError
-from .query import QueryManager, FieldFilter, GroupFilter, QueryFilter
+from .query import FilteredQueryList, FieldFilter, GroupFilter, QueryFilter
 from .utils import timerange_gettimes, parse_query_result, format_fields_for_query
 
-class EventManager(QueryManager):
+class EventManager(FilteredQueryList):
     """
     EventManager class.
     Interface to query and manage events.
-    Inherits from QueryManager.
+    Inherits from FilteredQueryList.
     """ 
 
     #Constants
@@ -50,7 +50,7 @@ class EventManager(QueryManager):
             filters : list of tuple (field [values])
             compute_time_range : False if you want to send the actualy time_range in parameter for the initial query.
                 Defaulted to True cause the query splitting implies computing the time_range anyway.
-            *args, **kwargs : Parameters passed to `msiempy.base.QueryManager.__init__()`
+            *args, **kwargs : Parameters passed to `msiempy.base.FilteredQueryList.__init__()`
            
             
             Examples
@@ -172,7 +172,7 @@ class EventManager(QueryManager):
 
     def add_filter(self, afilter):
         """
-        Concrete description of the QueryManager method.
+        Concrete description of the FilteredQueryList method.
         It can take a tuple(fiels, [values]) or a QueryFilter sub class.
         """
         if isinstance(afilter, tuple) :
