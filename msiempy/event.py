@@ -445,6 +445,10 @@ class Event(NitroDict):
         Desctructive action. It's actually going to replace the note !
         Add a new note in the note field.
         """
+        if len(note) >= 4000:
+            log.warning("The note is longer than 4000 characters, only the first 4000 characters will be kept. The maximum accepted by the SIEM is 4096 characters.")
+            note=note[:4000]+'\n\n----- MAXIMUM NOTE LENGHT REACHED, THE NOTE HAS BEEN TRUNCATED (sorry) -----'
+
         self.nitro.request("add_note_to_event", 
             id=self.data["Alert.IPSIDAlertID"],
             note="NOTE (msiempy-{}) : \\n{}".format(
@@ -454,5 +458,3 @@ class Event(NitroDict):
     def data_from_id(self, id):
         """EsmAlertData wrapper"""
         return self.nitro.request('get_alert_data', id=id)
-        
-    
