@@ -6,15 +6,15 @@ import datetime
 import logging
 log = logging.getLogger('msiempy')
 
-from . import Item, NitroError
-from .query import QueryManager, FieldFilter, GroupFilter, QueryFilter
+from . import NitroDict, NitroError
+from .query import FilteredQueryList, FieldFilter, GroupFilter, QueryFilter
 from .utils import timerange_gettimes, parse_query_result, format_fields_for_query
 
-class EventManager(QueryManager):
+class EventManager(FilteredQueryList):
     """
     EventManager class.
     Interface to query and manage events.
-    Inherits from QueryManager.
+    Inherits from FilteredQueryList.
     """ 
 
     #Constants
@@ -50,7 +50,7 @@ class EventManager(QueryManager):
             filters : list of tuple (field [values])
             compute_time_range : False if you want to send the actualy time_range in parameter for the initial query.
                 Defaulted to True cause the query splitting implies computing the time_range anyway.
-            *args, **kwargs : Parameters passed to `msiempy.base.QueryManager.__init__()`
+            *args, **kwargs : Parameters passed to `msiempy.base.FilteredQueryList.__init__()`
            
             
             Examples
@@ -172,7 +172,7 @@ class EventManager(QueryManager):
 
     def add_filter(self, afilter):
         """
-        Concrete description of the QueryManager method.
+        Concrete description of the FilteredQueryList method.
         It can take a tuple(fiels, [values]) or a QueryFilter sub class.
         """
         if isinstance(afilter, tuple) :
@@ -332,7 +332,7 @@ class EventManager(QueryManager):
         #log.debug("Events parsed : "+str(events))
         return events
           
-class Event(Item):
+class Event(NitroDict):
     """
     Event.
     You can see all the requested fields and have some 
@@ -445,10 +445,16 @@ class Event(Item):
         Desctructive action. It's actually going to replace the note !
         Add a new note in the note field.
         """
-        self.nitro.request("add_note_to_event", id=self.data["Alert.IPSIDAlertID"], note="msiempy note at {} : {}".format(str(datetime.datetime.now()),note))
+        if len(note) >= 4000:
+            log.warning("The note is longer than 4000 characters, only the first 4000 characters will be kept. The maximum accepted by the SIEM is 4096 characters.")
+            note=note[:4000]+'\n\n----- MAXIMUM NOTE LENGHT REACHED, THE NOTE HAS BEEN TRUNCATED (sorry) -----'
+
+        self.nitro.request("add_note_to_event", 
+            id=self.data["Alert.IPSIDAlertID"],
+            note="NOTE (msiempy-{}) : \\n{}".format(
+                str(datetime.datetime.now()),
+                note.replace('"','\\"').replace('\n','\\n')))
         
     def data_from_id(self, id):
         """EsmAlertData wrapper"""
         return self.nitro.request('get_alert_data', id=id)
-        
-    

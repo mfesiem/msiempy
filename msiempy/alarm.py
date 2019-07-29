@@ -6,16 +6,16 @@ import datetime
 import logging
 log = logging.getLogger('msiempy')
 
-from . import Item, Manager
-from .query import QueryManager
+from . import NitroDict, NitroList
+from .query import FilteredQueryList
 from .event import EventManager, Event
 from .utils import regex_match, convert_to_time_obj
 
-class AlarmManager(QueryManager):
+class AlarmManager(FilteredQueryList):
     """
     AlarmManager class.
     Interface to query and manage Alarms.
-    Inherits from QueryManager.
+    Inherits from FilteredQueryList.
     """
     def __init__(self, status_filter='all', page_size=None, page_number=None, filters=None, *args, **kwargs):
 
@@ -27,7 +27,7 @@ class AlarmManager(QueryManager):
             page_number : defaulted to 1.
             filters : [(field, [values]), (field, [values])]
             fields : list of strings. Can be an EsmTriggeredAlarm or an EsmTriggeredAlarmEvent field, or any synonims. See 
-            *args, **kwargs : Parameters passed to `msiempy.base.QueryManager.__init__()`
+            *args, **kwargs : Parameters passed to `msiempy.base.FilteredQueryList.__init__()`
             
         Examples
         
@@ -56,7 +56,7 @@ class AlarmManager(QueryManager):
         super(self.__class__, self.__class__).filters.__set__(self, filters)
 
         #Casting all data to Alarms objects, better way to do it ?
-        collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, Item))])
+        collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, NitroDict))])
 
     @property
     def table_colums(self):
@@ -135,14 +135,14 @@ class AlarmManager(QueryManager):
 
     def load_data(self, **kwargs):
         """
-        Specialized load_data() method that convert the `msiempy.base.QueryManager.load_data()` result to AlarmManager object.
+        Specialized load_data() method that convert the `msiempy.base.FilteredQueryList.load_data()` result to AlarmManager object.
         kwargs are passed to super().load_data()
         """
         return AlarmManager(alist=super().load_data(**kwargs))
 
     def load_events(self, workers=20, extra_fields=None, by_id=False):
         """
-        Returns a new Manager with full detailled events fields
+        Returns a new NitroList with full detailled events fields
         """
         self.perform(
             Alarm.load_events,
@@ -187,7 +187,7 @@ class AlarmManager(QueryManager):
         Helper method that filters the alarms depending on alarm and event filters.
             -> Filter dependinf on alarms related filters -> load events details
                 -> Filter depending on event related filters
-        Returns a AlarmsManager
+        Returns a AlarmsNitroList
     
         """
 
@@ -233,10 +233,10 @@ class AlarmManager(QueryManager):
                 break
         return match
         
-class Alarm(Item):
+class Alarm(NitroDict):
     """
     Alarm
-    `
+    Dict keys :
         id : The ID of the triggered alarm
         summary  : The summary of the triggered alarm
         assignee : The assignee for this triggered alarm
@@ -268,7 +268,7 @@ class Alarm(Item):
         description : The description for this user
         actions : The actions for this user
         events : The events for this user
-    `
+    
     """
 
     """@property

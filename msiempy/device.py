@@ -15,7 +15,7 @@ from itertools import chain
 from io import StringIO
 from functools import partial, lru_cache
 
-from . import Item, Manager, NitroError, NitroObject
+from . import NitroDict, NitroList, NitroError, NitroObject
 from .utils import dehexify
 
 class Device(NitroObject):
@@ -368,7 +368,7 @@ class ESM(Device):
                     for _ven in self._venmods['vendors']
                     for _mod in _ven['models']]
 
-class DataSource(Item):
+class DataSource(NitroDict):
     """
     A DataSource object represents a validated datasource configuration.
     
@@ -625,7 +625,7 @@ class DataSource(Item):
         except ValueError:
             return False
      
-class DevTree(Manager):
+class DevTree(NitroList):
     """
     Interface to the ESM device tree.
     

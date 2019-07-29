@@ -2,7 +2,7 @@
 """The point of convergence of every request to the McFee ESM It provides standard dialogue with the esm.
 Configuration management, authentication, verbosity, logfile, general timeout, and others...
 Two main type of classes are offered in this API : lists and dicts.
-Managers are lists and Items are dicts.
+NitroLists are lists and NitroDicts are dicts.
 """
 __version__ = '0.1.0'
 
@@ -13,22 +13,9 @@ import ast
 import re
 import urllib.parse
 import urllib3
-
-from .params import PARAMS
-from .utils import tob64
-
-try :
-    requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-except : pass
-
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-log = logging.getLogger('msiempy')
-
 import configparser
 import os
 import getpass
-
 import abc
 import collections
 import tqdm
@@ -41,7 +28,18 @@ import datetime
 import functools
 import textwrap
 
-from .utils import regex_match
+from .utils import regex_match, tob64
+from .params import PARAMS
+
+try :
+    requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+except : pass
+
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+log = logging.getLogger('msiempy')
+
+
 
 class NitroError(Exception):
     """
@@ -64,7 +62,6 @@ class NitroConfig(configparser.ConfigParser):
         # For Mac :     $HOME/'''+CONFIG_FILE_NAME+'''
         # For Linux :   $XDG_CONFIG_HOME/'''+CONFIG_FILE_NAME+'''
         #        or :   $HOME/'''+CONFIG_FILE_NAME+'''
-        # Use command line to setup authentication
         '''
     """
         # The configuration file should be located securely in your path since it 
@@ -73,7 +70,6 @@ class NitroConfig(configparser.ConfigParser):
         # For Mac :     $HOME/
         # For Linux :   $XDG_CONFIG_HOME/
         #        or :   $HOME/
-        # Use command line to setup authentication
     """
 
     DEFAULT_CONF_DICT={
@@ -325,6 +321,7 @@ class NitroSession():
 
             #Set the logging configuration
             self._init_log(verbose=self.config.verbose,
+                quiet=self.config.quiet,
                 logfile=self.config.logfile)
 
     def _request(self, method, http, data=None, callback=None, raw=False, secure=False):
@@ -440,8 +437,6 @@ class NitroSession():
                 **params :  interpolation parameters that will be match to PARAMS templates
 
             Returns None if HTTP error, Timeout or TooManyRedirects if raw=False
-            Should be stable.
-
         """
         log.debug("Calling nitro request : {} params={} http={} raw={} secure={} callback={}".format(
             str(request), str(params) if not secure else '***', str(http), str(raw), str(secure), str(callback)
@@ -451,7 +446,7 @@ class NitroSession():
 
         if data is not None :
             data =  data % params
-            data = ast.literal_eval((data.replace('\n','').replace('\t','').replace("'",'"')))
+            data = ast.literal_eval((data.replace('\n','').replace('\t','')))
            
         if method is not None:
             try :
@@ -483,7 +478,7 @@ class NitroSession():
         NitroSession.__initiated__ = False
 
     @staticmethod
-    def _init_log(verbose=False, logfile=None):
+    def _init_log(verbose=False, quiet=False, logfile=None):
         """
         Private method. Inits the session's logger settings based on params
         All objects should be able to log stuff, so the logger is globaly accessible
@@ -499,8 +494,13 @@ class NitroSession():
 
         if verbose :
             std.setLevel(logging.DEBUG)
+        elif quiet :
+            std.setLevel(logging.CRITICAL)
         else :
             std.setLevel(logging.INFO)
+
+        
+            
             
         log.handlers=[]
         
@@ -511,6 +511,9 @@ class NitroSession():
             fh.setLevel(logging.DEBUG)
             fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
             log.addHandler(fh)
+
+        if verbose and quiet :
+            log.warning("Verbose and quiet values are both set to True. This is a very inconsistent state. By default, verbose value has priority.")
 
         return (log)
     
@@ -583,11 +586,11 @@ class NitroObject(abc.ABC):
     class NitroJSONEncoder(json.JSONEncoder):
         """
         Custom JSON encoder that will use the approprtiate propertie depending of the type of NitroObject.
-        TODO return meta info about the Manager. Maybe create a section `manager` and `data`.
-        TODO support json json dumping of QueryFilers, may be by making them inherits from Item.
+        TODO return meta info about the NitroList. Maybe create a section `manager` and `data`.
+        TODO support json json dumping of QueryFilers, may be by making them inherits from NitroDict.
         """
         def default(self, obj): # pylint: disable=E0202
-            if isinstance(obj,(Item, Manager)):
+            if isinstance(obj,(NitroDict, NitroList)):
                 return obj.data
             #elif isinstance(obj, (QueryFilter)):
                 #return obj.config_dict
@@ -603,7 +606,7 @@ class NitroObject(abc.ABC):
     def __str__(self):
         """
         str(obj) -> return text string.
-        Can be a table if the object is a Manager.
+        Can be a table if the object is a NitroList.
         """
         return self.text
 
@@ -634,7 +637,7 @@ class NitroObject(abc.ABC):
         """
         pass
 
-class Item(collections.UserDict, NitroObject):
+class NitroDict(collections.UserDict, NitroObject):
     """
     Base class that represent any SIEM data that can be represented as a item of a manager.
     Exemple : Event, Alarm, etc...
@@ -656,7 +659,7 @@ class Item(collections.UserDict, NitroObject):
 
         for key in self.data :
             if isinstance(self.data[key], list):
-                self.data[key]=Manager(alist=self.data[key])
+                self.data[key]=NitroList(alist=self.data[key])
 
     @property
     def json(self):
@@ -681,9 +684,9 @@ class Item(collections.UserDict, NitroObject):
         """
         pass
 
-class Manager(collections.UserList, NitroObject):
+class NitroList(collections.UserList, NitroObject):
     """
-    Base class for Managers objects. 
+    Base class for NitroLists objects. 
     Inherits from list
     """
 
@@ -698,13 +701,13 @@ class Manager(collections.UserList, NitroObject):
         if alist is None:
             collections.UserList.__init__(self, [])
         
-        elif isinstance(alist , (list, Manager)):
+        elif isinstance(alist , (list, NitroList)):
             collections.UserList.__init__(
-                self, alist #[Item(adict=item) for item in alist if isinstance(item, (dict, Item))] 
-                #Can't instanciate Item, so Concrete classes has to cast the items afterwards
+                self, alist #[NitroDict(adict=item) for item in alist if isinstance(item, (dict, NitroDict))] 
+                #Can't instanciate NitroDict, so Concrete classes has to cast the items afterwards
                 )
         else :
-            raise ValueError('Manager can only be initiated based on a list')
+            raise ValueError('NitroList can only be initiated based on a list')
 
     @property
     def table_colums(self):
@@ -719,7 +722,7 @@ class Manager(collections.UserList, NitroObject):
         Creating keys in dicts
         """
         for item in self.data :
-            if isinstance(item, (dict, Item)):
+            if isinstance(item, (dict, NitroDict)):
                 for key in self.keys :
                     if key not in item :
                         item[key]=None
@@ -732,7 +735,7 @@ class Manager(collections.UserList, NitroObject):
         
         manager_keys=set()
         for item in self.data:
-            if isinstance(item, (dict,Item)):
+            if isinstance(item, (dict,NitroDict)):
                 manager_keys.update(item.keys())
 
         return manager_keys
@@ -762,9 +765,9 @@ class Manager(collections.UserList, NitroObject):
             self._norm_dicts()
 
             for item in self.data:
-                if isinstance(item, (dict, Item)):
+                if isinstance(item, (dict, NitroDict)):
                     table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=max_column_width))
-                        if not isinstance(item[field], Manager)
+                        if not isinstance(item[field], NitroList)
                         else item[field].get_text() for field in fields])
                 else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
 
@@ -788,10 +791,10 @@ class Manager(collections.UserList, NitroObject):
             text=text[0:len(text)-1]
             text+='\n'
             for item in self.data:
-                if isinstance(item, (dict, Item)):
+                if isinstance(item, (dict, NitroDict)):
                     text+='| '
                     for field in fields :
-                        if isinstance(item[field], Manager):
+                        if isinstance(item[field], NitroList):
                             text+=item[field].get_text(compact=True)
                         else:
                             text+=(str(item[field]))
@@ -822,10 +825,10 @@ class Manager(collections.UserList, NitroObject):
         Return a list of elements that matches regex patterns.
         Patterns are applied one after another. It's a logic AND.
         Use `|` inside patterns to search with logic OR.
-        This method will return a new Manager with matching data. Items in the returned Manager do not
-        references the items in the original Manager.
+        This method will return a new NitroList with matching data. NitroDicts in the returned NitroList do not
+        references the items in the original NitroList.
 
-        If you wish to apply more specific filters to Manager list, please
+        If you wish to apply more specific filters to NitroList list, please
         use filter(), list comprehension, or other filtering method.
             i.e. : `[item for item in manager if item['cost'] > 50]`
 
@@ -843,13 +846,13 @@ class Manager(collections.UserList, NitroObject):
         
         if isinstance(apattern, str):
             for item in self.data :
-                if regex_match(apattern, getattr(item, match_prop) if isinstance(item, Item) else str(item)) is not invert :
+                if regex_match(apattern, getattr(item, match_prop) if isinstance(item, NitroDict) else str(item)) is not invert :
                     matching_items.append(item)
             log.debug("You're search returned {} rows : {}".format(
                 len(matching_items),
                 str(matching_items)[:100]+'...'))
             #Apply AND reccursively
-            return Manager(alist=matching_items).search(*pattern, invert=invert, match_prop=match_prop)
+            return NitroList(alist=matching_items).search(*pattern, invert=invert, match_prop=match_prop)
         else:
             raise ValueError('pattern must be str')
 
@@ -857,12 +860,12 @@ class Manager(collections.UserList, NitroObject):
         """
         Execute refresh function on all items.
         """
-        log.warning("The function Manager.refresh hasn't been correctly tested")
-        self.perform(Item.refresh)
+        log.warning("The function NitroList.refresh hasn't been correctly tested")
+        self.perform(NitroDict.refresh)
 
     def perform(self, func, data=None, func_args=None, confirm=False, asynch=False,  workers=None , progress=False, message=None):
         """
-        Wrapper arround executable and the data list of Manager object.
+        Wrapper arround executable and the data list of NitroList object.
         Will execute the callable the local manager data list.
 
             Params
@@ -921,14 +924,19 @@ class Manager(collections.UserList, NitroObject):
         #Runs the callable on list on executor or by iterating
         if asynch == True :
             if isinstance(workers, int) :
-                if progress==True:
-                    #Need to call tqdm to have better support for concurrent futures executor
-                    # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
-                    returned=list(tqdm.tqdm(concurrent.futures.ThreadPoolExecutor(
-                    max_workers=workers ).map(
-                        func, elements), **tqdm_args))
+                if progress==True :
+                    if not self.nitro.config.quiet:
+                        #Need to call tqdm to have better support for concurrent futures executor
+                        # tqdm would load the whole bar intantaneously and not wait until the callable func returns. 
+                        returned=list(tqdm.tqdm(concurrent.futures.ThreadPoolExecutor(
+                        max_workers=workers ).map(
+                            func, elements), **tqdm_args))
+                    else:
+                        log.warning("You requested to show perfrom progress but config's quiet value is True, not showing tqdm load bar.")
+                        returned=list(concurrent.futures.ThreadPoolExecutor(
+                        max_workers=workers ).map(
+                            func, elements))
                 else:
-                    #log.info()
                     returned=list(concurrent.futures.ThreadPoolExecutor(
                     max_workers=workers ).map(
                         func, elements))
@@ -937,7 +945,10 @@ class Manager(collections.UserList, NitroObject):
         else :
 
             if progress==True:
-                elements=tqdm.tqdm(elements, **tqdm_args)
+                if not self.nitro.config.quiet:
+                    elements=tqdm.tqdm(elements, **tqdm_args)
+                else:
+                    log.warning("You requested to show perform progress but config's quiet value is True, not showing tqdm load bar.")
 
             for index_or_item in elements:
                 returned.append(func(index_or_item))

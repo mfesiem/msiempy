@@ -254,9 +254,6 @@ def format_fields_for_query(fields):
     """
     return([{'name':value} for value in list(fields)])
 
-
-
-
 def parse_timedelta(time_str):
     """
     Parse a time string e.g. (2h13m) into a timedelta object.
@@ -271,3 +268,30 @@ def parse_timedelta(time_str):
     assert parts is not None, "Could not parse any time information from '{}'.  Examples of valid strings: '8h', '2d8h5m20s', '2m4s'".format(time_str)
     time_params = {name: float(param) for name, param in parts.groupdict().items() if param}
     return timedelta(**time_params)
+
+def sanitize_string(strg, valid_chars = ''):
+    ''' Sanitize string 
+        Usage:
+            By default returns the string without special characters, underscore replaced with space, and surrounding whitespace removed
+            :valid_chars: By default this function removes all characters. Specifying a string of characters here will skip removing them
+
+        Edited from https://github.com/AutomationSolutionz/Zeuz_Python_Node/blob/master/Framework/Built_In_Automation/Built_In_Utility/CrossPlatform/BuiltInUtilityFunction.py
+    '''
+    
+    # Invalid character list (space and underscore are handle separately)
+    invalid_chars = '!"#$%&\'()*+,-./:;<=>?@[\]^`{|}~'
+
+    # Adjust invalid character list, based on function input
+    for j in range(len(valid_chars)): # For each valid character
+        invalid_chars = invalid_chars.replace(valid_chars[j], '') # Remove valid character from invalid character list
+   
+    for j in range(0,len(invalid_chars)): # For each invalid character (allows us to only remove those the user hasn't deemed valid)
+        strg = strg.replace(invalid_chars[j], '') # Remove invalid character
+        strg = strg.lower() # Convert to lower case
+    if '_' not in valid_chars: strg = strg.replace('_', ' ') # Underscore to space (unless user wants to keep it)
+
+    strg = strg.replace('  ', ' ') # Double space to single space
+    strg = strg.strip() # Remove leading and trailing whitespace
+
+    
+    return strg

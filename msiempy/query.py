@@ -1,4 +1,4 @@
-"""Module that provide time ranged filtered query wrapper. QueryManager is an abstract object.
+"""Module that provide time ranged filtered query wrapper. FilteredQueryList is an abstract object.
 """
 
 import datetime
@@ -8,13 +8,13 @@ import json
 import logging
 log = logging.getLogger('msiempy')
 
-from . import Manager, NitroError, NitroObject
+from . import NitroList, NitroError, NitroObject
 from .utils import format_esm_time, convert_to_time_obj, timerange_gettimes, parse_timedelta, divide_times
 
-class QueryManager(Manager):
+class FilteredQueryList(NitroList):
     """
     Base class for query based managers : AlarmManager, EventManager
-    QueryManager object can handle time_ranges and time splitting.
+    FilteredQueryList object can handle time_ranges and time splitting.
     """
     
     DEFAULT_TIME_RANGE="CURRENT_DAY"
@@ -72,7 +72,7 @@ class QueryManager(Manager):
         Params
         `
             time_range : Query time range. String representation of a time range. 
-                See `msiempy.base.QueryManager.POSSIBLE_TIME_RANGE`
+                See `msiempy.base.FilteredQueryList.POSSIBLE_TIME_RANGE`
             start_time : Query starting time, can be a string or a datetime object. Parsed with dateutil.
             end_time : Query endding time, can be a string or a datetime object. Parsed with dateutil.
             filters : List of filters applied to the query
@@ -128,7 +128,7 @@ class QueryManager(Manager):
     @property
     def time_range(self):
         """
-        Returns the query time range. See `msiempy.query.QueryManager.POSSIBLE_TIME_RANGE`.
+        Returns the query time range. See `msiempy.query.FilteredQueryList.POSSIBLE_TIME_RANGE`.
         Return 'CUSTOM' if internal _time_range is None and start_time annd end_time are set.
         """
         """if self.start_time is not None and self.end_time is not None :
@@ -158,7 +158,7 @@ class QueryManager(Manager):
     def time_range(self, time_range):
         """
         Set the time range of the query to the specified string value. 
-        Defaulf `msiempy.queryQueryManager.DEFAULT_TIME_RANGE`.
+        Defaulf `msiempy.queryFilteredQueryList.DEFAULT_TIME_RANGE`.
         Note : the time range is upper cased automatically.
         Throw VallueError if unrecognized time range.
         """
@@ -226,7 +226,7 @@ class QueryManager(Manager):
     @filters.setter
     def filters(self, filters):
         """Query filters property : can be a list of tuple(field, [values]) 
-            or just a tuple. None value will call `msiempy.query.QueryManager.clear_filters()`
+            or just a tuple. None value will call `msiempy.query.FilteredQueryList.clear_filters()`
         Throws AttributeError if type not supported.
         """
         
@@ -275,10 +275,10 @@ class QueryManager(Manager):
         Secondly, if the sub queries are not completed, divide them in the number of `slots`, this step is
         If you're looking foe `max_query_depth`, it's define at the creation of the query manager
 
-        Returns a QueryManager.
+        Returns a FilteredQueryList.
         
         Note :
-            IF you looking for load_async = True/False, you should pass thid to the constructor method `msiempy.query.QueryManager`
+            IF you looking for load_async = True/False, you should pass thid to the constructor method `msiempy.query.FilteredQueryList`
                 or by setting the attribute manually like `manager.load_asynch=True`
             Only the first query is loaded asynchronously.
 
@@ -333,7 +333,7 @@ class QueryManager(Manager):
                     sub_queries.append(sub_query)
 
             
-                results = self.perform(QueryManager.load_data, sub_queries, 
+                results = self.perform(FilteredQueryList.load_data, sub_queries, 
                     #The sub query is asynch only when it's set to True and it's the first query
                     asynch=False if not self.load_async else (self.__parent__==None),
                     progress=self.__parent__==None, 
@@ -350,7 +350,7 @@ class QueryManager(Manager):
                     self.__root_parent__.not_completed=True
 
         self.data=items
-        return(Manager(alist=items)) #return self ?
+        return(NitroList(alist=items)) #return self ?
 
 class QueryFilter(NitroObject):
 
