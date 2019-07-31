@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Watchlist module offers a whatchlist management."""
+"""Provide whatchlist management."""
 
 import logging
 import collections
@@ -9,6 +9,9 @@ from . import NitroDict, NitroList
 class WatchlistManager(NitroList):
 
     def __init__(self, *args, **kwargs):
+        """
+
+        """
         super().__init__(*args, **kwargs)
         self.data=self.nitro.request('get_watchlists_no_filters', hidden=False, dynamic=False, writeOnly=False, indexedOnly=False)
 
@@ -16,6 +19,9 @@ class WatchlistManager(NitroList):
         collections.UserList.__init__(self, [Watchlist(adict=item) for item in self.data if isinstance(item, (dict, NitroDict))])
 
     def load_details(self):
+        """
+        
+        """
         self.perform(Watchlist.load_details, asynch=False, progress=True)
 
 
@@ -23,7 +29,9 @@ class Watchlist(NitroDict):
     """
 
     Complete list of watchlist fields (not values) once load with load_details()
-    Dict keys :
+
+        Dictionary keys
+
         name: The name of the watchlist
         type: The watchlist type
         customType: The watchlist custom type (custom field)
@@ -76,13 +84,22 @@ class Watchlist(NitroDict):
         super().__init__(*args, **kwargs)
 
     def add_values(self, values):
+        """
+        
+        """
         self.nitro.request('add_watchlist_values', watchlist=self['id'], values=values)
 
     def data_from_id(self, id):
+        """
+        
+        """
         info=self.nitro.request('get_watchlist_details', id=id)
         return info
 
     def load_details(self):
+        """
+        
+        """
         the_id = self.data['id']
         self.data.update(self.data_from_id(the_id))
         self.data['id']=the_id

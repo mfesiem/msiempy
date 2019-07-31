@@ -1,4 +1,4 @@
-"""Module offering ESM, ERC, DevTree and DataSource management (TODO)
+"""Provide ESM, ERC and data source management.
 """
 
 import logging

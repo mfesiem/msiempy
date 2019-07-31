@@ -1,4 +1,4 @@
-"""Module for event management, qryExecuteDetails wrapper, adding note, etc..
+"""Provide event management.
 """
 
 import time

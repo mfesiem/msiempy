@@ -1,4 +1,4 @@
-"""Module that provide alarm management, acknowledgement, filtering, etc...
+"""Provide alarm management.
 """
 
 import collections

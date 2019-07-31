@@ -1,4 +1,4 @@
-"""Module that provide time ranged filtered query wrapper. FilteredQueryList is an abstract object.
+"""Provide time ranged filtered query wrapper.
 """
 
 import datetime
@@ -69,18 +69,20 @@ class FilteredQueryList(NitroList):
         """
         Abstract base class that handles the time ranges operations, loading data from the SIEM.
 
-        Params
-        `
+            Parameters
+        
             time_range : Query time range. String representation of a time range. 
                 See `msiempy.base.FilteredQueryList.POSSIBLE_TIME_RANGE`
             start_time : Query starting time, can be a string or a datetime object. Parsed with dateutil.
             end_time : Query endding time, can be a string or a datetime object. Parsed with dateutil.
-            filters : List of filters applied to the query
+            filters : List of filters applied to the query.
+            load_async : Load asynchonously the sub-queries. Defaulted to True.
+            requests_size : number of items per request.
             max_query_depth : maximum number of supplement reccursions of division of the query times
                 Meaning, if requests_size=500, slots=5 and max_query_depth=3, then the maximum capacity of 
                 the list is (500*5)*(500*5)*(500*5) = 15625000000
-            load_async : Load asynchonously the sub-queries. Defaulted to True.
-        `
+            
+        
         """
 
         super().__init__(*arg, **kwargs)
@@ -267,30 +269,29 @@ class FilteredQueryList(NitroList):
     @abc.abstractmethod
     def load_data(self, workers=15, slots=4, delta='24h'):
         """
-        Method to load the data from the SIEM
+        Method to load the data from the SIEM.
         Split the query in defferents time slots if the query apprears not to be completed.
         Splitting is done by duplicating current object, setting different times,
         and re-loading results. First your query time is split in slots of size `delta` 
-        in [performance] section of the config and launch asynchronously in queue of length `max_workers`.
-        Secondly, if the sub queries are not completed, divide them in the number of `slots`, this step is
-        If you're looking foe `max_query_depth`, it's define at the creation of the query manager
+        if the sub queries are not completed, divide them in the number of `slots`, this step is
+        If you're looking for `max_query_depth`, it's define at the creation of the query list.
 
         Returns a FilteredQueryList.
         
         Note :
-            IF you looking for load_async = True/False, you should pass thid to the constructor method `msiempy.query.FilteredQueryList`
+            IF you looking for load_async = True/False, you should pass this to the constructor method `msiempy.query.FilteredQueryList`
                 or by setting the attribute manually like `manager.load_asynch=True`
             Only the first query is loaded asynchronously.
 
-        Params
-        `
+            Parameters
+        
             requests_size : size (in items) for the individual requests.
             workers : numbre of parrallels task
             slots : number of time slots the query can be divided. The loading bar is 
                 divided according to the number of slots
             delta : exemple : '24h', the query will be firstly divided in chuncks according to the time delta read
                 with dateutil.
-        `
+        
         #
         """
 

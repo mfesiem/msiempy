@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """This module imports a dict into the msiem core class to provide
-    a central place to aggregate methods and parameters. The params
+    a central place to aggregate API methods and parameters. The params
     are stored as docstrings to support string replacement.
 
     Args:
         method (str): Dict key associated with desired function
-        Use normal dict access, ["method"], or .pop("method")
+        Use normal dict access, PARAMS["method"], or PARAMS.get("method")
 
     Returns:
         tuple: (string, string)
