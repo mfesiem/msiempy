@@ -2,6 +2,7 @@
 """
 
 import time
+import collections
 import datetime
 import logging
 log = logging.getLogger('msiempy')
@@ -11,10 +12,8 @@ from .query import FilteredQueryList, FieldFilter, GroupFilter, QueryFilter
 from .utils import timerange_gettimes, parse_query_result, format_fields_for_query
 
 class EventManager(FilteredQueryList):
-    """
-    EventManager class.
-    Interface to query and manage events.
-    Inherits from FilteredQueryList.
+    """Interface to query and manage events.
+    Inherits from `msiempy.query.FilteredQueryList`.
     """ 
 
     #Constants
@@ -35,9 +34,10 @@ class EventManager(FilteredQueryList):
         Paramters:  
            
         - `fields` : list of strings representing all fields you want to apprear in the Events records.
-            Get the list of possible fields by calling EventManager.get_possible_fields() method.
-            Some defaults fields will always be present unless removed, see (1).
-        - `order` : Not implemented yet. 
+            Get the list of possible fields by calling `msiempy.event.EventManager.get_possible_fields()` method or see 
+            `msiempy.event.Event`.
+            Some defaults fields will always be present unless removed with `remove()` method, see notes.
+        - `order` : **Not implemented yet** . 
             tuple (direction, field) or a list of filters in the SIEM format.
             will set the first order according to (direction, fields).
                 -> same as using the property setter.
@@ -45,29 +45,35 @@ class EventManager(FilteredQueryList):
             Structure must be in correct format
                 -> same as setting _order property directly.
         - `limit` : max number of rows per query, by default takes the value in config `default_rows` option.
-        - `filters` : list of tuple (field [values])
+        - `filters` : list of filters. A filter can be a tuple (field, [values]) or it can be a `msiempy.query.QueryFilter`.
+        if you wish to use advanced filtering.
         - `compute_time_range` : False if you want to send the actualy time_range in parameter for the initial query.
             Defaulted to True cause the query splitting implies computing the time_range anyway.
         - `*args, **kwargs` : Parameters passed to `msiempy.base.FilteredQueryList.__init__()`
            
             
-        Examples:  
+        Notes :
             
-            `__init__()` parameters are also properties. E.g. :
-            ```
-                >>>em=EventManager(fields=['SrcIP','DstIP'],
-                        order=('DESCENDING''LastTime'),
-                        filters=[('DstIP','4.4.0.0/16','8.8.0.0/16')])
-                >>>em.load_data()```
+        - `__init__()` parameters are also properties.
+        ```
+            >>>em=EventManager(fields=['SrcIP','DstIP'],
+                    order=('DESCENDING''LastTime'),
+                    filters=[('DstIP','4.4.0.0/16','8.8.0.0/16')])
+            >>>em.load_data()```
 
-            Equlas :
-            ```
-                >>>em=EventManager()
-                >>>em.fields=['SrcIP','DstIP'],
-                >>>em._order=[{  "direction": 'DESCENDING',
-                                "field": { "name": 'LastTime' }  }]
-                >>>em.filters=[('DstIP','4.4.0.0/16','8.8.0.0/16')]
-                >>>em.load_data()```
+        is equivalent to :
+        ```
+            >>>em=EventManager()
+            >>>em.fields=['SrcIP','DstIP'],
+            >>>em._order=[{  "direction": 'DESCENDING',
+                            "field": { "name": 'LastTime' }  }]
+            >>>em.filters=[('DstIP','4.4.0.0/16','8.8.0.0/16')]
+            >>>em.load_data()```
+        - You can remove fields from `msiempy.event.Event.DEFAULTS_EVENT_FIELDS`.
+        ```
+            >>>em=EventManager()
+            >>>em.fields.remove('SrcIP')
+        ```
                 
         """
 
@@ -93,6 +99,7 @@ class EventManager(FilteredQueryList):
         #   and compare efficiency
         self.limit=self.requests_size if limit is None else int(limit)
         #we can ignore Access to member 'requests_size' before its definition line 95pylint(access-member-before-definition)
+        #It's define in FilteredQueryList __init__()
 
         self.requests_size=self.limit
 
@@ -112,35 +119,26 @@ class EventManager(FilteredQueryList):
         super(self.__class__, self.__class__).filters.__set__(self, filters)
 
         #Type cast all items in the list "data" to events type objects
-        self.type_cast_items_to_events()
+        #Casting all data to Event objects, better way to do it ?
+        collections.UserList.__init__(self, [Event(adict=item) for item in self.data if isinstance(item, (dict, NitroDict))])
+        
 
     @property
     def table_colums(self):
         return Event.DEFAULTS_EVENT_FIELDS
 
-    def type_cast_items_to_events(self):
-        """Type cast all items in the list "data" to events type objects"""
-        
-        events = []
-        for item in self.data:
-            event = Event(item)
-            events.append(event)
-
-        self.data = events
-
     @property
     def order(self):
         """
-        Return a list of orders representing the what the SIEM is expecting as the 'order'
+        Orders representing the what the SIEM is expecting as the 'order'.
+        The `order` must be tuple (direction, field). Only the first order can be set by this property.
+        Use _order to set with SIEM format.
+        Note that `order` property handling is **not implemented yet**.
         """
         return(self._order)
 
     @order.setter
     def order(self, order):
-        """
-        The order must be tuple (direction, field).
-        Use _order to set with SIEM format.
-        """
         if order is None :
             self._order=[{
                 "direction": 'DESCENDING',
@@ -187,18 +185,13 @@ class EventManager(FilteredQueryList):
     
     @property
     def time_range(self):
-        """ Same as super class.
-            Need to re-declare the time_range getter to be able to define setter.
+        """ Re-implemented the `msiempy.query.FilteredQueryList.time_range` to have better control on the property setter.
+        If `compute_time_range` is True (by default it is), try to get a start and a end time with `msiempy.utils.timerange_gettimes()`
         """
         return(super().time_range)
 
     @time_range.setter
     def time_range(self, time_range):
-        """
-        Set the time range of the query to the specified string value.
-        Trys if compute_time_range is True - by default it is - to get a 
-            start and a end time with utils.timerange_gettimes()
-        """
         if time_range!=None and time_range!='CUSTOM' and self.compute_time_range :
             try :
                 times = timerange_gettimes(time_range)
@@ -327,25 +320,23 @@ class EventManager(FilteredQueryList):
         return events
           
 class Event(NitroDict):
-    """
-    Event.
-    You can see all the requested fields and have some 
-        interaction - note only - with the events
-        
+    """        
     Default event field keys :  
-    - `Rule.msg`,
-    - `Alert.SrcPort`,
-    - `Alert.DstPort`, 
-    - `Alert.SrcIP`, 
-    - `Alert.DstIP`, 
-    - `SrcMac`,
-    - `Alert.DstMac`, 
-    - `Alert.LastTime`,
-    - `Rule.NormID`,
-    - `Alert.DSIDSigID`,
-    - `Alert.IPSIDAlertID`,
-        
-    See msiempy/static JSON files to browse complete list of fields and filters
+    - `Rule.msg`
+    - `Alert.SrcPort`
+    - `Alert.DstPort`
+    - `Alert.SrcIP`
+    - `Alert.DstIP`
+    - `SrcMac`
+    - `Alert.DstMac`
+    - `Alert.LastTime`
+    - `Rule.NormID`
+    - `Alert.DSIDSigID`
+    - `Alert.IPSIDAlertID`
+    
+    You can request more fields by passing a list of fields to the `msiempy.event.EventManager` object.
+    See msiempy/static JSON files to browse complete list : https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json
+
     """
    
     FIELDS_TABLES=["ADGroup",

@@ -129,41 +129,15 @@ class FilteredQueryList(NitroList):
     @property
     def time_range(self):
         """
-        Returns the query time range. See `msiempy.query.FilteredQueryList.POSSIBLE_TIME_RANGE`.
-        Return 'CUSTOM' if internal _time_range is None and start_time annd end_time are set.
+        Query time range. See `msiempy.query.FilteredQueryList.POSSIBLE_TIME_RANGE`.
+        Default to `msiempy.queryFilteredQueryList.DEFAULT_TIME_RANGE` (CURRENT_DAY).
+        Note that the time range is upper cased automatically.
+        Throw VallueError if unrecognized time range is set or not the right type.
         """
-        """if self.start_time is not None and self.end_time is not None :
-            return('CUSTOM')
-        else :"""
         return self._time_range.upper()
-
-    @property
-    def start_time(self):
-        """
-        Return the start time of the query in the right SIEM format.
-            See `msiempy.utils.format_esm_time()`
-        Use _start_time to get the datetime object
-        """
-        return format_esm_time(self._start_time)
-
-    @property
-    def end_time(self):
-        """
-        Return the end time of the query in the right SIEM format.
-            See `msiempy.utils.format_esm_time()`
-        Use _end_time to get the datetime object
-        """
-        return format_esm_time(self._end_time)
 
     @time_range.setter
     def time_range(self, time_range):
-        """
-        Set the time range of the query to the specified string value. 
-        Defaulf `msiempy.queryFilteredQueryList.DEFAULT_TIME_RANGE`.
-        Note : the time range is upper cased automatically.
-        Throw VallueError if unrecognized time range.
-        """
-
         if not time_range :
             self.time_range=self.DEFAULT_TIME_RANGE
 
@@ -179,16 +153,17 @@ class FilteredQueryList(NitroList):
         else:
             raise ValueError('time_range must be a string or None')
 
-    
+    @property
+    def start_time(self):
+        """
+        Start time of the query in the right SIEM format. See `msiempy.utils.format_esm_time()`
+        Use `_start_time` to get the datetime object. You can set the `star_time` as a `str` or a `datetime`.
+        If None, equivalent CURRENT_DAY start 00:00:00. Raises `ValueError` if not the right type.
+        """
+        return format_esm_time(self._start_time)
+
     @start_time.setter
     def start_time(self, start_time):
-        """
-        Set the time start of the query.
-        start_time can be a string or a datetime.
-        If None, equivalent current_day start 00:00:00.
-        """
-        
-        
         if isinstance(start_time, str):
             self.start_time = convert_to_time_obj(start_time)
         elif isinstance(start_time, datetime.datetime):
@@ -197,16 +172,18 @@ class FilteredQueryList(NitroList):
              self._start_time=None#raise ValueError("Time must be string or datetime object, not None")#self.start_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             raise ValueError("Time must be string or datetime object.")
-                
-    
+
+    @property
+    def end_time(self):
+        """
+        End time of the query in the right SIEM format.  See `msiempy.utils.format_esm_time()`
+        Use _end_time to get the datetime object. You can set the `end_time` as a `str` or a `datetime`.
+        If None, equivalent CURRENT_DAY ends now. Raises `ValueError` if not the right type.
+        """
+        return format_esm_time(self._end_time)
+
     @end_time.setter
-    def end_time(self, end_time):
-        """
-        Set the time end of the query.
-        end_time can be a string or a datetime.
-        If None, equivalent now.
-        """
-       
+    def end_time(self, end_time):       
         if isinstance(end_time, str):
             self.end_time = convert_to_time_obj(end_time)
         elif isinstance(end_time, datetime.datetime):
@@ -219,18 +196,16 @@ class FilteredQueryList(NitroList):
     @abc.abstractproperty
     def filters(self):
         """ 
-        Filter propertie getter. Returns a list of filters.
+        Filter property : Returns a list of filters.
+        Can be set with list of tuple(field, [values]) or `msiempy.query.QueryFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted. 
+        None value will call `msiempy.query.FilteredQueryList.clear_filters()`
+        Throws AttributeError if type not supported.
         TODO find a better solution to integrate the filter propertie
         """
         raise NotImplementedError()
 
     @filters.setter
     def filters(self, filters):
-        """Query filters property : can be a list of tuple(field, [values]) 
-            or just a tuple. None value will call `msiempy.query.FilteredQueryList.clear_filters()`
-        Throws AttributeError if type not supported.
-        """
-        
         if isinstance(filters, list):
             for f in filters :
                 self.add_filter(f)
@@ -351,14 +326,15 @@ class FilteredQueryList(NitroList):
         return(NitroList(alist=items)) #return self ?
 
 class QueryFilter(NitroObject):
-
+    """Base class for all SIEM query objects, declares the `config_dict` abstract property in order to dump the filter as JSON.
+    """
     _possible_filters = []
 
     def __init__(self):
         super().__init__()
 
         #Setting up static constant
-        """ Not checking dynamically the validity of the fields cause makes too much of unecessary requests
+        """Not checking dynamically the validity of the fields cause makes too much of unecessary requests
             self._possible_filters = self._get_possible_filters()
             """
 
@@ -371,7 +347,7 @@ class QueryFilter(NitroObject):
     @abc.abstractproperty
     def config_dict(self):
         """
-        Dump a filter in the right format.
+        Dump a filter in the right JSON format.
         """
         pass
 
@@ -384,14 +360,14 @@ class QueryFilter(NitroObject):
     @property
     def json(self):
         """
-        Dump the filter as a json
+        Dump the filter as a json.
         """
         return (json.dumps(self, indent=4, cls=NitroObject.NitroJSONEncoder))
     
     @property
     def text(self):
         """
-        Text representation
+        Text representation of `config_dict` property.
         """
         return str(self.config_dict)
 
@@ -503,41 +479,26 @@ class FieldFilter(QueryFilter):
     @property
     def name(self):
         """
-        Field name property getter.
+        Field name property. Example : `SrcIP`. See full list here: https://github.com/mfesiem/msiempy/blob/master/static/all_filters.json
         """
         return (self._name)
-    
-    @property
-    def operator(self):
-        """
-        Field operator property getter.
-        """
-        return (self._operator)
-
-    @property
-    def values(self):
-        """
-        Field values property getter.
-        """
-        return (self._values)
 
     @name.setter
     def name(self, name):
-        """
-        Could checking dynamically the validity of the fields but turned off cause it was loading to much 
-        #TODO add the list of fields check in better way and STORE the list one time only. Use class property ?
-        """
         if True : # Not checking dynamically the validity of the fields cause makes too much of unecessary requests any(f.get('name', None) == name for f in self._possible_filters):
             self._name = name
         else:
             raise AttributeError("Illegal value for the "+name+" field. The filter must be in :"+str([f['name'] for f in self._possible_filters]))
-       
-
+    
+    @property
+    def operator(self):
+        """
+        Field operator property. Check the value against the list of possible operators and trow `AttributeError` if not present.
+        """
+        return (self._operator)
+    
     @operator.setter
     def operator(self, operator):
-        """
-        Check the value against the list of possible operators and trow error if not present.
-        """
         try:
             if operator in self.POSSIBLE_OPERATORS :
                 self._operator = operator
@@ -545,6 +506,37 @@ class FieldFilter(QueryFilter):
                 raise AttributeError("Illegal value for the filter operator "+operator+". The operator must be in "+str(self.POSSIBLE_OPERATORS))
         except:
             raise
+
+    @property
+    def values(self):
+        """
+        Values property.
+        Set a list of values by calling `msiempy.query.FilteredQueryList.add_value()` if value is a 
+        `dict` or calls `msiempy.query.FilteredQueryList.add_basic_value()` if value type is `int`, `float` or `str`.
+        Values will always be added to the filter. To remove values, handle directly the `_values` property.
+
+        Example:  
+            >>> filter = FieldFilter(name='DstIP',values=['10.1.13.0/24'],operator='IN')
+            >>> filter.values=['10.1.14.0/8', {'type':'EsmWatchlistValue', 'watchlist':42}]
+            >>> filter.config_dict
+            {'type': 'EsmFieldFilter', 
+            'field': {'name': 'DstIP'}, 
+            'operator': 'IN', 
+            'values': [{'type': 'EsmBasicValue', 'value': '10.1.13.0/24'},
+                {'type': 'EsmBasicValue', 'value': '10.1.14.0/8'},
+                {'type': 'EsmWatchlistValue', 'watchlist': 42}]}
+            
+        """
+        return (self._values)
+
+    @values.setter  
+    def values(self, values):
+        for val in values :
+            if isinstance(val, dict):
+                self.add_value(**val)
+
+            elif isinstance(val, (int, float, str)) :
+                self.add_basic_value(val)
         
     def add_value(self, type, **args):
         """
@@ -593,16 +585,4 @@ class FieldFilter(QueryFilter):
         """
         self.add_value(type='EsmBasicValue', value=value)
 
-    @values.setter
-    def values(self, values):
-        """
-        Set a list of values calls add_value if value is a 
-            dict or calls add_basic_value if int, float or str
-        
-        """
-        for val in values :
-            if isinstance(val, dict):
-                self.add_value(**val)
-
-            elif isinstance(val, (int, float, str)) :
-                self.add_basic_value(val)
+    

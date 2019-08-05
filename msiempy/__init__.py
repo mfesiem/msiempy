@@ -679,7 +679,7 @@ class NitroList(collections.UserList, NitroObject):
         elif isinstance(alist , (list, NitroList)):
             collections.UserList.__init__(
                 self, alist #[NitroDict(adict=item) for item in alist if isinstance(item, (dict, NitroDict))] 
-                #Can't instanciate NitroDict, so Concrete classes has to cast the items afterwards
+                #Can't instanciate NitroDict, so Concrete classes have to cast the items afterwards!
                 )
         else :
             raise ValueError('NitroList can only be initiated based on a list')

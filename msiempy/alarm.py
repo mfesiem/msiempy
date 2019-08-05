@@ -72,8 +72,9 @@ class AlarmManager(FilteredQueryList):
     @property
     def status_filter(self):
         """
-        Return the status of the alarms in the query. `status_filter` is not a filter like other cause it's computed on the SIEM side.
-        Other filters are computed locally - Unlike EventManager filters.
+        Status of the alarms in the query. `status_filter` is not a filter like other cause it's computed on the SIEM side.
+        Other filters are computed locally - Unlike EventManager filters. the status filter of the alarm query. 'acknowledged', 'unacknowledged', 'all', '' or null -> all (default is '').
+        You can pass synonims of each status. See `msiempy.alarm.Alarm.POSSIBLE_ALARM_STATUS`.
         """
         return self._status_filter
         """
@@ -83,10 +84,6 @@ class AlarmManager(FilteredQueryList):
 
     @status_filter.setter
     def status_filter(self, status_filter):
-        """
-        Set the status filter of the alarm query. 'acknowledged', 'unacknowledged', 'all', '' or null -> all (default is '').
-        You can pass synonims of each status. See `msiempy.alarm.Alarm.POSSIBLE_ALARM_STATUS`.
-        """
         status_found=False
         if type(status_filter) is str : 
             for synonims in Alarm.POSSIBLE_ALARM_STATUS :
