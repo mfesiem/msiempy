@@ -375,9 +375,9 @@ class GroupFilter(QueryFilter):
         Used to dump groups of filters in the right format.
     """
 
-    def __init__(self, logic='AND', *filters) :
+    def __init__(self, filters, logic='AND') :
         """Parameters :  
-        - `filter` : a list of filters, it can be `msiempy.query.FieldFilter` or `msiempy.query.GroupFilter`
+        - `filters` : a list of filters, it can be `msiempy.query.FieldFilter` or `msiempy.query.GroupFilter`
         - `logic` : 'AND' or 'OR'
         """
         super().__init__()
