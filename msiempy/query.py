@@ -130,9 +130,9 @@ class FilteredQueryList(NitroList):
     def time_range(self):
         """
         Query time range. See `msiempy.query.FilteredQueryList.POSSIBLE_TIME_RANGE`.
-        Default to `msiempy.queryFilteredQueryList.DEFAULT_TIME_RANGE` (CURRENT_DAY).
+        Default to `msiempy.query.FilteredQueryList.DEFAULT_TIME_RANGE` (CURRENT_DAY).
         Note that the time range is upper cased automatically.
-        Throw VallueError if unrecognized time range is set or not the right type.
+        Raises `VallueError` if unrecognized time range is set and `AttributeError` if not the right type.
         """
         return self._time_range.upper()
 
@@ -151,14 +151,14 @@ class FilteredQueryList(NitroList):
             else:
                 raise ValueError("The time range must be in "+str(self.POSSIBLE_TIME_RANGE))
         else:
-            raise ValueError('time_range must be a string or None')
+            raise AttributeError('time_range must be a string or None')
 
     @property
     def start_time(self):
         """
         Start time of the query in the right SIEM format. See `msiempy.utils.format_esm_time()`
         Use `_start_time` to get the datetime object. You can set the `star_time` as a `str` or a `datetime`.
-        If None, equivalent CURRENT_DAY start 00:00:00. Raises `ValueError` if not the right type.
+        If `None`, equivalent CURRENT_DAY start 00:00:00. Raises `ValueError` if not the right type.
         """
         return format_esm_time(self._start_time)
 
@@ -178,7 +178,7 @@ class FilteredQueryList(NitroList):
         """
         End time of the query in the right SIEM format.  See `msiempy.utils.format_esm_time()`
         Use _end_time to get the datetime object. You can set the `end_time` as a `str` or a `datetime`.
-        If None, equivalent CURRENT_DAY ends now. Raises `ValueError` if not the right type.
+        If `None`, equivalent CURRENT_DAY ends now. Raises `ValueError` if not the right type.
         """
         return format_esm_time(self._end_time)
 
@@ -199,7 +199,7 @@ class FilteredQueryList(NitroList):
         Filter property : Returns a list of filters.
         Can be set with list of tuple(field, [values]) or `msiempy.query.QueryFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted. 
         None value will call `msiempy.query.FilteredQueryList.clear_filters()`
-        Throws AttributeError if type not supported.
+        Raises `AttributeError` if type not supported.
         TODO find a better solution to integrate the filter propertie
         """
         raise NotImplementedError()
@@ -289,8 +289,6 @@ class FilteredQueryList(NitroList):
                 
                 sub_queries=list()
 
-                #self.
-
                 for time in times :
                     """
                     """
@@ -378,9 +376,9 @@ class GroupFilter(QueryFilter):
     """
 
     def __init__(self, logic='AND', *filters) :
-        """
-        filter : a list of filters, it can be FieldFilter or GroupFilter aka -  base.QueryFilter
-        logic : 'AND' or 'OR' (i think)
+        """Parameters :  
+        - `filter` : a list of filters, it can be `msiempy.query.FieldFilter` or `msiempy.query.GroupFilter`
+        - `logic` : 'AND' or 'OR'
         """
         super().__init__()
         
@@ -516,6 +514,7 @@ class FieldFilter(QueryFilter):
         Values will always be added to the filter. To remove values, handle directly the `_values` property.
 
         Example:  
+        ```
             >>> filter = FieldFilter(name='DstIP',values=['10.1.13.0/24'],operator='IN')
             >>> filter.values=['10.1.14.0/8', {'type':'EsmWatchlistValue', 'watchlist':42}]
             >>> filter.config_dict
@@ -525,6 +524,7 @@ class FieldFilter(QueryFilter):
             'values': [{'type': 'EsmBasicValue', 'value': '10.1.13.0/24'},
                 {'type': 'EsmBasicValue', 'value': '10.1.14.0/8'},
                 {'type': 'EsmWatchlistValue', 'watchlist': 42}]}
+                ```
             
         """
         return (self._values)
@@ -542,11 +542,14 @@ class FieldFilter(QueryFilter):
         """
         Add a new value to the field filter.
         
-        Parameters could be (depending of the value type):  
-        - `{ type='EsmBasicValue', value='a value'}`
-        - `{ type='EsmWatchlistValue', watchlist=1}`
-        - `{ type='EsmVariableValue', variable=1}`
-        - `{ type='EsmCompoundValue', values=['.*']}`
+        Parameters (`**args`) could be (depending of the value type):  
+        - `{ type='EsmBasicValue', value='a value'}`  
+        - `{ type='EsmWatchlistValue', watchlist=1}`  
+        - `{ type='EsmVariableValue', variable=1}`  
+        - `{ type='EsmCompoundValue', values=['.*']}`  
+
+        Raises `KeyError` or `AttributeError` if you don't respect the correct type/key/value combo.
+        Note : Filtering query with other type of filter than 'EsmBasicValue' is not tested.
         """
         try:
             type_template=None
