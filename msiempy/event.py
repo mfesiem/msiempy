@@ -332,7 +332,7 @@ class Event(NitroDict):
     You can see all the requested fields and have some 
         interaction - note only - with the events
         
-    Default event field keys :
+    Default event field keys :  
     - `Rule.msg`,
     - `Alert.SrcPort`,
     - `Alert.DstPort`, 

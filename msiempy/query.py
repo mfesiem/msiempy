@@ -550,11 +550,11 @@ class FieldFilter(QueryFilter):
         """
         Add a new value to the field filter.
         
-        Parameters could be (depending of the value type):
-            (type='EsmBasicValue',      value='a value'}. or
-            (type='EsmWatchlistValue',  watchlist=1)   or 
-            (type='EsmVariableValue',   variable=1}  or
-            (type='EsmCompoundValue',   values=['.*']}
+        Parameters could be (depending of the value type):  
+        - `{ type='EsmBasicValue', value='a value'}`
+        - `{ type='EsmWatchlistValue', watchlist=1}`
+        - `{ type='EsmVariableValue', variable=1}`
+        - `{ type='EsmCompoundValue', values=['.*']}`
         """
         try:
             type_template=None
