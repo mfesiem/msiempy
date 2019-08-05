@@ -1,4 +1,4 @@
-"""Module that provide alarm management, acknowledgement, filtering, etc...
+"""Provide alarm management.
 """
 
 import collections
@@ -20,21 +20,18 @@ class AlarmManager(FilteredQueryList):
     def __init__(self, status_filter='all', page_size=None, page_number=None, filters=None, *args, **kwargs):
 
         """
-        Params
+        Parameters:  
         
-            status_filter : status of the alarms to query
-            page_size : max number of rows per query, by default takes the value in config `default_rows` option.
-            page_number : defaulted to 1.
-            filters : [(field, [values]), (field, [values])]
-            fields : list of strings. Can be an EsmTriggeredAlarm or an EsmTriggeredAlarmEvent field, or any synonims. See 
-            *args, **kwargs : Parameters passed to `msiempy.base.FilteredQueryList.__init__()`
+        - `status_filter` : status of the alarms to query
+        - `page_size` : max number of rows per query, by default takes the value in config `default_rows` option.
+        - `page_number` : defaulted to 1.
+        - `filters` : [(field, [values]), (field, [values])]
+        - `fields` : list of strings. Can be an EsmTriggeredAlarm or an EsmTriggeredAlarmEvent field, or any synonims. See 
+        - `*args, **kwargs` : Parameters passed to `msiempy.base.FilteredQueryList.__init__()`
             
-        Examples
-        
-            ```
-            >>>em=AlarmManager(status_filter='unacknowledged',
-                filters=[('sourceIp','^10.*'), ('ruleMessage','Wordpress')]).load_data()
-            ```
+        Examples:  
+        ```>>>alarm_list=AlarmManager(status_filter='unacknowledged',
+            filters=[('sourceIp','^10.*'), ('ruleMessage','Wordpress')]).load_data()```
         """
 
         super().__init__(*args, **kwargs)
@@ -60,6 +57,9 @@ class AlarmManager(FilteredQueryList):
 
     @property
     def table_colums(self):
+        """
+
+        """
         return ['id','alarmName', 'triggeredDate', 'events']
 
     @property
@@ -72,8 +72,9 @@ class AlarmManager(FilteredQueryList):
     @property
     def status_filter(self):
         """
-        Return the status of the alarms in the query. `status_filter` is not a filter like other cause it's computed on the SIEM side.
-        Other filters are computed locally - Unlike EventManager filters.
+        Status of the alarms in the query. `status_filter` is not a filter like other cause it's computed on the SIEM side.
+        Other filters are computed locally - Unlike EventManager filters. the status filter of the alarm query. 'acknowledged', 'unacknowledged', 'all', '' or null -> all (default is '').
+        You can pass synonims of each status. See `msiempy.alarm.Alarm.POSSIBLE_ALARM_STATUS`.
         """
         return self._status_filter
         """
@@ -83,10 +84,6 @@ class AlarmManager(FilteredQueryList):
 
     @status_filter.setter
     def status_filter(self, status_filter):
-        """
-        Set the status filter of the alarm query. 'acknowledged', 'unacknowledged', 'all', '' or null -> all (default is '').
-        You can pass synonims of each status. See `msiempy.alarm.Alarm.POSSIBLE_ALARM_STATUS`.
-        """
         status_found=False
         if type(status_filter) is str : 
             for synonims in Alarm.POSSIBLE_ALARM_STATUS :
@@ -235,39 +232,17 @@ class AlarmManager(FilteredQueryList):
         
 class Alarm(NitroDict):
     """
-    Alarm
-    Dict keys :
-        id : The ID of the triggered alarm
-        summary  : The summary of the triggered alarm
-        assignee : The assignee for this triggered alarm
-        severity : The severity for this triggered alarm
-        triggeredDate : The date this alarm was triggered
-        acknowledgedDate : The date this triggered alarm was acknowledged
-        acknowledgedUsername : The user that acknowledged this triggered alarm
-        alarmName : The name of the alarm that was triggered
-        conditionType : The condition type of the alarm
-        filters : The filters for this user
-        queryId : The queryId for this user
-        alretRateMin : The alretRateMin for this user
-        alertRateCount : The alertRateCount for this user
-        percentAbove : The percentAbove for this user
-        percentBelow : The percentBelow for this user
-        offsetMinutes : The offsetMinutes for this user
-        timeFilter : The timeFilter for this user
-        maximumConditionTriggerFrequency : The maximumConditionTriggerFrequency for this user
-        useWatchlist : The useWatchlist for this user
-        matchField : The matchField for this user
-        matchValue  : The matchValue for this user
-        healthMonStatus : The healthMonStatus for this user
-        assigneeId : The assigneeId for this user
-        escalatedDate : The escalatedDate for this user
-        caseId : The caseId for this user
-        caseName : The caseName for this user
-        iocName : The iocName for this user
-        iocId : The iocId for this user
-        description : The description for this user
-        actions : The actions for this user
-        events : The events for this user
+    Dict keys :  
+        - `id` : The ID of the triggered alarm
+        - `summary`  : The summary of the triggered alarm
+        - `assignee` : The assignee for this triggered alarm
+        - `severity` : The severity for this triggered alarm
+        - `triggeredDate` : The date this alarm was triggered
+        - `acknowledgedDate` : The date this triggered alarm was acknowledged
+        - `acknowledgedUsername` : The user that acknowledged this triggered alarm
+        - `alarmName` : The name of the alarm that was triggered
+        - `events` : The events for this user
+        - And others...
     
     """
 
@@ -284,7 +259,7 @@ class Alarm(NitroDict):
         ['', 'all', 'both']
     ]
     """
-    Possible alarm statuses : 'acknowledged', 'unacknowledged' or ''
+    Possible alarm statuses : `'acknowledged', 'unacknowledged' or ''`. Some synonims can also be used, see source code.
     """
 
     ALARM_FILTER_FIELDS = [('id',),
@@ -297,7 +272,7 @@ class Alarm(NitroDict):
     ('alarmName','name'),
     ]
     """
-    Possible fields usable in a alarm filter : 'id', 'summary', 'assignee', 'severity', 'triggeredDate', 'acknowledgedDate', 'acknowledgedUsername', 'alarmName'.
+    Possible fields usable in a alarm filter : `'id', 'summary', 'assignee', 'severity', 'triggeredDate', 'acknowledgedDate', 'acknowledgedUsername', 'alarmName'`. 
     Some synonims can also be used, see source code.
     """
 
@@ -312,13 +287,13 @@ class Alarm(NitroDict):
     ("lastTime",'date'),
     ("eventSubType",'subtype')]
     """
-    Possible fields usable in a event filter : 'eventID', 'ruleMessage', 'eventCount', 'sourceIp', 'destIp', 'protocol', 'lastTime', 'eventSubType'.
+    Possible fields usable in a event filter : `'eventID', 'ruleMessage', 'eventCount', 'sourceIp', 'destIp', 'protocol', 'lastTime', 'eventSubType'`.
     Some synonims can also be used, see source code.
 
     """
 
     ALARM_DEFAULT_FIELDS=['triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage']
-    """Defaulfs fields : 'triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage' (not used, may be for printing ?)
+    """Defaulfs fields : `'triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage'` (not used , may be for printing with `msiempy.NitroList.get_text(fields=msiempy.alarm.ALARM_DEFAULT_FIELDS)`)
     """
 
     def __init__(self, *arg, **kwargs):
@@ -363,9 +338,10 @@ class Alarm(NitroDict):
     def load_events(self, extra_fields=None, by_id=False):
         """
         Retreive the genuine Event object from an Alarm.
-        extra_fields : list of extra fields. Reminder, defaul fields : `msiempy.event.Event.DEFAULTS_EVENT_FIELDS`
-        by_id : will seek for event data using the getAlertData SIEM api call. (doesn't work TODO )
-                If not, will use qryExecuteDetails and with a timedeal +-1second and some ip source/dest filter...
+        Parameters:  
+        - `extra_fields` : List of extra fields. Reminder, defaul fields : `msiempy.event.Event.DEFAULTS_EVENT_FIELDS`
+        - `by_id` : Will seek for event data using the getAlertData SIEM api call. (doesn't work TODO ) 
+        If not, will use qryExecuteDetails and with a timedeal +-1second and some ip source/destination filter.
         """
         events=self.data['events']
         filters = list()

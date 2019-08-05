@@ -16,10 +16,9 @@ pip install msiempy
 
 ### Configuration setup
 The configuration file should be located securely in your path since it has credentials.
-        For Windows:  %APPDATA%\.msiem\conf.ini
-        For Mac :     $HOME/.msiem/conf.ini
-        For Linux :   $XDG_CONFIG_HOME/.msiem/conf.ini
-               or :   $HOME/.msiem/conf.ini
+- For Windows:  %APPDATA%\.msiem\conf.ini
+- For Mac :     $HOME/.msiem/conf.ini
+- For Linux :   $XDG_CONFIG_HOME/.msiem/conf.ini or :   $HOME/.msiem/conf.ini
 ```
 [esm]
 host = [ESM HOST NAME OR IP]

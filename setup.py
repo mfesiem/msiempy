@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 from setuptools import setup
+from msiempy import __version__ as msiempy_version
 import pathlib
 
 # The directory containing this file
@@ -15,7 +16,7 @@ setup(
     url='https://github.com/mfesiem/msiempy',
     maintainer='andywalden, tristanlatr, mathieubeland',
     maintainer_email='aw@krakencodes.com, tris.la.tr@gmail.com',
-    version='0.1.0',
+    version=msiempy_version,
     packages=['msiempy',],
     entry_points = {
         'console_scripts': ['msiempy=msiempy.cli:main'],

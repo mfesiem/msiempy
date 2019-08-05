@@ -32,8 +32,8 @@ class T(unittest.TestCase):
     def test_query_splitted(self):
         events = msiempy.event.EventManager(
             filters=[msiempy.query.GroupFilter(
-                msiempy.event.FieldFilter('DstIP', ['0.0.0.0/0']),
-                msiempy.event.FieldFilter('SrcIP', ['0.0.0.0/0']),
+                [msiempy.event.FieldFilter(name='DstIP', values=['0.0.0.0/0']),
+                msiempy.event.FieldFilter(name='SrcIP', values=['0.0.0.0/0'])],
                 logic='AND'
                 )],
             time_range='LAST_3_DAYS',

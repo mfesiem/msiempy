@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
-"""The point of convergence of every request to the McFee ESM It provides standard dialogue with the esm.
-Configuration management, authentication, verbosity, logfile, general timeout, and others...
-Two main type of classes are offered in this API : lists and dicts.
-NitroLists are lists and NitroDicts are dicts.
+"""Welcome to the msiempy base framework module documentation.
+Classes listed in this module are used by other classes in sub-modules to build specialized objects and functions.
+`msiempy.NitroSession` is the point of convergence of every request to the McFee ESM It provides standard dialogue with the esm.
+It uses `msiempy.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.
+This API offers two main types of objects to interact with the SIEM : `msiempy.NitroList`, `msiempy.NitroDict`.
+`msiempy.NitroList`s have default behaviours related to parallel execution, string representation generation and search feature.
+Whereas `msiempy.NitroDict` that doesn't have any specific behaviours.
+
+
+Look at the class diagram : https://mfesiem.github.io/docs/msiempy/classes.png
 """
-__version__ = '0.1.0'
+__version__ = '0.1.2'
 
 import logging
 import requests
@@ -43,34 +49,26 @@ log = logging.getLogger('msiempy')
 
 class NitroError(Exception):
     """
-    Base internal exception
+    Base internal exception. It's used when the user/passwd is incorrect, or other specific ESM related errors.
     """
     pass
 
 class NitroConfig(configparser.ConfigParser):
-    """"NitroConfig
-   Class that handles the configuration.
+    """Class that handles the configuration. Reads the config file where ever it is and make accessible it's values throught object properties. 
+    If a `.msiem/` directory exists in your current directory, the program will assume the `conf.ini` file is there, if not, it will create it with default values. 
+    Secondly, if no `.msiem/` directory exists in the current directory, it will be automatically placed in a appropriate place depending of your platform:  
+
+    - For Windows:  %APPDATA%\\  
+    - For Mac :     $HOME/  
+    - For Linux :   $XDG_CONFIG_HOME/ or : $HOME/
+
     """
 
     CONFIG_FILE_NAME='.msiem/conf.ini'
-    CONF_DIR='.msiem/'
+    """`.msiem/conf.ini`"""
 
-    CONFIG_FILE_DISCLAMER='''
-        # The configuration file should be located securely in your path since it 
-        # has credentials.
-        # For Windows:  %APPDATA%\\\\'''+CONFIG_FILE_NAME+'''
-        # For Mac :     $HOME/'''+CONFIG_FILE_NAME+'''
-        # For Linux :   $XDG_CONFIG_HOME/'''+CONFIG_FILE_NAME+'''
-        #        or :   $HOME/'''+CONFIG_FILE_NAME+'''
-        '''
-    """
-        # The configuration file should be located securely in your path since it 
-        # has credentials.
-        # For Windows:  %APPDATA%\\
-        # For Mac :     $HOME/
-        # For Linux :   $XDG_CONFIG_HOME/
-        #        or :   $HOME/
-    """
+    CONF_DIR='.msiem/'
+    """`.msiem/`"""
 
     DEFAULT_CONF_DICT={
         'esm':{'host':'', 
@@ -83,31 +81,34 @@ class NitroConfig(configparser.ConfigParser):
             'ssl_verify':False,
             'output':'text'}
     }
-    """
-    Default configuration. Authentication is left empty.
-    {
-        'esm':{'host':'', 
-            'user':'',
-            'passwd':''},
-        'general':{'verbose':False,
-            'quiet':False,
-            'logfile':'',
-            'timeout':30,
-            'ssl_verify':False,
-            'output':'text'}
-    }
+    """Default configuration file should look like this. Authentication is left empty.
+    ```
+    [esm]
+    host = 
+    user = 
+    passwd = 
+
+    [general]
+    verbose = False
+    quiet = False
+    logfile = 
+    timeout = 30
+    ssl_verify = False
+    output = text #Not used yet
+    ```
     """
 
     def __str__(self):
         """Custom str() method that lists all config fields.
         """
-        return(self.CONFIG_FILE_DISCLAMER+'\nConfiguration file : '+
-            self._path+'\n'+str({section: dict(self[section]) for section in self.sections()}))
+        return('Configuration file : '+ self._path+'\n'+str({section: dict(self[section]) for section in self.sections()}))
 
     def __init__(self, path=None, config=None, *arg, **kwarg):
-        """
-        Initialize the Config instance.
-        If path is left None, will automatically look for it.
+        """Parameters:  
+
+        - `path`: Config file special path, if path is left None, will automatically look for it.  
+        - `config`: Manual config dict. ex: `{'general':{'verbose':True}}`.
+        - `*args, **kwargs` : Passed to `configparser.ConfigParser.__init__()` method.
         """
 
         super().__init__(*arg, **kwarg)
@@ -136,8 +137,7 @@ class NitroConfig(configparser.ConfigParser):
             self.read_dict(config)
 
     def write(self):
-        """
-        Write the config file.
+        """Write the config file to the predetermined path.
         """
         log.info("Write config file at "+self._path)
         with open(self._path, 'w') as conf:
@@ -159,9 +159,12 @@ class NitroConfig(configparser.ConfigParser):
             super().set(section, option, newvalue)
 
     def iset(self, section, option=None, secure=False):
-        """
-        Will interactively set the specified section/optionby asking the user the input.
-        If option stays None, all section's option will be interactively set.
+        """Interactively set the specified section/option by asking the user the input.  
+        Parameters:  
+
+        - `section`: Configuration's section. Exemple : 'esm' or 'general'.  
+        - `option`: Configuraion's option. Leave to `None` to set the whole section one after another. Exemple : 'user', 'timeout'.  
+        - `secure`: Will use getpass to retreive the configuration value and won't print old value.
         """
         if option is None :
             for key in self.options(section):
@@ -170,49 +173,31 @@ class NitroConfig(configparser.ConfigParser):
             self._iset(section, option, secure)
 
     @property
-    def user(self):
-        """ConfigParser.get('esm', 'user')"""
-        return self.get('esm', 'user')
+    def user(self): return self.get('esm', 'user')
 
     @property
-    def host(self):
-        """ConfigParser.get('esm', 'host')"""
-        return self.get('esm', 'host')
+    def host(self): return self.get('esm', 'host')
 
     @property
-    def passwd(self):
-        """ConfigParser.get('esm', 'passwd')"""
-        return self.get('esm', 'passwd')
+    def passwd(self): return self.get('esm', 'passwd')
 
     @property
-    def verbose(self):
-        """ConfigParser.getboolean('general', 'verbose')"""
-        return self.getboolean('general', 'verbose')
+    def verbose(self): return self.getboolean('general', 'verbose')
 
     @property
-    def quiet(self):
-        """ConfigParser.getboolean('general', 'quiet')"""
-        return self.getboolean('general', 'quiet')
+    def quiet(self): return self.getboolean('general', 'quiet')
 
     @property
-    def logfile(self):
-        """ConfigParser.get('general', 'logfile')"""
-        return self.get('general', 'logfile')
+    def logfile(self): return self.get('general', 'logfile')
 
     @property
-    def timeout(self):
-        """ConfigParser.getint('general', 'timeout')"""
-        return self.getint('general', 'timeout')
+    def timeout(self): return self.getint('general', 'timeout')
 
     @property
-    def ssl_verify(self):
-        """ConfigParser.getboolean('general', 'ssl_verify')"""
-        return self.getboolean('general', 'ssl_verify')
+    def ssl_verify(self): return self.getboolean('general', 'ssl_verify')
 
     @property
-    def output(self):
-        """ConfigParser.get('general', 'output')"""
-        return self.get('general', 'output')
+    def output(self): return self.get('general', 'output')
 
    
     @staticmethod
@@ -220,14 +205,7 @@ class NitroConfig(configparser.ConfigParser):
         '''
         Returns the location of a supposed conf.ini file the conf.ini file,
         If the file doesn't exist, will still return the location.
-        Do not create a files not directory.
-        If a .msiem/ directory exists in pwd, will return './.msiem/conf.ini'
-        Or  For Windows:  %APPDATA%\\Roaming\\
-            For Mac :     $HOME/
-            For Linux :   $XDG_CONFIG_HOME/
-                or :   $HOME/
-        If your system doesn't have any of the above environment varibles,
-            will return './.msiem/conf.ini'
+        Do not create a file nor directory.
         '''
         conf_path_dir=None
 
@@ -253,13 +231,8 @@ class NitroConfig(configparser.ConfigParser):
 
 class NitroSession():
     '''NitroSession object represent the point of convergence of every request to the McFee ESM
-    It provides standard dialogue with the esm with params.py
-    Internal __dict__ refers to a unique instance of dict and thus, properties can be instanciated only once.
-    No need to call a login() method. Credentials and other configurations are read from a ./.msiem/conf.ini file 
-    If the ./msiem directory desn't exists in your current directory, will assume the file is your home directory
-        as ~/.msiem/conf.ini or %appdata%\\Roaming\\.msiem\\conf.ini
-    Use logout() to delete the object.
-    Use NitroSession.config.read() - ConfigParser object - to read a new configuration file. 
+    It provides standard dialogue with the esm with agument interpolation with `msiempy.params`.
+    Internal `__dict__` refers to a unique instance of dict and thus, properties can be instanciated only once. 
     '''
 
     BASE_URL = 'https://{}/rs/esm/'
@@ -296,12 +269,14 @@ class NitroSession():
 
     def __init__(self, conf_path=None, conf_dict=None):
         """
-        This init method is called every time you call NitroSession() constructor.
-        but the properties are actually initiated only once.
-        Use logout() to trash the obejct and re instanciate NitroSession.
-        Configuration file path can be passed as conf_path attr and/or conf_dict.
-        We read from conf_dict attr ie : {'esm':{'host':'myhost.com','user':'username','passwd':''}...}
-            See NitroConfig class to have full details.
+        The init method is called every time you call NitroSession() constructor.
+        But the properties are actually initiated only once.
+        Use logout() to reinstanciate NitroSession.  
+
+        Parameters:  
+
+        - `conf_path` : Configuration file path.  
+        - `conf_dict` : Manual config dict. ex: `{'general':{'verbose':True}}`. See `msiempy.NitroConfig` class to have full details.
         """
         global log
         self.__dict__ = NitroSession.__unique_state__
@@ -428,15 +403,18 @@ class NitroSession():
 
     def request(self, request, http='post', callback=None, raw=False, secure=False, **params):
         """
-            This method is the centralized interface of all request coming to the SIEM.
-                request :   keyword corresponding to the request name in PARAMS mapping
-                http :      http method
-                callback :  a callable to execute on the returned object if needed
-                raw :       if true will return the Response object from requests module
-                secure :    if true will not log the content of the request
-                **params :  interpolation parameters that will be match to PARAMS templates
+            This method is the centralized interface of all requests going to the SIEM.  
 
-            Returns None if HTTP error, Timeout or TooManyRedirects if raw=False
+            Parameters:  
+
+            - `request`: Keyword corresponding to the request name in `msiempy.params` mapping.  
+            - `http`: HTTP method.  
+            - `callback`: A callable to execute on the returned object if needed.  
+            - `raw`: If true will return the Response object from requests module.  
+            - `secure`: If true will not log the content of the request.  
+            - `**params`: Interpolation parameters that will be match to `msiempy.params` templates. Check the file to be sure of the keyword arguments.  
+
+            Returns None if HTTP error, Timeout or TooManyRedirects if raw=False.
         """
         log.debug("Calling nitro request : {} params={} http={} raw={} secure={} callback={}".format(
             str(request), str(params) if not secure else '***', str(http), str(raw), str(secure), str(callback)
@@ -579,8 +557,7 @@ class NitroSession():
 
 class NitroObject(abc.ABC):
     """
-    Base class for all nitro objects. All objects have a reference the single
-    NitroSession object that handle the esm requests.
+    Base class for all nitro objects. All objects have a reference to the single `msiempy.NitroSession` object that handle the esm requests.
     """
 
     class NitroJSONEncoder(json.JSONEncoder):
@@ -604,42 +581,37 @@ class NitroObject(abc.ABC):
         self.nitro=NitroSession()
 
     def __str__(self):
-        """
-        str(obj) -> return text string.
+        """str(obj) -> return text string.
         Can be a table if the object is a NitroList.
         """
         return self.text
 
     def __repr__(self):
-        """
-        repr(obj) -> return json string.
+        """repr(obj) -> return json string.
         """
         return self.json
 
     @abc.abstractproperty
     def text(self):
-        """
-        Returns printable string.
+        """Returns printable string.
         """
         pass
 
     @abc.abstractproperty
     def json(self):
-        """
-        Returns json string representation.
+        """Returns json string representation.
         """
         pass
 
     @abc.abstractmethod
     def refresh(self):
-        """
-        Refresh the state of the object.
+        """Refresh the state of the object.
         """
         pass
 
 class NitroDict(collections.UserDict, NitroObject):
     """
-    Base class that represent any SIEM data that can be represented as a item of a manager.
+    Base class that represent any SIEM data that can be represented as a item of a list.
     Exemple : Event, Alarm, etc...
     Inherits from dict.
     """
@@ -647,6 +619,11 @@ class NitroDict(collections.UserDict, NitroObject):
         """
         Initiate the NitroObject and UserDict objects, load the data if id is specified, use adict agument 
         and update dict values accordingly.
+
+        Parameters:  
+
+        - `adict`: dict object to wrap.  
+        - `id`: ESM obejct unique identifier. Alert.IPSIDAlertID for exemple. 
         """
         NitroObject.__init__(self)
         collections.UserDict.__init__(self, adict)
@@ -686,16 +663,14 @@ class NitroDict(collections.UserDict, NitroObject):
 
 class NitroList(collections.UserList, NitroObject):
     """
-    Base class for NitroLists objects. 
-    Inherits from list
+    Base class for NitroList objects. It offers callable execution management, searcb and other data list actions.
     """
 
     def __init__(self, alist=None):
         """
-        Ignore nested lists. Meaning that if alist if a list of lists 
-            it will we be ignored.
-        Nevertheless, if a list is present as a key value in a dict, 
-            it will be added as such.
+        Parameters:  
+
+        - `alist`: list object to wrap.
         """
         NitroObject.__init__(self)
         if alist is None:
@@ -704,7 +679,7 @@ class NitroList(collections.UserList, NitroObject):
         elif isinstance(alist , (list, NitroList)):
             collections.UserList.__init__(
                 self, alist #[NitroDict(adict=item) for item in alist if isinstance(item, (dict, NitroDict))] 
-                #Can't instanciate NitroDict, so Concrete classes has to cast the items afterwards
+                #Can't instanciate NitroDict, so Concrete classes have to cast the items afterwards!
                 )
         else :
             raise ValueError('NitroList can only be initiated based on a list')
@@ -717,9 +692,9 @@ class NitroList(collections.UserList, NitroObject):
 
     def _norm_dicts(self):
         """
-        Internal method
-        all dict should have the same set of keys
-        Creating keys in dicts
+        Internal method.
+        All dict should have the same set of keys.
+        Creating keys in dicts.
         """
         for item in self.data :
             if isinstance(item, (dict, NitroDict)):
@@ -744,10 +719,12 @@ class NitroList(collections.UserList, NitroObject):
     def get_text(self, compact=False, fields=None, max_column_width=120):
         """
         Return a acsii table string representation of the manager list
-            compact : Returns a nice string table made with prettytable, else an '|' separated list.
-            fields : list of fields you want in the table
-                is None : default fields are returned by .keys attribute and sorted.
-            max_column_width when using prettytable (not compact)
+
+        Parameters:  
+
+        - `compact`: Returns a nice string table made with prettytable, else an '|' separated list.  
+        - `fields`: list of fields you want in the table is None : default fields are returned by .keys attribute and sorted.  
+        - `max_column_width`: when using prettytable (not compact)  
 
         It's an expesive thing to do on big ammount of data !
         """
@@ -816,21 +793,28 @@ class NitroList(collections.UserList, NitroObject):
         
     @property
     def json(self):
-        """Dumps a JSON list of dicts.
+        """Dumps a JSON list of dicts representing the current list.
         """
         return(json.dumps([dict(item) for item in self.data], indent=4, cls=NitroObject.NitroJSONEncoder))
 
-    def search(self, *pattern, invert=False, match_prop='json'):
+    def search(self, invert=False, match_prop='json', *pattern):
         """
-        Return a list of elements that matches regex patterns.
+        Return a list of elements that matches one or more regex patterns.
         Patterns are applied one after another. It's a logic AND.
         Use `|` inside patterns to search with logic OR.
         This method will return a new NitroList with matching data. NitroDicts in the returned NitroList do not
-        references the items in the original NitroList.
+        references the items in the original NitroList.  
+
+        Parameters:  
+        
+        - `*pattern`: List or string regex patterns to look for.
+        - `invert`: Weither or not to invert the search and return elements that doesn't not match search.
+        - `match_prop`: Propertie that is going to be called to search. Could be `text` or `json`.
+
 
         If you wish to apply more specific filters to NitroList list, please
         use filter(), list comprehension, or other filtering method.
-            i.e. : `[item for item in manager if item['cost'] > 50]`
+            i.e. : `[item for item in list if item['cost'] > 50]`
 
         More on regex https://docs.python.org/3/library/re.html#re.Pattern.search
         """
@@ -865,20 +849,19 @@ class NitroList(collections.UserList, NitroObject):
 
     def perform(self, func, data=None, func_args=None, confirm=False, asynch=False,  workers=None , progress=False, message=None):
         """
-        Wrapper arround executable and the data list of NitroList object.
-        Will execute the callable the local manager data list.
+        Wrapper arround executable and the data list of `msiempy.NitroList` object.
+        Will execute the callable the list.
 
-            Params
-            
-            func : callable stateless function
-                funs is going to be called like func(item, **func_args) on all items in data patern
-            if data stays None, will perform the action on all rows, else it will perfom the action on the data list
-            func_args : dict that will be passed by default to func in all calls
-            confirm : will ask interactively confirmation 
-            asynch : execute the task asynchronously with NitroSession executor
-            workers : mandatory if asynch is true
-            progress : to show progress bar with ETA (tqdm) 
-            message : To show to the user
+        Parameters:  
+        
+        - `func`: callable stateless function. func is going to be called like `func(item, **func_args)` on all items in data.
+        - `data`: if stays None, will perform the action on all rows, else it will perfom the action on the data list.
+        - `func_args`: dict that will be passed by default to func in all calls.
+        - `confirm`: will ask interactively confirmation.
+        - `asynch`: execute the task asynchronously with `msiempy.NitroSession` executor.
+        - `workers`: mandatory if asynch is true.
+        - `progress`: to show progress bar with ETA (tqdm).
+        - `message` : To show to the user.
 
         Returns a list of returned results
         """
