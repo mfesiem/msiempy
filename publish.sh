@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #Publish on the python index
+python3 setup.py install --user
 python3 setup.py build check sdist bdist_wheel
 twine upload --verbose dist/*
 python3 setup.py clean
-pip3 install msiempy --upgrade --user
 
 #Generate and publish the documentation
 git clone https://github.com/mfesiem/mfesiem.github.io
