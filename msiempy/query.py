@@ -43,7 +43,7 @@ class FilteredQueryList(NitroList):
             "PREVIOUS_YEAR"
     ]
     """
-    List of possible time ranges : "CUSTOM",
+    List of possible time ranges : `"CUSTOM",
             "LAST_MINUTE",
             "LAST_10_MINUTES",
             "LAST_30_MINUTES",
@@ -60,7 +60,7 @@ class FilteredQueryList(NitroList):
             "CURRENT_QUARTER",
             "PREVIOUS_QUARTER",
             "CURRENT_YEAR",
-            "PREVIOUS_YEAR"
+            "PREVIOUS_YEAR"`
     """
 
     def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
@@ -69,20 +69,19 @@ class FilteredQueryList(NitroList):
         """
         Abstract base class that handles the time ranges operations, loading data from the SIEM.
 
-            Parameters
-        
-            time_range : Query time range. String representation of a time range. 
-                See `msiempy.query.FilteredQueryList.POSSIBLE_TIME_RANGE`
-            start_time : Query starting time, can be a string or a datetime object. Parsed with dateutil.
-            end_time : Query endding time, can be a string or a datetime object. Parsed with dateutil.
-            filters : List of filters applied to the query.
-            load_async : Load asynchonously the sub-queries. Defaulted to True.
-            requests_size : number of items per request.
-            max_query_depth : maximum number of supplement reccursions of division of the query times
-                Meaning, if requests_size=500, slots=5 and max_query_depth=3, then the maximum capacity of 
-                the list is (500*5)*(500*5)*(500*5) = 15625000000
+        Parameters:  
+    
+        - `time_range` : Query time range. String representation of a time range. 
+            See `msiempy.query.FilteredQueryList.POSSIBLE_TIME_RANGE`
+        - `start_time` : Query starting time, can be a string or a datetime object. Parsed with dateutil.
+        - `end_time` : Query endding time, can be a string or a datetime object. Parsed with dateutil.
+        - `filters` : List of filters applied to the query.
+        - `load_async` : Load asynchonously the sub-queries. Defaulted to True.
+        - `requests_size` : number of items per request.
+        - `max_query_depth` : maximum number of supplement reccursions of division of the query times
+            Meaning, if requests_size=500, slots=5 and max_query_depth=3, then the maximum capacity of 
+            the list is (500*5)*(500*5)*(500*5) = 15625000000
             
-        
         """
 
         super().__init__(*arg, **kwargs)
@@ -283,16 +282,14 @@ class FilteredQueryList(NitroList):
                 or by setting the attribute manually like `manager.load_asynch=True`
             Only the first query is loaded asynchronously.
 
-            Parameters
+        Parameters:  
+    
+        - `workers` : numbre of parrallels task
+        - `slots` : number of time slots the query can be divided. The loading bar is 
+            divided according to the number of slots
+        - `delta` : exemple : '24h', the query will be firstly divided in chuncks according to the time delta read
+            with dateutil.
         
-            requests_size : size (in items) for the individual requests.
-            workers : numbre of parrallels task
-            slots : number of time slots the query can be divided. The loading bar is 
-                divided according to the number of slots
-            delta : exemple : '24h', the query will be firstly divided in chuncks according to the time delta read
-                with dateutil.
-        
-        #
         """
 
         items, completed = self._load_data(workers=workers)
@@ -449,22 +446,38 @@ class FieldFilter(QueryFilter):
         'DOES_NOT_CONTAIN',
         'REGEX']
 
-    """List of possible type of value and the associated keyword to pass
-        to
+    """List of possible operators : `'IN',
+        'NOT_IN',
+        'GREATER_THAN',
+        'LESS_THAN',
+        'GREATER_OR_EQUALS_THAN',
+        'LESS_OR_EQUALS_THAN',
+        'NUMERIC_EQUALS',
+        'NUMERIC_NOT_EQUALS',
+        'DOES_NOT_EQUAL',
+        'EQUALS',
+        'CONTAINS',
+        'DOES_NOT_CONTAIN',
+        'REGEX'`
         """
+
     POSSIBLE_VALUE_TYPES=[
             {'type':'EsmWatchlistValue',    'key':'watchlist'},
             {'type':'EsmVariableValue',     'key':'variable'},
             {'type':'EsmBasicValue',        'key':'value'},
             {'type':'EsmCompoundValue',     'key':'values'}]
+            """
+            List of possible value type. See `msiempy.query.FieldFilter.add_value`.
+            """
 
 
     def __init__(self, name, values, operator='IN') :
         """
-        name : field name as string
-        values : list of values the field is going 
-                 to be tested againts with the specified orperator
-        orperator : string representing 
+        Parameters:
+
+        - `name` : field name as string.
+        - `values` : list of values the field is going to be tested againts with the specified orperator.
+        - `orperator` : operator, see `msiempy.query.FieldFilter.POSSIBLE_OPERATORS`.
         """
         super().__init__()
         #Declaring attributes
@@ -537,7 +550,7 @@ class FieldFilter(QueryFilter):
         """
         Add a new value to the field filter.
         
-        Args could be :
+        Parameters could be (depending of the value type):
             (type='EsmBasicValue',      value='a value'}. or
             (type='EsmWatchlistValue',  watchlist=1)   or 
             (type='EsmVariableValue',   variable=1}  or
@@ -576,7 +589,7 @@ class FieldFilter(QueryFilter):
 
     def add_basic_value(self, value):
         """
-        Wrapper arround add_value to add a EsmBasicValue
+        Wrapper arround add_value to add a EsmBasicValue.
         """
         self.add_value(type='EsmBasicValue', value=value)
 

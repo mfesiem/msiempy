@@ -32,42 +32,34 @@ class EventManager(FilteredQueryList):
 
     def __init__(self, fields=None, order=None, limit=None, filters=None, compute_time_range=True, *args, **kwargs):
         """
-           Params
-           ======
+        Paramters:  
            
-            fields : list of strings representing all fields you want to apprear in the Events records.
-                Get the list of possible fields by calling EventManager.get_possible_fields() method.
-                Some defaults fields will always be present unless removed, see (1).
-            order : Not implemented yet. 
-                tuple (direction, field) or a list of filters in the SIEM format.
-                will set the first order according to (direction, fields).
-                    -> same as using the property setter.
-                If you pass a list here, will use the this raw list as the SIEM `order` field.
-                Structure must be in correct format
-                
-                    -> same as setting _order property directly.
-            limit : max number of rows per query, by default takes the value in config `default_rows` option.
-            filters : list of tuple (field [values])
-            compute_time_range : False if you want to send the actualy time_range in parameter for the initial query.
-                Defaulted to True cause the query splitting implies computing the time_range anyway.
-            *args, **kwargs : Parameters passed to `msiempy.base.FilteredQueryList.__init__()`
+        - `fields` : list of strings representing all fields you want to apprear in the Events records.
+            Get the list of possible fields by calling EventManager.get_possible_fields() method.
+            Some defaults fields will always be present unless removed, see (1).
+        - `order` : Not implemented yet. 
+            tuple (direction, field) or a list of filters in the SIEM format.
+            will set the first order according to (direction, fields).
+                -> same as using the property setter.
+            If you pass a list here, will use the this raw list as the SIEM `order` field.
+            Structure must be in correct format
+                -> same as setting _order property directly.
+        - `limit` : max number of rows per query, by default takes the value in config `default_rows` option.
+        - `filters` : list of tuple (field [values])
+        - `compute_time_range` : False if you want to send the actualy time_range in parameter for the initial query.
+            Defaulted to True cause the query splitting implies computing the time_range anyway.
+        - `*args, **kwargs` : Parameters passed to `msiempy.base.FilteredQueryList.__init__()`
            
             
-            Examples
-            ========
+        Examples:  
             
-            (1) To delete a default field
-            ```
-                >>>em=EventManager()
-                >>>del em.fields['SrcIP']
-            ```
-            
-            Every init parameters are also properties. E.g. :
+            `__init__()` parameters are also properties. E.g. :
             ```
                 >>>em=EventManager(fields=['SrcIP','DstIP'],
                         order=('DESCENDING''LastTime'),
                         filters=[('DstIP','4.4.0.0/16','8.8.0.0/16')])
                 >>>em.load_data()```
+
             Equlas :
             ```
                 >>>em=EventManager()
@@ -99,7 +91,9 @@ class EventManager(FilteredQueryList):
         #Setting limit according to config or limit argument
         #TODO Try to load queries with a limit of 10k and get result as chucks of 500 with starPost nbRows
         #   and compare efficiency
-        self.limit=self.requests_size if limit is None else int(limit) #IGNORE THE CONFIG 
+        self.limit=self.requests_size if limit is None else int(limit)
+        #we can ignore Access to member 'requests_size' before its definition line 95pylint(access-member-before-definition)
+
         self.requests_size=self.limit
 
         if isinstance(order, list): #if a list is passed for the prder, will replace the whole param supposed in correct SIEM format
@@ -339,17 +333,17 @@ class Event(NitroDict):
         interaction - note only - with the events
         
     Default event field keys :
-        "Rule.msg",
-        "Alert.SrcPort",
-        "Alert.DstPort", 
-        "Alert.SrcIP", 
-        "Alert.DstIP", 
-        "SrcMac",
-        "Alert.DstMac", 
-        "Alert.LastTime",
-        "Rule.NormID",
-        "Alert.DSIDSigID",
-        "Alert.IPSIDAlertID",
+    - `Rule.msg`,
+    - `Alert.SrcPort`,
+    - `Alert.DstPort`, 
+    - `Alert.SrcIP`, 
+    - `Alert.DstIP`, 
+    - `SrcMac`,
+    - `Alert.DstMac`, 
+    - `Alert.LastTime`,
+    - `Rule.NormID`,
+    - `Alert.DSIDSigID`,
+    - `Alert.IPSIDAlertID`,
         
     See msiempy/static JSON files to browse complete list of fields and filters
     """
