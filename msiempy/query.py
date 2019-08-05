@@ -72,7 +72,7 @@ class FilteredQueryList(NitroList):
             Parameters
         
             time_range : Query time range. String representation of a time range. 
-                See `msiempy.base.FilteredQueryList.POSSIBLE_TIME_RANGE`
+                See `msiempy.query.FilteredQueryList.POSSIBLE_TIME_RANGE`
             start_time : Query starting time, can be a string or a datetime object. Parsed with dateutil.
             end_time : Query endding time, can be a string or a datetime object. Parsed with dateutil.
             filters : List of filters applied to the query.

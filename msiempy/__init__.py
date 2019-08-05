@@ -104,7 +104,8 @@ class NitroConfig(configparser.ConfigParser):
 
     def __init__(self, path=None, config=None, *arg, **kwarg):
         """
-
+        Initiate a config object.
+        
             Parameters
 
             path: Config file speciale path, if path is left None, will automatically look for it.
