@@ -466,9 +466,9 @@ class FieldFilter(QueryFilter):
             {'type':'EsmVariableValue',     'key':'variable'},
             {'type':'EsmBasicValue',        'key':'value'},
             {'type':'EsmCompoundValue',     'key':'values'}]
-            """
-            List of possible value type. See `msiempy.query.FieldFilter.add_value`.
-            """
+    """
+    List of possible value type. See `msiempy.query.FieldFilter.add_value`.
+    """
 
 
     def __init__(self, name, values, operator='IN') :
