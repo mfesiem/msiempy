@@ -54,12 +54,12 @@ class NitroError(Exception):
     pass
 
 class NitroConfig(configparser.ConfigParser):
-    """Class that handles the configuration. Reads the config file where ever it is and make accessible it's values throught object properties.  
-    If a `.msiem/` directory exists in your current directory, the program will assume the `conf.ini` file is there, if not, it will create it with default values.  
-    Secondly, if no `.msiem/` directory exists in the current directory, it will be automatically placed in a appropriate place depending of your platform.  
-      * For Windows:  %APPDATA%\\  
-      * For Mac :     $HOME/  
-      * For Linux :   $XDG_CONFIG_HOME/ or : $HOME/
+    """Class that handles the configuration. Reads the config file where ever it is and make accessible it's values throught object properties. 
+    If a `.msiem/` directory exists in your current directory, the program will assume the `conf.ini` file is there, if not, it will create it with default values. 
+    Secondly, if no `.msiem/` directory exists in the current directory, it will be automatically placed in a appropriate place depending of your platform:  
+    - For Windows:  %APPDATA%\\  
+    - For Mac :     $HOME/  
+    - For Linux :   $XDG_CONFIG_HOME/ or : $HOME/
     """
 
     CONFIG_FILE_NAME='.msiem/conf.ini'
@@ -93,7 +93,7 @@ class NitroConfig(configparser.ConfigParser):
     logfile = 
     timeout = 30
     ssl_verify = False
-    output = text
+    output = text #Not used yet
     ```
     """
 
@@ -104,13 +104,13 @@ class NitroConfig(configparser.ConfigParser):
 
     def __init__(self, path=None, config=None, *arg, **kwarg):
         """
-        Initiate a config object.
-        
-            Parameters
+        Initiate a config object.  
 
-            path: Config file speciale path, if path is left None, will automatically look for it.
-            config: Manual config dict. ex: {'general':{'verbose':True}}
-            *args, **kwargs : Passed to configparser.ConfigParser __init__()
+        Parameters:  
+
+        - path: Config file speciale path, if path is left None, will automatically look for it.  
+        - config: Manual config dict. ex: ```{'general':{'verbose':True}}```  
+        - *args, **kwargs : Passed to configparser.ConfigParser __init__()
         """
 
         super().__init__(*arg, **kwarg)
