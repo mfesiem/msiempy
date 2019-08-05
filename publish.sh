@@ -4,7 +4,7 @@
 python3 setup.py build check sdist bdist_wheel
 twine upload --verbose dist/*
 python3 setup.py clean
-sudo pip3 install msiempy --upgrade
+pip3 install msiempy --upgrade --user
 
 #Generate and publish the documentation
 git clone https://github.com/mfesiem/mfesiem.github.io
@@ -14,7 +14,7 @@ mv ./classes.png ./mfesiem.github.io/docs/msiempy
 mv ./packages.png ./mfesiem.github.io/docs/msiempy
 cd mfesiem.github.io
 git add .
-git commit -m 'Generate docs'
+git commit -m "Generate docs $(date)"
 git push origin master
 cd ..
 rm -rf mfesiem.github.io
