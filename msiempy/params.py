@@ -225,7 +225,7 @@ PARAMS = {
     "get_watchlist_details": ("""sysGetWatchlistDetails""","""{"id": %(id)s}"""),
 
     "add_watchlist_values": ("""sysAddWatchlistValues""","""{
-        "watchlist": %(id)s,
+        "watchlist": %(watchlist)s,
         "values": %(values)s,
         }"""),
 
