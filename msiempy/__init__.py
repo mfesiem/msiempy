@@ -10,7 +10,7 @@ Whereas `msiempy.NitroDict` that doesn't have any specific behaviours.
 
 Look at the class diagram : https://mfesiem.github.io/docs/msiempy/classes.png
 """
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 import logging
 import requests
