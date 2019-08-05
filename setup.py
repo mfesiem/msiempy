@@ -9,7 +9,7 @@ HERE = pathlib.Path(__file__).parent
 
 #Version of the project
 version = {}
-exec((HERE / "__version__.py").read_text(), version)
+exec((HERE / "msiempy" / "__version__.py").read_text(), version)
 
 # The text of the README file
 README = (HERE / "README.md").read_text()
