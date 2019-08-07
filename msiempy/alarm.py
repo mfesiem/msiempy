@@ -6,10 +6,9 @@ import datetime
 import logging
 log = logging.getLogger('msiempy')
 
-from . import NitroDict, NitroList
-from .query import FilteredQueryList
+from . import NitroDict, NitroList, FilteredQueryList
 from .event import EventManager, Event
-from .utils import regex_match, convert_to_time_obj
+from .__utils__ import regex_match, convert_to_time_obj
 
 class AlarmManager(FilteredQueryList):
     """
@@ -149,7 +148,7 @@ class AlarmManager(FilteredQueryList):
             func_args=dict(extra_fields=extra_fields, by_id=by_id))
         return AlarmManager(alist=self)
 
-    def _load_data(self, workers):
+    def _load_data(self, workers, no_detailed_filter=False):
         """
         Concrete helper method that loads the data.
             -> Fetch the complete list of alarms -> Filter
@@ -176,10 +175,12 @@ class AlarmManager(FilteredQueryList):
                 page_size=self.page_size,
                 page_number=self.page_number
                 )
+                
         #alarms = AlarmManager(alist=alarms)
-        return (( self._filter(alarms, workers), len(alarms)<self.page_size ))
+        return (( self._filter(alarms, workers, no_detailed_filter), 
+            len(alarms)<self.page_size ))
 
-    def _filter(self, alarms, workers, alarmonly=False):
+    def _filter(self, alarms, workers, no_detailed_filter=False):
         """
         Helper method that filters the alarms depending on alarm and event filters.
             -> Filter dependinf on alarms related filters -> load events details
@@ -190,7 +191,7 @@ class AlarmManager(FilteredQueryList):
 
         alarms = AlarmManager(alist=[a for a in alarms if self._alarm_match(a)])
 
-        if not alarmonly :
+        if not no_detailed_filter :
             log.info("Getting alarms infos... Please be patient.")
             detailed = self.perform(Alarm.load_details, list(alarms), asynch=True, progress=True, workers=workers)
             alarms = AlarmManager(alist=[a for a in detailed if self._event_match(a)])

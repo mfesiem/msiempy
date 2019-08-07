@@ -1,0 +1,27 @@
+- DEBUG - Waiting for EsmRunningQuery object : ERROR_IndexNotTurnedOn (49)
+- DEBUG - Waiting for EsmRunningQuery object : ERROR_InvalidFilter (228)
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/ipsGetAlertData Cannot construct instance of `com.mcafee.siem.api.data.alert.EsmAlertId` (although at least one Creator exists): no double/Double-argument constructor/factory method to deserialize from Number value (1.44116287688146944E17)
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/ipsGetAlertData Cannot construct instance of `com.mcafee.siem.api.data.alert.EsmAlertId` (although at least one Creator exists): no int/Int-argument constructor/factory method to deserialize from Number value (15131927)
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/ipsGetAlertData Cannot construct instance of `com.mcafee.siem.api.data.alert.EsmAlertId` (although at least one Creator exists): no long/Long-argument constructor/factory method to deserialize from Number value (144116287688146944)
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/ipsGetAlertData Cannot construct instance of `com.mcafee.siem.api.data.alert.EsmAlertId` (although at least one Creator exists): no suitable creator method found to deserialize from Number value (14411628768814694415131927)
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/ipsGetAlertData Unexpected character (':' (code 58)): Expected space separating root-level values
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/ipsGetAlertData Unexpected character ('|' (code 124)): Expected space separating root-level values
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/qryExecuteDetail?type=EVENT&reverse=false Both customStart and customEnd properties must be set when running a query with a custom time range.
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/qryExecuteDetail?type=EVENT&reverse=false Cannot deserialize instance of `java.lang.String` out of START_OBJECT token
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/qryExecuteDetail?type=EVENT&reverse=false Cannot deserialize value of type `com.mcafee.siem.api.data.query.EsmTimeRange` from String "": value not one of declared Enum instance names: [CURRENT_YEAR, PREVIOUS_QUARTER, PREVIOUS_YEAR, LAST_30_MINUTES, LAST_10_MINUTES, LAST_3_DAYS, LAST_2_DAYS, CUSTOM, PREVIOUS_DAY, CURRENT_DAY, PREVIOUS_MONTH, CURRENT_WEEK, LAST_24_HOURS, PREVIOUS_WEEK, LAST_MINUTE, 
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/qryExecuteDetail?type=EVENT&reverse=false ERROR_IndexNotTurnedOn (49)
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/qryExecuteDetail?type=EVENT&reverse=false ERROR_InvalidFilter (228)
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/qryGetResults?startPos=0&numRows=5&reverse=false ERROR_NoData (62)
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/qryGetStatus ERROR_JobEngine_GetQueryStatus_StatusNotFound (3005)
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/sysGetWatchlistValues Parameter "pos" cannot be missing when calling sysGetWatchlistValues
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/sysGetWatchlistValues?pos=0&count=50 ERROR_Internal (-1)
+- ERROR - 400 Client Error: 400 for url: https://HOSTNAME:4443/rs/esm/sysGetWatchlistValues?pos=0&count=500 ERROR_Internal (-1)
+- ERROR - 404 Client Error: 404 for url: https://HOSTNAME:4443/rs/esm/ipsAddAlertNote No such command.
+- ERROR - 404 Client Error: 404 for url: https://HOSTNAME:4443/rs/esm/notifyGetTriggeredNotification No such command.
+- ERROR - 404 Client Error: 404 for url: https://HOSTNAME:4443/rs/esm/sysGetSysInfo No such command.
+- ERROR - 404 Client Error: Not Found for url: https://HOSTNAME:4443/GRP_GETVIRTUALGROUPIPSLISTDATA <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+- ERROR - HTTPSConnectionPool(host='HOSTNAME', port=4443): Read timed out. (read timeout=15)
+- ERROR - HTTPSConnectionPool(host='HOSTNAME', port=4443): Read timed out. (read timeout=30)
+- ERROR - HTTPSConnectionPool(host='HOSTNAME', port=4443): Read timed out. (read timeout=60)
+- ERROR - HTTPSConnectionPool(host='user', port=443): Max retries exceeded with url: /rs/esm/login (Caused by NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x1022994a8>: Failed to establish a new connection: [Errno 8] nodename nor servname provided, or not known'))
+- ERROR - _format_params() argument after ** must be a mapping, not str
