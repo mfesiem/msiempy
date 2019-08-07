@@ -14,8 +14,7 @@ import dateutil.parser
 def dehexify(data):
     """
     A URL and Hexadecimal Decoding Library.
-
-    Credit: Larry Dewey
+    Credit: Larry Dewey. In the case of the SIEM API, this is used only when dealing with the pricate API calls.
     """
 
     hexen = {
@@ -75,14 +74,23 @@ def timethis(func):
     return wrapper
 
 def tob64(s):
+    """
+    Encode a string to base64 like `echo '123' | base64` would do.
+    """
     if type(s) is str:
         return base64.b64encode(s.encode('utf-8')).decode()
 
 def fromb64(s):
+    """
+    Decode a string to base64 like `echo 'MTIzCg==' | base64 --decode` would do.
+    """
     if type(s) is str:
         return base64.b64decode(s.encode('utf-8')).encode()
 
 def timerange_gettimes(time_range):
+    """
+    Convert a string time range to a tuple of datetime objects. Only works for certain time ranges.
+    """
     t=time_range.upper()
     now=datetime.now()
     times=tuple()
@@ -140,7 +148,7 @@ def timerange_gettimes(time_range):
 
 def divide_times(first, last, time=0, slots=0, delta=0, min_slots=0):
     """"
-        Divide the time range based on another time, a delta or on a number of slots
+        Divide the time range based on another time, a delta or on a number of slots.
         Return list of tuple
     """
 

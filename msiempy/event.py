@@ -2,13 +2,14 @@
 """
 
 import time
+import json
+import abc
 import collections
 import datetime
 import logging
 log = logging.getLogger('msiempy')
 
-from . import NitroDict, NitroError
-from .query import FilteredQueryList, FieldFilter, GroupFilter, QueryFilter
+from . import NitroObject, NitroDict, NitroError, FilteredQueryList
 from .utils import timerange_gettimes, parse_query_result, format_fields_for_query
 
 class EventManager(FilteredQueryList):
@@ -323,6 +324,7 @@ class EventManager(FilteredQueryList):
         return events
           
 class Event(NitroDict):
+
     """        
     Default event field keys :  
     - `Rule.msg`
@@ -425,6 +427,7 @@ class Event(NitroDict):
         """
         Desctructive action.
         Replace the notes by an empty string. 
+        Do not work with SIEM v 11.2.1.
         """
         NotImplementedError()
 
@@ -446,3 +449,269 @@ class Event(NitroDict):
     def data_from_id(self, id):
         """EsmAlertData wrapper"""
         return self.nitro.request('get_alert_data', id=id)
+
+    
+class QueryFilter(NitroObject):
+    """Base class for all SIEM query objects, declares the `config_dict` abstract property in order to dump the filter as JSON.
+    """
+    _possible_filters = []
+
+    def __init__(self):
+        super().__init__()
+
+        #Setting up static constant
+        """Not checking dynamically the validity of the fields cause makes too much of unecessary requests
+            self._possible_filters = self._get_possible_filters()
+            """
+
+    def get_possible_filters(self):
+        """
+        Return all the fields that you can filter on in a query.
+        """
+        return(self.nitro.request('get_possible_filters'))
+
+    @abc.abstractproperty
+    def config_dict(self):
+        """
+        Dump a filter in the right JSON format.
+        """
+        pass
+
+    def refresh(self):
+        """
+        Superclass method.
+        """
+        log.warning("Can't refresh filter "+str(self))
+
+    @property
+    def json(self):
+        """
+        Dump the filter as a json.
+        """
+        return (json.dumps(self, indent=4, cls=NitroObject.NitroJSONEncoder))
+    
+    @property
+    def text(self):
+        """
+        Text representation of `config_dict` property.
+        """
+        return str(self.config_dict)
+
+class GroupFilter(QueryFilter):
+    """
+        Based on EsmFilterGroup. See SIEM api doc.
+        Used to dump groups of filters in the right format.
+    """
+
+    def __init__(self, filters, logic='AND') :
+        """Parameters :  
+        - `filters` : a list of filters, it can be `msiempy.query.FieldFilter` or `msiempy.query.GroupFilter`
+        - `logic` : 'AND' or 'OR'
+        """
+        super().__init__()
+        
+        #Declaring attributes
+        self.filters=filters
+        self.logic=logic
+
+    @property
+    def config_dict(self):
+        """
+        Could call recursively if there is other GroupFilter(s) object nested.
+        Dump a filter in the right format.
+        """
+        return({
+            "type": "EsmFilterGroup",
+            "filters": [f.config_dict for f in self.filters],
+            "logic":self.logic
+            })
+        
+class FieldFilter(QueryFilter):
+    """
+    Based on EsmFieldFilter. See SIEM api doc.
+    Used to dump a filter in the right format.
+    """
+
+    """List of possibles operators        
+        """
+    POSSIBLE_OPERATORS=['IN',
+        'NOT_IN',
+        'GREATER_THAN',
+        'LESS_THAN',
+        'GREATER_OR_EQUALS_THAN',
+        'LESS_OR_EQUALS_THAN',
+        'NUMERIC_EQUALS',
+        'NUMERIC_NOT_EQUALS',
+        'DOES_NOT_EQUAL',
+        'EQUALS',
+        'CONTAINS',
+        'DOES_NOT_CONTAIN',
+        'REGEX']
+
+    """List of possible operators : `'IN',
+        'NOT_IN',
+        'GREATER_THAN',
+        'LESS_THAN',
+        'GREATER_OR_EQUALS_THAN',
+        'LESS_OR_EQUALS_THAN',
+        'NUMERIC_EQUALS',
+        'NUMERIC_NOT_EQUALS',
+        'DOES_NOT_EQUAL',
+        'EQUALS',
+        'CONTAINS',
+        'DOES_NOT_CONTAIN',
+        'REGEX'`
+        """
+
+    POSSIBLE_VALUE_TYPES=[
+            {'type':'EsmWatchlistValue',    'key':'watchlist'},
+            {'type':'EsmVariableValue',     'key':'variable'},
+            {'type':'EsmBasicValue',        'key':'value'},
+            {'type':'EsmCompoundValue',     'key':'values'}]
+    """
+    List of possible value type. See `msiempy.query.FieldFilter.add_value`.
+    """
+
+
+    def __init__(self, name, values, operator='IN') :
+        """
+        Parameters:
+
+        - `name` : field name as string.
+        - `values` : list of values the field is going to be tested againts with the specified orperator.
+        - `orperator` : operator, see `msiempy.query.FieldFilter.POSSIBLE_OPERATORS`.
+        """
+        super().__init__()
+        #Declaring attributes
+        self._name=str()
+        self._operator=str()
+        self._values=list()
+        self.name = name
+        self.operator = operator
+        self.values = values
+
+    @property
+    def config_dict(self):
+        """
+        Dump a filter in the right format.
+        """
+        return ({
+            "type": "EsmFieldFilter",
+            "field": {"name": self.name},
+            "operator": self.operator,
+            "values": self.values
+            })
+
+    @property
+    def name(self):
+        """
+        Field name property. Example : `SrcIP`. See full list here: https://github.com/mfesiem/msiempy/blob/master/static/all_filters.json
+        """
+        return (self._name)
+
+    @name.setter
+    def name(self, name):
+        if True : # Not checking dynamically the validity of the fields cause makes too much of unecessary requests any(f.get('name', None) == name for f in self._possible_filters):
+            self._name = name
+        else:
+            raise AttributeError("Illegal value for the "+name+" field. The filter must be in :"+str([f['name'] for f in self._possible_filters]))
+    
+    @property
+    def operator(self):
+        """
+        Field operator property. Check the value against the list of possible operators and trow `AttributeError` if not present.
+        """
+        return (self._operator)
+    
+    @operator.setter
+    def operator(self, operator):
+        try:
+            if operator in self.POSSIBLE_OPERATORS :
+                self._operator = operator
+            else:
+                raise AttributeError("Illegal value for the filter operator "+operator+". The operator must be in "+str(self.POSSIBLE_OPERATORS))
+        except:
+            raise
+
+    @property
+    def values(self):
+        """
+        Values property.
+        Set a list of values by calling `msiempy.query.FilteredQueryList.add_value()` if value is a 
+        `dict` or calls `msiempy.query.FilteredQueryList.add_basic_value()` if value type is `int`, `float` or `str`.
+        Values will always be added to the filter. To remove values, handle directly the `_values` property.
+
+        Example:  
+        ```
+            >>> filter = FieldFilter(name='DstIP',values=['10.1.13.0/24'],operator='IN')
+            >>> filter.values=['10.1.14.0/8', {'type':'EsmWatchlistValue', 'watchlist':42}]
+            >>> filter.config_dict
+            {'type': 'EsmFieldFilter', 
+            'field': {'name': 'DstIP'}, 
+            'operator': 'IN', 
+            'values': [{'type': 'EsmBasicValue', 'value': '10.1.13.0/24'},
+                {'type': 'EsmBasicValue', 'value': '10.1.14.0/8'},
+                {'type': 'EsmWatchlistValue', 'watchlist': 42}]}
+                ```
+            
+        """
+        return (self._values)
+
+    @values.setter  
+    def values(self, values):
+        for val in values :
+            if isinstance(val, dict):
+                self.add_value(**val)
+
+            elif isinstance(val, (int, float, str)) :
+                self.add_basic_value(val)
+        
+    def add_value(self, type, **args):
+        """
+        Add a new value to the field filter.
+        
+        Parameters (`**args`) could be (depending of the value type):  
+        - `{ type='EsmBasicValue', value='a value'}`  
+        - `{ type='EsmWatchlistValue', watchlist=1}`  
+        - `{ type='EsmVariableValue', variable=1}`  
+        - `{ type='EsmCompoundValue', values=['.*']}`  
+
+        Raises `KeyError` or `AttributeError` if you don't respect the correct type/key/value combo.
+        Note : Filtering query with other type of filter than 'EsmBasicValue' is not tested.
+        """
+        try:
+            type_template=None
+            
+            #Look for the type of the object ex EsmBasicValue
+            # it' used to know the type and name of value parameter we should receive next
+            for possible_value_type in self.POSSIBLE_VALUE_TYPES :
+                if possible_value_type['type'] == type :
+                    type_template=possible_value_type
+                    if type != 'EsmBasicValue' :
+                        log.warning("Filtering query with other type of filter than 'EsmBasicValue' is not tested.")                            
+                    break
+
+            #Error throwing
+            if type_template is not None :
+                if type_template['key'] in args :
+                    
+                    # Adds a new value to a fields filter
+                    # Filtering query with other type of filter than 'EsmBasicValue' is not tested.
+                    value = args[type_template['key']]
+                    if type == 'EsmBasicValue' :
+                        value=str(value)
+                        #log.debug('Adding a basic value to filter ('+self.text+') : '+value)
+                    self._values.append({'type':type, type_template['key']:value})
+                    #log.debug('The value was appended to the list: '+str(self))
+                    
+                #Error throwing
+                else: raise KeyError ('The valid key value parameter is not present')
+            else: raise KeyError ('Impossible filter')
+        except KeyError as err:
+            raise AttributeError("You must provide a valid named parameters containing the type and values for this filter. The type/keys must be in "+str(self.POSSIBLE_VALUE_TYPES)+"Can't be type="+str(type)+' '+str(args)+". Additionnal indicator :"+str(err) )
+
+    def add_basic_value(self, value):
+        """
+        Wrapper arround add_value to add a EsmBasicValue.
+        """
+        self.add_value(type='EsmBasicValue', value=value)

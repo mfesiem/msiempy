@@ -64,7 +64,7 @@ It souldn't take more than 5 minutes
 ### Example
 Query events according to filters, loading the data with comprensive parralel tasks and printing relevant data.
 ```
-events = msiempy.event.EventList(
+events = msiempy.event.EventManager(
         time_range='LAST_3_DAYS',
         fields=['HostID', 'UserIDSrc'],
         filters=[
@@ -75,6 +75,10 @@ events = msiempy.event.EventList(
 events.load_data(delta='2h', slots='4', workers=5)
 print(events.get_text(fields=['Alert.LastTime','Alert.SrcIP', 'Alert.BIN(4', 'Alert.BIN(7)', 'Rule.msg']))
 ```
+
+### Error report
+Execute :
+ ```cat ./.msiem/*.txt | cut -c 25-500 | grep -i error | sort | uniq```
 
 ### Disclaimer
 This is an **UNOFFICIAL** project and is **NOT** sponsored or supported by **McAfee, Inc**. If you accidentally delete all of your datasources, don't call support (or me). Product access will always be limited to 'safe' methods and with respect to McAfee's intellectual property.

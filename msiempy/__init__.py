@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
-"""Welcome to the msiempy base framework module documentation.
-Classes listed in this module are used by other classes in sub-modules to build specialized objects and functions.
-`msiempy.NitroSession` is the point of convergence of every request to the McFee ESM It provides standard dialogue with the esm.
-It uses `msiempy.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.
-This API offers two main types of objects to interact with the SIEM : `msiempy.NitroList`, `msiempy.NitroDict`.
+"""# Welcome to the **msiempy** module documentation. The pythonic way to deal with McFee esm API.  
+
+### Classes listed in this module are used by other classes in sub-modules to build specialized objects and functions. 
+# If you with to see concrete example of code, **head to one of the sub-modules** !  
+
+This API offers two main types of objects to interact with the SIEM : `msiempy.NitroList`, `msiempy.NitroDict`. 
 `msiempy.NitroList`s have default behaviours related to parallel execution, string representation generation and search feature.
-Whereas `msiempy.NitroDict` that doesn't have any specific behaviours.
+Whereas `msiempy.NitroDict` that doesn't have any specific behaviours. Both inheriths from `msiempy.NitroObject`.  
 
+`msiempy.NitroSession` is the point of convergence of every request to the McFee ESM It provides standard dialogue with the esm.
+It uses `msiempy.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.  
 
-Look at the class diagram : https://mfesiem.github.io/docs/msiempy/classes.png
+Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png. Packages : https://mfesiem.github.io/docs/msiempy/packages.png
 """
 
 import logging
@@ -33,8 +36,7 @@ import datetime
 import functools
 import textwrap
 
-from .utils import regex_match, tob64
-from .params import PARAMS
+from .utils import regex_match, tob64, format_esm_time, convert_to_time_obj, timerange_gettimes, parse_timedelta, divide_times
 
 try :
     requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
@@ -260,10 +262,246 @@ class NitroSession():
     """
     Executor object.
     """
+
+    PARAMS = {
+        "login": ("login",
+                """{"username": "%(username)s",
+                    "password" : "%(password)s",
+                    "locale": "en_US",
+                    "os": "Win32"}
+                    """),
+
+        "get_devtree": ("GRP_GETVIRTUALGROUPIPSLISTDATA",
+                        """{"ITEMS": "#{DC1 + DC2}",
+                            "DID": "1",
+                            "HD": "F",
+                            "NS": "0"}
+                        """),
+
+        "get_zones_devtree": ("GRP_GETVIRTUALGROUPIPSLISTDATA",
+                        """{"ITEMS": "#{DC1 + DC2}",
+                            "DID": "3",
+                            "HD": "F",
+                            "NS": "0"}
+                        """),
+
+        "req_client_str": ("DS_GETDSCLIENTLIST",
+                            """{"DSID": "%(_ds_id)s",
+                                "SEARCH": ""}
+                            """),
+
+        "get_rfile": ("MISC_READFILE",
+                    """{"FNAME": "%(_ftoken)s",
+                    "SPOS": "0",
+                    "NBYTES": "0"}
+                    """),
+
+        "get_wfile": ("MISC_WRITEFILE",
+                    """{"DATA1": "%(_ds_id)s",
+                    """),
+
+                    
+                    
+        "map_dtree": ("map_dtree",
+                    """{"dev_type": "%(dev_type)s",
+                    "name": "%(ds_name)s",
+                    "ds_id": "%(ds_id)s",
+                    "enabled": "%(enabled)s",
+                    "ds_ip": "%(ds_ip)s",
+                    "hostname" : "%(hostname)s",
+                    "typeID": "%(type_id)s",
+                    "vendor": "",
+                    "model": "",
+                    "tz_id": "",
+                    "date_order": "",
+                    "port": "",
+                    "syslog_tls": "",
+                    "client_groups": "%(client_groups)s"
+                    }
+                    """),
+                    
+        "add_ds": ("dsAddDataSource", 
+                    """{"datasource": {
+                            "parentId": {"id": "%(parent_id)s"},
+                            "name": "%(name)s",
+                            "id": {"id": "%(ds_id)s"},
+                            "typeId": {"id": "%(type_id)s"},
+                            "childEnabled": "%(child_enabled)s",
+                            "childCount": "%(child_count)s",
+                            "childType": "%(child_type)s",
+                            "ipAddress": "%(ds_ip)s",
+                            "zoneId": "%(zone_id)s",
+                            "url": "%(url)s",
+                            "enabled": "%(enabled)s",
+                            "idmId": "%(idm_id)s",
+                            "parameters": %(parameters)s
+                        }}"""),
+
+        "add_client": ("DS_ADDDSCLIENT", 
+                        """{"PID": "%(parent_id)s",
+                        "NAME": "%(name)s",
+                        "ENABLED": "%(enabled)s",
+                        "IP": "%(ds_ip)s",
+                        "HOST": "%(hostname)s",
+                        "TYPE": "%(type_id)s",
+                        "TZID": "%(tz_id)s",
+                        "DORDER": "%(dorder)s",
+                        "MASKFLAG": "%(maskflag)s",
+                        "PORT": "%(port)s",
+                        "USETLS": "%(syslog_tls)s"
+                        }"""),
+                        
+        "get_recs": ("devGetDeviceList?filterByRights=false",
+                        """{"types": ["RECEIVER"]}
+                        """),
+
+        "get_dstypes": ("dsGetDataSourceTypes",
+                        """{"receiverId": {"id": "%(rec_id)s"}
+                            }
+                        """),
+                        
+        "del_ds": ("dsDeleteDataSource",
+                    """{"receiverId": {"id": "%(parent_id)s"},
+                        "datasourceId": {"id": "%(ds_id)s"}}
+                    """),
+                    
+        "del_client": ("DS_DELETEDSCLIENTS",None
+                        ),
+                        
+        "ds_last_times": ("QRY%5FGETDEVICELASTALERTTIME","""{}"""),
+                        
+        "zonetree": ("zoneGetZoneTree",None),
+                        
+        "ds_by_type": ("QRY_GETDEVICECOUNTBYTYPE",None),
+
+        "_dev_types":  ("dev_type_map",
+                            """{"1": "zone",
+                                "2": "ERC",
+                                "3": "datasource",
+                                "4": "Database Event Monitor (DBM)",
+                                "5": "DBM Database",
+                                "7": "Policy Auditor",
+                                "10": "Application Data Monitor (ADM)",
+                                "12": "ELM",
+                                "14": "Local ESM",
+                                "15": "Advanced Correlation Engine (ACE)",
+                                "16": "Asset datasource",
+                                "17": "Score-based Correlation",
+                                "19": "McAfee ePolicy Orchestrator (ePO)",
+                                "20": "EPO",
+                                "21": "McAfee Network Security Manager (NSM)",
+                                "22": "McAfee Network Security Platform (NSP)",
+                                "23": "NSP Port",
+                                "24": "McAfee Vulnerability Manager (MVM)",
+                                "25": "Enterprise Log Search (ELS)",
+                                "254": "client_group",
+                                "256": "client"}
+                            """),
+                            
+            "ds_details": ("dsGetDataSourceDetail",
+                            """{"datasourceId": 
+                                {"id": "%(ds_id)s"}}
+                            """),
+
+            "get_alarms_custom_time": ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&customStart=%(start_time)s&customEnd=%(end_time)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""",
+                        None),
+
+            "get_alarms": ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""", None),
+
+            "get_alarm_details": ("""notifyGetTriggeredNotification""", """{"id":%(id)s}"""),
+
+            "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
+
+            "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
+
+            "delete_alarms": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
+            
+            "get_possible_filters" : ( """qryGetFilterFields""", None ),
+
+            "get_possible_fields" : ( """qryGetSelectFields?type=%(type)s&groupType=%(groupType)s""", None ),
+
+            "get_esm_time" : ( """essmgtGetESSTime""",None),
+
+            "logout" : ( """userLogout""", None ),
+
+            "get_user_locale" : ( """getUserLocale""", None ),
+
+            "event_query_custom_time" : ("""qryExecuteDetail?type=EVENT&reverse=false""", """{
+                    "config": {
+                        "timeRange": "%(time_range)s",
+                        "customStart": "%(start_time)s",
+                        "customEnd": "%(end_time)s",
+                        "fields":%(fields)s,
+                        "filters":%(filters)s,
+                        "limit":%(limit)s,
+                        "offset":%(offset)s
+                        }
+                        }"""),
+
+            "event_query" : ("""qryExecuteDetail?type=EVENT&reverse=false""", """{
+                    "config": {
+                        "timeRange":"%(time_range)s",
+                        "fields":%(fields)s,
+                        "filters":%(filters)s,
+                        "limit":%(limit)s,
+                        "offset":%(offset)s
+                        }
+                        }"""),
+
+            "query_status" : ("""qryGetStatus""", """{"resultID": %(resultID)s}"""),
+
+            "query_result" : ("""qryGetResults?startPos=%(startPos)s&numRows=%(numRows)s&reverse=false""", """{"resultID": %(resultID)s}"""),
+            
+            "time_zones" : ("""userGetTimeZones""", None),
+
+            "logout" : ("""logout""", None),
+            
+            "add_note_to_event" : ("""ipsAddAlertNote""", """{
+                "id": {"value": "%(id)s"},
+                "note": {"note": "%(note)s"}
+            }"""),
+
+            "get_watchlists_no_filters" : ("""sysGetWatchlists?hidden=%(hidden)s&dynamic=%(dynamic)s&writeOnly=%(writeOnly)s&indexedOnly=%(indexedOnly)s""", 
+                None),
+
+            "get_watchlist_details": ("""sysGetWatchlistDetails""","""{"id": %(id)s}"""),
+
+            "add_watchlist_values": ("""sysAddWatchlistValues""","""{
+                "watchlist": %(watchlist)s,
+                "values": %(values)s,
+                }"""),
+
+            "get_watchlist_values": ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}"""),
+
+            "get_alert_data": ("""ipsGetAlertData""", """{"id": "%(id)s"}"""),
+            
+            "get_sys_info"  : ("sysGetSysInfo",None),
+            
+            "build_stamp" : ("essmgtGetBuildStamp",None)
+    }
+    """
+    This structure provide a central place to aggregate API methods and parameters. 
+    The parameters are stored as docstrings to support string replacement.
+
+    Args:
+        method (str): Dict key associated with desired function
+        Use normal dict access, PARAMS["method"], or PARAMS.get("method")
+
+    Returns:
+        tuple: (string, string)
+
+        The first string is the method name that is actually used as
+        the URI or passed to the ESM. The second string is the params
+        required for that method. Some params require variables be
+        interpolated as documented in the Attributes.
+
+    Example:
+        method, params = params["login"].format(username, password)
+
+    Important note : Do not use sigle quotes (') to delimit data into the interpolated strings !
+    """
         
     def __str__(self):
-        """
-    """
         return repr(self.__unique_state__) 
 
     def __init__(self, conf_path=None, conf_dict=None):
@@ -349,12 +587,16 @@ class NitroSession():
                 except requests.HTTPError as e :
                     log.error(str(e)+' '+str(result.text))
                     return result.text
+                    """
                     #TODO handle expired session error, result unavailable / other siem errors
-                    # ERROR_InvalidFilter (228)
+                    # _InvalidFilter (228)
+                    # _IndexNotTurnedOn (49)
                     # Status Code 500: Error processing request, see server logs for more details 
                     # <Response [400]>
+                    400 Client Error: 400 for url: https://207.179.200.58:4443/rs/esm/ipsGetAlertData Cannot construct instance of `com.mcafee.siem.api.data.alert.EsmAlertId`
                     # Input Validation Error
                     # By creating a new class
+                    """
 
                 else: #
                     result = self._unpack_resp(result)
@@ -419,7 +661,7 @@ class NitroSession():
             str(request), str(params) if not secure else '***', str(http), str(raw), str(secure), str(callback)
         ))
 
-        method, data = PARAMS.get(request)
+        method, data = self.PARAMS.get(request)
 
         if data is not None :
             data =  data % params
@@ -561,9 +803,9 @@ class NitroObject(abc.ABC):
 
     class NitroJSONEncoder(json.JSONEncoder):
         """
-        Custom JSON encoder that will use the approprtiate propertie depending of the type of NitroObject.
-        TODO return meta info about the NitroList. Maybe create a section `manager` and `data`.
-        TODO support json json dumping of QueryFilers, may be by making them inherits from NitroDict.
+        Custom JSON encoder that will use the approprtiate propertie depending of the type of NitroObject.  
+        TODO return meta info about the NitroList. Maybe create a section `manager` and `data`.  
+        TODO support json json dumping of QueryFilers, may be by making them inherits from NitroDict.  
         """
         def default(self, obj): # pylint: disable=E0202
             if isinstance(obj,(NitroDict, NitroList)):
@@ -662,7 +904,8 @@ class NitroDict(collections.UserDict, NitroObject):
 
 class NitroList(collections.UserList, NitroObject):
     """
-    Base class for NitroList objects. It offers callable execution management, searcb and other data list actions.
+    Base class for NitroList objects. It offers callable execution management, search and other data list actions.  
+    TODO better polymorphism to cast every sub-NitroList class's item dynamcally in `__init__` method
     """
 
     def __init__(self, alist=None):
@@ -679,6 +922,7 @@ class NitroList(collections.UserList, NitroObject):
             collections.UserList.__init__(
                 self, alist #[NitroDict(adict=item) for item in alist if isinstance(item, (dict, NitroDict))] 
                 #Can't instanciate NitroDict, so Concrete classes have to cast the items afterwards!
+                #TODO better polymorphism to cast every sub-NitroList class's item dynamcally !
                 )
         else :
             raise ValueError('NitroList can only be initiated based on a list')
@@ -945,3 +1189,317 @@ class NitroList(collections.UserList, NitroObject):
         if not 'y' in input('Are you sure you want to do this '+str(func)+' on '+
         ('\n'+str(elements) if elements is not None else 'all elements')+'? [y/n]: '):
             raise InterruptedError("The action was cancelled by the user.")
+
+class FilteredQueryList(NitroList):
+    """
+    Base class for query based managers : AlarmManager, EventManager
+    FilteredQueryList object can handle time_ranges and time splitting.
+    Provide time ranged filtered query wrapper.
+    """
+    
+    DEFAULT_TIME_RANGE="CURRENT_DAY"
+    """
+    If you don't specify any `time_range`, act like if it was "CURRENT_DAY".
+    """
+
+    POSSIBLE_TIME_RANGE=[
+            "CUSTOM",
+            "LAST_MINUTE",
+            "LAST_10_MINUTES",
+            "LAST_30_MINUTES",
+            "LAST_HOUR",
+            "CURRENT_DAY",
+            "PREVIOUS_DAY",
+            "LAST_24_HOURS",
+            "LAST_2_DAYS",
+            "LAST_3_DAYS",
+            "CURRENT_WEEK",
+            "PREVIOUS_WEEK",
+            "CURRENT_MONTH",
+            "PREVIOUS_MONTH",
+            "CURRENT_QUARTER",
+            "PREVIOUS_QUARTER",
+            "CURRENT_YEAR",
+            "PREVIOUS_YEAR"
+    ]
+    """
+    List of possible time ranges : `"CUSTOM",
+            "LAST_MINUTE",
+            "LAST_10_MINUTES",
+            "LAST_30_MINUTES",
+            "LAST_HOUR",
+            "CURRENT_DAY",
+            "PREVIOUS_DAY",
+            "LAST_24_HOURS",
+            "LAST_2_DAYS",
+            "LAST_3_DAYS",
+            "CURRENT_WEEK",
+            "PREVIOUS_WEEK",
+            "CURRENT_MONTH",
+            "PREVIOUS_MONTH",
+            "CURRENT_QUARTER",
+            "PREVIOUS_QUARTER",
+            "CURRENT_YEAR",
+            "PREVIOUS_YEAR"`
+    """
+
+    def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
+        load_async=True, requests_size=500, max_query_depth=0,
+            __parent__=None, *arg, **kwargs):
+        """
+        Abstract base class that handles the time ranges operations, loading data from the SIEM.
+
+        Parameters:  
+    
+        - `time_range` : Query time range. String representation of a time range. 
+            See `msiempy.query.FilteredQueryList.POSSIBLE_TIME_RANGE`
+        - `start_time` : Query starting time, can be a string or a datetime object. Parsed with dateutil.
+        - `end_time` : Query endding time, can be a string or a datetime object. Parsed with dateutil.
+        - `filters` : List of filters applied to the query.
+        - `load_async` : Load asynchonously the sub-queries. Defaulted to True.
+        - `requests_size` : number of items per request.
+        - `max_query_depth` : maximum number of supplement reccursions of division of the query times
+            Meaning, if requests_size=500, slots=5 and max_query_depth=3, then the maximum capacity of 
+            the list is (500*5)*(500*5)*(500*5) = 15625000000
+            
+        """
+
+        super().__init__(*arg, **kwargs)
+
+        #Store the query parent 
+        self.__parent__=__parent__
+        self.not_completed=False
+
+        #self.nitro.config.default_rows #nb rows per request : eq limit/page_size = requests_size
+        #self.nitro.config.max_rows #max nb rows 
+
+        #Declaring attributes and types
+        self._time_range=str()
+        self._start_time=None
+        self._end_time=None
+
+        #self.filters=filters filter property setter should be called in the concrete class
+        #TODO find a better solution to integrate the filter propertie
+
+        self.load_async=load_async
+
+        if start_time is not None and end_time is not None :
+            self.start_time=start_time
+            self.end_time=end_time
+            self.time_range='CUSTOM'
+        else :
+            self.time_range=time_range
+
+        self.load_async=load_async
+        self.requests_size=requests_size
+        self.__init_max_query_depth__=max_query_depth
+        self.query_depth_ttl=max_query_depth
+
+
+    @property
+    def __root_parent__(self):
+        """
+        Internal method that return the first query of the query tree
+        """
+        if self.__parent__==None:
+            return self
+        else :
+            return self.__parent__.__root_parent__
+
+    @property
+    def time_range(self):
+        """
+        Query time range. See `msiempy.query.FilteredQueryList.POSSIBLE_TIME_RANGE`.
+        Default to `msiempy.query.FilteredQueryList.DEFAULT_TIME_RANGE` (CURRENT_DAY).
+        Note that the time range is upper cased automatically.
+        Raises `VallueError` if unrecognized time range is set and `AttributeError` if not the right type.
+        """
+        return self._time_range.upper()
+
+    @time_range.setter
+    def time_range(self, time_range):
+        if not time_range :
+            self.time_range=self.DEFAULT_TIME_RANGE
+
+        elif isinstance(time_range, str):
+            time_range=time_range.upper()
+            if time_range in self.POSSIBLE_TIME_RANGE :
+                if time_range != 'CUSTOM':
+                    self.start_time=None
+                    self.end_time=None
+                self._time_range=time_range
+            else:
+                raise ValueError("The time range must be in "+str(self.POSSIBLE_TIME_RANGE))
+        else:
+            raise AttributeError('time_range must be a string or None')
+
+    @property
+    def start_time(self):
+        """
+        Start time of the query in the right SIEM format. See `msiempy.utils.format_esm_time()`
+        Use `_start_time` to get the datetime object. You can set the `star_time` as a `str` or a `datetime`.
+        If `None`, equivalent CURRENT_DAY start 00:00:00. Raises `ValueError` if not the right type.
+        """
+        return format_esm_time(self._start_time)
+
+    @start_time.setter
+    def start_time(self, start_time):
+        if isinstance(start_time, str):
+            self.start_time = convert_to_time_obj(start_time)
+        elif isinstance(start_time, datetime.datetime):
+            self._start_time = start_time
+        elif start_time==None:
+             self._start_time=None#raise ValueError("Time must be string or datetime object, not None")#self.start_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            raise ValueError("Time must be string or datetime object.")
+
+    @property
+    def end_time(self):
+        """
+        End time of the query in the right SIEM format.  See `msiempy.utils.format_esm_time()`
+        Use _end_time to get the datetime object. You can set the `end_time` as a `str` or a `datetime`.
+        If `None`, equivalent CURRENT_DAY ends now. Raises `ValueError` if not the right type.
+        """
+        return format_esm_time(self._end_time)
+
+    @end_time.setter
+    def end_time(self, end_time):       
+        if isinstance(end_time, str):
+            self.end_time = convert_to_time_obj(end_time)
+        elif isinstance(end_time, datetime.datetime):
+            self._end_time = end_time
+        elif end_time==None:
+             self._end_time=None#raise ValueError("Time must be string or datetime object, not None")
+        else:
+            raise ValueError("Time must be string or datetime object.")
+
+    @abc.abstractproperty
+    def filters(self):
+        """ 
+        Filter property : Returns a list of filters.
+        Can be set with list of tuple(field, [values]) or `msiempy.query.QueryFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted. 
+        None value will call `msiempy.query.FilteredQueryList.clear_filters()`
+        Raises `AttributeError` if type not supported.
+        TODO find a better solution to integrate the filter propertie
+        """
+        raise NotImplementedError()
+
+    @filters.setter
+    def filters(self, filters):
+        if isinstance(filters, list):
+            for f in filters :
+                self.add_filter(f)
+
+        elif isinstance(filters, tuple):
+            self.add_filter(filters)
+
+        elif filters == None :
+            self.clear_filters()
+        
+        else :
+            raise AttributeError("Illegal type for the filter object, it must be a list, a tuple or None.")
+
+    
+    @abc.abstractmethod
+    def add_filter(self, filter):
+        """Method that figures out the way to add a filter to the query.
+        """
+        pass
+
+    @abc.abstractmethod
+    def clear_filters(self):
+        """Method that fiures out the way to remove all filters to the query.
+        """
+        pass 
+
+    @abc.abstractmethod
+    def _load_data(self, workers):
+        """
+        Rturn a tuple (items, completed).
+        completed = True if all the data that should be load is loaded.
+        """
+        pass
+
+    @abc.abstractmethod
+    def load_data(self, workers=15, slots=4, delta='24h'):
+        """
+        Method to load the data from the SIEM.
+        Split the query in defferents time slots if the query apprears not to be completed.
+        Splitting is done by duplicating current object, setting different times,
+        and re-loading results. First your query time is split in slots of size `delta` 
+        if the sub queries are not completed, divide them in the number of `slots`, this step is
+        If you're looking for `max_query_depth`, it's define at the creation of the query list.
+
+        Returns a FilteredQueryList.
+        
+        Note :
+            IF you looking for load_async = True/False, you should pass this to the constructor method `msiempy.query.FilteredQueryList`
+                or by setting the attribute manually like `manager.load_asynch=True`
+            Only the first query is loaded asynchronously.
+
+        Parameters:  
+    
+        - `workers` : numbre of parrallels task
+        - `slots` : number of time slots the query can be divided. The loading bar is 
+            divided according to the number of slots
+        - `delta` : exemple : '24h', the query will be firstly divided in chuncks according to the time delta read
+            with dateutil.
+        
+        """
+
+        items, completed = self._load_data(workers=workers)
+
+        if not completed :
+            #If not completed the query is split and items aren't actually used
+
+            if self.query_depth_ttl > 0 :
+                #log.info("The query data couldn't be loaded in one request, separating it in sub-queries...")
+
+                if self.time_range != 'CUSTOM': #can raise a NotImplementedError if unsupported time_range
+                    start, end = timerange_gettimes(self.time_range)
+                else :
+                    start, end = self.start_time, self.end_time
+
+                if self.__parent__ == None and isinstance(delta, str) :
+                    #if it's the first query and delta is speficied, cut the time_range in slots according to the delta
+                    times=divide_times(start, end, delta=parse_timedelta(delta))
+                    
+                else :times=divide_times(start, end, slots=slots)
+                        #IGONORING THE CONFIG ### : self.nitro.config.slots)
+                
+                sub_queries=list()
+
+                for time in times :
+                    """
+                    """
+                    sub_query = copy.copy(self)
+                    sub_query.__parent__=self
+                    sub_query.compute_time_range=False
+                    sub_query.time_range='CUSTOM'
+                    sub_query.start_time=time[0].isoformat()
+                    sub_query.end_time=time[1].isoformat()
+                    sub_query.load_async=False
+                    sub_query.query_depth_ttl=self.query_depth_ttl-1
+                    #sub_query.requests_size=requests_size
+                    sub_queries.append(sub_query)
+
+            
+                results = self.perform(FilteredQueryList.load_data, sub_queries, 
+                    #The sub query is asynch only when it's set to True and it's the first query
+                    asynch=False if not self.load_async else (self.__parent__==None),
+                    progress=self.__parent__==None, 
+                    message='Loading data from '+self.start_time+' to '+self.end_time+'. In {} slots'.format(len(times)),
+                    func_args=dict(slots=slots),
+                    workers=workers)
+
+                #Flatten the list of lists in a list
+                items=[item for sublist in results for item in sublist]
+                
+            else :
+                if not self.__root_parent__.not_completed :
+                    log.warning("The query won't fully complete. Try to divide in more slots or increase the requests_size")
+                    self.__root_parent__.not_completed=True
+
+        self.data=items
+        return(NitroList(alist=items)) #return self ?
+

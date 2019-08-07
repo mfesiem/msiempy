@@ -4,6 +4,7 @@
 import logging
 import collections
 log = logging.getLogger('msiempy')
+
 from . import NitroDict, NitroList
 
 class WatchlistManager(NitroList):
