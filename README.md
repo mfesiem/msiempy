@@ -4,10 +4,21 @@
 This project aims to provide a basic API wrapper around the McAfee SIEM API to help make it more 
 accessible and pythonic.
 
+⚠️ This python module is currently Experimental ⚠️
+
+### Main features
+- ESM monitoring (work in progress)
+- Datasource management : add, edit, del - including client datasources (work in progress)
+- Alarm management and querying : [asynchronous] filter, [un]acknowledge, delete (not working in v11.2.1 see #11).  
+- Event querying : [asynchronous] dynamic query
+- Watchlist operations : list all watchlists and add values (work in progress)
+- Single stable session handler and built-in asynchronous jobs
+
+
 ### Documentation and links
-- msiempy API technical documentation : https://mfesiem.github.io/docs/msiempy/index.html
+- Python API technical documentation : https://mfesiem.github.io/docs/msiempy/index.html
 - Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png
-- SIEM API technical documentation : https://[ESM HOST NAME OR IP]/rs/esm/help
+- SIEM API technical documentation : https://ESM_HOSTNAME/rs/esm/help
 
 ### Installation 
 ```
@@ -21,9 +32,9 @@ The configuration file should be located securely in your path since it has cred
 - For Linux :   $XDG_CONFIG_HOME/.msiem/conf.ini or :   $HOME/.msiem/conf.ini
 ```
 [esm]
-host = [ESM HOST NAME OR IP]
-user = [USERNAME]
-passwd = [PASSWORD IN BASE64]
+host = ESM HOST NAME OR IP
+user = USERNAME
+passwd = PASSWORD IN BASE64, generate it like `echo 'p@ssw0d' | base 64`
 
 [general]
 verbose = yes
@@ -35,7 +46,7 @@ output = text
 ```
 
 You can initiate and configure the file with python cli.
-```
+```python
 $ python3
 >>> from msiempy import NitroConfig
 >>> config=NitroConfig()
@@ -62,9 +73,34 @@ OK
 It souldn't take more than 5 minutes
 
 ### Example
-Query events according to filters, loading the data with comprensive parralel tasks and printing relevant data.
+
+#### Alarm
+Print all unacknowledged alarms of the year. The number of alarms retreived is defined by the `page_zize` property.
+```python
+import msiempy.alarm
+
+alarms=msiempy.alarm.AlarmManager(
+        time_range='CURRENT_YEAR',
+        status_filter='unacknowledged',
+        filters=[
+                ('alarmName', 'IPS alarm'),
+                ('ruleMessage','Wordpress')],
+        page_zize='400')
+        
+alarms.load_data()
+print(alarms)
+
+alarms.load_events(extra_fields=['HostID','UserIDSrc'])
+[ print alarm['events'] for alarm in alarms ]
 ```
-events = msiempy.event.EventList(
+See: https://mfesiem.github.io/docs/msiempy/alarm.html#msiempy.alarm.AlarmManager
+
+#### Event
+Query events according to filters, loading the data with comprensive parralel tasks and printing relevant data.
+```python
+import msiempy.event
+
+events = msiempy.event.EventManager(
         time_range='LAST_3_DAYS',
         fields=['HostID', 'UserIDSrc'],
         filters=[
@@ -75,6 +111,41 @@ events = msiempy.event.EventList(
 events.load_data(delta='2h', slots='4', workers=5)
 print(events.get_text(fields=['Alert.LastTime','Alert.SrcIP', 'Alert.BIN(4', 'Alert.BIN(7)', 'Rule.msg']))
 ```
+See: https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.EventManager
+
+#### ESM
+Print a few esm infos. This is still work in progress.
+```python
+>>> import msiempy.device
+
+>>> esm=msiempy.device.ESM()
+>>> esm.version()
+'11.2.1'
+>>> esm.recs()
+[('ERC-1', 144116287587483648)]
+>>> esm.buildstamp()
+'11.2.1 20190725050014'
+```
+See: https://mfesiem.github.io/docs/msiempy/device.html#msiempy.device.ESM
+
+#### Datasource
+Load all datasources and search.  This is still work in progress.
+```python
+import msiempy.device
+
+devtree = msiempy.device.DevTree()
+```
+See: https://mfesiem.github.io/docs/msiempy/device.html#msiempy.device.DevTree
+
+### Contribute
+If you like the project and think you could help with making it better, there are many ways you can do it:
+
+Create new issue for new feature proposal or a bug
+Implement existing issues
+Help with improving the documentation
+Spread a word about the project to your collegues, friends, blogs or any other channels
+Any other things you could imagine
+Any contribution would be of great help and I will highly appreciate it! If you have any questions, please create a new issue, or concact me via tris.la.tr@gmail.com
 
 ### Disclaimer
 This is an **UNOFFICIAL** project and is **NOT** sponsored or supported by **McAfee, Inc**. If you accidentally delete all of your datasources, don't call support (or me). Product access will always be limited to 'safe' methods and with respect to McAfee's intellectual property.
