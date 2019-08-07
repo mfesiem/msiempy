@@ -5,7 +5,7 @@ import unittest
 class T(unittest.TestCase):
 
 
-    def test_print(self):
+    def test_print_no_detailed_filter(self):
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_YEAR',
             max_query_depth=0,
@@ -13,8 +13,20 @@ class T(unittest.TestCase):
 
         print(alarms.__dict__)
 
-        alarms.load_data()
+        alarms.data = alarms._load_data(workers=5, no_detailed_filter=True)[0]
         
+        print('ALARMS JSON\n'+str(alarms.json))
+        print('ALARMS TEXT\n'+str(alarms))
+        print('ALARMS KEYS\n'+str(alarms.keys))
+
+    def test_print(self):
+
+        alarms = msiempy.alarm.AlarmManager(
+            time_range='CURRENT_YEAR',
+            max_query_depth=0,
+            page_size=10)
+
+        alarms.load_data()
         print('ALARMS JSON\n'+str(alarms.json))
         print('ALARMS TEXT\n'+str(alarms))
         print('ALARMS KEYS\n'+str(alarms.keys))

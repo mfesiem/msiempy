@@ -1,5 +1,4 @@
 import msiempy.event
-import msiempy.query
 from msiempy.utils import format_esm_time
 import unittest
 
@@ -31,7 +30,7 @@ class T(unittest.TestCase):
 
     def test_query_splitted(self):
         events = msiempy.event.EventManager(
-            filters=[msiempy.query.GroupFilter(
+            filters=[msiempy.event.GroupFilter(
                 [msiempy.event.FieldFilter(name='DstIP', values=['0.0.0.0/0']),
                 msiempy.event.FieldFilter(name='SrcIP', values=['0.0.0.0/0'])],
                 logic='AND'

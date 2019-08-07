@@ -16,7 +16,7 @@ from io import StringIO
 from functools import partial, lru_cache
 
 from . import NitroDict, NitroList, NitroError, NitroObject
-from .utils import dehexify
+from .__utils__ import dehexify
 
 class Device(NitroObject):
     pass

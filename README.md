@@ -147,5 +147,9 @@ Spread a word about the project to your collegues, friends, blogs or any other c
 Any other things you could imagine
 Any contribution would be of great help and I will highly appreciate it! If you have any questions, please create a new issue, or concact me via tris.la.tr@gmail.com
 
+### Error report
+Execute :
+ ```cat ./.msiem/*.txt | cut -c 25-500 | grep -i error | sort | uniq```
+
 ### Disclaimer
 This is an **UNOFFICIAL** project and is **NOT** sponsored or supported by **McAfee, Inc**. If you accidentally delete all of your datasources, don't call support (or me). Product access will always be limited to 'safe' methods and with respect to McAfee's intellectual property.
