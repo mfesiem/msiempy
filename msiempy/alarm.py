@@ -8,7 +8,7 @@ log = logging.getLogger('msiempy')
 
 from . import NitroDict, NitroList, FilteredQueryList
 from .event import EventManager, Event
-from .utils import regex_match, convert_to_time_obj
+from .__utils__ import regex_match, convert_to_time_obj
 
 class AlarmManager(FilteredQueryList):
     """

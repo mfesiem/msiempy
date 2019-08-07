@@ -36,7 +36,8 @@ import datetime
 import functools
 import textwrap
 
-from .utils import regex_match, tob64, format_esm_time, convert_to_time_obj, timerange_gettimes, parse_timedelta, divide_times
+from .__utils__ import regex_match, tob64, format_esm_time, convert_to_time_obj, timerange_gettimes, parse_timedelta, divide_times
+
 
 try :
     requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
@@ -1336,7 +1337,7 @@ class FilteredQueryList(NitroList):
     @property
     def start_time(self):
         """
-        Start time of the query in the right SIEM format. See `msiempy.utils.format_esm_time()`
+        Start time of the query in the right SIEM format. See `msiempy\__utils__.format_esm_time()`
         Use `_start_time` to get the datetime object. You can set the `star_time` as a `str` or a `datetime`.
         If `None`, equivalent CURRENT_DAY start 00:00:00. Raises `ValueError` if not the right type.
         """
@@ -1356,7 +1357,7 @@ class FilteredQueryList(NitroList):
     @property
     def end_time(self):
         """
-        End time of the query in the right SIEM format.  See `msiempy.utils.format_esm_time()`
+        End time of the query in the right SIEM format.  See `msiempy\__utils__.format_esm_time()`
         Use _end_time to get the datetime object. You can set the `end_time` as a `str` or a `datetime`.
         If `None`, equivalent CURRENT_DAY ends now. Raises `ValueError` if not the right type.
         """

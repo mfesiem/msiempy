@@ -10,7 +10,7 @@ import logging
 log = logging.getLogger('msiempy')
 
 from . import NitroObject, NitroDict, NitroError, FilteredQueryList
-from .utils import timerange_gettimes, parse_query_result, format_fields_for_query
+from .__utils__ import timerange_gettimes, parse_query_result, format_fields_for_query
 
 class EventManager(FilteredQueryList):
     """Interface to query and manage events.
