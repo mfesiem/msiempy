@@ -1,10 +1,11 @@
+![Logo](https://avatars0.githubusercontent.com/u/50667087?s=200&v=4 "Logo") 
 ### McAfee SIEM API Python wrapper
 [![Build Status](https://travis-ci.org/mfesiem/msiempy.svg?branch=master)](https://travis-ci.org/mfesiem/msiempy)
 
 This project aims to provide a basic API wrapper around the McAfee SIEM API to help make it more 
 accessible and pythonic.
 
-⚠️ This python module is currently Experimental ⚠️
+⚠️ This python module is currently experimental ⚠️
 
 ### Main features
 - ESM monitoring (work in progress)
@@ -14,11 +15,10 @@ accessible and pythonic.
 - Watchlist operations : list all watchlists and add values (work in progress)
 - Single stable session handler and built-in asynchronous jobs
 
-
 ### Documentation and links
-- Python API technical documentation : https://mfesiem.github.io/docs/msiempy/index.html
+- Python msiempy module documentation : https://mfesiem.github.io/docs/msiempy/index.html
 - Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png
-- SIEM API technical documentation : https://ESM_HOSTNAME/rs/esm/help
+- SIEM API documentation : https://ESM_HOSTNAME/rs/esm/help
 
 ### Installation 
 ```
@@ -75,7 +75,7 @@ It souldn't take more than 5 minutes
 ### Example
 
 #### Alarm
-Print all unacknowledged alarms of the year. The number of alarms retreived is defined by the `page_zize` property.
+Print all unacknowledged alarms of the year. The number of alarms retreived is defined by the `page_size` property.
 ```python
 import msiempy.alarm
 
