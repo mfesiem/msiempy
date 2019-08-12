@@ -928,12 +928,6 @@ class NitroList(collections.UserList, NitroObject):
         else :
             raise ValueError('NitroList can only be initiated based on a list')
 
-    @property
-    def table_colums(self):
-        """Return the list of columns the table representation will have. This attribute is designed to overwritten.
-        """            
-        return []
-
     def _norm_dicts(self):
         """
         Internal method.
@@ -987,22 +981,22 @@ class NitroList(collections.UserList, NitroObject):
 
             for item in self.data:
                 if isinstance(item, (dict, NitroDict)):
-                    table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=max_column_width))
-                        if not isinstance(item[field], NitroList)
-                        else item[field].get_text() for field in fields])
+                    try :
+                        table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=max_column_width))
+                            if not isinstance(item[field], NitroList)
+                            else item[field].get_text() for field in fields])
+                    
+                    except (KeyError, IndexError) as err :
+                        log.error("Inconsistent NitroList state, some fields aren't present in the dict keys. Try calling _norm_dicts() method : "+str(err))
+                        raise
+
+                    except Exception as err :
+                        if "Row has incorrect number of values" in str(err):
+                            log.error("Inconsistent NitroList state, some fields aren't present or too many are present : {}".format(str(err)))
+
                 else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
 
-            if len(self.table_colums) >0 :
-                try :
-                    text =table.get_string(fields=self.table_colums)
-                except Exception as err :
-                    if "Invalid field name" in str(err):
-                        text=table.get_string()
-                        log.warning("Inconsistent manager state, some fields aren't present {}".format(str(err)))
-                    else :
-                        raise
-            else: 
-                text=table.get_string()
+            text=table.get_string()
 
         elif compact is True :
             text='|_'

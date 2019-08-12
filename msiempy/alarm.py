@@ -54,12 +54,7 @@ class AlarmManager(FilteredQueryList):
         #Casting all data to Alarms objects, better way to do it ?
         collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, NitroDict))])
 
-    @property
-    def table_colums(self):
-        """
-
-        """
-        return ['id','alarmName', 'triggeredDate', 'events']
+    
 
     @property
     def filters(self):
@@ -293,7 +288,7 @@ class Alarm(NitroDict):
 
     """
 
-    ALARM_DEFAULT_FIELDS=['triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage']
+    ALARM_DEFAULT_FIELDS=['triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage'] #could also be ['id','alarmName', 'triggeredDate', 'events']
     """Defaulfs fields : `'triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage'` (not used , may be for printing with `msiempy.NitroList.get_text(fields=msiempy.alarm.ALARM_DEFAULT_FIELDS)`)
     """
 
