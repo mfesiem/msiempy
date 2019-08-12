@@ -1,6 +1,5 @@
 """Module that provide alarm management, acknowledgement, filtering, etc...
 """
-
 import collections
 import datetime
 import logging
@@ -9,7 +8,7 @@ log = logging.getLogger('msiempy')
 from . import NitroDict, NitroList
 from .query import FilteredQueryList
 from .event import EventManager, Event
-from .utils import regex_match, convert_to_time_obj
+from .utils import regex_match, convert_to_time_obj, dehexify
 
 class AlarmManager(FilteredQueryList):
     """
@@ -407,7 +406,9 @@ class Alarm(NitroDict):
         """
 
         """
-        return self.nitro.request('get_alarm_details', id=str(id))
+        alarms = self.nitro.request('get_alarm_details_int', id=str(id['value']))
+        alarms = {key: dehexify(val).replace('\n', '|') for key, val in alarms.items()}
+        return alarms
 
     """
     def _hasID(self):
