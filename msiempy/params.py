@@ -237,7 +237,7 @@ PARAMS = {
 
     "get_alert_data": ("""ipsGetAlertData""", """{"id": "%(id)s"}"""),
     
-    "get_sys_info"  : ("sysGetSysInfo",None),
+    "get_sys_info"  : ("SYS_GETSYSINFO","""{}"""),
     
     "build_stamp" : ("essmgtGetBuildStamp",None)
 }

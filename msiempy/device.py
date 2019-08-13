@@ -126,6 +126,28 @@ class ESM(Device):
         self._esmtime = self.nitro.request("get_esm_time")
         return self._esmtime['value']
 
+    def map_status_int_fields(self, status):
+        new_status = {}
+        new_status['cpu'] = status['HDW'].split('\n')[0][6:]
+        new_status['hdd'] = status['HDW'].split('\n')[1][6:]
+        new_status['ram'] = status['HDW'].split('\n')[2][6:]
+        new_status['autoBackupEnabled'] = status['ABENABLED']
+        new_status['autoBackupHour'] = status['ABHOUR']
+        new_status['autoBackupDay'] = status['ABDAY']
+        new_status['backupNextTime'] = status['BUNEXT']
+        new_status['backupLastTime'] = status['BULAST']
+        new_status['rulesAndSoftwareCheckEnabled'] = status['RSCENABLED']
+        new_status['rulesAndSoftNextCheck'] = status['RSNEXT']
+        if status['RSLAST'] == 'RSLAST':
+            new_status['rulesAndSoftLastCheck'] = None
+        else:
+            new_status['rulesAndSoftLastCheck'] = status['RSLAST']
+        if status['CHIP'] == 'CHIP':
+            new_status['callHomeIp'] = None
+        else:
+            new_status['callHomeIp'] = status['CHIP']
+
+        return new_status
 
     def status(self):
         """
@@ -140,8 +162,8 @@ class ESM(Device):
                 - list of top level devices
         Other functions exist to return subsets of this data also.
         """
-        #return self.post("sysGetSysInfo")
-        return self.nitro.request("get_sys_info")
+        status = self.nitro.request("get_sys_info")
+        return self.map_status_int_fields(status)
 
     def disks(self):
         """
@@ -177,7 +199,7 @@ class ESM(Device):
         self._fields = ['autoBackupEnabled',
                         'autoBackupDay',
                         'autoBackupHour',
-                        'autoBackupHour',
+                        'backupLastTime',
                         'backupNextTime']
 
         return {self.key: self.val for self.key, self.val in self.status().items()
