@@ -124,11 +124,6 @@ class EventManager(FilteredQueryList):
         #Type cast all items in the list "data" to events type objects
         #Casting all data to Event objects, better way to do it ?
         collections.UserList.__init__(self, [Event(adict=item) for item in self.data if isinstance(item, (dict, NitroDict))])
-        
-
-    @property
-    def table_colums(self):
-        return Event.DEFAULTS_EVENT_FIELDS
 
     @property
     def order(self):
