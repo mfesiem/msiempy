@@ -1,6 +1,6 @@
 """Provide alarm management.
 """
-
+import sys
 import collections
 import datetime
 import logging
@@ -8,7 +8,7 @@ log = logging.getLogger('msiempy')
 
 from . import NitroDict, NitroList, FilteredQueryList
 from .event import EventManager, Event
-from .__utils__ import regex_match, convert_to_time_obj
+from .__utils__ import regex_match, convert_to_time_obj, dehexify
 
 class AlarmManager(FilteredQueryList):
     """
@@ -326,14 +326,14 @@ class Alarm(NitroDict):
     def load_details(self):
         """Update the alarm with detailled data loaded from the SIEM.
         """
-        the_id = self.data['id']
+        the_id = self.data['id']['value']
         self.data.update(self.data_from_id(the_id))
         self.data['id']=the_id
         return self
 
     def refresh(self):
         """Update the alarm with detailled data loaded from the SIEM. Concrete NitroObject method.
-        """
+        """        
         self.load_details()
 
     def load_events(self, extra_fields=None, by_id=False):
@@ -380,11 +380,49 @@ class Alarm(NitroDict):
 
         return events
 
+    def map_alarm_int_fields(self, alarm_details):
+        for key, val in alarm_details.items():
+            if alarm_details[key] == key:
+                alarm_details[key] = None
+            elif alarm_details[key] in ['f', 'F']:
+                alarm_details[key] = False
+            elif alarm_details[key] in ['t', 'T']:
+                alarm_details[key] = True
+            else:
+                alarm_details[key] = val
+
+        new_alarm = {}
+        new_alarm['filters'] = alarm_details.get('FILTERS') or None
+        new_alarm['queryId'] = alarm_details.get('QID') or None
+        new_alarm['alretRateMin'] = alarm_details.get('ARM') or None
+        new_alarm['alertRateCount'] = alarm_details.get('ARC') or None
+        new_alarm['percentAbove'] = alarm_details.get('PCTA') or None
+        new_alarm['percentBelow'] = alarm_details.get('PCTB') or None
+        new_alarm['offsetMinutes'] = alarm_details.get('OFFSETMIN') or None
+        new_alarm['maximumConditionTriggerFrequency'] = alarm_details.get('TIMEF') or None
+        new_alarm['useWatchlist'] = alarm_details.get('USEW') or None
+        new_alarm['matchField'] = alarm_details.get('MFLD') or None
+        new_alarm['matchValue'] = alarm_details.get('MWAL') or None
+        #new_alarm['healthMonalarm_details'] = alarm_details.get('HMS') or None
+        new_alarm['assigneeId'] = alarm_details.get('ASNID') or None
+        new_alarm['escalatedDate'] = alarm_details.get('ESCDATE') or None
+        new_alarm['caseId'] = alarm_details.get('CASEID') or None
+        new_alarm['caseName'] = alarm_details.get('CASENAME') or None
+        new_alarm['iocName'] = alarm_details.get('IOCNAME') or None
+        new_alarm['iocId'] = alarm_details.get('IOCID') or None
+        new_alarm['description'] = alarm_details.get('DESC') or None
+        new_alarm['actions'] = alarm_details.get('ACTIONS') or None
+        new_alarm['events'] = alarm_details.get('EVENTS') or None
+        return new_alarm
+                                                                                       
     def data_from_id(self, id):
         """
 
         """
-        return self.nitro.request('get_alarm_details', id=str(id))
+        alarms = self.nitro.request('get_alarm_details_int', id=str(id))
+        alarms = {key: dehexify(val).replace('\n', '|') for key, val in alarms.items()}
+        alarms = self.map_alarm_int_fields(alarms)        
+        return alarms
 
     """
     def _hasID(self):
