@@ -5,7 +5,7 @@
 This project aims to provide a basic API wrapper around the McAfee SIEM API to help make it more 
 accessible and pythonic.
 
-⚠️ This python module is currently experimental ⚠️
+ This python module is currently experimental 
 
 ### Main features
 - ESM monitoring (work in progress)

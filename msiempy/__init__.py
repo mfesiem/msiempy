@@ -410,6 +410,10 @@ class NitroSession():
             "get_alarms": ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""", None),
 
             "get_alarm_details": ("""notifyGetTriggeredNotification""", """{"id":%(id)s}"""),
+            
+            "get_alarm_details_int": ("NOTIFY_GETTRIGGEREDNOTIFICATIONDETAIL", 
+                                        """{"TID": "%(id)s"}"""),
+
 
             "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
 
@@ -476,7 +480,7 @@ class NitroSession():
 
             "get_alert_data": ("""ipsGetAlertData""", """{"id": "%(id)s"}"""),
             
-            "get_sys_info"  : ("sysGetSysInfo",None),
+            "get_sys_info"  : ("SYS_GETSYSINFO","""{}"""),
             
             "build_stamp" : ("essmgtGetBuildStamp",None)
     }
