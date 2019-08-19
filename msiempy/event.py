@@ -322,17 +322,17 @@ class Event(NitroDict):
 
     """        
     Default event field keys :  
-    - `Rule.msg`
-    - `Alert.SrcPort`
-    - `Alert.DstPort`
-    - `Alert.SrcIP`
-    - `Alert.DstIP`
-    - `SrcMac`
-    - `Alert.DstMac`
-    - `Alert.LastTime`
-    - `Rule.NormID`
-    - `Alert.DSIDSigID`
-    - `Alert.IPSIDAlertID`
+    - `Rule.msg`  
+    - `Alert.SrcPort`  
+    - `Alert.DstPort`  
+    - `Alert.SrcIP`  
+    - `Alert.DstIP`  
+    - `Alert.SrcMac`  
+    - `Alert.DstMac`  
+    - `Alert.LastTime`  
+    - `Rule.NormID`  
+    - `Alert.DSIDSigID`  
+    - `Alert.IPSIDAlertID`  
     
     You can request more fields by passing a list of fields to the `msiempy.event.EventManager` object.
     See msiempy/static JSON files to browse complete list : https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json
@@ -392,6 +392,7 @@ class Event(NitroDict):
     """Relatively common event fields that could be useful to have.
     """
 
+
     def __getitem__(self, key):
         """
         Automatically adding the table name of the field by iterating trought FIELDS_TABLES
@@ -439,15 +440,30 @@ class Event(NitroDict):
                 note.replace('"','\\"').replace('\n','\\n')))
 
     def add_note(self, note):
+        """Deprecated, please use set_note() method instead."""
         log.warning(str(DeprecationWarning())+" Please use set_note() method instead.")
         self.set_note(note)
         
         
-    def data_from_id(self, id):
-        """Uses the query module to retreive common event data. Do not use getAlertData, it's only a workaround. Only works with SIEM v 11.2.x
-        TODO : make the ipsGetAlertData call work."""
-        #return self.nitro.request('get_alert_data', id=id)
-        return EventManager(time_range='CURRENT_YEAR', filters=[('IPSIDAlertID',id)], compute_time_range=False).load_data()[0]
+    def data_from_id(self, id, use_query=False, extra_fields=[]):
+        """
+        Load event's data.  
+        Parameters : 
+        - `id` : The event ID. (i.e. : `144128388087414784|747122896`)
+        - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2.x.
+        - `extra_fields` : Only when `use_query=True`. Additionnal event fields to load in the query.
+        """
+        
+        if use_query == True :
+
+            e = EventManager(time_range='CURRENT_YEAR', filters=[('IPSIDAlertID',id)], compute_time_range=False, fields=extra_fields).load_data()
+            if len(e) == 1 :
+                return e[0]
+            else :
+                raise NitroError('Could not load event : '+str(id)+' from query :'+str(e.__dict__)+'. Try with use_query=False.')
+
+        elif use_query == False :
+            return self.nitro.request('get_alert_data', id=id)
 
     
 class QueryFilter(NitroObject):

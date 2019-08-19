@@ -5,86 +5,113 @@ import unittest
 class T(unittest.TestCase):
 
 
-    def test_print_no_detailed_filter(self):
+    def test_no_detailed_filter(self):
+
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_YEAR',
-            max_query_depth=0,
-            page_size=10)
-
-        print(alarms.__dict__)
+            page_size=5,
+            status_filter='unacknowledged')
 
         alarms.data = alarms._load_data(workers=5, no_detailed_filter=True)[0]
         
-        print('ALARMS JSON\n'+str(alarms.json))
-        print('ALARMS TEXT\n'+str(alarms))
-        print('ALARMS KEYS\n'+str(alarms.keys))
+        self.assertEqual(type(alarms), msiempy.alarm.AlarmManager, 'Type error')
 
-    def test_print(self):
+        self.assertEqual(len(alarms), 5, 'Alarm list lenght differ from page_size property')
 
-        alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_YEAR',
-            max_query_depth=0,
-            page_size=10)
+        for alarm in alarms : 
 
-        alarms.load_data()
-        print('ALARMS JSON\n'+str(alarms.json))
-        print('ALARMS TEXT\n'+str(alarms))
-        print('ALARMS KEYS\n'+str(alarms.keys))
+            self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
+            self.assertEqual(alarm['acknowledgedDate'], '', "status_filter is unacknowledged but alarm's acknowledgedDate has a value")
+            self.assertEqual(alarm['acknowledgedUsername'], '', "status_filter is unacknowledged but alarm's acknowledgedUsername has a value")
+            self.assertEqual(alarm.keys(), alarms.keys, "Alarms's key property is wrong")
 
-        self.assertGreater(len(alarms),0)
+        print(alarms)
    
-    def test_query(self):
-
-        alarms=msiempy.alarm.AlarmManager(time_range='CURRENT_YEAR', status_filter='unacknowledged', max_query_depth=0, page_size=50).load_data()
-        self.assertGreater(len(alarms),0)
-
-        for alarm in alarms:
-            self.assertEqual(alarm['acknowledgedDate'],  '')
-            self.assertEqual(alarm['acknowledgedUsername'], None)
+    def test_alarm_filter(self):
 
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_YEAR',
-            filters=[
-                ('severity', [50, 80,85,90,95,100]),
-                #('ruleMessage', 'HTTP'),
-                ('sourceIp', ['1','2','3'])],
+            filters=[('severity', [50,80,85,90,95,100])],
             max_query_depth=0,
             page_size=50
-            ).load_data(workers=20)
+            )
+            
+        alarms.load_data()
 
-        self.assertGreater(len(alarms),0)
+        self.assertGreater(50,len(alarms), "The filter don't seem to have filtered any alarm from the list")
 
         for alarm in alarms :
-            #self.assertRegex(alarm['alarmName'], 'High Severity Event', 'Filtering alarms is not working')
-            self.assertRegex(str(alarm['severity']), '10|25|50|80|85|90|95|100', 'Filtering alarms is not working')
-            #self.assertRegex(str(alarm['events'][0]['ruleMessage']), 'HTTP', 'Filtering alarms is not working')
-            self.assertRegex(str(alarm['events'][0]['sourceIp']), '1|2|3', 'Filtering alarms is not working')
+            self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
+            self.assertEqual(type(alarm['events']), str, 'Type error')
 
-    def test_get_event_details(self):
+            self.assertRegex(str(alarm['severity']), '50|80|85|90|95|100', 'Filtering alarms is not working')
+
+        print(alarms.json)
+            
+    def test_events_filter(self):
+
+        alarms = msiempy.alarm.AlarmManager(
+            time_range='CURRENT_YEAR',
+            filters=[('srcIp', ['10','159.33'])],
+            max_query_depth=0,
+            page_size=50
+            )
+            
+        alarms.load_data()
+
+        for alarm in alarms :
+            self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
+            self.assertEqual(type(alarm['events'][0]), msiempy.event.Event, 'Type error')
+
+            self.assertRegex(str(alarm['events'][0]['srcIp']), '10|159.33', 'Filtering alarms is not working')
+
+    def test_events_filter_using_query(self):
+
+        alarms = msiempy.alarm.AlarmManager(
+            time_range='CURRENT_YEAR',
+            filters=[('Alert.SrcIP', ['10','159.33'])],
+            max_query_depth=0,
+            page_size=50
+            )
+            
+        alarms.load_data(use_query=True)
+
+        for alarm in alarms :
+            self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
+            self.assertEqual(type(alarm['events'][0]), msiempy.event.Event, 'Type error')
+
+            self.assertRegex(str(alarm['events'][0]['Alert.SrcIP']), '10|159.33', 'Filtering alarms is not working')
+        
+    def test_print_and_compare(self):
 
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_YEAR',
             max_query_depth=0,
-            page_size=10
+            page_size=3
         )
         
-        alarms_with_event_summary = alarms.load_data()
-        alarms_with_genuine_events = alarms.load_events() #No need the re-call load_data() cause alrealy called on alarms
-        alarms_with_alert_data_events=alarms.load_events(by_id=True)
+        alarms_without_events = alarms.load_data(no_detailed_filter=True)
+        alarms_with_query_events = alarms.load_data(use_query=True)
+        alarms_with_alert_data_events = alarms.load_data()
 
-        self.assertGreater(len(alarms_with_event_summary),0)
+        """
+        self.assertGreater(len(alarms_without_events),0)
    
-        self.assertEqual(len(alarms_with_event_summary), len(alarms_with_genuine_events), "The two lists doesn't have the same lenght")
-        for i in range(len(alarms)):
-            self.assertEqual(alarms_with_event_summary[i]['alarmName'], alarms_with_genuine_events[i]['alarmName'], 'Loading events changed list order')
-            if len(alarms_with_event_summary[i]['events']) >0:
-                event_sum=alarms_with_event_summary[i]['events'][0]
-                event_genuine=alarms_with_genuine_events[i]['events'][0]
-                self.assertEqual(event_sum['ruleMessage'], event_genuine['Rule.msg'], 'getting event details is in trouble')
+        self.assertEqual(len(alarms_without_events), len(alarms_with_query_events), "The two lists doesn't have the same lenght")
 
-        print('ALARMS WITH EVENT SUM\n'+str(alarms_with_event_summary))
-        print('ALARMS WITH GENUINE EVENTS\n'+str(alarms_with_genuine_events))
-        print('ALARMS WITH ALERT DATA EVENTS\n'+str(alarms_with_alert_data_events))
+        for i in range(len(alarms)):
+
+            self.assertEqual(alarms_without_events[i]['alarmName'], alarms_with_query_events[i]['alarmName'], 'Loading events changed list order')
+
+            if len(alarms_without_events[i]['events']) >0:
+                event_sum=alarms_without_events[i]['events'][0]
+                event_genuine=alarms_with_query_events[i]['events'][0]
+                self.assertEqual(event_sum['ruleMessage'], event_genuine['Rule.msg'], 'getting event details is in trouble')
+            """
+
+        print('ALARMS WITHOUT EVENTS\n'+alarms_without_events.json)
+        print('ALARMS WITH QUERYIED EVENTS\n'+alarms_with_query_events.json)
+        print('ALARMS WITH ALERT DATA EVENTS\n'+alarms_with_alert_data_events.json)
 
 
 

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """# Welcome to the **msiempy** module documentation. The pythonic way to deal with McFee esm API.  
 
-### Classes listed in this module are used by other classes in sub-modules to build specialized objects and functions. 
-# If you with to see concrete example of code, **head to one of the sub-modules** !  
+Classes listed in this module are used by other classes in sub-modules to build specialized objects and functions. If you with to see concrete example of code, **head to one of the sub-modules** !  
 
 This API offers two main types of objects to interact with the SIEM : `msiempy.NitroList`, `msiempy.NitroDict`. 
 `msiempy.NitroList`s have default behaviours related to parallel execution, string representation generation and search feature.
@@ -478,7 +477,7 @@ class NitroSession():
 
             "get_watchlist_values": ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}"""),
 
-            "get_alert_data": ("""ipsGetAlertData""", """{"id": "%(id)s"}"""),
+            "get_alert_data": ("""ipsGetAlertData""", """{"id": {"value":"%(id)s"}}"""),
             
             "get_sys_info"  : ("SYS_GETSYSINFO","""{}"""),
             
@@ -1418,7 +1417,7 @@ class FilteredQueryList(NitroList):
         pass
 
     @abc.abstractmethod
-    def load_data(self, workers=15, slots=4, delta='24h'):
+    def load_data(self, workers=15, slots=4, delta='24h', *args, **kwargs):
         """
         Method to load the data from the SIEM.
         Split the query in defferents time slots if the query apprears not to be completed.
@@ -1444,7 +1443,7 @@ class FilteredQueryList(NitroList):
         
         """
 
-        items, completed = self._load_data(workers=workers)
+        items, completed = self._load_data(workers=workers, *args, **kwargs)
 
         if not completed :
             #If not completed the query is split and items aren't actually used
