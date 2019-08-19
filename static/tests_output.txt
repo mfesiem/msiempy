@@ -1,83 +1,0 @@
-test_add_value (tests.auth.test_watchlist.T) ... /usr/local/lib/python3.7/site-packages/urllib3/connectionpool.py:847: InsecureRequestWarning: Unverified HTTPS request is being made. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings
-  InsecureRequestWarning)
-ok
-test_print (tests.auth.test_watchlist.T) ... Loading...:   0%|          | 0/5 [00:00<?, ?it/s]Loading...:  20%|██        | 1/5 [00:00<00:01,  3.57it/s]Loading...:  40%|████      | 2/5 [00:04<00:04,  1.57s/it]Loading...:  60%|██████    | 3/5 [00:09<00:04,  2.44s/it]Loading...:  80%|████████  | 4/5 [00:09<00:01,  1.79s/it]Loading...: 100%|██████████| 5/5 [00:09<00:00,  1.34s/it]
-2019-08-18 22:25:43,707 - ERROR - 400 Client Error: 400 for url: https://207.179.200.58:4443/rs/esm/sysGetWatchlistValues?pos=0&count=50 ERROR_Internal (-1)
-ok
-test (tests.auth.test_session.T) ... ok
-test_add_note (tests.auth.test_event.T) ... 2019-08-18 22:25:45,866 - WARNING - The query won't fully complete. Try to divide in more slots or increase the requests_size
-2019-08-18 22:25:46,114 - ERROR - 404 Client Error: 404 for url: https://207.179.200.58:4443/rs/esm/ipsAddAlertNote No such command.
-2019-08-18 22:25:46,370 - ERROR - 404 Client Error: 404 for url: https://207.179.200.58:4443/rs/esm/ipsAddAlertNote No such command.
-ok
-test_query (tests.auth.test_event.T) ... 2019-08-18 22:25:49,544 - WARNING - The query won't fully complete. Try to divide in more slots or increase the requests_size
-ok
-test_query_splitted (tests.auth.test_event.T) ... Loading data from 2019-08-15T22:25:49.000Z to 2019-08-18T22:25:49.000Z. In 6 slots:   0%|          | 0/6 [00:00<?, ?it/s]2019-08-18 22:25:54,528 - WARNING - The query won't fully complete. Try to divide in more slots or increase the requests_size
-Loading data from 2019-08-15T22:25:49.000Z to 2019-08-18T22:25:49.000Z. In 6 slots:  17%|█▋        | 1/6 [00:02<00:11,  2.25s/it]Loading data from 2019-08-15T22:25:49.000Z to 2019-08-18T22:25:49.000Z. In 6 slots: 100%|██████████| 6/6 [00:02<00:00,  2.66it/s]
-ok
-test_print (tests.auth.test_device.T) ... ok
-test_get_event_details (tests.auth.test_alarm.T) ... 2019-08-18 22:25:58,824 - INFO - Getting alarms infos... Please be patient.
-Loading...:   0%|          | 0/10 [00:00<?, ?it/s]Loading...:  10%|█         | 1/10 [00:02<00:26,  2.91s/it]Loading...:  20%|██        | 2/10 [00:03<00:17,  2.19s/it]Loading...:  60%|██████    | 6/10 [00:03<00:06,  1.56s/it]Loading...: 100%|██████████| 10/10 [00:03<00:00,  2.62it/s]
-2019-08-18 22:26:02,654 - INFO - 10 alarms matching your filter(s)
-2019-08-18 22:26:02,654 - WARNING - The query won't fully complete. Try to divide in more slots or increase the requests_size
-Loading...:   0%|          | 0/10 [00:00<?, ?it/s]ERROR
-test_print (tests.auth.test_alarm.T) ... 2019-08-18 22:26:02,932 - INFO - Getting alarms infos... Please be patient.
-
-Loading...:   0%|          | 0/10 [00:00<?, ?it/s]Loading...:  10%|█         | 1/10 [00:02<00:18,  2.10s/it]Loading...:  20%|██        | 2/10 [00:03<00:14,  1.80s/it]Loading...:  50%|█████     | 5/10 [00:04<00:06,  1.36s/it]Loading...: 100%|██████████| 10/10 [00:04<00:00,  2.36it/s]
-2019-08-18 22:26:07,188 - INFO - 10 alarms matching your filter(s)
-2019-08-18 22:26:07,189 - WARNING - The query won't fully complete. Try to divide in more slots or increase the requests_size
-ok
-test_print_no_detailed_filter (tests.auth.test_alarm.T) ... 2019-08-18 22:26:07,935 - INFO - 10 alarms matching your filter(s)
-ok
-test_query (tests.auth.test_alarm.T) ... 2019-08-18 22:26:13,983 - INFO - Getting alarms infos... Please be patient.
-Loading...:   0%|          | 0/50 [00:00<?, ?it/s]Loading...:   2%|▏         | 1/50 [00:05<04:34,  5.61s/it]Loading...:  24%|██▍       | 12/50 [00:06<02:30,  3.95s/it]Loading...:  26%|██▌       | 13/50 [00:07<01:52,  3.04s/it]Loading...:  32%|███▏      | 16/50 [00:08<01:15,  2.22s/it]Loading...:  50%|█████     | 25/50 [00:09<00:39,  1.59s/it]Loading...:  52%|█████▏    | 26/50 [00:10<00:36,  1.52s/it]Loading...:  58%|█████▊    | 29/50 [00:10<00:22,  1.09s/it]Loading...:  70%|███████   | 35/50 [00:11<00:12,  1.23it/s]Loading...:  72%|███████▏  | 36/50 [00:12<00:11,  1.19it/s]Loading...:  82%|████████▏ | 41/50 [00:14<00:06,  1.49it/s]Loading...:  96%|█████████▌| 48/50 [00:14<00:00,  2.09it/s]Loading...: 100%|██████████| 50/50 [00:14<00:00,  2.80it/s]
-2019-08-18 22:26:28,462 - INFO - 50 alarms matching your filter(s)
-2019-08-18 22:26:28,462 - WARNING - The query won't fully complete. Try to divide in more slots or increase the requests_size
-FAIL
-test (tests.local.test_config.T) ... 2019-08-18 22:26:28,465 - INFO - Write config file at ./.msiem/conf.ini
-ok
-test_item (tests.local.test_base.T) ... ok
-test_json (tests.local.test_base.T) ... ok
-test_manager (tests.local.test_base.T) ... Loading...:   0%|          | 0/14357 [00:00<?, ?it/s]Loading...:  20%|█▉        | 2861/14357 [00:00<00:00, 28471.08it/s]Loading...:  33%|███▎      | 4668/14357 [00:00<00:00, 23923.97it/s]Loading...:  48%|████▊     | 6947/14357 [00:00<00:00, 23571.88it/s]Loading...:  61%|██████▏   | 8826/14357 [00:00<00:00, 21535.37it/s]Loading...:  78%|███████▊  | 11215/14357 [00:00<00:00, 21878.69it/s]Loading...:  93%|█████████▎| 13396/14357 [00:00<00:00, 21575.79it/s]Loading...: 100%|██████████| 14357/14357 [00:00<00:00, 21771.08it/s]
-Loading...:   0%|          | 0/14357 [00:00<?, ?it/s]Loading...:  18%|█▊        | 2514/14357 [00:00<00:00, 24357.44it/s]Loading...:  33%|███▎      | 4693/14357 [00:00<00:00, 23519.13it/s]Loading...:  47%|████▋     | 6816/14357 [00:00<00:00, 22477.82it/s]Loading...:  62%|██████▏   | 8903/14357 [00:00<00:00, 21849.64it/s]Loading...:  79%|███████▊  | 11296/14357 [00:00<00:00, 22334.19it/s]Loading...:  94%|█████████▍| 13478/14357 [00:00<00:00, 22004.13it/s]Loading...: 100%|██████████| 14357/14357 [00:00<00:00, 22027.00it/s]
-Loading...:   0%|          | 0/14357 [00:00<?, ?it/s]Loading...:  15%|█▍        | 2094/14357 [00:00<00:00, 20745.83it/s]Loading...:  28%|██▊       | 4083/14357 [00:00<00:00, 20463.19it/s]Loading...:  44%|████▍     | 6350/14357 [00:00<00:00, 20718.83it/s]Loading...:  60%|█████▉    | 8606/14357 [00:00<00:00, 21056.37it/s]Loading...:  76%|███████▌  | 10940/14357 [00:00<00:00, 21621.52it/s]Loading...:  91%|█████████ | 13053/14357 [00:00<00:00, 21159.55it/s]Loading...: 100%|██████████| 14357/14357 [00:00<00:00, 21220.62it/s]
-ok
-test_print (tests.local.test_base.T) ... ok
-
-======================================================================
-ERROR: test_get_event_details (tests.auth.test_alarm.T)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/Users/tristan/msiempy/tests/auth/test_alarm.py", line 72, in test_get_event_details
-    alarms_with_genuine_events = alarms.load_events() #No need the re-call load_data() cause alrealy called on alarms
-  File "/Users/tristan/msiempy/msiempy/alarm.py", line 143, in load_events
-    func_args=dict(extra_fields=extra_fields, by_id=by_id))
-  File "/Users/tristan/msiempy/msiempy/__init__.py", line 1158, in perform
-    func, elements), **tqdm_args))
-  File "/usr/local/lib/python3.7/site-packages/tqdm/_tqdm.py", line 1022, in __iter__
-    for obj in iterable:
-  File "/usr/local/Cellar/python/3.7.2_1/Frameworks/Python.framework/Versions/3.7/lib/python3.7/concurrent/futures/_base.py", line 586, in result_iterator
-    yield fs.pop().result()
-  File "/usr/local/Cellar/python/3.7.2_1/Frameworks/Python.framework/Versions/3.7/lib/python3.7/concurrent/futures/_base.py", line 425, in result
-    return self.__get_result()
-  File "/usr/local/Cellar/python/3.7.2_1/Frameworks/Python.framework/Versions/3.7/lib/python3.7/concurrent/futures/_base.py", line 384, in __get_result
-    raise self._exception
-  File "/usr/local/Cellar/python/3.7.2_1/Frameworks/Python.framework/Versions/3.7/lib/python3.7/concurrent/futures/thread.py", line 57, in run
-    result = self.fn(*self.args, **self.kwargs)
-  File "/Users/tristan/msiempy/msiempy/alarm.py", line 357, in load_events
-    if len(event['sourceIp']) >= 7 :
-TypeError: string indices must be integers
-
-======================================================================
-FAIL: test_query (tests.auth.test_alarm.T)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/Users/tristan/msiempy/tests/auth/test_alarm.py", line 43, in test_query
-    self.assertEqual(alarm['acknowledgedUsername'], None)
-AssertionError: '' != None
-
-----------------------------------------------------------------------
-Ran 16 tests in 68.219s
-
-FAILED (failures=1, errors=1)
-Test failed: <unittest.runner.TextTestResult run=16 errors=1 failures=1>
-error: Test failed: <unittest.runner.TextTestResult run=16 errors=1 failures=1>
