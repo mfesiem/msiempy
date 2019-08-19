@@ -12,7 +12,7 @@ class T(unittest.TestCase):
             page_size=5,
             status_filter='unacknowledged')
 
-        alarms.data = alarms._load_data(workers=5, no_detailed_filter=True)[0]
+        alarms.load_data(no_detailed_filter=True)
         
         self.assertEqual(type(alarms), msiempy.alarm.AlarmManager, 'Type error')
 
@@ -21,6 +21,8 @@ class T(unittest.TestCase):
         for alarm in alarms : 
 
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
+            self.assertEqual(type(alarm['events']), str, 'Type error')
+            
             self.assertEqual(alarm['acknowledgedDate'], '', "status_filter is unacknowledged but alarm's acknowledgedDate has a value")
             self.assertEqual(alarm['acknowledgedUsername'], '', "status_filter is unacknowledged but alarm's acknowledgedUsername has a value")
             self.assertEqual(alarm.keys(), alarms.keys, "Alarms's key property is wrong")
@@ -42,7 +44,7 @@ class T(unittest.TestCase):
 
         for alarm in alarms :
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
-            self.assertEqual(type(alarm['events']), str, 'Type error')
+            self.assertEqual(type(alarm['events']), msiempy.event.Event, 'Type error')
 
             self.assertRegex(str(alarm['severity']), '50|80|85|90|95|100', 'Filtering alarms is not working')
 
