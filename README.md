@@ -10,7 +10,7 @@ accessible and pythonic.
 ### Main features
 - ESM monitoring (work in progress)
 - Datasource operations : add, edit, delete - including client datasources (work in progress)
-- Alarm operations and querying : filter, [un]acknowledge, delete (not working in v11.2.1 see [#11](https://github.com/mfesiem/msiempy/issues/11).  
+- Alarm operations and querying : filter, [un]acknowledge, delete  
 - Event querying and builtin workaround SIEM query `limit`
 - Watchlist operations : list watchlists, add values (work in progress)
 - Single stable session handler and built-in asynchronous jobs

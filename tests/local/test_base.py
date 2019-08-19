@@ -78,8 +78,6 @@ class T(unittest.TestCase):
 
         print('SPECIFIC FIELDS')
         print(manager.get_text(fields=['County', 'Eco_Name']))
-
-        print(':)')
     
 
 
