@@ -1280,8 +1280,6 @@ class FilteredQueryList(NitroList):
         #self.filters=filters filter property setter should be called in the concrete class
         #TODO find a better solution to integrate the filter propertie
 
-        self.load_async=load_async
-
         if start_time is not None and end_time is not None :
             self.start_time=start_time
             self.end_time=end_time

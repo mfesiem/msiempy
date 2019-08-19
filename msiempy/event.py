@@ -420,16 +420,13 @@ class Event(NitroDict):
 
     def clear_notes(self):
         """
-        Desctructive action.
-        Replace the notes by an empty string. 
-        Do not work with SIEM v 11.2.1.
+        Replace the notes by an empty string. Desctructive action.
         """
-        NotImplementedError()
+        self.set_note('')
 
-    def add_note(self, note):
+    def set_note(self, note):
         """
-        Desctructive action. It's actually going to replace the note !
-        Add a new note in the note field.
+        Set the event's note. Desctructive action.
         """
         if len(note) >= 4000:
             log.warning("The note is longer than 4000 characters, only the first 4000 characters will be kept. The maximum accepted by the SIEM is 4096 characters.")
@@ -440,10 +437,17 @@ class Event(NitroDict):
             note="NOTE (msiempy-{}) : \\n{}".format(
                 str(datetime.datetime.now()),
                 note.replace('"','\\"').replace('\n','\\n')))
+
+    def add_note(self, note):
+        log.warning(str(DeprecationWarning())+" Please use set_note() method instead.")
+        self.set_note(note)
+        
         
     def data_from_id(self, id):
-        """EsmAlertData wrapper"""
-        return self.nitro.request('get_alert_data', id=id)
+        """Uses the query module to retreive common event data. Do not use getAlertData, it's only a workaround. Only works with SIEM v 11.2.x
+        TODO : make the ipsGetAlertData call work."""
+        #return self.nitro.request('get_alert_data', id=id)
+        return EventManager(time_range='CURRENT_YEAR', filters=[('IPSIDAlertID',id)], compute_time_range=False).load_data()[0]
 
     
 class QueryFilter(NitroObject):
@@ -654,12 +658,26 @@ class FieldFilter(QueryFilter):
 
     @values.setter  
     def values(self, values):
-        for val in values :
-            if isinstance(val, dict):
-                self.add_value(**val)
+        if isinstance(values, list): 
 
-            elif isinstance(val, (int, float, str)) :
-                self.add_basic_value(val)
+            for val in values :
+                if isinstance(val, dict):
+                    self.add_value(**val)
+
+                elif isinstance(val, (int, float, str)) :
+                    self.add_basic_value(val)
+
+                else:
+                    raise TypeError("Invalid filter type, must be a list, int, float or str")
+        
+        elif isinstance(values, dict):
+            self.add_value(**values)
+
+        elif isinstance(values, (int, float, str)) :
+            self.add_basic_value(values)
+        
+        else :
+            raise TypeError("Invalid filter type, must be a list, int, float or str")
         
     def add_value(self, type, **args):
         """
