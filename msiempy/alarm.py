@@ -142,13 +142,21 @@ class AlarmManager(FilteredQueryList):
         """
         return AlarmManager(alist=super().load_data(**kwargs))
 
-    def qry_load_data(self, workers, no_detailed_filter=False, use_query=False, extra_fields=[]):
+    def qry_load_data(self, workers, no_detailed_filter=False, use_query=False, extra_fields=[], *args, **kwargs):
         """
-        Method that loads the data.
-            -> Fetch the complete list of alarms 
-            -> Filter depending on alarms related filters 
-            -> load events details
-            -> Filter depending on event related filters
+        Method that loads the data :
+            -> Fetch the list of alarms and load alarms details  
+            -> Filter depending on alarms related filters  
+            -> Load the events details  
+            -> Filter depending on event related filters  
+
+        Parameters:  
+        - `workers` : number of asynchronous workers
+        - `no_detailed_filter`
+        - `use_query`
+        - `extra_fields`
+        - `*args, **kwargs`
+
         """
 
         if self.time_range == 'CUSTOM' :
@@ -278,11 +286,11 @@ class Alarm(NitroDict):
     """
 
     ALARM_EVENT_FILTER_FIELDS=[
-    ("ruleName",'msg','rulemsg'),
-    ("srcIp",'srcip'),
-    ("destIp",'dstip'),
-    ("protocol",'prot'),
-    ("lastTime",'date'),
+    ("ruleName"),
+    ("srcIp",),
+    ("destIp",),
+    ("protocol",),
+    ("lastTime",),
     ("subtype",),
     ("destPort",),
     ("destMac",),
@@ -299,29 +307,7 @@ class Alarm(NitroDict):
     ("domain",),
     ("ipsId",),
     ]
-    """
-    Possible fields usable in a event filter : ```("ruleName",'msg','rulemsg'),
-    ("srcIp",'srcip'),
-    ("destIp",'dstip'),
-    ("protocol",'prot'),
-    ("lastTime",'date'),
-    ("subtype",),
-    ("destPort",),
-    ("destMac",),
-    ("srcMac",),
-    ("srcPort",),
-    ("deviceName",),
-    ("sigId",),
-    ("normId",),
-    ("srcUser",),
-    ("destUser",),
-    ("normMessage",),
-    ("normDesc",),
-    ("host",),
-    ("domain",),
-    ("ipsId",),```
-
-    """
+    __pdoc__['Alarm.ALARM_EVENT_FILTER_FIELDS']=""" Possible fields usable in a event filter : ```%(fields)s```""" % dict(fields=', '.join(ALARM_EVENT_FILTER_FIELDS))
 
     ALARM_DEFAULT_FIELDS=['triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage'] #could also be ['id','alarmName', 'triggeredDate', 'events']
     """Defaulfs fields : `'triggeredDate','alarmName','status','sourceIp','destIp','ruleMessage'` (not used , may be for printing with `msiempy.NitroList.get_text(fields=msiempy.alarm.ALARM_DEFAULT_FIELDS)`)

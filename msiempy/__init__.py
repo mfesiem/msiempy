@@ -481,29 +481,29 @@ class NitroSession():
             "build_stamp" : ("essmgtGetBuildStamp",None)
     }
     __pdoc__['NitroSession.PARAMS'] = """
-This structure provide a central place to aggregate API methods and parameters. 
-The parameters are stored as docstrings to support string replacement.  
+        This structure provide a central place to aggregate API methods and parameters. 
+        The parameters are stored as docstrings to support string replacement.  
 
-Args:  
-    method (str): Dict key associated with desired function
-    Use normal dict access, PARAMS["method"], or PARAMS.get("method")
+        Args:  
+            method (str): Dict key associated with desired function
+            Use normal dict access, PARAMS["method"], or PARAMS.get("method")
 
-Returns:  
-    - `tuple `: (string, string) : The first string is the method name that is actually used as
-    the URI or passed to the ESM. The second string is the params
-    required for that method. Some params require variables be
-    interpolated as documented in the Attributes.
+        Returns:  
+            - `tuple `: (string, string) : The first string is the method name that is actually used as
+            the URI or passed to the ESM. The second string is the params
+            required for that method. Some params require variables be
+            interpolated as documented in the Attributes.
 
-Example:
-    method, params = PARAMS.get("login").format(username, password)  
-    See : `msiempy.NitroSession.request`
+        Example:
+            method, params = PARAMS.get("login").format(username, password)  
+            See : `msiempy.NitroSession.request`
 
-Important note : 
-    Do not use sigle quotes (') to delimit data into the interpolated strings !
+        Important note : 
+            Do not use sigle quotes (') to delimit data into the interpolated strings !
 
-Content :  
-    %(content)s
-    """ % dict(content=json.dumps(PARAMS, indent=1).replace('\n',"""  
+        Content :  
+            %(content)s
+            """ % dict(content=json.dumps(PARAMS, indent=1).replace('\n',"""  
     """)[:1300]+""" [...] and more..  
     See around: https://github.com/mfesiem/msiempy/blob/master/msiempy/__init__.py#L266
     """)
@@ -671,7 +671,7 @@ Content :
 
             - `request`: Keyword corresponding to the request name in `msiempy.NitroSession.PARAMS` mapping.  
             - `**kwargs` Can contain :
-                - `misiempy.NitroSession.esm_request` arguments except `method` and `data`
+                - `msiempy.NitroSession.esm_request` arguments except `method` and `data`
                 - Interpolation parameters that will be match to `msiempy.NitroSession.PARAMS` templates. Check the file to be sure of the keyword arguments.  
 
             Returns : 
@@ -1216,8 +1216,7 @@ class FilteredQueryList(NitroList):
     """
     
     DEFAULT_TIME_RANGE="CURRENT_DAY"
-    __pdoc__['FilteredQueryList.DEFAULT_TIME_RANGE']="""
-    Default time range : %(default)s""" % dict(default=DEFAULT_TIME_RANGE)
+    __pdoc__['FilteredQueryList.DEFAULT_TIME_RANGE']="""Default time range : %(default)s""" % dict(default=DEFAULT_TIME_RANGE)
 
     POSSIBLE_TIME_RANGE=[
             "CUSTOM",
@@ -1410,7 +1409,7 @@ class FilteredQueryList(NitroList):
         pass 
 
     @abc.abstractmethod
-    def qry_load_data(self, workers, *args, **kwargs):
+    def qry_load_data(self, *args, **kwargs):
         """
         Method to load the data from the SIEM.
         Rturn a tuple (items, completed).
@@ -1425,7 +1424,7 @@ class FilteredQueryList(NitroList):
         If you're looking for `max_query_depth`, it's define at the creation of the `msiempy.FilteredQueryList`.
 
         Note :
-            IF you looking for load_async = True/False, you should pass this to the constructor method `msiempy.FilteredQueryList`
+            IF you looking for `load_async` = True/False, you should pass this to the constructor method `msiempy.FilteredQueryList`
                 or by setting the attribute manually like `manager.load_asynch=True`
             Only the first query is loaded asynchronously.
 
@@ -1439,8 +1438,10 @@ class FilteredQueryList(NitroList):
         - `*args, **kwargs` : concrete `qry_load_data` parameters
 
         Returns : `msiempy.FilteredQueryList`
-        
         """
+
+        if workers > slots :
+            log.warning("The numbre of slots is smaller than the number of workers, the complete asynchronous potential won't be used")
 
         items, completed = self.qry_load_data(workers=workers, *args, **kwargs)
 

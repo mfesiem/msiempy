@@ -218,7 +218,7 @@ class EventManager(FilteredQueryList):
         """
         return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
 
-    def qry_load_data(self, workers):
+    def qry_load_data(self, *args, **kwargs):
         """"
             Concrete helper method to execute the query and load the data : 
                 -> Submit the query -> wait -> get the events -> parse -
@@ -227,6 +227,9 @@ class EventManager(FilteredQueryList):
                       tuple (items, completed).
             
             (1) aka EventManager
+
+            Parameters :
+            - `*args, **kwargs` : Not used
         """
         query_infos=dict()
 
