@@ -220,17 +220,16 @@ class EventManager(FilteredQueryList):
 
     def qry_load_data(self, **kwargs):
         """"
-            Concrete helper method to execute the query and load the data : 
-                -> Submit the query -> wait -> get the events -> parse -
-                    -> convert to EventManager ->  set self.data and return 
-            Returns a tuple ( list of Events(1) ,the status of the query )
-                      tuple (items, completed).
-            
-            (1) aka EventManager
+        Concrete helper method to execute the query and load the data : 
+            -> Submit the query 
+            -> Wait the query to be executed
+            -> Get and parse the events
+        
+        Parameters :  
+        - `**kwargs` : Not used  
 
-            Parameters:
-            - `**kwargs` : Not used
- 
+        Returns : `tuple` : ( `msiempy.event.EventManager`, Status of the query : `completed` )
+
         """
         query_infos=dict()
 
@@ -453,10 +452,11 @@ class Event(NitroDict):
     def data_from_id(self, id, use_query=False, extra_fields=[]):
         """
         Load event's data.  
-        Parameters : 
-        - `id` : The event ID. (i.e. : `144128388087414784|747122896`)
-        - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2.x.
-        - `extra_fields` : Only when `use_query=True`. Additionnal event fields to load in the query.
+
+        Parameters :   
+        - `id` : The event ID. (i.e. : `144128388087414784|747122896`)  
+        - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2.x.  
+        - `extra_fields` : Only when `use_query=True`. Additionnal event fields to load in the query.  
         """
         
         if use_query == True :
@@ -530,8 +530,9 @@ class GroupFilter(QueryFilter):
 
     def __init__(self, filters, logic='AND') :
         """Parameters :  
-        - `filters` : a list of filters, it can be `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter`
-        - `logic` : 'AND' or 'OR'
+
+        - `filters` : a list of filters, it can be `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter`  
+        - `logic` : 'AND' or 'OR'  
         """
         super().__init__()
         
@@ -602,9 +603,9 @@ class FieldFilter(QueryFilter):
         """
         Parameters:
 
-        - `name` : field name as string.
-        - `values` : list of values the field is going to be tested againts with the specified orperator.
-        - `orperator` : operator, see `msiempy.event.FieldFilter.POSSIBLE_OPERATORS`.
+        - `name` : field name as string.  
+        - `values` : list of values the field is going to be tested againts with the specified orperator.  
+        - `orperator` : operator, see `msiempy.event.FieldFilter.POSSIBLE_OPERATORS`.  
         """
         super().__init__()
         #Declaring attributes
@@ -666,8 +667,7 @@ class FieldFilter(QueryFilter):
         `dict` or calls `msiempy.FilteredQueryList.add_basic_value()` if value type is `int`, `float` or `str`.
         Values will always be added to the filter. To remove values, handle directly the `_values` property.
 
-        Example:  
-        ```
+        Example :  
             >>> filter = FieldFilter(name='DstIP',values=['10.1.13.0/24'],operator='IN')
             >>> filter.values=['10.1.14.0/8', {'type':'EsmWatchlistValue', 'watchlist':42}]
             >>> filter.config_dict
@@ -677,7 +677,6 @@ class FieldFilter(QueryFilter):
             'values': [{'type': 'EsmBasicValue', 'value': '10.1.13.0/24'},
                 {'type': 'EsmBasicValue', 'value': '10.1.14.0/8'},
                 {'type': 'EsmWatchlistValue', 'watchlist': 42}]}
-                ```
             
         """
         return (self._values)

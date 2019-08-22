@@ -154,12 +154,15 @@ class AlarmManager(FilteredQueryList):
             -> Load the events details  
             -> Filter depending on event related filters  
 
-        Parameters:  
+        Parameters :  
+
         - `workers` : Number of asynchronous workers  
         - `no_detailed_filter` : Don't load detailed alarms and events infos, you can only filter based on `msiempy.alarm.Alarm.ALARM_FILTER_FIELDS` values  
         - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2.1 or greater  
         - `extra_fields` :  Only when `use_query=True`. Additionnal event fields to load in the query. See : `msiempy.event.EventManager`  
         - `**kwargs` : Not used
+
+        Returns : `tuple` : ( `msiempy.alarm.AlarmManager`, Status of the query : `completed` )
 
         """
 
@@ -285,7 +288,7 @@ class Alarm(NitroDict):
     __pdoc__['Alarm.ALARM_FILTER_FIELDS']="""Possible alarm related fields usable in a filter : ```%(fields)s```""" % dict(fields=', '.join([ '/'.join(synonims) for synonims in ALARM_FILTER_FIELDS]))
 
     ALARM_EVENT_FILTER_FIELDS=[
-    ("ruleName"),
+    ("ruleName",),
     ("srcIp",),
     ("destIp",),
     ("protocol",),

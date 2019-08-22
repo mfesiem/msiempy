@@ -62,9 +62,10 @@ class NitroConfig(configparser.ConfigParser):
     If a `.msiem/` directory exists in your current directory, the program will assume the `conf.ini` file is there, if not, it will create it with default values. 
     Secondly, if no `.msiem/` directory exists in the current directory, it will be automatically placed in a appropriate place depending of your platform:  
 
-    - For Windows:  `%APPDATA%\\`
-    - For Mac :     $HOME/  
-    - For Linux :   $XDG_CONFIG_HOME/ or : $HOME/
+    For Windows: `%APPDATA%\.msiem\conf.ini`
+    For Mac : `$HOME/.msiem/conf.ini`
+    For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`
+    If `.msiem` folder exists in you local directory : `./.msiem/conf.ini`
 
     """
 
@@ -208,7 +209,7 @@ class NitroConfig(configparser.ConfigParser):
     def find_ini_location():
         '''
         Returns the location of a supposed conf.ini file the `conf.ini` file.  
-        If folder ./.msiem exists, assume the `conf.ini` file is in there.
+        If `.msiem` folder exists in you local directory, assume the `conf.ini` file is in there.
         If the file doesn't exist, will still return the location.
         Do not create a file nor directory, you must call `msiempy.NitroConfig.write`.
         '''
@@ -241,10 +242,10 @@ class NitroSession():
     '''
 
     BASE_URL = 'https://{}/rs/esm/'
-    __pdoc__['NitroSession.BASE_URL']="""API v2 base url: `%(url)s`""" % dict(url=', '.join(BASE_URL))
+    __pdoc__['NitroSession.BASE_URL']="""API v2 base url: `%(url)s`""" % dict(url=BASE_URL)
 
     BASE_URL_PRIV = 'https://{}/ess/'
-    __pdoc__['NitroSession.BASE_URL_PRIV']="""Private API base URL: `%(url)s`""" % dict(url=', '.join(BASE_URL_PRIV))
+    __pdoc__['NitroSession.BASE_URL_PRIV']="""Private API base URL: `%(url)s`""" % dict(url=BASE_URL_PRIV)
 
     __initiated__ = False
     """
@@ -480,29 +481,28 @@ class NitroSession():
             
             "build_stamp" : ("essmgtGetBuildStamp",None)
     }
-    __pdoc__['NitroSession.PARAMS'] = """
-        This structure provide a central place to aggregate API methods and parameters. 
-        The parameters are stored as docstrings to support string replacement.  
+    __pdoc__['NitroSession.PARAMS'] = """This structure provide a central place to aggregate API methods and parameters. 
+    The parameters are stored as docstrings to support string replacement.  
 
-        Args:  
-            method (str): Dict key associated with desired function
-            Use normal dict access, PARAMS["method"], or PARAMS.get("method")
+    Args:  
+        method (str): Dict key associated with desired function
+        Use normal dict access, PARAMS["method"], or PARAMS.get("method")
 
-        Returns:  
-            - `tuple `: (string, string) : The first string is the method name that is actually used as
-            the URI or passed to the ESM. The second string is the params
-            required for that method. Some params require variables be
-            interpolated as documented in the Attributes.
+    Returns:  
+        - `tuple `: (string, string) : The first string is the method name that is actually used as
+        the URI or passed to the ESM. The second string is the params
+        required for that method. Some params require variables be
+        interpolated as documented in the Attributes.
 
-        Example:
-            `method, params = PARAMS.get("login").format(username, password)`. See : `msiempy.NitroSession.request`
+    Example:
+        `method, params = PARAMS.get("login").format(username, password)`. See : `msiempy.NitroSession.request`
 
-        Important note : 
-            Do not use sigle quotes (') to delimit data into the interpolated strings !
+    Important note : 
+        Do not use sigle quotes (') to delimit data into the interpolated strings !
 
-        Content :  
-            %(content)s
-            """ % dict(content=json.dumps(PARAMS, indent=4).replace('\n',"""  
+    Content :
+        %(content)s
+        """ % dict(content=json.dumps(PARAMS, indent=4).replace('\n',"""  
     """)[:130]+""" [...] and more..  
     See : https://github.com/mfesiem/msiempy/blob/master/msiempy/__init__.py#L266
     """)
@@ -550,18 +550,18 @@ class NitroSession():
         In any way, the ESM response is unpacked by `msiempy.NitroSession.unpack_resp`
 
         Parameters :
-            - `method` : ESM API enpoint name and url parameters
+            - `method` : ESM API enpoint name and url parameters  
             - `http`: HTTP method.  
-            - `data` : dict data to send
-            - `callback` : function to apply afterwards
-            - `raw` : If true will return the Response object from requests module. 
-            - `secure` : If true will not log the content of the request.  
+            - `data` : dict data to send  
+            - `callback` : function to apply afterwards  
+            - `raw` : If true will return the Response object from requests module.   
+            - `secure` : If true will not log the content of the request.   
 
         Returns : 
-            - a `dict` or `list` object 
-            - the `resquest.Response` object if raw=True
-            - `result.text` if `requests.HTTPError`, 
-            - `None` if Timeout or TooManyRedirects if raw=False
+            - a `dict`, `list` or `str` object  
+            - the `resquest.Response` object if raw=True  
+            - `result.text` if `requests.HTTPError`,   
+            - `None` if Timeout or TooManyRedirects if raw=False  
 
          Note : Private API is under /ess/ and public api is under /rs/esm  
 
@@ -640,7 +640,7 @@ class NitroSession():
             return None
         
     def login(self):
-        """Authentication is done lazily upon the first call to ``msiempy.NitroSession.request` method, but you can still do it manually by calling this method.  
+        """Authentication is done lazily upon the first call to `msiempy.NitroSession.request` method, but you can still do it manually by calling this method.  
         Throws `msiempy.NitroError` if login fails
         """
         userb64 = tob64(self.config.user)
@@ -665,7 +665,8 @@ class NitroSession():
         """
             This method is the centralized interface of all requests going to the SIEM.  
             It interpolates `**params` with `msiempy.NitroSession.PARAMS` docstrings and build a valid datastructure with `ast`.  
-            Wrapper around the `msiempy.NitroSession.esm_request` method.
+            Wrapper around the `msiempy.NitroSession.esm_request` method.  
+
             Parameters:  
 
             - `request`: Keyword corresponding to the request name in `msiempy.NitroSession.PARAMS` mapping.  
@@ -674,7 +675,7 @@ class NitroSession():
                 - Interpolation parameters that will be match to `msiempy.NitroSession.PARAMS` templates. Check the file to be sure of the keyword arguments.  
 
             Returns : 
-            - a `dict` or `list` object  
+            - a `dict`, `list` or `str` object  
             - the `resquest.Response` object if raw=True  
             - `result.text` if `requests.HTTPError`,   
             - `None` if Timeout or TooManyRedirects if raw=False  
