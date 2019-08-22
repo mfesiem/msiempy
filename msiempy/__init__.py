@@ -34,6 +34,7 @@ from prettytable import MSWORD_FRIENDLY
 import datetime
 import functools
 import textwrap
+import inspect
 
 from .__utils__ import regex_match, tob64, format_esm_time, convert_to_time_obj, timerange_gettimes, parse_timedelta, divide_times
 
@@ -46,7 +47,7 @@ except : pass
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 log = logging.getLogger('msiempy')
 
-
+__pdoc__={} #Init pdoc overwrite engine to document stuff dynamically
 
 class NitroError(Exception):
     """
@@ -258,11 +259,6 @@ class NitroSession():
     NitroConfig object.
     """
     
-    executor = None
-    """
-    Executor object.
-    """
-
     PARAMS = {
         "login": ("login",
                 """{"username": "%(username)s",
@@ -414,11 +410,11 @@ class NitroSession():
                                         """{"TID": "%(id)s"}"""),
 
 
-            "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
+            "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList"::%(ids)s}}"""),
 
-            "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
+            "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
 
-            "delete_alarms": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
+            "delete_alarms": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
             
             "get_possible_filters" : ( """qryGetFilterFields""", None ),
 
@@ -483,27 +479,33 @@ class NitroSession():
             
             "build_stamp" : ("essmgtGetBuildStamp",None)
     }
-    """
-    This structure provide a central place to aggregate API methods and parameters. 
-    The parameters are stored as docstrings to support string replacement.
+    __pdoc__['NitroSession.PARAMS'] = """
+This structure provide a central place to aggregate API methods and parameters. 
+The parameters are stored as docstrings to support string replacement.  
 
-    Args:
-        method (str): Dict key associated with desired function
-        Use normal dict access, PARAMS["method"], or PARAMS.get("method")
+Args:  
+    method (str): Dict key associated with desired function
+    Use normal dict access, PARAMS["method"], or PARAMS.get("method")
 
-    Returns:
-        tuple: (string, string)
+Returns:  
+    - `tuple `: (string, string) : The first string is the method name that is actually used as
+    the URI or passed to the ESM. The second string is the params
+    required for that method. Some params require variables be
+    interpolated as documented in the Attributes.
 
-        The first string is the method name that is actually used as
-        the URI or passed to the ESM. The second string is the params
-        required for that method. Some params require variables be
-        interpolated as documented in the Attributes.
+Example:
+    method, params = PARAMS.get("login").format(username, password)  
+    See : `msiempy.NitroSession.request`
 
-    Example:
-        method, params = params["login"].format(username, password)
+Important note : 
+    Do not use sigle quotes (') to delimit data into the interpolated strings !
 
-    Important note : Do not use sigle quotes (') to delimit data into the interpolated strings !
-    """
+Content :  
+    %(content)s
+    """ % dict(content=json.dumps(PARAMS, indent=1).replace('\n',"""  
+    """)[:1300]+""" [...] and more..  
+    See around: https://github.com/mfesiem/msiempy/blob/master/msiempy/__init__.py#L266
+    """)
         
     def __str__(self):
         return repr(self.__unique_state__) 
@@ -540,24 +542,44 @@ class NitroSession():
                 quiet=self.config.quiet,
                 logfile=self.config.logfile)
 
-    def _request(self, method, http, data=None, callback=None, raw=False, secure=False):
+
+    def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False):
         """
-        Helper method that format the request, handle the basic parsing of the SIEM result 
-        as well as other errors.        
-        If method is all upper cases, it's a private API call.
-        Private API is under /ess/ and public api is under /rs/esm
-        Returns None if HTTP error, Timeout or TooManyRedirects if raw=False
+        Helper method that format the request, handle the basic parsing of the SIEM result as well as other errors.          
+        If method is all upper cases, it's going to be formatted as a private API call. See `msiempy.NitroSession.format_params` and `msiempy.NitroSession.format_priv_resp` 
+        In any way, the ESM response is unpacked by `msiempy.NitroSession.unpack_resp`
+
+        Parameters :
+            - `method` : ESM API enpoint name and url parameters
+            - `http`: HTTP method.  
+            - `data` : dict data to send
+            - `callback` : function to apply afterwards
+            - `raw` : If true will return the Response object from requests module. 
+            - `secure` : If true will not log the content of the request.  
+
+        Returns : 
+            - a `dict` or `list` object 
+            - the `resquest.Response` object if raw=True
+            - `result.text` if `requests.HTTPError`, 
+            - `None` if Timeout or TooManyRedirects if raw=False
+
+         Note : Private API is under /ess/ and public api is under /rs/esm  
+
         """
 
         url=str()
         privateApiCall=False
         result=None
 
+        #Logging the data request if not secure | Logs anyway the method
+        log.debug('Requesting HTTP '+str(http)+' '+ str(method) + 
+            (' with data '+str(data) if (data is not None and not secure) else '') )
+        log.debug(locals())
         #Handling private API calls formatting
         if method == method.upper():
             privateApiCall=True
             url = self.BASE_URL_PRIV
-            data = self._format_params(method, **data)
+            data = self.format_params(method, **data)
             log.debug('Private API call : '+str(method)+' Formatted params : '+str(data))
         
         #Normal API calls
@@ -565,10 +587,6 @@ class NitroSession():
             url = self.BASE_URL
             if data:
                 data = json.dumps(data)
-
-        #Logging the data request if not secure | Logs anyway the method
-        log.debug('Requesting HTTP '+http+' '+ method + 
-            (' with data '+str(data) if (data is not None and not secure) else '') )
 
         try :
             result = requests.request(
@@ -596,17 +614,15 @@ class NitroSession():
                     # _InvalidFilter (228)
                     # _IndexNotTurnedOn (49)
                     # Status Code 500: Error processing request, see server logs for more details 
-                    # <Response [400]>
-                    400 Client Error: 400 for url: https://207.179.200.58:4443/rs/esm/ipsGetAlertData Cannot construct instance of `com.mcafee.siem.api.data.alert.EsmAlertId`
                     # Input Validation Error
                     # By creating a new class
                     """
 
                 else: #
-                    result = self._unpack_resp(result)
+                    result = self.unpack_resp(result)
 
                     if privateApiCall :
-                        result = self._format_priv_resp(result)
+                        result = self.format_priv_resp(result)
 
                     if callback:
                         result = callback(result)
@@ -623,7 +639,7 @@ class NitroSession():
             log.error(e)
             return None
         
-    def _login(self):
+    def login(self):
         """
         Internal method that will be called when the user is not logged yet.
         Throws NitroError if login fails
@@ -646,43 +662,52 @@ class NitroSession():
         else:
             raise NitroError('ESM Login Error: Response empty')
 
-    def request(self, request, http='post', callback=None, raw=False, secure=False, **params):
+    def request(self, request, **kwargs):
         """
             This method is the centralized interface of all requests going to the SIEM.  
-
+            It interpolates `**params` with `msiempy.NitroSession.PARAMS` docstrings and build a valid datastructure with `ast`.  
+            Wrapper around the `msiempy.NitroSession.esm_request` method.
             Parameters:  
 
             - `request`: Keyword corresponding to the request name in `msiempy.params` mapping.  
-            - `http`: HTTP method.  
-            - `callback`: A callable to execute on the returned object if needed.  
-            - `raw`: If true will return the Response object from requests module.  
-            - `secure`: If true will not log the content of the request.  
-            - `**params`: Interpolation parameters that will be match to `msiempy.params` templates. Check the file to be sure of the keyword arguments.  
+            - `**kwargs` Can contain :
+                - `misiempy.NitroSession.esm_request` arguments except `method` and `data`
+                - Interpolation parameters that will be match to `msiempy.NitroSession.PARAMS` templates. Check the file to be sure of the keyword arguments.  
 
-            Returns None if HTTP error, Timeout or TooManyRedirects if raw=False.
+            Returns : 
+            - a `dict` or `list` object  
+            - the `resquest.Response` object if raw=True  
+            - `result.text` if `requests.HTTPError`,   
+            - `None` if Timeout or TooManyRedirects if raw=False  
         """
-        log.debug("Calling nitro request : {} params={} http={} raw={} secure={} callback={}".format(
-            str(request), str(params) if not secure else '***', str(http), str(raw), str(secure), str(callback)
-        ))
+        log.debug("Calling nitro request : {} kwargs={}".format(
+            str(request), str(kwargs) if 'secure' in kwargs and kwargs['secure']==True else str(kwargs)))
 
         method, data = self.PARAMS.get(request)
 
         if data is not None :
-            data =  data % params
+            data =  data % kwargs
             data = ast.literal_eval((data.replace('\n','').replace('\t','')))
            
         if method is not None:
             try :
-                method = method % params
+                method = method % kwargs
             except TypeError as err :
                 if ('must be real number, not dict' in str(err)):
                     log.warning("Interpolation failed probably because of the private API calls formatting... Unexpected behaviours can happend.")
 
         if not self._logged and method != 'login':
-            self._logged=self._login()
+            self._logged=self.login()
 
         try :
-            return self._request(method, http, data, callback, raw, secure)
+            #Dynamically checking the esm_request arguments so additionnal parameters can be passed afterwards.
+            esm_request_args = inspect.getargspec(self.esm_request)[0]
+            params={}
+            for arg in kwargs :
+                if arg in esm_request_args:
+                    params[arg]=kwargs[arg]
+            
+            return self.esm_request(method=method, data=data, **params)
 
         except ConnectionError as e:
             log.critical(e)
@@ -709,11 +734,9 @@ class NitroSession():
 
         log.setLevel(logging.DEBUG)
 
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-
         std = logging.StreamHandler()
         std.setLevel(logging.DEBUG)
-        std.setFormatter(formatter)
+        std.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
 
         if verbose :
             std.setLevel(logging.DEBUG)
@@ -722,9 +745,6 @@ class NitroSession():
         else :
             std.setLevel(logging.INFO)
 
-        
-            
-            
         log.handlers=[]
         
         log.addHandler(std)
@@ -742,9 +762,9 @@ class NitroSession():
     
 
     @staticmethod
-    def _format_params(cmd, **params):
+    def format_params(cmd, **params):
         """
-        Format private API call.
+        Format private API call.  
         From mfe_saw project at https://github.com/andywalden/mfe_saw
         """
         params = {k: v for k, v in params.items() if v is not None}
@@ -757,9 +777,9 @@ class NitroSession():
         return params
 
     @staticmethod
-    def _format_priv_resp(resp):
+    def format_priv_resp(resp):
         """
-        Format response from private API
+        Format response from private API.  
         From mfe_saw project at https://github.com/andywalden/mfe_saw
         """
         resp = re.search('Response=(.*)', resp).group(1)
@@ -778,7 +798,7 @@ class NitroSession():
         return formatted
 
     @staticmethod
-    def _unpack_resp(response) :
+    def unpack_resp(response) :
         """Unpack data from response.
         Args: 
             response: requests.Response response object
