@@ -146,7 +146,7 @@ def timerange_gettimes(time_range):
     elif t is 'PREVIOUS_YEAR':
         pass"""
 
-def divide_times(first, last, time=0, slots=0, delta=0, min_slots=0):
+def divide_times(first, last, time=0, slots=0, delta=0):
     """"
         Divide the time range based on another time, a delta or on a number of slots.
         Return list of tuple
@@ -173,9 +173,8 @@ def divide_times(first, last, time=0, slots=0, delta=0, min_slots=0):
             raise AttributeError('delta Must be timedelta or str object')
 
         
-        slots=int(duration.total_seconds()/div.total_seconds())
+        slots=int(duration.total_seconds()/div.total_seconds())+1
 
-    slots+=min_slots
     timeSlot=timedelta(seconds=duration.total_seconds()/slots)
 
     #print(locals())
