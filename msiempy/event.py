@@ -14,7 +14,7 @@ from .__utils__ import timerange_gettimes, parse_query_result, format_fields_for
 
 class EventManager(FilteredQueryList):
     """Interface to query and manage events.
-    Inherits from `msiempy.query.FilteredQueryList`.
+    Inherits from `msiempy.FilteredQueryList`.
     """ 
 
     #Constants
@@ -46,11 +46,11 @@ class EventManager(FilteredQueryList):
             Structure must be in correct format
                 -> same as setting _order property directly.
         - `limit` : max number of rows per query, by default takes the value in config `default_rows` option.
-        - `filters` : list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.query.QueryFilter`
+        - `filters` : list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.QueryFilter`
         if you wish to use advanced filtering.
         - `compute_time_range` : False if you want to send the actualy time_range in parameter for the initial query.
             Defaulted to True cause the query splitting implies computing the time_range anyway.
-        - `*args, **kwargs` : Parameters passed to `msiempy.query.FilteredQueryList`
+        - `*args, **kwargs` : Parameters passed to `msiempy.FilteredQueryList`
            
             
         Notes :
@@ -156,15 +156,15 @@ class EventManager(FilteredQueryList):
     @property
     def filters(self):
         """
-        JSON SIEM formatted filters for the query by calling reccursively : `msiempy.query.QueryFilter.config_dict`.
-        See `msiempy.query.FilteredQueryList.filters`.
+        JSON SIEM formatted filters for the query by calling reccursively : `msiempy.event.QueryFilter.config_dict`.
+        See `msiempy.FilteredQueryList.filters`.
         """
         return([f.config_dict for f in self._filters])
 
     def add_filter(self, afilter):
         """
-        Concrete description of the `msiempy.query.FilteredQueryList` method.
-        It can take a `tuple(fiels, [values])` or a `msiempy.query.QueryFilter` subclass.
+        Concrete description of the `msiempy.FilteredQueryList` method.
+        It can take a `tuple(fiels, [values])` or a `msiempy.event.QueryFilter` subclass.
         """
         if isinstance(afilter, tuple) :
             self._filters.append(FieldFilter(afilter[0], afilter[1]))
@@ -184,7 +184,7 @@ class EventManager(FilteredQueryList):
     
     @property
     def time_range(self):
-        """Re-implemented the `msiempy.query.FilteredQueryList.time_range` to have better control on the property setter.
+        """Re-implemented the `msiempy.FilteredQueryList.time_range` to have better control on the property setter.
         If `compute_time_range` is True (by default it is), try to get a start and a end time with `msiempy.utils.timerange_gettimes()`
         """
         return(super().time_range)
@@ -218,7 +218,7 @@ class EventManager(FilteredQueryList):
         """
         return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
 
-    def _load_data(self, workers):
+    def qry_load_data(self, workers):
         """"
             Concrete helper method to execute the query and load the data : 
                 -> Submit the query -> wait -> get the events -> parse -
@@ -267,19 +267,19 @@ class EventManager(FilteredQueryList):
         self.data=events
         return((events,len(events)<self.limit))
 
-    def load_data(self, **kwargs):
+    def load_data(self, *args, **kwargs):
         """
-        Specialized EventManager load_data method.
-        Use super load_data implementation.
-        You could decide not to use the splitting feature by 
-            calling directly _load_data() 
-            kwargs are passed to super().load_data()
+        Specialized EventManager load_data method.  
+        Use super load_data implementation.  
+        
+        Parameters :
+        - `*args, **kwargs` : See `msiempy.FilteredQueryList.load_data` and `msiempy.event.EventManager.qry_load_data`
         """
-        return EventManager(alist=super().load_data(**kwargs))
+        return EventManager(alist=super().load_data(*args, **kwargs))
 
     def _wait_for(self, resultID, sleep_time=0.35):
         """
-        Internal method called by _load_data
+        Internal method called by qry_load_data
         Wait and sleep - for `sleep_time` duration in seconds -
             until the query is completed
         
@@ -296,7 +296,7 @@ class EventManager(FilteredQueryList):
     def _get_events(self, resultID, startPos=0, numRows=None):
         """
         Internal method that will get the query events, 
-            called by _load_data
+            called by qry_load_data
         by default, numRows correspond to limit
         """
         
@@ -520,7 +520,7 @@ class GroupFilter(QueryFilter):
 
     def __init__(self, filters, logic='AND') :
         """Parameters :  
-        - `filters` : a list of filters, it can be `msiempy.query.FieldFilter` or `msiempy.query.GroupFilter`
+        - `filters` : a list of filters, it can be `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter`
         - `logic` : 'AND' or 'OR'
         """
         super().__init__()
@@ -584,7 +584,7 @@ class FieldFilter(QueryFilter):
             {'type':'EsmBasicValue',        'key':'value'},
             {'type':'EsmCompoundValue',     'key':'values'}]
     """
-    List of possible value type. See `msiempy.query.FieldFilter.add_value`.
+    List of possible value type. See `msiempy.event.FieldFilter.add_value`.
     """
 
 
@@ -594,7 +594,7 @@ class FieldFilter(QueryFilter):
 
         - `name` : field name as string.
         - `values` : list of values the field is going to be tested againts with the specified orperator.
-        - `orperator` : operator, see `msiempy.query.FieldFilter.POSSIBLE_OPERATORS`.
+        - `orperator` : operator, see `msiempy.event.FieldFilter.POSSIBLE_OPERATORS`.
         """
         super().__init__()
         #Declaring attributes
@@ -652,8 +652,8 @@ class FieldFilter(QueryFilter):
     def values(self):
         """
         Values property.
-        Set a list of values by calling `msiempy.query.FilteredQueryList.add_value()` if value is a 
-        `dict` or calls `msiempy.query.FilteredQueryList.add_basic_value()` if value type is `int`, `float` or `str`.
+        Set a list of values by calling `msiempy.FilteredQueryList.add_value()` if value is a 
+        `dict` or calls `msiempy.FilteredQueryList.add_basic_value()` if value type is `int`, `float` or `str`.
         Values will always be added to the filter. To remove values, handle directly the `_values` property.
 
         Example:  

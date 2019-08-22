@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-"""# Welcome to the **msiempy** module documentation. The pythonic way to deal with McFee esm API.  
+"""# Welcome to the **msiempy** module documentation. The pythonic way to deal with McAfee SIEM API.  
 
-Classes listed in this module are used by other classes in sub-modules to build specialized objects and functions. If you with to see concrete example of code, **head to one of the sub-modules** !  
+GitHub : https://github.com/mfesiem/msiempy  
+
+Classes listed in this module are base to other classes in sub-modules that offers specialized objects and functions.  
 
 This API offers two main types of objects to interact with the SIEM : `msiempy.NitroList`, `msiempy.NitroDict`. 
 `msiempy.NitroList`s have default behaviours related to parallel execution, string representation generation and search feature.
-Whereas `msiempy.NitroDict` that doesn't have any specific behaviours. Both inheriths from `msiempy.NitroObject`.  
+Whereas `msiempy.NitroDict` that doesn't have any specific behaviours. Both inheriths from `msiempy.NitroObject` that handle a reference to a single `msiempy.NitroSession` object.  
 
 `msiempy.NitroSession` is the point of convergence of every request to the McFee ESM It provides standard dialogue with the esm.
 It uses `msiempy.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.  
@@ -60,7 +62,7 @@ class NitroConfig(configparser.ConfigParser):
     If a `.msiem/` directory exists in your current directory, the program will assume the `conf.ini` file is there, if not, it will create it with default values. 
     Secondly, if no `.msiem/` directory exists in the current directory, it will be automatically placed in a appropriate place depending of your platform:  
 
-    - For Windows:  %APPDATA%\\  
+    - For Windows:  `%APPDATA%\\`
     - For Mac :     $HOME/  
     - For Linux :   $XDG_CONFIG_HOME/ or : $HOME/
 
@@ -118,7 +120,7 @@ class NitroConfig(configparser.ConfigParser):
         self.read_dict(self.DEFAULT_CONF_DICT)
     
         if not path :
-            self._path = self._find_ini_location()
+            self._path = self.find_ini_location()
         else : 
             self._path = path
 
@@ -203,11 +205,12 @@ class NitroConfig(configparser.ConfigParser):
 
    
     @staticmethod
-    def _find_ini_location():
+    def find_ini_location():
         '''
-        Returns the location of a supposed conf.ini file the conf.ini file,
+        Returns the location of a supposed conf.ini file the `conf.ini` file.  
+        If folder ./.msiem exists, assume the `conf.ini` file is in there.
         If the file doesn't exist, will still return the location.
-        Do not create a file nor directory.
+        Do not create a file nor directory, you must call `msiempy.NitroConfig.write`.
         '''
         conf_path_dir=None
 
@@ -233,17 +236,15 @@ class NitroConfig(configparser.ConfigParser):
 
 class NitroSession():
     '''NitroSession object represent the point of convergence of every request to the McFee ESM
-    It provides standard dialogue with the esm with agument interpolation with `msiempy.params`.
+    It provides standard dialogue with the esm with agument interpolation with `msiempy.NitroSession.PARAMS`.
     Internal `__dict__` refers to a unique instance of dict and thus, properties can be instanciated only once. 
     '''
 
     BASE_URL = 'https://{}/rs/esm/'
-    """API v2 base url.
-    """
+    __pdoc__['NitroSession.BASE_URL']="""API v2 base url: `%(url)s`""" % dict(url=', '.join(BASE_URL))
 
     BASE_URL_PRIV = 'https://{}/ess/'
-    """Private API base URL.
-    """
+    __pdoc__['NitroSession.BASE_URL_PRIV']="""Private API base URL: `%(url)s`""" % dict(url=', '.join(BASE_URL_PRIV))
 
     __initiated__ = False
     """
@@ -256,7 +257,7 @@ class NitroSession():
     
     config = None
     """
-    NitroConfig object.
+    `msiempy.NitroConfig` object.
     """
     
     PARAMS = {
@@ -640,9 +641,8 @@ Content :
             return None
         
     def login(self):
-        """
-        Internal method that will be called when the user is not logged yet.
-        Throws NitroError if login fails
+        """Authentication is done lazily upon the first call to ``msiempy.NitroSession.request` method, but you can still do it manually by calling this method.  
+        Throws `msiempy.NitroError` if login fails
         """
         userb64 = tob64(self.config.user)
         passb64 = self.config.passwd
@@ -669,7 +669,7 @@ Content :
             Wrapper around the `msiempy.NitroSession.esm_request` method.
             Parameters:  
 
-            - `request`: Keyword corresponding to the request name in `msiempy.params` mapping.  
+            - `request`: Keyword corresponding to the request name in `msiempy.NitroSession.PARAMS` mapping.  
             - `**kwargs` Can contain :
                 - `misiempy.NitroSession.esm_request` arguments except `method` and `data`
                 - Interpolation parameters that will be match to `msiempy.NitroSession.PARAMS` templates. Check the file to be sure of the keyword arguments.  
@@ -1048,7 +1048,7 @@ class NitroList(collections.UserList, NitroObject):
 
     @property
     def text(self):
-        """The text properti is a shorcut to get_text() with no arguments.
+        """The text property is a shorcut to get_text() with no arguments.
         """
         return self.get_text()
         
@@ -1216,9 +1216,8 @@ class FilteredQueryList(NitroList):
     """
     
     DEFAULT_TIME_RANGE="CURRENT_DAY"
-    """
-    If you don't specify any `time_range`, act like if it was "CURRENT_DAY".
-    """
+    __pdoc__['FilteredQueryList.DEFAULT_TIME_RANGE']="""
+    Default time range : %(default)s""" % dict(default=DEFAULT_TIME_RANGE)
 
     POSSIBLE_TIME_RANGE=[
             "CUSTOM",
@@ -1240,26 +1239,8 @@ class FilteredQueryList(NitroList):
             "CURRENT_YEAR",
             "PREVIOUS_YEAR"
     ]
-    """
-    List of possible time ranges : `"CUSTOM",
-            "LAST_MINUTE",
-            "LAST_10_MINUTES",
-            "LAST_30_MINUTES",
-            "LAST_HOUR",
-            "CURRENT_DAY",
-            "PREVIOUS_DAY",
-            "LAST_24_HOURS",
-            "LAST_2_DAYS",
-            "LAST_3_DAYS",
-            "CURRENT_WEEK",
-            "PREVIOUS_WEEK",
-            "CURRENT_MONTH",
-            "PREVIOUS_MONTH",
-            "CURRENT_QUARTER",
-            "PREVIOUS_QUARTER",
-            "CURRENT_YEAR",
-            "PREVIOUS_YEAR"`
-    """
+    __pdoc__['FilteredQueryList.POSSIBLE_TIME_RANGE']="""
+    List of possible time ranges : `%(timeranges)s`""" % dict(timeranges=', '.join(POSSIBLE_TIME_RANGE))
 
     def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
         load_async=True, requests_size=500, max_query_depth=0,
@@ -1270,7 +1251,7 @@ class FilteredQueryList(NitroList):
         Parameters:  
     
         - `time_range` : Query time range. String representation of a time range. 
-            See `msiempy.query.FilteredQueryList.POSSIBLE_TIME_RANGE`
+            See `msiempy.FilteredQueryList.POSSIBLE_TIME_RANGE`
         - `start_time` : Query starting time, can be a string or a datetime object. Parsed with dateutil.
         - `end_time` : Query endding time, can be a string or a datetime object. Parsed with dateutil.
         - `filters` : List of filters applied to the query.
@@ -1325,8 +1306,8 @@ class FilteredQueryList(NitroList):
     @property
     def time_range(self):
         """
-        Query time range. See `msiempy.query.FilteredQueryList.POSSIBLE_TIME_RANGE`.
-        Default to `msiempy.query.FilteredQueryList.DEFAULT_TIME_RANGE` (CURRENT_DAY).
+        Query time range. See `msiempy.FilteredQueryList.POSSIBLE_TIME_RANGE`.
+        Default to `msiempy.FilteredQueryList.DEFAULT_TIME_RANGE` (CURRENT_DAY).
         Note that the time range is upper cased automatically.
         Raises `VallueError` if unrecognized time range is set and `AttributeError` if not the right type.
         """
@@ -1393,7 +1374,7 @@ class FilteredQueryList(NitroList):
     def filters(self):
         """ 
         Filter property : Returns a list of filters.
-        Can be set with list of tuple(field, [values]) or `msiempy.query.QueryFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted. 
+        Can be set with list of tuple(field, [values]) or `msiempy.event.QueryFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted. 
         None value will call `msiempy.query.FilteredQueryList.clear_filters()`
         Raises `AttributeError` if type not supported.
         TODO find a better solution to integrate the filter propertie
@@ -1429,27 +1410,22 @@ class FilteredQueryList(NitroList):
         pass 
 
     @abc.abstractmethod
-    def _load_data(self, workers):
+    def qry_load_data(self, workers, *args, **kwargs):
         """
+        Method to load the data from the SIEM.
         Rturn a tuple (items, completed).
         completed = True if all the data that should be load is loaded.
         """
         pass
 
     @abc.abstractmethod
-    def load_data(self, workers=15, slots=4, delta='24h', *args, **kwargs):
-        """
-        Method to load the data from the SIEM.
-        Split the query in defferents time slots if the query apprears not to be completed.
-        Splitting is done by duplicating current object, setting different times,
-        and re-loading results. First your query time is split in slots of size `delta` 
-        if the sub queries are not completed, divide them in the number of `slots`, this step is
-        If you're looking for `max_query_depth`, it's define at the creation of the query list.
+    def load_data(self, workers=10, slots=10, delta=None, *args, **kwargs):
+        """Load the data from the SIEM into the manager list.  
+        Split the query in defferents time slots if the query apprears not to be completed. It wraps around `msiempy.FilteredQueryList.qry_load_data`.    
+        If you're looking for `max_query_depth`, it's define at the creation of the `msiempy.FilteredQueryList`.
 
-        Returns a FilteredQueryList.
-        
         Note :
-            IF you looking for load_async = True/False, you should pass this to the constructor method `msiempy.query.FilteredQueryList`
+            IF you looking for load_async = True/False, you should pass this to the constructor method `msiempy.FilteredQueryList`
                 or by setting the attribute manually like `manager.load_asynch=True`
             Only the first query is loaded asynchronously.
 
@@ -1460,10 +1436,13 @@ class FilteredQueryList(NitroList):
             divided according to the number of slots
         - `delta` : exemple : '24h', the query will be firstly divided in chuncks according to the time delta read
             with dateutil.
+        - `*args, **kwargs` : concrete `qry_load_data` parameters
+
+        Returns : `msiempy.FilteredQueryList`
         
         """
 
-        items, completed = self._load_data(workers=workers, *args, **kwargs)
+        items, completed = self.qry_load_data(workers=workers, *args, **kwargs)
 
         if not completed :
             #If not completed the query is split and items aren't actually used
@@ -1513,9 +1492,9 @@ class FilteredQueryList(NitroList):
                 
             else :
                 if not self.__root_parent__.not_completed :
-                    log.warning("The query won't fully complete. Try to divide in more slots or increase the requests_size")
+                    log.warning("The is not complete... Try to divide in more slots or increase the requests_size, page_size or limit")
                     self.__root_parent__.not_completed=True
 
         self.data=items
-        return(NitroList(alist=items)) #return self ?
+        return(self)
 

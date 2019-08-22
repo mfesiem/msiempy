@@ -132,19 +132,23 @@ class AlarmManager(FilteredQueryList):
 
     def load_data(self, **kwargs):
         """
-        Specialized load_data() method that convert the `msiempy.base.FilteredQueryList.load_data()` result to AlarmManager object.
-        kwargs are passed to super().load_data()
+        Specialized AlarmManager load_data method.  
+        Use super `msiempy.FilteredQueryList.load_data` implementation.  
+        
+        Parameters :
+        - `*args, **kwargs` : See `msiempy.FilteredQueryList.load_data` and `msiempy.alarm.AlarmManager.qry_load_data`
+
+        Returns : `msiempy.alarm.AlarmManager`
         """
         return AlarmManager(alist=super().load_data(**kwargs))
 
-    def _load_data(self, workers, no_detailed_filter=False, use_query=False, extra_fields=[]):
+    def qry_load_data(self, workers, no_detailed_filter=False, use_query=False, extra_fields=[]):
         """
         Method that loads the data.
             -> Fetch the complete list of alarms 
             -> Filter depending on alarms related filters 
             -> load events details
             -> Filter depending on event related filters
-            
         """
 
         if self.time_range == 'CUSTOM' :
