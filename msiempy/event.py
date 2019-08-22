@@ -218,7 +218,7 @@ class EventManager(FilteredQueryList):
         """
         return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
 
-    def qry_load_data(self, *args, **kwargs):
+    def qry_load_data(self, **kwargs):
         """"
             Concrete helper method to execute the query and load the data : 
                 -> Submit the query -> wait -> get the events -> parse -
@@ -228,8 +228,9 @@ class EventManager(FilteredQueryList):
             
             (1) aka EventManager
 
-            Parameters :
-            - `*args, **kwargs` : Not used
+            Parameters:
+            - `**kwargs` : Not used
+ 
         """
         query_infos=dict()
 
@@ -274,6 +275,7 @@ class EventManager(FilteredQueryList):
         """
         Specialized EventManager load_data method.  
         Use super load_data implementation.  
+        TODO : Use better polymorphism and do not cast here.
         
         Parameters :
         - `*args, **kwargs` : See `msiempy.FilteredQueryList.load_data` and `msiempy.event.EventManager.qry_load_data`
@@ -459,7 +461,12 @@ class Event(NitroDict):
         
         if use_query == True :
 
-            e = EventManager(time_range='CURRENT_YEAR', filters=[('IPSIDAlertID',id)], compute_time_range=False, fields=extra_fields).load_data()
+            e = EventManager(time_range='CURRENT_YEAR',
+                filters=[('IPSIDAlertID',id)],
+                compute_time_range=False,
+                fields=extra_fields,
+                limit=2).load_data()
+
             if len(e) == 1 :
                 return e[0]
             else :

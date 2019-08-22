@@ -1,3 +1,4 @@
+import msiempy
 import msiempy.alarm
 import unittest
 
@@ -21,7 +22,7 @@ class T(unittest.TestCase):
         for alarm in alarms : 
 
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
-            self.assertEqual(type(alarm['events']), str, 'Type error')
+            #self.assertEqual(type(alarm['events']), str, 'Type error')
             
             self.assertEqual(alarm['acknowledgedDate'], '', "status_filter is unacknowledged but alarm's acknowledgedDate has a value")
             self.assertEqual(alarm['acknowledgedUsername'], '', "status_filter is unacknowledged but alarm's acknowledgedUsername has a value")
@@ -44,7 +45,8 @@ class T(unittest.TestCase):
 
         for alarm in alarms :
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
-            self.assertEqual(type(alarm['events']), msiempy.event.Event, 'Type error')
+            self.assertEqual(type(alarm['events'][0]), msiempy.event.Event, 'Type error')
+            self.assertEqual(type(alarm['events']), msiempy.NitroList, 'Type error')
 
             self.assertRegex(str(alarm['severity']), '50|80|85|90|95|100', 'Filtering alarms is not working')
 

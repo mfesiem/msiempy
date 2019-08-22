@@ -495,17 +495,16 @@ class NitroSession():
             interpolated as documented in the Attributes.
 
         Example:
-            method, params = PARAMS.get("login").format(username, password)  
-            See : `msiempy.NitroSession.request`
+            `method, params = PARAMS.get("login").format(username, password)`. See : `msiempy.NitroSession.request`
 
         Important note : 
             Do not use sigle quotes (') to delimit data into the interpolated strings !
 
         Content :  
             %(content)s
-            """ % dict(content=json.dumps(PARAMS, indent=1).replace('\n',"""  
-    """)[:1300]+""" [...] and more..  
-    See around: https://github.com/mfesiem/msiempy/blob/master/msiempy/__init__.py#L266
+            """ % dict(content=json.dumps(PARAMS, indent=4).replace('\n',"""  
+    """)[:130]+""" [...] and more..  
+    See : https://github.com/mfesiem/msiempy/blob/master/msiempy/__init__.py#L266
     """)
         
     def __str__(self):
@@ -1332,9 +1331,9 @@ class FilteredQueryList(NitroList):
     @property
     def start_time(self):
         """
-        Start time of the query in the right SIEM format. See `msiempy\__utils__.format_esm_time()`
-        Use `_start_time` to get the datetime object. You can set the `star_time` as a `str` or a `datetime`.
-        If `None`, equivalent CURRENT_DAY start 00:00:00. Raises `ValueError` if not the right type.
+        Start time of the query in the right SIEM format.  
+        Use `_start_time` to get the datetime object. You can set the `star_time` as a `str` or a `datetime`.  
+        If `None`, equivalent CURRENT_DAY start 00:00:00. Raises `ValueError` if not the right type.  
         """
         return format_esm_time(self._start_time)
 
@@ -1352,9 +1351,9 @@ class FilteredQueryList(NitroList):
     @property
     def end_time(self):
         """
-        End time of the query in the right SIEM format.  See `msiempy\__utils__.format_esm_time()`
-        Use _end_time to get the datetime object. You can set the `end_time` as a `str` or a `datetime`.
-        If `None`, equivalent CURRENT_DAY ends now. Raises `ValueError` if not the right type.
+        End time of the query in the right SIEM format.  
+        Use `_end_time` property to get the datetime object. You can set the `end_time` as a `str` or a `datetime`.  
+        If `None`, equivalent CURRENT_DAY. Raises `ValueError` if not the right type.
         """
         return format_esm_time(self._end_time)
 
@@ -1373,9 +1372,9 @@ class FilteredQueryList(NitroList):
     def filters(self):
         """ 
         Filter property : Returns a list of filters.
-        Can be set with list of tuple(field, [values]) or `msiempy.event.QueryFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted. 
-        None value will call `msiempy.query.FilteredQueryList.clear_filters()`
-        Raises `AttributeError` if type not supported.
+        Can be set with list of tuple(field, [values]) or `msiempy.event.QueryFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted.  
+        `None value will call `msiempy.query.FilteredQueryList.clear_filters()`.  
+        Raises : `AttributeError` if type not supported.
         TODO find a better solution to integrate the filter propertie
         """
         raise NotImplementedError()
@@ -1409,7 +1408,7 @@ class FilteredQueryList(NitroList):
         pass 
 
     @abc.abstractmethod
-    def qry_load_data(self, *args, **kwargs):
+    def qry_load_data(self, **kwargs):
         """
         Method to load the data from the SIEM.
         Rturn a tuple (items, completed).
@@ -1418,32 +1417,28 @@ class FilteredQueryList(NitroList):
         pass
 
     @abc.abstractmethod
-    def load_data(self, workers=10, slots=10, delta=None, *args, **kwargs):
+    def load_data(self, workers=10, slots=10, delta=None, **kwargs):
         """Load the data from the SIEM into the manager list.  
         Split the query in defferents time slots if the query apprears not to be completed. It wraps around `msiempy.FilteredQueryList.qry_load_data`.    
         If you're looking for `max_query_depth`, it's define at the creation of the `msiempy.FilteredQueryList`.
 
-        Note :
-            IF you looking for `load_async` = True/False, you should pass this to the constructor method `msiempy.FilteredQueryList`
-                or by setting the attribute manually like `manager.load_asynch=True`
-            Only the first query is loaded asynchronously.
+        Note :  
+        If you looking for `load_async`, you should pass this to the constructor method `msiempy.FilteredQueryList` or by setting the attribute manually like `manager.load_asynch=True`
+        Only the first query is loaded asynchronously.
 
         Parameters:  
     
-        - `workers` : numbre of parrallels task
+        - `workers` : numbre of parrallels task  
         - `slots` : number of time slots the query can be divided. The loading bar is 
-            divided according to the number of slots
-        - `delta` : exemple : '24h', the query will be firstly divided in chuncks according to the time delta read
-            with dateutil.
-        - `*args, **kwargs` : concrete `qry_load_data` parameters
+            divided according to the number of slots  
+        - `delta` : exemple : '6h30m', the query will be firstly divided in chuncks according to the time delta read
+            with dateutil.  
+        - `**kwargs` : concrete additionnal `qry_load_data` parameters  
 
         Returns : `msiempy.FilteredQueryList`
         """
 
-        if workers > slots :
-            log.warning("The numbre of slots is smaller than the number of workers, the complete asynchronous potential won't be used")
-
-        items, completed = self.qry_load_data(workers=workers, *args, **kwargs)
+        items, completed = self.qry_load_data(workers=workers, **kwargs)
 
         if not completed :
             #If not completed the query is split and items aren't actually used
@@ -1460,14 +1455,16 @@ class FilteredQueryList(NitroList):
                     #if it's the first query and delta is speficied, cut the time_range in slots according to the delta
                     times=divide_times(start, end, delta=parse_timedelta(delta))
                     
-                else :times=divide_times(start, end, slots=slots)
-                        #IGONORING THE CONFIG ### : self.nitro.config.slots)
+                else : 
+                    times=divide_times(start, end, slots=slots)
+
+                if workers > len(times) :
+                    log.warning("The numbre of slots is smaller than the number of workers, only "+str(len(times))+" asynch workers will be used when you could use up to "+str(workers)+". Number of slots should be greater than the number of workers for better performance.")
                 
                 sub_queries=list()
 
                 for time in times :
-                    """
-                    """
+                    #Divide the query in sub queries
                     sub_query = copy.copy(self)
                     sub_query.__parent__=self
                     sub_query.compute_time_range=False
@@ -1476,9 +1473,8 @@ class FilteredQueryList(NitroList):
                     sub_query.end_time=time[1].isoformat()
                     sub_query.load_async=False
                     sub_query.query_depth_ttl=self.query_depth_ttl-1
-                    #sub_query.requests_size=requests_size
+                    
                     sub_queries.append(sub_query)
-
             
                 results = self.perform(FilteredQueryList.load_data, sub_queries, 
                     #The sub query is asynch only when it's set to True and it's the first query
@@ -1493,7 +1489,7 @@ class FilteredQueryList(NitroList):
                 
             else :
                 if not self.__root_parent__.not_completed :
-                    log.warning("The is not complete... Try to divide in more slots or increase the requests_size, page_size or limit")
+                    log.warning("The query is not complete... Try to divide in more slots or increase the requests_size, page_size or limit")
                     self.__root_parent__.not_completed=True
 
         self.data=items
