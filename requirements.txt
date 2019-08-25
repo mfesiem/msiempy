@@ -5,3 +5,4 @@ PTable
 python-dateutil
 pylint>=2.3
 pdoc3
+Graphviz
