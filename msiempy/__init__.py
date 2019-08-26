@@ -573,7 +573,7 @@ class NitroSession():
 
         #Logging the data request if not secure | Logs anyway the method
         log.debug('Requesting HTTP '+str(http)+' '+ str(method) + 
-            (' with data '+str(data) if (data is not None and not secure) else '') )
+            (' with data '+str(data) if (data is not None and not secure) else '***') )
         log.debug(locals())
         #Handling private API calls formatting
         if method == method.upper():
@@ -681,7 +681,7 @@ class NitroSession():
             - `None` if Timeout or TooManyRedirects if raw=False  
         """
         log.debug("Calling nitro request : {} kwargs={}".format(
-            str(request), str(kwargs) if 'secure' in kwargs and kwargs['secure']==True else str(kwargs)))
+            str(request), '***' if 'secure' in kwargs and kwargs['secure']==True else str(kwargs)))
 
         method, data = self.PARAMS.get(request)
 
