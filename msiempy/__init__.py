@@ -573,8 +573,8 @@ class NitroSession():
 
         #Logging the data request if not secure | Logs anyway the method
         log.debug('Requesting HTTP '+str(http)+' '+ str(method) + 
-            (' with data '+str(data) if (data is not None and not secure) else '***') )
-        log.debug(locals())
+            (' with data '+str(data) if not secure else ' ***') )
+        
         #Handling private API calls formatting
         if method == method.upper():
             privateApiCall=True
@@ -657,6 +657,7 @@ class NitroSession():
             self._headers['Cookie'] = resp.headers.get('Set-Cookie')
             self._headers['X-Xsrf-Token'] = resp.headers.get('Xsrf-Token')
     
+            self._logged=True
             return True
         else:
             raise NitroError('ESM Login Error: Response empty')
@@ -697,7 +698,7 @@ class NitroSession():
                     log.warning("Interpolation failed probably because of the private API calls formatting... Unexpected behaviours can happend.")
 
         if not self._logged and method != 'login':
-            self._logged=self.login()
+            self.login()
 
         try :
             #Dynamically checking the esm_request arguments so additionnal parameters can be passed afterwards.
