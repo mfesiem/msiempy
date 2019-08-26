@@ -609,8 +609,8 @@ class NitroSession():
 
                 except requests.HTTPError as e :
                     log.error(str(e)+' '+str(result.text))
-                    raise
-                    return result.text
+                    raise (requests.HTTPError(str(e.__dict__)))
+                    #return result.text
                     """
                     #TODO handle expired session error, result unavailable / other siem errors
                     # _InvalidFilter (228)
