@@ -411,7 +411,7 @@ class NitroSession():
             "get_alarm_details_int": ("NOTIFY_GETTRIGGEREDNOTIFICATIONDETAIL", 
                                         """{"TID": "%(id)s"}"""),
 
-            "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList"::%(ids)s}}"""),
+            "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
 
             "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
 
