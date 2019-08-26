@@ -7,6 +7,9 @@ class T(unittest.TestCase):
 
         session=msiempy.NitroSession()
         
+        session.logout()
+        session.login()
+        
         tz=session.request('time_zones')
         for t in tz :
             if not 'offset' in t:
