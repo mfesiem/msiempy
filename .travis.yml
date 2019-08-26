@@ -14,12 +14,14 @@ install:
 - python3 ./setup.py install
 - pip3 install -r requirements.txt
 script:
-- python3 -m unittest tests.auth.test_session
+#- python3 -m unittest tests.auth.test_session
+- python3 ./setup.py test
 - git clone https://github.com/mfesiem/mfesiem.github.io
 - pdoc3 msiempy --output-dir ./mfesiem.github.io/docs --html --force
-- pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-- mv ./classes.png ./mfesiem.github.io/docs/msiempy
-- mv ./packages.png ./mfesiem.github.io/docs/msiempy
+
+#- pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
+#- mv ./classes.png ./mfesiem.github.io/docs/msiempy
+#- mv ./packages.png ./mfesiem.github.io/docs/msiempy
 after_success:
   env:
     global:
