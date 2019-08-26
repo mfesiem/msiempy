@@ -525,9 +525,8 @@ class NitroSession():
         self.__dict__ = NitroSession.__unique_state__
         
         #Init properties only once
-        if not self.__initiated__ :
+        if NitroSession.__initiated__ == False :
             NitroSession.__initiated__ = True
-            log.info('New NitroSession instance')
             
             #Private attributes
             self._headers={'Content-Type': 'application/json'}
@@ -541,6 +540,8 @@ class NitroSession():
             self._init_log(verbose=self.config.verbose,
                 quiet=self.config.quiet,
                 logfile=self.config.logfile)
+
+            log.info('New NitroSession instance')
 
 
     def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False):

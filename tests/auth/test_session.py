@@ -6,7 +6,6 @@ class T(unittest.TestCase):
     def test(self):
 
         session=msiempy.NitroSession()
-        
         session.logout()
         session.login()
         
