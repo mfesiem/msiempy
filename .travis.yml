@@ -7,8 +7,9 @@ language: python
 python:
 - '3.7'
 before_install:
-- mkdir .msiem
-- openssl aes-256-cbc -K $encrypted_9e2f95a1ac81_key -iv $encrypted_9e2f95a1ac81_iv -in ./tests/conf.ini.encrypted -out ./.msiem/conf.ini -d
+- mkdir ./.msiem
+- openssl aes-256-cbc -K $encrypted_59847529a656_key -iv $encrypted_59847529a656_iv
+  -in ./tests/conf.ini.encrypted -out ./.msiem/conf.ini -d
 install:
 - python3 ./setup.py install
 - pip3 install -r requirements.txt
@@ -19,7 +20,7 @@ script:
 - pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
 - mv ./classes.png ./mfesiem.github.io/docs/msiempy
 - mv ./packages.png ./mfesiem.github.io/docs/msiempy
-after_success: 
+after_success:
   env:
     global:
       secure: DIfIi6vcboKx/h72e4B+ENz63uolupopVsAA7ipl/SSMXkR0XIm5y2gfBIObzaGCm6x9AzYT7H9QNMjeGugEa8ij12KbdRIV+b8k+K/pF5zwuEW3slsFu/oGjYSIg4yl72BNkEQVVVvLH/ANr7wkVUQXiH/Ei0gdL2DpYoCy+QxSRqo0sBF2LCc4ZVODwhkcJn+7KB8/bgpnqd+amx4iJUiKRE6a2NvyqE+K+qgoAJYKZeYdxfzcn7ExC3MIKv7K/+s56KA+OFMYdjg2RhlYeUAj2m+CoOsh/vt+f32+QRrcBVWj5lPNJG3v2FVN6wu3TAIeQ52FBfFhNCkQrKVmx9sR7ziB7fifG3hqx1Mf+uiC/ao1gqsB+bnOxyNQfkpQCk/ay325UydGxgGxBaaobjzoFq7UnnCBTpfB8rurB2p9aajVNwiZ1PwJr+NAZG8fEL8CyRiizYDDE4x8kN2WuFLfTzJYzguklohmBukk1M/8JKqJaPh5Waas4gkYMdVcweAjw6+PcrGD7VBX2ETCiAC2hrmxUpYo6rhdWAVPZvlatjJV4KqMInRcGsRccl1fLQ14UfbkbuiSPnxy4r/jYKnDA2Ya38Qq2pT19ECBnDfvP6buiyEcNxc3oUmnv45dVOBLnR38uv5D2mfYqkcYiRjov8tW83i9B+uI9u7uFdo=
