@@ -6,10 +6,11 @@ class T(unittest.TestCase):
     def test(self):
 
         session=msiempy.NitroSession()
-    
         session.login()
 
-        print('ESM build : '+session.request('build_stamp'))
+        print(str(session.__dict__))
+
+        print('ESM build : '+str(session.request('build_stamp')))
         
         tz=session.request('time_zones')
         for t in tz :
