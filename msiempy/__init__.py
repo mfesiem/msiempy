@@ -12,7 +12,10 @@ Whereas `msiempy.NitroDict` that doesn't have any specific behaviours. Both inhe
 `msiempy.NitroSession` is the point of convergence of every request to the McFee ESM It provides standard dialogue with the esm.
 It uses `msiempy.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.  
 
-Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png. Packages : https://mfesiem.github.io/docs/msiempy/packages.png
+Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png  
+Packages : https://mfesiem.github.io/docs/msiempy/packages.png  
+
+Only working with SIEM version >=11.2.1 (and maybe >=10.4.1)
 """
 
 import logging
