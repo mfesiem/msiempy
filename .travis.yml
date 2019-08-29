@@ -8,7 +8,7 @@ python:
 - '3.7'
 before_install:
 - mkdir ./.msiem
-- openssl aes-256-cbc -K $encrypted_59847529a656_key -iv $encrypted_59847529a656_iv -in ./tests/conf-test.ini.enc -out ./.msiem/conf.ini -d
+#- openssl aes-256-cbc -K $encrypted_59847529a656_key -iv $encrypted_59847529a656_iv -in ./tests/conf-test.ini.enc -out ./.msiem/conf.ini -d
 install:
 - python3 ./setup.py install
 - pip3 install -r requirements.txt
