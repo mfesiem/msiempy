@@ -433,18 +433,26 @@ class Event(NitroDict):
         """
         Set the event's note. Desctructive action.
         """
-        if len(note) >= 4000:
-            log.warning("The note is longer than 4000 characters, only the" 
-                         "first 4000 characters will be kept. The maximum" 
-                         "accepted by the SIEM is 4096 characters.")
-            note=note[:4000]+'\n\n--NOTE HAS BEEN TRUNCATED--'
+        the_id = self.data["Alert.IPSIDAlertID"] if "Alert.IPSIDAlertID" in self.data else str(self.data['ipsId']['id']+'|'+self.data["alertId"]) if "alertId" in self.data else None
 
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        note = note.replace('"','\\"').replace('\n','\\n')
-        note = timestamp + ' - ' + note
-        self.nitro.request("add_note_to_event_int", 
-            id=self.data["Alert.IPSIDAlertID"],
-            note=note)
+        if isinstance(the_id, str):
+
+            if len(note) >= 4000:
+                log.warning("The note is longer than 4000 characters, only the" 
+                            "first 4000 characters will be kept. The maximum" 
+                            "accepted by the SIEM is 4096 characters.")
+                note=note[:4000]+'\n\n--NOTE HAS BEEN TRUNCATED--'
+
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            note = note.replace('"','\\"').replace('\n','\\n')
+            note = timestamp + ' - ' + note
+            
+            self.nitro.request("add_note_to_event_int", 
+                id=the_id,
+                note=note)
+        else :
+            log.error("Couldn't set event's note, the event ID hasn't been found.")
+
 
     def add_note(self, note):
         """Deprecated, please use set_note() method instead."""
