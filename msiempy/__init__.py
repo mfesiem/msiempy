@@ -646,10 +646,9 @@ class NitroSession():
             else:
                 try:
                     result.raise_for_status()
-
                 except requests.HTTPError as e :
                     log.error(str(e)+' '+str(result.text))
-                    raise (requests.HTTPError(str(e.__dict__)))
+                    raise (requests.HTTPError('RESPONSE :'+str(e.__dict__['response'])))
                     #return result.text
                     """
                     #TODO handle expired session error, result unavailable / other siem errors

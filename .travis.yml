@@ -14,8 +14,8 @@ install:
 - python3 ./setup.py install
 - pip3 install -r requirements.txt
 script:
-#- python3 -m unittest tests.auth.test_session
-- python3 ./setup.py test
+- python3 -m unittest tests.auth.test_session
+#- python3 ./setup.py test
 - git clone https://github.com/mfesiem/mfesiem.github.io
 - pdoc3 msiempy --output-dir ./mfesiem.github.io/docs --html --force
 
