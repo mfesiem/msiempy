@@ -367,16 +367,22 @@ class Alarm(NitroDict):
         - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2.x.  
         - `extra_fields` : Only when `use_query=True`. Additionnal event fields to load in the query. See : `msiempy.event.EventManager`  
         """
-        #Retreive the alert id from the event's string
-        events_data=self.data['events'].split('|')
-        the_id = events_data[0]+'|'+events_data[1]
+        if isinstance(self.data['events'], str):
 
-        #instanciate the event
-        the_first_event=Event()
-        the_first_event.data = Event().data_from_id(id=the_id, use_query=use_query, extra_fields=extra_fields)
+            #Retreive the alert id from the event's string
+            events_data=self.data['events'].split('|')
+            the_id = events_data[0]+'|'+events_data[1]
 
-        #set it as the only item of the event list
-        self.data['events']= [ the_first_event ]
+            #instanciate the event
+            the_first_event=Event()
+            the_first_event.data = Event().data_from_id(id=the_id, use_query=use_query, extra_fields=extra_fields)
+
+            #set it as the only item of the event list
+            self.data['events']= [ the_first_event ]
+
+        else:
+            log.warning('The alarm {} ({}) has no events associated'.format(self.data['alarmName'], self.data['triggeredDate']))
+            self.data['events']= [ { } ]
 
         return self
 
