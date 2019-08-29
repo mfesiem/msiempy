@@ -386,7 +386,7 @@ class Alarm(NitroDict):
 
         else:
             log.warning('The alarm {} ({}) has no events associated'.format(self.data['alarmName'], self.data['triggeredDate']))
-            self.data['events']= [ { } ]
+            self.data['events']= [ Event() ]
 
         return self
 
