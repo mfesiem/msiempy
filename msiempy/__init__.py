@@ -647,9 +647,7 @@ class NitroSession():
                 try:
                     result.raise_for_status()
                 except requests.HTTPError as e :
-                    log.error(str(e)+' '+str(result.text))
-                    raise (requests.HTTPError('RESPONSE :'+str(e.__dict__['response'])))
-                    #return result.text
+                    raise(requests.HTTPError(str(e)+' '+str(result.text))+ ' ' + str(result.__dict__))
                     """
                     #TODO handle expired session error, result unavailable / other siem errors
                     # _InvalidFilter (228)
@@ -657,6 +655,7 @@ class NitroSession():
                     # Status Code 500: Error processing request, see server logs for more details 
                     # Input Validation Error
                     # By creating a new class
+                    # ERROR_InvalidSession (1)
                     """
 
                 else: #
