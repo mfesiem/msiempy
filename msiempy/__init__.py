@@ -284,12 +284,12 @@ class NitroSession():
                         """),
 
         "req_client_str": ("DS_GETDSCLIENTLIST",
-                            """{"DSID": "%(_ds_id)s",
+                            """{"DSID": "%(ds_id)s",
                                 "SEARCH": ""}
                             """),
 
         "get_rfile": ("MISC_READFILE",
-                    """{"FNAME": "%(_ftoken)s",
+                    """{"FNAME": "%(ftoken)s",
                     "SPOS": "0",
                     "NBYTES": "0"}
                     """),
@@ -411,8 +411,7 @@ class NitroSession():
             "get_alarm_details_int": ("NOTIFY_GETTRIGGEREDNOTIFICATIONDETAIL", 
                                         """{"TID": "%(id)s"}"""),
 
-
-            "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList"::%(ids)s}}"""),
+            "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
 
             "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
 
@@ -463,17 +462,58 @@ class NitroSession():
                 "note": {"note": "%(note)s"}
             }"""),
 
+            "add_note_to_event_int": ("""IPS_ADDALERTNOTE""", """{"AID": "%(id)s",
+                                                               "NOTE": "%(note)s"}"""),
+
+            "get_wl_types": ("""sysGetWatchlistFields""", None),
             "get_watchlists_no_filters" : ("""sysGetWatchlists?hidden=%(hidden)s&dynamic=%(dynamic)s&writeOnly=%(writeOnly)s&indexedOnly=%(indexedOnly)s""", 
                 None),
 
             "get_watchlist_details": ("""sysGetWatchlistDetails""","""{"id": %(id)s}"""),
 
+            "add_watchlist": ("""sysAddWatchlist""", """{
+                "watchlist": {
+                    "name": "%(name)s",
+                    "type": {"name": "%(wl_type)s",
+                              "id": "%(id)s"},
+                    "customType": {"name": "",
+                                   "id": 0},
+                    "dynamic": "False",
+                    "enabled": "True",
+                    "search": "",
+                    "source": 0,
+                    "updateType": "EVERY_SO_MANY_MINUTES",
+                    "updateDay": 0,
+                    "updateMin": 0,
+                    "ipsid": "0",
+                    "valueFile": {"fileToken": ""},
+                    "dbUrl": "",
+                    "mountPoint": "",    
+                    "path": "",
+                    "port": "22",
+                    "username": "",
+                    "password": "",
+                    "query": "",
+                    "lookup": "",
+                    "jobTrackerURL": "",
+                    "jobTrackerPort": "",
+                    "postArgs": "",
+                    "ignoreRegex": "",
+                    "method": 0,
+                    "matchRegex": "",
+                    "lineSkip": 0,
+                    "delimitRegex": "",
+                    "groups": 1
+                              }}"""),
+                                                            
             "add_watchlist_values": ("""sysAddWatchlistValues""","""{
                 "watchlist": %(watchlist)s,
                 "values": %(values)s,
                 }"""),
 
             "get_watchlist_values": ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}"""),
+
+            "remove_watchlists": ("""sysRemoveWatchlist""", """{"ids": {"watchlistIdList": ["%(wl_id_list)s"]}}"""),
 
             "get_alert_data": ("""ipsGetAlertData""", """{"id": {"value":"%(id)s"}}"""),
             
@@ -709,7 +749,6 @@ class NitroSession():
             for arg in kwargs :
                 if arg in esm_request_args:
                     params[arg]=kwargs[arg]
-            
             return self.esm_request(method=method, data=data, **params)
 
         except ConnectionError as e:
