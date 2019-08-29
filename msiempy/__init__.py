@@ -12,7 +12,10 @@ Whereas `msiempy.NitroDict` that doesn't have any specific behaviours. Both inhe
 `msiempy.NitroSession` is the point of convergence of every request to the McFee ESM It provides standard dialogue with the esm.
 It uses `msiempy.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.  
 
-Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png. Packages : https://mfesiem.github.io/docs/msiempy/packages.png
+Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png  
+Packages : https://mfesiem.github.io/docs/msiempy/packages.png  
+
+Only working with SIEM version >=11.2.1 (and maybe >=10.4.1)
 """
 
 import logging
@@ -565,9 +568,8 @@ class NitroSession():
         self.__dict__ = NitroSession.__unique_state__
         
         #Init properties only once
-        if not self.__initiated__ :
+        if NitroSession.__initiated__ == False :
             NitroSession.__initiated__ = True
-            log.info('New NitroSession instance')
             
             #Private attributes
             self._headers={'Content-Type': 'application/json'}
@@ -581,6 +583,8 @@ class NitroSession():
             self._init_log(verbose=self.config.verbose,
                 quiet=self.config.quiet,
                 logfile=self.config.logfile)
+
+            log.info('New NitroSession instance')
 
 
     def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False):
@@ -613,8 +617,8 @@ class NitroSession():
 
         #Logging the data request if not secure | Logs anyway the method
         log.debug('Requesting HTTP '+str(http)+' '+ str(method) + 
-            (' with data '+str(data) if (data is not None and not secure) else '') )
-        log.debug(locals())
+            (' with data '+str(data) if not secure else ' ***') )
+        
         #Handling private API calls formatting
         if method == method.upper():
             privateApiCall=True
@@ -639,16 +643,14 @@ class NitroSession():
             )
 
             if raw :
-                log.debug('Returning raw requests Response object :'+str(result))
+                log.debug('Returning raw requests Response object : '+str(result)+ ' ' + str(result.text))
                 return result
 
             else:
                 try:
                     result.raise_for_status()
-
                 except requests.HTTPError as e :
-                    log.error(str(e)+' '+str(result.text))
-                    return result.text
+                    raise(requests.HTTPError(str(e)+ ' ' +str(result.text)+ ' ' + str(result.__dict__)))
                     """
                     #TODO handle expired session error, result unavailable / other siem errors
                     # _InvalidFilter (228)
@@ -656,6 +658,7 @@ class NitroSession():
                     # Status Code 500: Error processing request, see server logs for more details 
                     # Input Validation Error
                     # By creating a new class
+                    # ERROR_InvalidSession (1)
                     """
 
                 else: #
@@ -697,6 +700,7 @@ class NitroSession():
             self._headers['Cookie'] = resp.headers.get('Set-Cookie')
             self._headers['X-Xsrf-Token'] = resp.headers.get('Xsrf-Token')
     
+            self._logged=True
             return True
         else:
             raise NitroError('ESM Login Error: Response empty')
@@ -721,7 +725,7 @@ class NitroSession():
             - `None` if Timeout or TooManyRedirects if raw=False  
         """
         log.debug("Calling nitro request : {} kwargs={}".format(
-            str(request), str(kwargs) if 'secure' in kwargs and kwargs['secure']==True else str(kwargs)))
+            str(request), '***' if 'secure' in kwargs and kwargs['secure']==True else str(kwargs)))
 
         method, data = self.PARAMS.get(request)
 
@@ -737,7 +741,7 @@ class NitroSession():
                     log.warning("Interpolation failed probably because of the private API calls formatting... Unexpected behaviours can happend.")
 
         if not self._logged and method != 'login':
-            self._logged=self.login()
+            self.login()
 
         try :
             #Dynamically checking the esm_request arguments so additionnal parameters can be passed afterwards.

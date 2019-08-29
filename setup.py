@@ -28,9 +28,6 @@ setup(
     install_requires=[
           'requests','tqdm','PTable','python-dateutil', 'urllib3'
     ],
-    tests_require=[
-          'pylint','pytest','pdoc3'
-    ],
     classifiers=[
         "Programming Language :: Python :: 3",
     ],
