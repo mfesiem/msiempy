@@ -647,7 +647,7 @@ class NitroSession():
                 try:
                     result.raise_for_status()
                 except requests.HTTPError as e :
-                    raise(requests.HTTPError(str(e)+' '+str(result.text))+ ' ' + str(result.__dict__))
+                    raise(requests.HTTPError(str(e)+ ' ' +str(result.text)+ ' ' + str(result.__dict__)))
                     """
                     #TODO handle expired session error, result unavailable / other siem errors
                     # _InvalidFilter (228)
