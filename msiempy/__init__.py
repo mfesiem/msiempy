@@ -513,6 +513,8 @@ class NitroSession():
 
             "get_watchlist_values": ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}"""),
 
+            "remove_watchlists": ("""sysRemoveWatchlist""", """{"ids": {"watchlistIdList": ["%(wl_id_list)s"]}}"""),
+
             "get_alert_data": ("""ipsGetAlertData""", """{"id": {"value":"%(id)s"}}"""),
             
             "get_sys_info"  : ("SYS_GETSYSINFO","""{}"""),
