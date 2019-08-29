@@ -640,7 +640,7 @@ class NitroSession():
             )
 
             if raw :
-                log.debug('Returning raw requests Response object :'+str(result))
+                log.debug('Returning raw requests Response object : '+str(result)+ ' ' + str(result.text)
                 return result
 
             else:
