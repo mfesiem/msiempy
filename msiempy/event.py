@@ -443,7 +443,7 @@ class Event(NitroDict):
                             "accepted by the SIEM is 4096 characters.")
                 note=note[:4000]+'\n\n--NOTE HAS BEEN TRUNCATED--'
             
-            if no_date=False:
+            if no_date==False:
                 timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 note = note.replace('"','\\"').replace('\n','\\n')
                 note = timestamp + ' - ' + note
