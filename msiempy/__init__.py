@@ -478,7 +478,7 @@ class NitroSession():
                 "watchlist": {
                     "name": "%(name)s",
                     "type": {"name": "%(wl_type)s",
-                              "id": "%(id)s"},
+                              "id": 0},
                     "customType": {"name": "",
                                    "id": 0},
                     "dynamic": "False",
