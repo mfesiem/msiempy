@@ -300,5 +300,29 @@ def sanitize_string(strg, valid_chars = ''):
     strg = strg.replace('  ', ' ') # Double space to single space
     strg = strg.strip() # Remove leading and trailing whitespace
 
-    
     return strg
+
+def get_pickle(filename):
+    ''' Get data from pickle file.
+        Args:
+            filename (str): name of pickle file
+        
+        Returns:
+            data or None
+    '''
+    try:
+        with open(filename, 'rb') as f:
+            data = pickle.load(f)
+            return data
+    except FileNotFoundError:
+        return None
+
+def write_pickle(filename, data):
+    ''' Write a pickle file.
+        Args:
+            filename (str): name of file to used
+            data: Any data to be written that can be pickled.
+    '''
+    with open(filename, 'wb') as f:
+        pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+    
