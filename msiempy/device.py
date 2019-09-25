@@ -9,6 +9,7 @@ import ipaddress
 import inspect
 import json
 import logging
+import pickle
 import re
 import sys
 from itertools import chain
@@ -16,7 +17,7 @@ from io import StringIO
 from functools import partial, lru_cache
 
 from . import NitroDict, NitroList, NitroError, NitroObject
-from .__utils__ import dehexify
+from .__utils__ import dehexify, get_pickle, write_pickle
 
 class Device(NitroObject):
     pass
@@ -679,8 +680,61 @@ class DevTree(NitroList):
         """
         Initalize the DevTree object
         """
+        self.debug_mode = None
+        self.debug_file = None
+        if kwargs.get('debug_mode'):
+            self.debug_mode = kwargs.pop('debug_mode')
+            if kwargs.get('debug_file'):
+                self.debug_file = kwargs.pop('debug_file')
+            self._set_debug_mode()
+
         super().__init__(*args, **kwargs)
+
+        if self.debug_mode == 'r':
+
+            self._now = self.nitro.request('get_esm_time')['value'][:-7]
+            self.debug_log['now'] = self._now
+        elif not self.debug_mode:
+            self._now = self.nitro.request('get_esm_time')['value'][:-7]        
+        
         self.build_devtree()
+    
+    def _set_debug_mode(self):
+        ''' Sets debug_mode
+
+        Args:
+            debug_mode (str): 'r' or 'o' for record and offline.
+                record mode will log each of the API returns
+                to a file.
+                
+                offline mode pulls data from the file created 
+                with record mode and does not contact the ESM.
+                
+                'r' must be used before 'o' to create the data file.
+
+            file (str): filename to use for the debug file. 
+                default: debug.pkl
+
+        Notes:
+            Data structure for the debug file is a dict with a key 
+            for each API response whic is then pickled. 
+        '''
+        if not self.debug_file:
+            self.debug_file = 'debug.pkl'
+        
+        if self.debug_mode == 'r':
+            self.debug_log = {'clients': {}}
+        elif self.debug_mode == 'o':
+            try:
+                self.debug_log = get_pickle(self.debug_file)
+            except FileNotFoundError:
+                print('Offline mode requires debug file.'
+                       'Run with debug_mode="r" to create.')
+                return
+            self._now = self.debug_log['now']
+
+    
+    
 
     def __len__(self):
         """
@@ -815,18 +869,53 @@ class DevTree(NitroList):
         """
         Coordinates assembly of the devtree object
         """
-        devtree = self._get_devtree()        
+        if self.debug_mode == 'o':
+            devtree = self.debug_log['build_devtree']
+        elif self.debug_mode == 'r':
+            devtree = self._get_devtree()
+            self.debug_log['build_devtree'] = devtree
+        else:
+            devtree = self._get_devtree()
+
         devtree = self._format_devtree(devtree)
         devtree = self._insert_rec_info(devtree)        
         containers = self._get_client_containers(devtree)
         devtree = self._merge_clients(containers, devtree)
-        zonetree = self._get_zonetree()
+        
+        if self.debug_mode == 'o':
+            zonetree = self.debug_log['zonetree']
+        elif self.debug_mode == 'r':
+            zonetree = self._get_zonetree()
+            self.debug_log['zonetree'] = zonetree
+        else:
+            zonetree = self._get_zonetree()
+
+        
         devtree = self._insert_zone_names(zonetree, devtree)
-        zone_map = self._get_zone_map()
+        if self.debug_mode == 'o':
+            zone_map = self.debug_log['zone_map']
+        elif self.debug_mode == 'r':
+            zone_map = self._get_zone_map()
+            self.debug_log['zone_map'] = zone_map
+        else:
+            zone_map = self._get_zone_map()
+        
         devtree = self._insert_zone_ids(zone_map, devtree)            
-        last_times = self._get_last_times()
+        devtree = self._insert_rec_info(devtree)
+
+        if self.debug_mode == 'o':
+            last_times = self.debug_log['lasttimes']
+        elif self.debug_mode == 'r':
+            last_times = self._get_last_times()
+            self.debug_log['lasttimes'] = last_times
+        else:
+            last_times = self._get_last_times()
         last_times = self._format_times(last_times)
         self.devtree = self._insert_ds_last_times(last_times, devtree)
+
+        if self.debug_mode == 'r':
+            write_pickle(self.debug_file, self.debug_log)
+        
         return self.devtree
 
     def _get_devtree(self):
@@ -964,7 +1053,13 @@ class DevTree(NitroList):
         _cidx = 0
         _didx = 0
         for cont in containers:
-            clients = self._get_clients(cont['ds_id'])
+            if self.debug_mode == 'o':
+                clients = self.debug_log['clients'][cont['ds_id']]
+            elif self.debug_mode == 'r':
+                clients = self._get_clients(cont['ds_id'])
+                self.debug_log['clients'][cont['ds_id']] = clients
+            else:
+                clients = self._get_clients(cont['ds_id'])
             clients = self._format_clients(clients)
             cont['idx'] = cont['idx'] + _didx
             _pidx = cont['idx']
