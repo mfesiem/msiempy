@@ -4,6 +4,7 @@
 
 import time
 import base64
+import pickle
 import re
 from functools import wraps
 import logging
