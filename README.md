@@ -99,13 +99,13 @@ events = msiempy.event.EventManager(
         time_range='LAST_3_DAYS',
         fields=['HostID', 'UserIDSrc'],
         filters=[
-                msiempy.query.FieldFilter('DstIP', ['8.8.0.0/8',]),
-                msiem.query.FieldFilter('HostID', ['mydomain.local'], operator='CONTAINS') ],
+                msiempy.event.FieldFilter('DstIP', ['8.8.0.0/8',]),
+                msiempy.event.FieldFilter('HostID', ['mydomain.local'], operator='CONTAINS') ],
         limit=500,
         max_query_depth=2)
 events.load_data(delta='2h', slots='4', workers=5)
 
-print(events.get_text(fields=['Alert.LastTime','Alert.SrcIP', 'Alert.BIN(4', 'Alert.BIN(7)', 'Rule.msg']))
+print(events.get_text(fields=['Alert.LastTime','Alert.SrcIP', 'Rule.msg']))
 ```
 See: [FilteredQueryList](https://mfesiem.github.io/docs/msiempy/index.html#msiempy.FilteredQueryList), [EventManager](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.EventManager), [FieldFilter](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.FieldFilter), [Event](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.Event)
 
