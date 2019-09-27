@@ -88,8 +88,10 @@ class EventManager(FilteredQueryList):
         self.fields=Event.DEFAULTS_EVENT_FIELDS
         
         #Adds the specified fields and make sure there is no duplicates
+        # Need to fix this as it does not handle field name variations.
         if fields :
             self.fields=list(set(self.fields+fields))
+            
 
         #Set the compute_time_range propertir that is going to be used when time_range setter is called
         self.compute_time_range=compute_time_range
@@ -381,19 +383,11 @@ class Event(NitroDict):
 
    
     DEFAULTS_EVENT_FIELDS=[
-        "Rule.msg",
-        "Alert.SrcPort",
-        "Alert.DstPort", 
-        "Alert.SrcIP", 
-        "Alert.DstIP", 
-        "Alert.SrcMac",
-        "Alert.DstMac", 
-        "Alert.LastTime",
-        "Rule.NormID",
         "Alert.DSIDSigID",
-        "Alert.IPSIDAlertID"
+        "Alert.LastTime",
         ]
-    """Relatively common event fields that could be useful to have.
+    
+    """Minimum default fields for query.
     """
 
 
