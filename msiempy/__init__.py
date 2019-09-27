@@ -18,28 +18,30 @@ Packages : https://mfesiem.github.io/docs/msiempy/packages.png
 Only working with SIEM version >=11.2.1 (and maybe >=10.4.1)
 """
 
-import logging
-import requests
-import json
-import ast
-import re
-import urllib.parse
-import urllib3
-import configparser
-import os
-import getpass
 import abc
+import ast
 import collections
-import tqdm
+import configparser
+import concurrent.futures
 import copy
 import csv
-import concurrent.futures
-import prettytable
-from prettytable import MSWORD_FRIENDLY
 import datetime
 import functools
-import textwrap
+import getpass
 import inspect
+from io import StringIO
+import json
+import logging
+import os
+import re
+import requests
+import sys
+import tqdm
+import textwrap
+import urllib.parse
+import urllib3
+import prettytable
+from prettytable import MSWORD_FRIENDLY
 
 from .__utils__ import regex_match, tob64, format_esm_time, convert_to_time_obj, timerange_gettimes, parse_timedelta, divide_times
 
@@ -1020,13 +1022,18 @@ class NitroList(collections.UserList, NitroObject):
         return manager_keys
 
 
-    def get_text(self, compact=False, fields=None, max_column_width=120, get_text_nest_attr={}):
+    def get_text(self, format='pprint', fields=None, 
+                        max_column_width=120, get_text_nest_attr={}):
         """
         Return a acsii table string representation of the manager list
 
         Parameters:  
 
-        - `compact`: Returns a nice string table made with prettytable, else an '|' separated list.  
+        - `format`: 
+              pprint: Returns a spaced table separated by |
+              compact: Returns a non-spaced table separated by |
+              csv: Returns data with header and comma separated values. 
+              
         - `fields`: list of fields you want in the table is None : default fields are returned by .keys attribute and sorted.  
         - `max_column_width`: when using prettytable (not compact)  
         - `get_text_nest_attr`: attributes passed to the nested NitroList elements. Useful to control events appearence.
@@ -1040,32 +1047,15 @@ class NitroList(collections.UserList, NitroObject):
         if len(self) == 0 :
             return('The list is empty')
 
-        if not compact : #Table
-            table = prettytable.PrettyTable()
-            table.set_style(MSWORD_FRIENDLY)
-            table.field_names=fields
-            self._norm_dicts()
 
-            for item in self.data:
-                if isinstance(item, (dict, NitroDict)):
-                    try :
-                        table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=max_column_width))
-                            if not isinstance(item[field], NitroList)
-                            else item[field].get_text(**get_text_nest_attr) for field in fields])
-                    
-                    except (KeyError, IndexError) as err :
-                        log.error("Inconsistent NitroList state, some fields aren't present in the dict keys. Try calling _norm_dicts() method : "+str(err))
-                        raise
-
-                    except Exception as err :
-                        if "Row has incorrect number of values" in str(err):
-                            log.error("Inconsistent NitroList state, some fields aren't present or too many are present : {}".format(str(err)))
-
-                else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
-
-            text=table.get_string()
-
-        elif compact is True :
+        if format == 'csv':
+            file = StringIO()
+            dw = csv.DictWriter(file, self.data[0].keys())
+            dw.writeheader()
+            dw.writerows(self.data)
+            text = file.getvalue()
+            
+        elif format == 'compact':
             text='|_'
             for field in fields :
                 text+=field
@@ -1086,15 +1076,43 @@ class NitroList(collections.UserList, NitroObject):
                     #text+=textwrap.wrap(str(item),width=max_column_width)
                 text+='\n'
             text=text[0:len(text)-1]
+            
+        else:
+            table = prettytable.PrettyTable()
+            table.set_style(MSWORD_FRIENDLY)
+            table.field_names=fields
+            self._norm_dicts()
+
+            for item in self.data:
+                if isinstance(item, (dict, NitroDict)):
+                    try :
+                        table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=max_column_width))
+                            if not isinstance(item[field], NitroList)
+                            else item[field].get_text(**get_text_nest_attr) for field in fields])
+                    
+                    except (KeyError, IndexError) as err :
+                        log.error("Inconsistent NitroList state, some fields aren't present in the dict keys. Try calling _norm_dicts() method : "+str(err))
+                        raise
+
+                    except Exception as err :
+                        if "Row has incorrect number of values" in str(err):
+                            log.error("Inconsistent NitroList state, some fields aren't present or too many are present : {}".format(str(err)))
+                else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
+            text=table.get_string()
         return text
-
-
 
     @property
     def text(self):
         """The text property is a shorcut to get_text() with no arguments.
         """
         return self.get_text()
+
+    @property
+    def as_dict(self):
+        """
+        Returns data as a list of dicts.
+        """
+        return [dict(item) for item in self.data]
         
     @property
     def json(self):
