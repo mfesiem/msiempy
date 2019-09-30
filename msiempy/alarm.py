@@ -221,6 +221,8 @@ class AlarmManager(FilteredQueryList):
         match=True
         for alarm_filter in self._alarm_filters :
             match=False
+            if alarm_filter[0] not in alarm:
+                break
             value = str(alarm[alarm_filter[0]]) #Can only match strings
             for filter_value in alarm_filter[1]:
                 if regex_match(filter_value.lower(), value.lower()):
@@ -237,9 +239,11 @@ class AlarmManager(FilteredQueryList):
         match=True
         for event_filter in self._event_filters :
             match=False
-            values = [str(event[event_filter[0]]) for event in alarm['events']] #Can only match strings
+            if event_filter[0] not in alarm['events'][0]:
+                break
+            value = str(alarm['events'][0][event_filter[0]])
             for filter_value in event_filter[1]:
-                if any(regex_match(filter_value.lower(), value.lower()) for value in values):
+                if regex_match(filter_value.lower(), value.lower()) :
                     match=True
                     break
             if not match :
@@ -367,16 +371,22 @@ class Alarm(NitroDict):
         - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2.x.  
         - `extra_fields` : Only when `use_query=True`. Additionnal event fields to load in the query. See : `msiempy.event.EventManager`  
         """
-        #Retreive the alert id from the event's string
-        events_data=self.data['events'].split('|')
-        the_id = events_data[0]+'|'+events_data[1]
+        if isinstance(self.data['events'], str):
 
-        #instanciate the event
-        the_first_event=Event()
-        the_first_event.data = Event().data_from_id(id=the_id, use_query=use_query, extra_fields=extra_fields)
+            #Retreive the alert id from the event's string
+            events_data=self.data['events'].split('|')
+            the_id = events_data[0]+'|'+events_data[1]
 
-        #set it as the only item of the event list
-        self.data['events']= [ the_first_event ]
+            #instanciate the event
+            the_first_event=Event()
+            the_first_event.data = Event().data_from_id(id=the_id, use_query=use_query, extra_fields=extra_fields)
+
+            #set it as the only item of the event list
+            self.data['events']= [ the_first_event ]
+
+        else:
+            log.warning('The alarm {} ({}) has no events associated'.format(self.data['alarmName'], self.data['triggeredDate']))
+            self.data['events']= [ Event() ]
 
         return self
 
