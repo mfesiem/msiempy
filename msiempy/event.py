@@ -357,7 +357,7 @@ class EventManager(FilteredQueryList):
                     
                     sub_queries.append(sub_query)
             
-                results = self.perform(FilteredQueryList.load_data, sub_queries, 
+                results = self.perform(EventManager.load_data, sub_queries, 
                     #The sub query is asynch only when it's set to True and it's the first query
                     asynch=False if not self.load_async else (self.__parent__==None),
                     progress=self.__parent__==None, 
@@ -370,7 +370,7 @@ class EventManager(FilteredQueryList):
                 
             else :
                 if not self.__root_parent__.not_completed :
-                    log.warning("The query is not complete... Try to divide in more slots or increase the requests_size, page_size or limit")
+                    log.warning("The query is not complete... Try to divide in more slots or increase the page_size or limit")
                     self.__root_parent__.not_completed=True
 
         self.data=items

@@ -1305,6 +1305,10 @@ class FilteredQueryList(NitroList):
             
         """
 
+        if 'max_query_depth' in kwargs :
+            log.warning(str(DeprecationWarning())+'max_query_depth argument has been removed from AlarmManager, it\'s now a specilized EventManager argument only as it made more sens.')
+            del kwargs['max_query_depth']
+
         super().__init__(*arg, **kwargs)
 
         
