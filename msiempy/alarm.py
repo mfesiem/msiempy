@@ -135,12 +135,10 @@ class AlarmManager(FilteredQueryList):
 
     def load_data(self, *args, **kwargs):
         """
-        Specialized AlarmManager load_data method.  
-        Use super `msiempy.FilteredQueryList.load_data` implementation.
-        TODO : Use better polymorphism and do not cast here.
-        
+        Shortcut for `msiempy.alarm.AlarmManager.qry_load_data`.  
+        #TODO : Implement paging
         Parameters :
-        - `*args, **kwargs` : See `msiempy.FilteredQueryList.load_data` and `msiempy.alarm.AlarmManager.qry_load_data`
+        - `*args, **kwargs` : Same as `msiempy.alarm.AlarmManager.qry_load_data`
 
         Returns : `msiempy.alarm.AlarmManager`
         """
