@@ -33,6 +33,7 @@ import collections
 import tqdm
 import copy
 import csv
+import sys
 import concurrent.futures
 import prettytable
 from prettytable import MSWORD_FRIENDLY
@@ -650,7 +651,10 @@ class NitroSession():
                 try:
                     result.raise_for_status()
                 except requests.HTTPError as e :
-                    raise(requests.HTTPError(str(e)+ ' ' +str(result.text)+ ' ' + str(result.__dict__)))
+                    log.error('\n' + str(e)+ ' ' +str(result.text) + '\nSee debug log for more infos.')
+                    log.debug(str(e)+ ' ' +str(result.text)+ ' ' + str(result.__dict__))
+                    sys.exit(-1)
+                    
                     """
                     #TODO handle expired session error, result unavailable / other siem errors
                     # _InvalidFilter (228)
