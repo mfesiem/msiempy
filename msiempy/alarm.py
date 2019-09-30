@@ -19,7 +19,9 @@ class AlarmManager(FilteredQueryList):
     Interface to query and manage Alarms.
     Inherits from FilteredQueryList.
     """
-    def __init__(self, status_filter='all', page_size=None, page_number=None, filters=None, *args, **kwargs):
+    def __init__(self, status_filter='all', page_size=None, 
+        page_number=None, filters=None, #event_filters=None,
+         *args, **kwargs):
 
         """
         Parameters:  

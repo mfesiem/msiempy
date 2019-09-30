@@ -585,7 +585,7 @@ class NitroSession():
                 quiet=self.config.quiet,
                 logfile=self.config.logfile)
 
-            log.info('New NitroSession instance')
+            log.info('New ESM session instance is created with : '+str(self.config.host))
 
 
     def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False):
@@ -653,7 +653,7 @@ class NitroSession():
                 except requests.HTTPError as e :
                     log.error('\n' + str(e)+ ' ' +str(result.text) + '\nSee debug log for more infos.')
                     log.debug(str(e)+ ' ' +str(result.text)+ ' ' + str(result.__dict__))
-                    sys.exit(-1)
+                    exit(423)
                     
                     """
                     #TODO handle expired session error, result unavailable / other siem errors
