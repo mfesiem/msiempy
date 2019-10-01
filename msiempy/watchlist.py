@@ -122,37 +122,6 @@ class Watchlist(NitroDict):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if id in kwargs:
-            self.id = id
-        else:
-            self.id = 0
-        self.name = None
-        self.active = True
-        self.type = None
-        self.type_id = None
-        self.custom_type = False
-        self.dynamic = False
-        self.source = 0
-        self.search = None
-        self.update_type = 'EVERY_SO_MANY_MINUTES'
-        self.update_day = 0
-        self.update_min = 0
-        self.ipsid = 0
-        self.job_tracker_url = None
-        self.job_tracker_port = None
-        self.post_args = None
-        self.ssl_check = False
-        self.method = 0
-        self.ignore_regex = None
-        self.groups = None
-        self.mount_point = None
-        self.path = None
-        self.port = None
-        self.lookup = None
-        self.line_skip = None
-        self.delimit_regex = None
-        self.record_count = 0
-        self.scored = False
         self.__dict__.update(kwargs)
 
     def values(self):
