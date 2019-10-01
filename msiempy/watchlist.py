@@ -130,6 +130,10 @@ class Watchlist(NitroDict):
                     if not key.startswith('_')
                     if key not in exclude]
 
+    def __repr__(self):
+        return self.data.__repr__()
+
+
     def add_values(self, values):
         """
         Add values to static watchlist.
