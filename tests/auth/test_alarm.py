@@ -41,7 +41,7 @@ class T(unittest.TestCase):
             
         alarms.load_data()
 
-        self.assertGreater(50,len(alarms), "The filter don't seem to have filtered any alarm from the list")
+        self.assertGreater(51,len(alarms), "The filter don't seem to have filtered any alarm from the list")
 
         for alarm in alarms :
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')

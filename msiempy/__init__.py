@@ -297,6 +297,15 @@ class NitroSession():
                     "NBYTES": "0"}
                     """),
 
+        "del_rfile": ("ESSMGT_DELETEFILE",
+                    """{"FN": "%(ftoken)s"}"""),
+
+        "get_rfile2": ("MISC_READFILE",
+                    """{"FNAME": "%(ftoken)s",
+                    "SPOS": "%(pos)s",
+                    "NBYTES": "%(nbytes)s"}
+                    """),
+
         "get_wfile": ("MISC_WRITEFILE",
                     """{"DATA1": "%(_ds_id)s",
                     """),
@@ -514,7 +523,8 @@ class NitroSession():
                 "values": %(values)s,
                 }"""),
 
-            "get_watchlist_values": ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}"""),
+            "get_watchlist_values": ("SYS_GETWATCHLISTDETAILS",
+                                            """{"WID": "%(id)s", "LIM": "T"}"""),
 
             "remove_watchlists": ("""sysRemoveWatchlist""", """{"ids": {"watchlistIdList": ["%(wl_id_list)s"]}}"""),
 
@@ -639,7 +649,9 @@ class NitroSession():
                 data=data, 
                 headers=self._headers,
                 verify=self.config.ssl_verify,
-                timeout=self.config.timeout
+                timeout=self.config.timeout,
+                # Uncomment for debugging.
+                #proxies={"http": "http://127.0.0.1:8888", "https":"http:127.0.0.1:8888"}
             )
 
             if raw :

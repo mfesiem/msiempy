@@ -119,20 +119,18 @@ class Watchlist(NitroDict):
     - And others...
 
     """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__dict__.update(kwargs)
-
-    def values(self):
-        exclude = ['data', 'adict', 'nitro','kwargs']
-        return [val for key, val in self.__dict__.items()
-                    if not key.startswith('_')
-                    if key not in exclude]
+        if kwargs.get('adict'):
+            kwargs = kwargs['adict']
+            self.__dict__.update(kwargs)
 
     def __repr__(self):
         return self.data.__repr__()
-
+    
+    def __iter__(self):
+        for data in self.data:
+            yield data
 
     def add_values(self, values):
         """
@@ -153,15 +151,41 @@ class Watchlist(NitroDict):
 
     def load_details(self):
         """
-
+        Load Watchlist details.
         """
-        the_id = self.data['id']
-        self.data.update(self.data_from_id(the_id))
-        self.data['id']=the_id
+        self.data.update(self.data_from_id(self.data['id']))
 
-    def load_values(self, count=50):
+    def load_values(self):
         """
-        Not properly tested yet.
+        Load Watchlist values.
         """
-        self.data['values']=self.nitro.request('get_watchlist_values', id=self.data['id'], pos=0, count=count)
+        wl_details = self.nitro.request('get_watchlist_values', id=self.data['id'])
 
+        try:
+            file = wl_details['WLVFILE']
+        except KeyError:
+            print('ESM Error: Is watchlist valid?')
+
+        pos = 0
+        nbytes = 0
+        resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
+
+        if resp['FSIZE'] == resp['BREAD']:
+            print('Single file. Size: {}. BREAD: {}'.format(resp['FSIZE'], resp['BREAD']))
+            self.data['values'] = resp['DATA'].split('\n')
+            self.nitro.request('del_rfile', ftoken=file)
+            return
+
+        data = []
+        data.append(resp['DATA'])
+        file_size = int(resp['FSIZE'])
+        collected = int(resp['BREAD'])
+
+        while file_size > collected:
+            pos += int(resp['BREAD'])
+            nbytes = file_size - collected
+            resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
+            collected += int(resp['BREAD'])
+            data.append(resp['DATA'])
+        self.data['values'] = ''.join(data).split('\n')
+        resp = self.nitro.request('del_rfile', ftoken=file)
