@@ -133,5 +133,16 @@ class T(unittest.TestCase):
         print('ALARMS WITH QUERYIED EVENTS\n'+alarms_with_query_events.json)
         print('ALARMS WITH ALERT DATA EVENTS\n'+alarms_with_alert_data_events.json)
 
+    def test_paged_request(self):
+        alarms = msiempy.alarm.AlarmManager(
+            time_range='CURRENT_YEAR',
+            filters=[('Alert.SrcIP', ['10','159.33'])],
+            page_size=10
+            )
+        alarms.load_data(use_query=True, pages=3)
+        for alarm in alarms :
+            self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
+            self.assertEqual(type(alarm['events'][0]), msiempy.event.Event, 'Type error')
+            self.assertRegex(str(alarm['events'][0]['Alert.SrcIP']), '10|159.33', 'Filtering alarms is not working')
 
 

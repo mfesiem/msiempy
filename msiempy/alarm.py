@@ -78,10 +78,6 @@ class AlarmManager(FilteredQueryList):
         You can pass synonims of each status. See `msiempy.alarm.Alarm.POSSIBLE_ALARM_STATUS`.
         """
         return self._status_filter
-        """
-        for synonims in Alarm.POSSIBLE_ALARM_STATUS :
-            if self._status_filter in synonims :
-                return synonims[0]"""
 
     @status_filter.setter
     def status_filter(self, status_filter):
@@ -91,7 +87,12 @@ class AlarmManager(FilteredQueryList):
                 if status_filter in synonims:
                     self._status_filter=synonims[0]
                     status_found=True
-                
+
+        #Patch weird bug regarding paging : 
+        if isinstance(status_filter, list) : #this is the patch
+            self._status_filter='all'
+            status_found=True 
+
         if not status_found:
             raise AttributeError("Illegal value of status filter. The status must be in "+str(Alarm.POSSIBLE_ALARM_STATUS)+' not :'+str(status_filter))
 
@@ -182,21 +183,33 @@ class AlarmManager(FilteredQueryList):
         self._alarm_filters = list(tuple())
         self._event_filters = list(tuple())
 
-    def load_data(self, *args, **kwargs):
+    def load_data(self, pages=1, **kwargs):
         """
         Shortcut for `msiempy.alarm.AlarmManager.qry_load_data`.  
         #TODO : Implement pagging
         Parameters :
-        - `*args, **kwargs` : Same as `msiempy.alarm.AlarmManager.qry_load_data`
+        - `**kwargs` : Same as `msiempy.alarm.AlarmManager.qry_load_data`
 
         Returns : `msiempy.alarm.AlarmManager`
         """
-        items, completed = self.qry_load_data(*args, **kwargs)
+        items, completed = self.qry_load_data(**kwargs)
         #Casting items to Alarms
-        self.data=[Alarm(adict=item) for item in items]
+        alarms=[Alarm(adict=item) for item in items]
+
+        if not completed and pages>1 :
+            if 'page_number' in kwargs :
+                kwargs['page_number']=kwargs['page_number']+1
+            else:
+                kwargs['page_number']=2
+
+            log.info('Reqesting next alarm page : {}'.format(kwargs['page_number']))
+            alarms=alarms+list(self.load_data(pages=pages-1, **kwargs))
+
+        self.data=alarms
+        log.info(str(len(alarms)) + " alarms are matching your filter(s)")
         return(self)
 
-    def qry_load_data(self, workers=10, no_detailed_filter=False, use_query=False, extra_fields=[], page_number=1, **kwargs):
+    def qry_load_data(self, workers=10, no_detailed_filter=False, use_query=False, extra_fields=[], page_number=1):
         """
         Method that loads the data :
             -> Fetch the list of alarms and load alarms details  
@@ -210,7 +223,8 @@ class AlarmManager(FilteredQueryList):
         - `no_detailed_filter` : Don't load detailed alarms and events infos, you can only filter based on `msiempy.alarm.Alarm.ALARM_FILTER_FIELDS` values  
         - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2.1 or greater  
         - `extra_fields` :  Only when `use_query=True`. Additionnal event fields to load in the query. See : `msiempy.event.EventManager`  
-        - `**kwargs` : Not used
+        - `page_number` : Page number, default to 1. Do not touch if you're using `pages` parameter
+        
 
         Returns : `tuple` : ( Results : `list` , Status of the query : `completed` )
 
@@ -260,8 +274,6 @@ class AlarmManager(FilteredQueryList):
 
         else :
             filtered_alarms = alarm_based_filtered
-
-        log.info(str(len(filtered_alarms)) + " alarms matching your filter(s)")
 
         return (( filtered_alarms , len(no_filtered_alarms)<self.page_size ))
 
