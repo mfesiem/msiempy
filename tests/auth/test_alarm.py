@@ -35,7 +35,7 @@ class T(unittest.TestCase):
 
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_YEAR',
-            filters=[('severity', [50,80,85,90,95,100])],
+            filters=[('severity', [80,90])],
             max_query_depth=0,
             page_size=50
             )

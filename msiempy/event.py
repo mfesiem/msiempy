@@ -36,8 +36,9 @@ class EventManager(FilteredQueryList):
 
     def __init__(self, fields=None, 
         order=None, limit=500, filters=None, 
-        compute_time_range=True, 
-        max_query_depth=0, __parent__=None,
+        compute_time_range=True, #to remove ~> use it just when max_query_depth>0
+        max_query_depth=0, #to move to load_data()
+        __parent__=None,
         *args, **kwargs):
         """
         Paramters:  
@@ -315,7 +316,7 @@ class EventManager(FilteredQueryList):
             divided according to the number of slots  
         - `delta` : exemple : '6h30m', the query will be firstly divided in chuncks according to the time delta read
             with dateutil.  
-        - `**kwargs` : concrete additionnal `qry_load_data` parameters  
+        - `**kwargs` : Same as `msiempy.event.EventManager.qry_load_data` parameters  
 
         Returns : `msiempy.event.EventManager`
         """

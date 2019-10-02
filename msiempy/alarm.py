@@ -185,9 +185,10 @@ class AlarmManager(FilteredQueryList):
 
     def load_data(self, pages=1, **kwargs):
         """
-        Shortcut for `msiempy.alarm.AlarmManager.qry_load_data`.  
-        #TODO : Implement pagging
+        Implements automatic paging over `msiempy.alarm.AlarmManager.qry_load_data`.  
+        
         Parameters :
+        - `pages` : Automatic pagging count (not asynchronous). Events and Alarms loading are though !
         - `**kwargs` : Same as `msiempy.alarm.AlarmManager.qry_load_data`
 
         Returns : `msiempy.alarm.AlarmManager`
@@ -196,17 +197,20 @@ class AlarmManager(FilteredQueryList):
         #Casting items to Alarms
         alarms=[Alarm(adict=item) for item in items]
 
+        #Iterative automatic paging (not asynchronous)
         if not completed and pages>1 :
-            if 'page_number' in kwargs :
-                kwargs['page_number']=kwargs['page_number']+1
-            else:
-                kwargs['page_number']=2
+            next_kwargs={}
+            if 'page_number' in kwargs : next_kwargs['page_number']=kwargs['page_number']+1
+            else: next_kwargs['page_number']=2
 
-            log.info('Reqesting next alarm page : {}'.format(kwargs['page_number']))
-            alarms=alarms+list(self.load_data(pages=pages-1, **kwargs))
+            log.info('Loading pages... ({})'.format(next_kwargs['page_number']))
+            alarms=alarms+list(self.load_data(pages=pages-1, **next_kwargs))
 
         self.data=alarms
-        log.info(str(len(alarms)) + " alarms are matching your filter(s)")
+
+        if 'page_number' not in kwargs:
+            log.info(str(len(alarms)) + " alarms are matching your filter(s)")
+
         return(self)
 
     def qry_load_data(self, workers=10, no_detailed_filter=False, use_query=False, extra_fields=[], page_number=1):
