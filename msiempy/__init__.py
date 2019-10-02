@@ -1205,13 +1205,14 @@ class NitroList(collections.UserList, NitroObject):
 
         #Printing message if specified.
         tqdm_args=dict()
+
         #The message will appear on loading bar if progress is True
         if progress is True :
             tqdm_args=dict(desc='Loading...', total=len(elements))
             if message is not None:
                 tqdm_args['desc']=message
-
-        
+        elif message is not None:
+            log.info(message)
 
         #Runs the callable on list on executor or by iterating
         if asynch == True :
@@ -1290,7 +1291,7 @@ class FilteredQueryList(NitroList):
     List of possible time ranges : `%(timeranges)s`""" % dict(timeranges=', '.join(POSSIBLE_TIME_RANGE))
 
     def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
-        load_async=True, requests_size=500, *arg, **kwargs):
+        load_async=True, *arg, **kwargs):
         """
         Abstract base class that handles the time ranges operations, loading data from the SIEM.
 
@@ -1301,17 +1302,20 @@ class FilteredQueryList(NitroList):
         - `start_time` : Query starting time, can be a string or a datetime object. Parsed with dateutil.
         - `end_time` : Query endding time, can be a string or a datetime object. Parsed with dateutil.
         - `filters` : List of filters applied to the query.
-        - `load_async` : Load asynchonously the sub-queries. Defaulted to True.
-        - `requests_size` : number of items per request.
-        - `max_query_depth` : maximum number of supplement reccursions of division of the query times
-            Meaning, if requests_size=500, slots=5 and max_query_depth=3, then the maximum capacity of 
-            the list is (500*5)*(500*5)*(500*5) = 15625000000
+        - `load_async` : Load asynchonously the sub-queries. Defaulted to True.       
             
         """
 
+        #handled eventual deprecated arguments
         if 'max_query_depth' in kwargs :
-            log.warning(str(DeprecationWarning())+'max_query_depth argument has been removed from AlarmManager, it\'s now a specilized EventManager argument only as it made more sens.')
+            log.warning('Deprecated : `max_query_depth` argument has been removed from FilteredQueryList, it\'s now a specilized EventManager argument only. You can remove this argument.')
             del kwargs['max_query_depth']
+        if 'requests_size' in kwargs :
+            log.warning('Deprecated : `requests_size` argument has been removed from FilteredQueryList, use `page_size` (Alarms) or `limit` (Events) arguments.')
+            del kwargs['requests_size']
+        if 'load_async' in kwargs :
+            log.warning('Deprecated : `load_async` argument has been removed from FilteredQueryList. Queries are now always loaded asynchronously...')
+            del kwargs['load_async']
 
         super().__init__(*arg, **kwargs)
 
@@ -1337,7 +1341,6 @@ class FilteredQueryList(NitroList):
             self.time_range=time_range
 
         self.load_async=load_async
-        self.requests_size=requests_size
 
     @property
     def time_range(self):
@@ -1448,7 +1451,7 @@ class FilteredQueryList(NitroList):
         pass 
 
     @abc.abstractmethod
-    def qry_load_data(self,*args, **kwargs):
+    def qry_load_data(self, *args, **kwargs):
         """
         Method to load the data from the SIEM.  
         Rturn a tuple (items, completed).  

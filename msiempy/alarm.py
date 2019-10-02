@@ -19,8 +19,7 @@ class AlarmManager(FilteredQueryList):
     Interface to query and manage Alarms.
     Inherits from FilteredQueryList.
     """
-    def __init__(self, status_filter='all', page_size=None, 
-        page_number=None, filters=None, #event_filters=None,
+    def __init__(self, status_filter='all', page_size=500, filters=None, event_filters=None,
          *args, **kwargs):
 
         """
@@ -30,7 +29,7 @@ class AlarmManager(FilteredQueryList):
         - `page_size` : max number of rows per query, by default takes the value in config `default_rows` option.
         - `page_number` : defaulted to 1.
         - `filters` : [(field, [values]), (field, [values])]
-        - `fields` : list of strings. Can be an EsmTriggeredAlarm or an EsmTriggeredAlarmEvent field, or any synonims. See 
+        - `event_filters` : [(field, [values]), (field, [values])]
         - `*args, **kwargs` : Parameters passed to `msiempy.base.FilteredQueryList.__init__()`
             
         Examples:  
@@ -47,14 +46,17 @@ class AlarmManager(FilteredQueryList):
 
         #Setting attributes
         self.status_filter=status_filter
-        self.page_size=page_size if page_size is not None else self.requests_size #IGNORE THE CONFIG
-        self.requests_size=self.page_size
-        self.page_number=page_number if page_number is not None else 1
+        self.page_size=page_size
+
+        #Seeting events filters before alarms filters cause it would overwrite it
+        self.event_filters=event_filters
 
         #uses the parent filter setter
         #TODO : find a soltuion not to use this stinky tric
         #callign super().filters=filters #https://bugs.python.org/issue14965
         super(self.__class__, self.__class__).filters.__set__(self, filters)
+
+        
 
         #Casting all data to Alarms objects, better way to do it ?
         collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, NitroDict))])
@@ -64,9 +66,9 @@ class AlarmManager(FilteredQueryList):
     @property
     def filters(self):
         """
-        Returns the addition of alarm related filters and event related filters.
+        Returns the alarm related filters
         """
-        return self._alarm_filters + self._event_filters
+        return self._alarm_filters
     
     @property
     def status_filter(self):
@@ -96,7 +98,8 @@ class AlarmManager(FilteredQueryList):
     def add_filter(self, afilter):
         """
             Make sure the filters format is tuple(field, list(values in string)).
-            Takes also care of the differents synonims fields can have.
+            Takes also care of the differents synonims fields can have : Deprecated
+            - `afilter` : Can be a `tuple` (field,[values]) or `str` 'field=value'
         """
 
         if isinstance(afilter,str):
@@ -113,20 +116,64 @@ class AlarmManager(FilteredQueryList):
 
             for synonims in Alarm.ALARM_EVENT_FILTER_FIELDS :
                 if afilter[0] in synonims :
+                    log.warning('Deprecated : Passing event related filters in `filters` argument is deprecated please use `event_filters` argument. You\'ll be able to use more filters dynamically.')
                     self._event_filters.append((synonims[0], values))
                     added=True
 
             #support query related filtering if the filter's field is composed by a table name then a field name separated by a dot.
             if len(afilter[0].split('.')) == 2 :
                 self._event_filters.append((afilter[0], values))
+                log.warning('Deprecated : Passing event related filters in `filters` argument is deprecated please use `event_filters` argument.')
                 added=True
 
+            if added==False:
+                self._alarm_filters.append((afilter[0], values))
+                added=True
 
         except IndexError:
             added = False
 
         if not added :
             raise AttributeError("Illegal filter field value : "+afilter[0]+". The filter field must be in :"+str(Alarm.ALARM_FILTER_FIELDS + Alarm.ALARM_EVENT_FILTER_FIELDS))
+
+    @property
+    def event_filters(self):
+        """ 
+        Returns the event related filters.  
+        Can be set with list of tuple(field, [values]). A single tuple is also accepted.  
+        None value will reset event_filters property.  
+        Raises : `AttributeError` if type not supported.
+        """
+        return self._event_filters
+
+    @event_filters.setter
+    def event_filters(self, filters):
+        if isinstance(filters, list):
+            for f in filters :
+                self.add_event_filter(f)
+
+        elif isinstance(filters, tuple):
+            self.add_event_filter(filters)
+
+        elif filters == None :
+            self._event_filters=list(tuple())
+        
+        else :
+            raise AttributeError("Illegal type for the filter object, it must be a list, a tuple or None.")
+
+    def add_event_filter(self, afilter):
+        """
+            Make sure the filters format is tuple(field, list(values in string)).
+            Takes also care of the differents synonims fields can have : Deprecated
+            - `afilter` : Can be a `tuple` (field,[values]) or `str` 'field=value'
+        """
+
+        if isinstance(afilter,str):
+            afilter = afilter.split('=',1)
+       
+        values = afilter[1] if isinstance(afilter[1], list) else [afilter[1]]
+        values = [str(v) for v in values] 
+        self._event_filters.append((afilter[0], values))
 
     def clear_filters(self):
         """
@@ -138,15 +185,18 @@ class AlarmManager(FilteredQueryList):
     def load_data(self, *args, **kwargs):
         """
         Shortcut for `msiempy.alarm.AlarmManager.qry_load_data`.  
-        #TODO : Implement paging
+        #TODO : Implement pagging
         Parameters :
         - `*args, **kwargs` : Same as `msiempy.alarm.AlarmManager.qry_load_data`
 
         Returns : `msiempy.alarm.AlarmManager`
         """
-        return AlarmManager(alist=super().load_data(*args, **kwargs))
+        items, completed = self.qry_load_data(*args, **kwargs)
+        #Casting items to Alarms
+        self.data=[Alarm(adict=item) for item in items]
+        return(self)
 
-    def qry_load_data(self, workers, no_detailed_filter=False, use_query=False, extra_fields=[], **kwargs):
+    def qry_load_data(self, workers=10, no_detailed_filter=False, use_query=False, extra_fields=[], page_number=1, **kwargs):
         """
         Method that loads the data :
             -> Fetch the list of alarms and load alarms details  
@@ -162,7 +212,7 @@ class AlarmManager(FilteredQueryList):
         - `extra_fields` :  Only when `use_query=True`. Additionnal event fields to load in the query. See : `msiempy.event.EventManager`  
         - `**kwargs` : Not used
 
-        Returns : `tuple` : ( `msiempy.alarm.AlarmManager`, Status of the query : `completed` )
+        Returns : `tuple` : ( Results : `list` , Status of the query : `completed` )
 
         """
 
@@ -174,7 +224,7 @@ class AlarmManager(FilteredQueryList):
                 end_time=self.end_time,
                 status=self.status_filter,
                 page_size=self.page_size,
-                page_number=self.page_number
+                page_number=page_number
                 )
 
         else :
@@ -183,10 +233,11 @@ class AlarmManager(FilteredQueryList):
                 time_range=self.time_range,
                 status=self.status_filter,
                 page_size=self.page_size,
-                page_number=self.page_number
+                page_number=page_number
                 )
-                
-        alarm_based_filtered = AlarmManager(alist=[a for a in no_filtered_alarms if self._alarm_match(a)])
+
+        #Casting to list of Alarms to be able to call load_details etc...        
+        alarm_based_filtered = [Alarm(adict=a) for a in no_filtered_alarms if self._alarm_match(a)]
 
         if not no_detailed_filter :
 
@@ -205,7 +256,7 @@ class AlarmManager(FilteredQueryList):
                 progress=True, 
                 workers=workers)
 
-            filtered_alarms = AlarmManager(alist=[a for a in event_detailed if self._event_match(a)])
+            filtered_alarms = [a for a in event_detailed if self._event_match(a)]
 
         else :
             filtered_alarms = alarm_based_filtered

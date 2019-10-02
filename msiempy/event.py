@@ -35,7 +35,7 @@ class EventManager(FilteredQueryList):
     _possible_fields = []
 
     def __init__(self, fields=None, 
-        order=None, limit=None, filters=None, 
+        order=None, limit=500, filters=None, 
         compute_time_range=True, 
         max_query_depth=0, __parent__=None,
         *args, **kwargs):
@@ -58,6 +58,9 @@ class EventManager(FilteredQueryList):
         if you wish to use advanced filtering.
         - `compute_time_range` : False if you want to send the actualy time_range in parameter for the initial query.
             Defaulted to True cause the query splitting implies computing the time_range anyway.
+        - `max_query_depth` : maximum number of supplement reccursions of division of the query times
+            Meaning, if requests_size=500, slots=5 and max_query_depth=3, then the maximum capacity of 
+            the list is (500*5)*(500*5)*(500*5) = 15625000000
         - `*args, **kwargs` : Parameters passed to `msiempy.FilteredQueryList`
            
             
@@ -115,7 +118,7 @@ class EventManager(FilteredQueryList):
         #Setting limit according to config or limit argument
         #TODO Try to load queries with a limit of 10k and get result as chucks of 500 with starPost nbRows
         #   and compare efficiency
-        self.limit=self.requests_size if limit is None else int(limit)
+        self.limit=int(limit)
         #we can ignore Access to member 'requests_size' before its definition line 95pylint(access-member-before-definition)
         #It's define in FilteredQueryList __init__()
 
@@ -233,15 +236,12 @@ class EventManager(FilteredQueryList):
         """
         return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
 
-    def qry_load_data(self, **kwargs):
+    def qry_load_data(self):
         """"
         Concrete helper method to execute the query and load the data : 
             -> Submit the query 
             -> Wait the query to be executed
             -> Get and parse the events
-        
-        Parameters :  
-        - `**kwargs` : Not used  
 
         Returns : `tuple` : ( `msiempy.event.EventManager`, Status of the query : `completed` )
 
@@ -284,6 +284,7 @@ class EventManager(FilteredQueryList):
         
         self.data=events
         return((events,len(events)<self.limit))
+
     '''
     def load_data(self, *args, **kwargs):
         """
@@ -309,7 +310,7 @@ class EventManager(FilteredQueryList):
 
         Parameters:  
     
-        - `workers` : numbre of parrallels task  
+        - `workers` : numbre of parrallels tasks, should be equal or less than the number of slots.  
         - `slots` : number of time slots the query can be divided. The loading bar is 
             divided according to the number of slots  
         - `delta` : exemple : '6h30m', the query will be firstly divided in chuncks according to the time delta read
@@ -319,7 +320,7 @@ class EventManager(FilteredQueryList):
         Returns : `msiempy.event.EventManager`
         """
 
-        items, completed = self.qry_load_data(workers=workers, **kwargs)
+        items, completed = self.qry_load_data()
 
         if not completed :
             #If not completed the query is split and items aren't actually used
@@ -358,8 +359,8 @@ class EventManager(FilteredQueryList):
                     sub_queries.append(sub_query)
             
                 results = self.perform(EventManager.load_data, sub_queries, 
-                    #The sub query is asynch only when it's set to True and it's the first query
-                    asynch=False if not self.load_async else (self.__parent__==None),
+                    #The sub query is asynch only when it's the first query (root parent)
+                    asynch=self.__parent__==None,
                     progress=self.__parent__==None, 
                     message='Loading data from '+self.start_time+' to '+self.end_time+'. In {} slots'.format(len(times)),
                     func_args=dict(slots=slots),
@@ -370,7 +371,7 @@ class EventManager(FilteredQueryList):
                 
             else :
                 if not self.__root_parent__.not_completed :
-                    log.warning("The query is not complete... Try to divide in more slots or increase the page_size or limit")
+                    log.warning("The query is not complete... Try to divide in more slots or increase the limit")
                     self.__root_parent__.not_completed=True
 
         self.data=items
