@@ -446,7 +446,8 @@ class Event(NitroDict):
     - `Alert.IPSIDAlertID`  
     
     You can request more fields by passing a list of fields to the `msiempy.event.EventManager` object.
-    See msiempy/static JSON files to browse complete list : https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json
+    See msiempy/static JSON files to browse complete list : https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json  
+    Prefixes 'Alert.', 'Rule.', etc are optionnal, prefix autocompletion is computed in any case :)
 
     """
    
@@ -508,27 +509,28 @@ class Event(NitroDict):
         """
         Automatically adding the table name of the field by iterating trought FIELDS_TABLES
         if no '.' is present in the key
-        Not working. Skipping.
-        TODO try with collections.UserDict.__getitem__(self, key)
         """
+        try :
+            return collections.UserDict.__getitem__(self, key)
+        except (AttributeError, KeyError) : pass
 
-        return super().__getitem__(key)
-        """
         if '.' not in key :
             for table in self.FIELDS_TABLES :
                 try :
-                    return super().__getitem__(table+'.'+key)
+                    return collections.UserDict.__getitem__(self, table+'.'+key)
                 except (AttributeError, KeyError) : pass
         try :
-            return super().__getitem__(key)
+            return collections.UserDict.__getitem__(self, key)
         except (AttributeError, KeyError) : 
             if key in self.DEFAULTS_EVENT_FIELDS :
                 log.error('Some default event fields are missing from SIEM reponse.')
                 return 'missing'
             else:
                 log.error('The SIEM dict keys are not always the same are the requested fields. check .keys()')
+                #Todo : table of corespondance UserIDSrc = BIN(7) etc...
+                #Map the table to getitem
                 raise
-        """
+        
 
     def clear_notes(self):
         """
