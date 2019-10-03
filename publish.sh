@@ -91,6 +91,7 @@ while getopts ":htpd:" arg; do
 
             #mfesiem.github.io
             cd mfesiem.github.io
+            git pull -v
             folder=${OPTARG}
             if [ "$folder" = "master" ]; then
                 pdoc msiempy --output-dir ./docs --html --force
