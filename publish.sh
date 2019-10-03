@@ -36,8 +36,8 @@ function generateSubTitle() {
 ### END CODE COPIED ###
 
 #Setting bash strict mode. See http://redsymbol.net/articles/unofficial-bash-strict-mode/
-set -euo pipefail
-IFS=$'\n\t,'
+#set -euo pipefail
+#IFS=$'\n\t,'
 
 #FUNCTIONS
 usage(){
@@ -49,7 +49,7 @@ usage(){
     echo "message to avoid unexpected behaviours."
     echo
     echo -e "\t-h\t\tPrint this help message."
-    echo -e "\t-t\t\tLaunch tests, save output to ~/static/tests.txt and push changes to current remote branch."
+    echo -e "\t-t\t\tLaunch tests, save output to ~/static/tests.txt and push changes to current remote branch IF SUCCESS !."
     echo -e "\t-p\t\tPublish to PYPI."
     echo -e "\t-d <Folder>\t\tPublish the docs to https://mfesiem.github.io/docs/{folder}/msiempy/"
     echo -e "\t\tuse 'master' keyword to publish to https://mfesiem.github.io/docs/msiempy/"
@@ -80,35 +80,54 @@ while getopts ":htpd:" arg; do
 
         d) #Docs
             generateSubTitle "Documentation"
-            #Gen diagrams :
-            pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-            #Generate and publish the documentation
-            git clone https://github.com/mfesiem/mfesiem.github.io
-            cd mfesiem.github.io
-            branch=${OPTARG}
 
-            if [ "$branch" = "master" ]; then
+            #Gen diagrams and  :
+            pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
+
+            #Generate and publish the documentation
+            if [[ ! -d mfesiem.github.io ]]; then
+                git clone https://github.com/mfesiem/mfesiem.github.io
+            fi
+
+            #mfesiem.github.io
+            cd mfesiem.github.io
+            folder=${OPTARG}
+            if [ "$folder" = "master" ]; then
                 pdoc msiempy --output-dir ./docs --html --force
-                mv ../classes.png ./docs/msiempy
-                mv ../packages.png ./docs/msiempy
+                cp ../classes.png ./docs/msiempy
+                cp ../packages.png ./docs/msiempy
             else
-                pdoc msiempy --output-dir ./docs/${branch} --html --force
-                mv ../classes.png ./docs/${branch}/msiempy
-                mv ../packages.png ./docs/${branch}/msiempy
+                pdoc msiempy --output-dir ./docs/${folder} --html --force
+                cp ../classes.png ./docs/${folder}/msiempy
+                cp ../packages.png ./docs/${folder}/msiempy
+            fi
+
+            git add .
+            git commit -m "Generate ${folder} docs $(date)"
+            git push origin master
+
+            cd ..
+
+            #msiempy
+            #push to current branch
+            git add .
+            git commit -m "Generate diagrams $(date)"
+            git push
+            
+            if [ "$folder" = "master" ]; then
+                url="https://mfesiem.github.io/docs/msiempy/"
+            else
+                url="https://mfesiem.github.io/docs/${folder}/msiempy/"
             fi
             
-            git add .
-            git commit -m "Generate docs $(date)"
-            git push origin $branch
-            cd ..
-            rm -rf mfesiem.github.io
-            generateSubTitle "Documentation on line at : "
+            generateSubTitle "Documentation on line at : ${url}"
             ;;
         *)
             generateSubTitle "Syntax mistake"
             echo "[ERROR] You made a syntax mistake calling the script."
             usage
             exit
+            ;;
     esac
 done
 shift $((OPTIND-1))

@@ -1,6 +1,9 @@
 # msiem CONFIGURATION FILE
 .msiem/
 
+#documentation
+mfesiem.github.io/
+
 # vscode
 .vscode
 .vscode/settings.json
