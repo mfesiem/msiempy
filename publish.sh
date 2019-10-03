@@ -37,7 +37,7 @@ function generateSubTitle() {
 
 #Setting bash strict mode. See http://redsymbol.net/articles/unofficial-bash-strict-mode/
 #set -euo pipefail
-#IFS=$'\n\t,'
+IFS=$'\n\t,'
 
 #FUNCTIONS
 usage(){
@@ -67,13 +67,15 @@ while getopts ":htpd:" arg; do
             git add ~/static/tests.txt
             git commit -m "Generate tests $(date)"
             git push
+            #echo "[IMPORTANT] Tests pushed"
             ;;
 
         p) ##Publish on the python index
             generateSubTitle "PyPI upload"x
             rm -rf dist
             python3 setup.py build check sdist bdist_wheel
-            echo 'HIT CTRL+C TO CANCEL PYPI DISTRIBUTION UPLOAD'
+            echo 'Dont forget to bump __version__'
+            echo 'Hit ctrl+C to cancel PyPI upload'
             twine upload --verbose dist/*
             python3 setup.py clean
             ;;
@@ -121,7 +123,7 @@ while getopts ":htpd:" arg; do
                 url="https://mfesiem.github.io/docs/${folder}/msiempy/"
             fi
             
-            echo "Documentation on line at : ${url}"
+            echo "[IMPORTANT] Documentation on line at : ${url}"
             ;;
         *)
             generateSubTitle "Syntax mistake"
@@ -132,4 +134,4 @@ while getopts ":htpd:" arg; do
     esac
 done
 shift $((OPTIND-1))
-generateSubTitle "End, usage: $0 [-h] [-t] [-p] [-d]"
+echo "[END] usage: $0 [-h] [-t] [-p] [-d]"
