@@ -70,8 +70,11 @@ class T(unittest.TestCase):
         manager[10]['County']=msiempy.NitroList(alist=data[:5])
         manager[20]['County']=data[:5]
 
+        print('CSV')
+        print(manager.get_text(format='csv'))
+
         print('COMPACT')
-        print(manager.get_text(compact=True))
+        print(manager.get_text(format='compact'))
 
         print('NORMAL')
         print(manager.text)

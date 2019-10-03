@@ -1000,6 +1000,9 @@ class DevTree(NitroList):
             ftoken (str): instance name set by 
         
         """
+        # Need to test ESM with large client list to see if
+        # multiple requests may be necessary here.
+
         resp = self.nitro.request('get_rfile', ftoken=ftoken)
         return dehexify(resp['DATA'])
 
