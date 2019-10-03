@@ -121,9 +121,6 @@ class Watchlist(NitroDict):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if kwargs.get('adict'):
-            kwargs = kwargs['adict']
-            self.__dict__.update(kwargs)
 
     def __repr__(self):
         return self.data.__repr__()
