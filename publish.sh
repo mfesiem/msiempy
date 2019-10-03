@@ -82,7 +82,8 @@ while getopts ":htd:p" arg; do
 
             #msiempy
             #push to current branch
-            git add .
+            git add ./packages.png
+            git add ./classes.png
             git commit -m "Generate diagrams $(date)"
             echo "[RETURN CODE] $?"
             git push
