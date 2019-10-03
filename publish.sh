@@ -51,11 +51,12 @@ usage(){
     echo -e "\t-h\t\tPrint this help message."
     echo -e "\t-t\t\tLaunch tests, save output to ~/static/tests.txt and push changes to current remote branch."
     echo -e "\t-p\t\tPublish to PYPI."
-    echo -e "\t-d\t\tPublish the docs to https://mfesiem.github.io/docs/msiempy/"
+    echo -e "\t-d <Folder>\t\tPublish the docs to https://mfesiem.github.io/docs/{folder}/msiempy/"
+    echo -e "\t\tuse 'master' keyword to publish to https://mfesiem.github.io/docs/msiempy/"
     exit -1
 }
 
-while getopts ":htpd" arg; do
+while getopts ":htpd:" arg; do
     case "${arg}" in
         h) #Print help
             usage
@@ -79,19 +80,29 @@ while getopts ":htpd" arg; do
 
         d) #Docs
             generateSubTitle "Documentation"
+            #Gen diagrams :
+            pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
             #Generate and publish the documentation
             git clone https://github.com/mfesiem/mfesiem.github.io
-            pdoc msiempy --output-dir ./mfesiem.github.io/docs --html --force
-            pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-            mv ./classes.png ./mfesiem.github.io/docs/msiempy
-            mv ./packages.png ./mfesiem.github.io/docs/msiempy
             cd mfesiem.github.io
+            branch=${OPTARG}
+
+            if [ "$branch" = "master" ]; then
+                pdoc msiempy --output-dir ./docs --html --force
+                mv ../classes.png ./docs/msiempy
+                mv ../packages.png ./docs/msiempy
+            else
+                pdoc msiempy --output-dir ./docs/${branch} --html --force
+                mv ../classes.png ./docs/${branch}/msiempy
+                mv ../packages.png ./docs/${branch}/msiempy
+            fi
+            
             git add .
             git commit -m "Generate docs $(date)"
-            git push
+            git push origin $branch
             cd ..
             rm -rf mfesiem.github.io
-
+            generateSubTitle "Documentation on line at : "
             ;;
         *)
             generateSubTitle "Syntax mistake"
