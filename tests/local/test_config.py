@@ -11,7 +11,4 @@ class T(unittest.TestCase):
         #config.iset('esm')
         config.write()
 
-        print('printing config')
-        print(config)
-
 

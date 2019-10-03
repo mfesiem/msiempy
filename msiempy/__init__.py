@@ -33,6 +33,7 @@ import collections
 import tqdm
 import copy
 import csv
+import sys
 import concurrent.futures
 import prettytable
 from prettytable import MSWORD_FRIENDLY
@@ -594,7 +595,7 @@ class NitroSession():
                 quiet=self.config.quiet,
                 logfile=self.config.logfile)
 
-            log.info('New NitroSession instance')
+            log.info('New ESM session instance is created with : '+str(self.config.host))
 
 
     def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False):
@@ -662,7 +663,10 @@ class NitroSession():
                 try:
                     result.raise_for_status()
                 except requests.HTTPError as e :
-                    raise(requests.HTTPError(str(e)+ ' ' +str(result.text)+ ' ' + str(result.__dict__)))
+                    log.error('\n' + str(e)+ ' ' +str(result.text) + '\nSee debug log for more infos.')
+                    log.debug(str(e)+ ' ' +str(result.text)+ ' ' + str(result.__dict__))
+                    exit(423)
+                    
                     """
                     #TODO handle expired session error, result unavailable / other siem errors
                     # _InvalidFilter (228)
@@ -1221,13 +1225,14 @@ class NitroList(collections.UserList, NitroObject):
 
         #Printing message if specified.
         tqdm_args=dict()
+
         #The message will appear on loading bar if progress is True
         if progress is True :
             tqdm_args=dict(desc='Loading...', total=len(elements))
             if message is not None:
                 tqdm_args['desc']=message
-
-        
+        elif message is not None:
+            log.info(message)
 
         #Runs the callable on list on executor or by iterating
         if asynch == True :
@@ -1306,8 +1311,7 @@ class FilteredQueryList(NitroList):
     List of possible time ranges : `%(timeranges)s`""" % dict(timeranges=', '.join(POSSIBLE_TIME_RANGE))
 
     def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
-        load_async=True, requests_size=500, max_query_depth=0,
-            __parent__=None, *arg, **kwargs):
+        load_async=True, *arg, **kwargs):
         """
         Abstract base class that handles the time ranges operations, loading data from the SIEM.
 
@@ -1318,18 +1322,24 @@ class FilteredQueryList(NitroList):
         - `start_time` : Query starting time, can be a string or a datetime object. Parsed with dateutil.
         - `end_time` : Query endding time, can be a string or a datetime object. Parsed with dateutil.
         - `filters` : List of filters applied to the query.
-        - `load_async` : Load asynchonously the sub-queries. Defaulted to True.
-        - `requests_size` : number of items per request.
-        - `max_query_depth` : maximum number of supplement reccursions of division of the query times
-            Meaning, if requests_size=500, slots=5 and max_query_depth=3, then the maximum capacity of 
-            the list is (500*5)*(500*5)*(500*5) = 15625000000
+        - `load_async` : Load asynchonously the sub-queries. Defaulted to True.       
             
         """
 
+        #handled eventual deprecated arguments
+        if 'max_query_depth' in kwargs :
+            log.warning('Deprecated : `max_query_depth` argument has been removed from FilteredQueryList, it\'s now a specilized EventManager argument only. You can remove this argument.')
+            del kwargs['max_query_depth']
+        if 'requests_size' in kwargs :
+            log.warning('Deprecated : `requests_size` argument has been removed from FilteredQueryList, use `page_size` (Alarms) or `limit` (Events) arguments.')
+            del kwargs['requests_size']
+        if 'load_async' in kwargs :
+            log.warning('Deprecated : `load_async` argument has been removed from FilteredQueryList. Queries are now always loaded asynchronously...')
+            del kwargs['load_async']
+
         super().__init__(*arg, **kwargs)
 
-        #Store the query parent 
-        self.__parent__=__parent__
+        
         self.not_completed=False
 
         #self.nitro.config.default_rows #nb rows per request : eq limit/page_size = requests_size
@@ -1351,20 +1361,6 @@ class FilteredQueryList(NitroList):
             self.time_range=time_range
 
         self.load_async=load_async
-        self.requests_size=requests_size
-        self.__init_max_query_depth__=max_query_depth
-        self.query_depth_ttl=max_query_depth
-
-
-    @property
-    def __root_parent__(self):
-        """
-        Internal method that return the first query of the query tree
-        """
-        if self.__parent__==None:
-            return self
-        else :
-            return self.__parent__.__root_parent__
 
     @property
     def time_range(self):
@@ -1462,101 +1458,31 @@ class FilteredQueryList(NitroList):
     
     @abc.abstractmethod
     def add_filter(self, filter):
-        """Method that figures out the way to add a filter to the query.
+        """Add a filter to the query.  
+        Abstract declaration.
         """
         pass
 
     @abc.abstractmethod
     def clear_filters(self):
-        """Method that fiures out the way to remove all filters to the query.
+        """Remove all filters to the query.  
+        Abstract declaration.
         """
         pass 
 
     @abc.abstractmethod
-    def qry_load_data(self, **kwargs):
+    def qry_load_data(self, *args, **kwargs):
         """
-        Method to load the data from the SIEM.
-        Rturn a tuple (items, completed).
-        completed = True if all the data that should be load is loaded.
+        Method to load the data from the SIEM.  
+        Rturn a tuple (items, completed).  
+        completed = True if all the data that should be load is loaded.  
+        Abstract declaration.
         """
         pass
 
     @abc.abstractmethod
-    def load_data(self, workers=10, slots=10, delta=None, **kwargs):
+    def load_data(self, *args, **kwargs):
         """Load the data from the SIEM into the manager list.  
-        Split the query in defferents time slots if the query apprears not to be completed. It wraps around `msiempy.FilteredQueryList.qry_load_data`.    
-        If you're looking for `max_query_depth`, it's define at the creation of the `msiempy.FilteredQueryList`.
-
-        Note :  
-        If you looking for `load_async`, you should pass this to the constructor method `msiempy.FilteredQueryList` or by setting the attribute manually like `manager.load_asynch=True`
-        Only the first query is loaded asynchronously.
-
-        Parameters:  
-    
-        - `workers` : numbre of parrallels task  
-        - `slots` : number of time slots the query can be divided. The loading bar is 
-            divided according to the number of slots  
-        - `delta` : exemple : '6h30m', the query will be firstly divided in chuncks according to the time delta read
-            with dateutil.  
-        - `**kwargs` : concrete additionnal `qry_load_data` parameters  
-
-        Returns : `msiempy.FilteredQueryList`
-        """
-
-        items, completed = self.qry_load_data(workers=workers, **kwargs)
-
-        if not completed :
-            #If not completed the query is split and items aren't actually used
-
-            if self.query_depth_ttl > 0 :
-                #log.info("The query data couldn't be loaded in one request, separating it in sub-queries...")
-
-                if self.time_range != 'CUSTOM': #can raise a NotImplementedError if unsupported time_range
-                    start, end = timerange_gettimes(self.time_range)
-                else :
-                    start, end = self.start_time, self.end_time
-
-                if self.__parent__ == None and isinstance(delta, str) :
-                    #if it's the first query and delta is speficied, cut the time_range in slots according to the delta
-                    times=divide_times(start, end, delta=parse_timedelta(delta))
-                    
-                else : 
-                    times=divide_times(start, end, slots=slots)
-
-                if workers > len(times) :
-                    log.warning("The numbre of slots is smaller than the number of workers, only "+str(len(times))+" asynch workers will be used when you could use up to "+str(workers)+". Number of slots should be greater than the number of workers for better performance.")
-                
-                sub_queries=list()
-
-                for time in times :
-                    #Divide the query in sub queries
-                    sub_query = copy.copy(self)
-                    sub_query.__parent__=self
-                    sub_query.compute_time_range=False
-                    sub_query.time_range='CUSTOM'
-                    sub_query.start_time=time[0].isoformat()
-                    sub_query.end_time=time[1].isoformat()
-                    sub_query.load_async=False
-                    sub_query.query_depth_ttl=self.query_depth_ttl-1
-                    
-                    sub_queries.append(sub_query)
-            
-                results = self.perform(FilteredQueryList.load_data, sub_queries, 
-                    #The sub query is asynch only when it's set to True and it's the first query
-                    asynch=False if not self.load_async else (self.__parent__==None),
-                    progress=self.__parent__==None, 
-                    message='Loading data from '+self.start_time+' to '+self.end_time+'. In {} slots'.format(len(times)),
-                    func_args=dict(slots=slots),
-                    workers=workers)
-
-                #Flatten the list of lists in a list
-                items=[item for sublist in results for item in sublist]
-                
-            else :
-                if not self.__root_parent__.not_completed :
-                    log.warning("The query is not complete... Try to divide in more slots or increase the requests_size, page_size or limit")
-                    self.__root_parent__.not_completed=True
-
-        self.data=items
-        return(self)
+        Abstract declaration."""
+        pass
 
