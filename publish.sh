@@ -1,9 +1,9 @@
 #!/bin/bash
 ### CODE COPIED ###
 # Created by Jamie Cruwys on 21/02/2014.
-symbol="*"
+symbol="#"
 paddingSymbol=" "
-lineLength=70
+lineLength=120
 charsToOption=1
 charsToName=3
 function generatePadding() {
@@ -121,7 +121,7 @@ while getopts ":htpd:" arg; do
                 url="https://mfesiem.github.io/docs/${folder}/msiempy/"
             fi
             
-            generateSubTitle "Documentation on line at : ${url}"
+            echo "Documentation on line at : ${url}"
             ;;
         *)
             generateSubTitle "Syntax mistake"
