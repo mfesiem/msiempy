@@ -40,7 +40,7 @@ import datetime
 import functools
 import textwrap
 import inspect
-
+from io import StringIO
 from .__utils__ import regex_match, tob64, format_esm_time, convert_to_time_obj, timerange_gettimes, parse_timedelta, divide_times
 
 
