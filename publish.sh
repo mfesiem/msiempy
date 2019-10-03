@@ -8,14 +8,17 @@ usage(){
     echo "[USAGE] $0 [-h] [-t] [-d] <Folder> [-p]" 1>&2
     echo
     echo "This little script is designed to help us manage msiempy."
-    echo "Arguments should be passed to the script in the same order they are listed in this"
-    echo "message to avoid unexpected behaviours."
     echo
-    echo -e "\t-h\t\tPrint this help message."
-    echo -e "\t-t\t\tLaunch tests, save output to ~/static/tests.txt and push changes to current remote branch IF SUCCESS !."
-    echo -e "\t-d <Folder>\t\tPublish the docs to https://mfesiem.github.io/docs/{folder}/msiempy/"
-    echo -e "\t-p\t\tPublish to PYPI."
+    echo -e "\t-h\tHelp\tPrint this help message."
+    echo -e "\t-t\tTests\tLaunch tests, save output to ~/static/tests.txt and push changes to current remote branch IF SUCCESS !."
+    echo -e "\t-d <folder> Docs \tPublish the docs to https://mfesiem.github.io/docs/{folder}/msiempy/"
     echo -e "\t\tuse 'master' keyword to publish to https://mfesiem.github.io/docs/msiempy/"
+    echo -e "\t-p\tPyPI\tPublish to PyPI."
+    
+    echo 
+    echo -e "\tExample : $0 -d dev -p"
+    echo -e "\tGenerate the documentation to https://mfesiem.github.io/docs/{folder}/msiempy/"
+    echo -e "\tand publish the module on PyPI."
     exit -1
 }
 
@@ -34,10 +37,8 @@ while getopts ":htd:p" arg; do
             echo "[RETURN CODE] $?"
             git push
             echo "[RETURN CODE] $?"
-            #echo "[IMPORTANT] Tests pushed"
+            echo "[IMPORTANT] Tests results pushed"
             ;;
-
-        
 
         d) #Docs
             echo "[BEGIN] Documentation"
@@ -107,6 +108,7 @@ while getopts ":htd:p" arg; do
             echo 'Hit ctrl+C to cancel PyPI upload'
             twine upload --verbose dist/*
             echo "[RETURN CODE] $?"
+            echo "[IMPORTANT] Module published at : https://pypi.org/project/msiempy/"
             python3 setup.py clean
             ;;
 
