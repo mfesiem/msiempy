@@ -80,8 +80,6 @@ class ESM(Device):
             obj. ESM object
         """
         super().__init__(*args, **kwargs)
-
-    
         
     def refresh(self):
         super().refresh()
@@ -112,7 +110,6 @@ class ESM(Device):
         Example:
             '10.0.2 20170516001031'
         """
-        #return self.post('essmgtGetBuildStamp')['buildStamp']
         return self.nitro.request('build_stamp')['buildStamp']
 
     def time(self):
@@ -123,9 +120,7 @@ class ESM(Device):
         Example:
             '2017-07-06T12:21:59.0+0000'
         """
-        self._esmtime = self.nitro.request("get_esm_time")
-        return self._esmtime['value']
-
+        return self.nitro.request("get_esm_time")['value']
 
     def status(self):
         """
@@ -197,22 +192,21 @@ class ESM(Device):
                 'backupLastTime': '07/03/2017 08:59:36',
                 'backupNextTime': '07/10/2017 08:59'}
         """
-        self._fields = ['autoBackupEnabled',
-                        'autoBackupDay',
-                        'autoBackupHour',
-                        'autoBackupHour',
-                        'backupNextTime']
+        fields = ['autoBackupEnabled',
+                   'autoBackupDay',
+                   'autoBackupHour',
+                   'autoBackupHour',
+                   'backupNextTime']
 
-        return {self.key: self.val for self.key, self.val in self.status().items()
-                if self.key in self._fields}
+        return {key: val for key, val in self.status().items()
+                if key in fields}
 
     def callhome(self):
         """
         Returns:
             bool. True/False if there is currently a callhome connection
         """
-        self._callhome_ip = self.status()['callHomeIp']
-        if self._callhome_ip:
+        if self.status()['callHomeIp']:
             return True
 
     def rules_status(self):
@@ -238,11 +232,8 @@ class ESM(Device):
         Returns: 
             
         """
-        #self.method, self.data = self._get_params('get_recs')
-        #self._rec_list = self.post(self.method, self.data)
-        self._rec_list=self.nitro.request('get_recs')
-
-        return [(_rec['name'], _rec['id']['id'])for _rec in self._rec_list]
+        rec_list = self.nitro.request('get_recs')
+        return [(rec['name'], rec['id']['id'])for rec in rec_list]
                 
     @lru_cache(maxsize=None)   
     def _get_timezones(self):
@@ -252,8 +243,7 @@ class ESM(Device):
         Returns:
             str. Raw return string from ESM including 
         """
-        #return self.post('userGetTimeZones')
-        return self.nitro.request('')
+        return self.nitro.request('time_zones')
         
     def tz_offsets(self):
         """
@@ -268,9 +258,8 @@ class ESM(Device):
              ...
             ]
         """
-        self.tz_resp = self._get_timezones()
-        return [(self.tz['id']['value'], self.tz['name'], self.tz['offset']) 
-                  for self.tz in self.tz_resp]
+        return [(tz['id']['value'], tz['name'], tz['offset']) 
+                  for tz in self._get_timezones()]
                    
         
     def timezones(self):
@@ -280,10 +269,8 @@ class ESM(Device):
         Returns:
             dict. {timezone_id, timezone_name}
         """
-        self.tz_resp = self._get_timezones()
-        self.tz_table = {str(self.tz['id']['value']): self.tz['name']
-                            for self.tz in self.tz_resp}
-        return self.tz_table
+        return {str(tz['id']['value']): tz['name']
+                            for tz in self._get_timezones()}
 
     def tz_name_to_id(self, tz_name):
         """
@@ -293,10 +280,10 @@ class ESM(Device):
         Returns:
             str. Timezone id or None if there is no match
         """
-        self.tz_reverse = {tz_name: tz_id 
-                            for tz_id, tz_name in self.timezones().items()}
+        tz_reverse = {tz_name.lower(): tz_id 
+                        for tz_id, tz_name in self.timezones().items()}
         try:
-            return self.tz_reverse[tz_name]
+            return tz_reverse[tz_name.lower()]
         except KeyError:
             return None
     
@@ -321,11 +308,10 @@ class ESM(Device):
         Returns:
             tuple. (vendor, model) or None if there is no match
         """
-        self.type_id = type_id
-        self.ds_types = self._get_ds_types()
-        for self.venmod in self.ds_types:
-            if str(self.venmod[0]) == str(self.type_id):
-                return (self.venmod[1], self.venmod[2])
+        ds_types = self._get_ds_types()
+        for venmod in ds_types:
+            if str(venmod[0]) == str(type_id):
+                return (venmod[1], venmod[2])
         return(('Unkown vendor for type_id {}'.format(type_id),'Unkown vendor'))
 
     def venmod_to_type_id(self, vendor, model):
@@ -337,15 +323,11 @@ class ESM(Device):
         Returns:
             str. Matching type_id or None if there is no match
         """
-        self.vendor = vendor
-        self.model = model
-        self.ds_types = self._get_ds_types()
-        for self.venmod in self.ds_types:
-            if self.vendor == self.venmod[1]:
-                if self.model == self.venmod[2]:
-                    return str(self.venmod[0])
+        for venmod in self._get_ds_types():
+            if vendor == venmod[1]:
+                if model == venmod[2]:
+                    return str(venmod[0])
         
-     
     @lru_cache(maxsize=None)   
     def _get_ds_types(self):
         """
@@ -357,14 +339,8 @@ class ESM(Device):
         Note:
             rec_id (str): self.rec_id assigned in method
         """
-        self.rec_id = self.recs()[0][1]
-
-        #self.method, self.data = self._get_params('get_dstypes')
-        #self.venmods = self.post(self.method, self.data, self._format_ds_types)
-
-        self.venmods=self.nitro.request('get_dstypes', rec_id=self.rec_id)
-
-        return self.venmods
+        rec_id = self.recs()[0][1]
+        return  self.nitro.request('get_dstypes', rec_id=rec_id)
                     
     def _format_ds_types(self, venmods):
         """
@@ -386,10 +362,9 @@ class ESM(Device):
             This is a callback for _get_ds_types.
 
         """
-        self._venmods = venmods
-        return [(_mod['id']['id'], _ven['name'], _mod['name'],)
-                    for _ven in self._venmods['vendors']
-                    for _mod in _ven['models']]
+        return [(mod['id']['id'], ven['name'], mod['name'],)
+                    for ven in venmods['vendors']
+                    for mod in ven['models']]
 
 class DataSource(NitroDict):
     """
@@ -456,9 +431,9 @@ class DataSource(NitroDict):
             
         """
         
-        super().__init__(*args)#, **kwargs)
+        super().__init__(*args)
                 
-        self._devtree = DevTree()
+        #self._devtree = DevTree()
 
         self.name=''
         self.parent_id=None
@@ -484,13 +459,13 @@ class DataSource(NitroDict):
         self._pval = None
         self.__dict__.update(kwargs)
         
-        self._dsfields = ['parent_id', 'name','ds_id', 'type_id', 'rec_ip',
+        ds_fields = ['parent_id', 'name','ds_id', 'type_id', 'rec_ip',
                            'child_enabled', 'child_count', 'child_type',
                            'ds_ip', 'zone_id', 'url', 'enabled', 'idm_id']
 
         self.parameters = [{key: val 
                             for key, val in kwargs.items()
-                            if key not in self._dsfields}]
+                            if key not in ds_fields}]
 
     def _validate_name(self, name):
         """
@@ -501,7 +476,7 @@ class DataSource(NitroDict):
             KeyError: if name is missing or invalid
         """
         try:
-            if re.search('^[a-zA-Z0-9_-]{1,100}$', self.name):
+            if re.search('^[a-zA-Z0-9_-]{1,100}$', name):
                 pass
             else:
                 raise KeyError('Valid name required for DataSource')
@@ -515,9 +490,9 @@ class DataSource(NitroDict):
         Returns:
             str: Datasource attributes as JSON
         """        
-        return {self._prop: self._pval
-            for self._prop, self._pval in self.__dict__.items()
-            if not self._prop.startswith('_')}
+        return {prop: pval
+            for prop, pval in self.__dict__.items()
+            if not prop.startswith('_')}
                     
     def add(self, client=False):
         """
@@ -530,16 +505,15 @@ class DataSource(NitroDict):
             ESMException: Will be raised if trying to add a duplicate
             datasource or if something else goes wrong.
         """
-        self._search_dups = partial(self._devtree.search, rec_id=self.parent_id)
-        if self._search_dups(self.name, zone_id=self.zone_id):
-            raise NitroError('Datasource name already exists.'
-                                'Cannot add datasource: {}'.format(self.name))
-        if self._search_dups(self.ds_ip, zone_id=self.zone_id):
-            raise NitroError('Datasource IP already exists.' 
-                                'Cannot add datasource: {}'.format(self.ds_ip))
+        #self._search_dups = partial(self._devtree.search, rec_id=self.parent_id)
+        #if self._search_dups(self.name, zone_id=self.zone_id):
+        #    raise NitroError('Datasource name already exists.'
+        #                        'Cannot add datasource: {}'.format(self.name))
+        #if self._search_dups(self.ds_ip, zone_id=self.zone_id):
+        #    raise NitroError('Datasource IP already exists.' 
+        #                        'Cannot add datasource: {}'.format(self.ds_ip))
         if client:
-            #self._method, self._data = self._get_params('add_client')
-            self._resp=self.nitro.request('add_client',
+            resp=self.nitro.request('add_client',
                                     parent_id=self.parent_id,
                                     name=self.name, 
                                     enabled=self.enabled, 
@@ -552,10 +526,10 @@ class DataSource(NitroDict):
                                     port=self.port, 
                                     syslog_tls=self.syslog_tls)
         else:
-            self._resp=self.nitro.request('add_ds', 
+            resp=self.nitro.request('add_ds', 
                                     parent_id=self.parent_id,
                                     name=self.name, 
-                                    ds_id=self.data['ds_id'], 
+                                    #ds_id=self.data['ds_id'], 
                                     type_id=self.data['type_id'], 
                                     child_enabled=self.child_enabled, 
                                     child_count=self.child_count, 
@@ -566,20 +540,17 @@ class DataSource(NitroDict):
                                     enabled=self.enabled, 
                                     idm_id=self.idm_id, 
                                     parameters=self.parameters)
-            #self._method, self._data = self._get_params('add_ds')
-
-        #self._resp = self.post(self._method, self._data)
 
         if client:
             try:
-                self._err_code = self._resp['EC']
-                if self._err_code == '0':
+                err_code = resp['EC']
+                if err_code == '0':
                     return None
             except KeyError:
                 raise NitroError('Unexpected error occured. ' 
                                     'DS may not have been added.')
         try:
-            self._ds_id = self._resp.get('id')
+            ds_id = resp.get('id')
             return None
         except (KeyError, AttributeError):
             pass
@@ -604,10 +575,8 @@ class DataSource(NitroDict):
                 still in the tree after being deleted an Exception 
                 will be raised.
         """
-        #self._method, self._data = self._get_params('del_ds')
-        #self._resp = self.post(self._method, self._data)
-
-        self._resp=self.nitro.request('del_ds', parent_id=self.parent_id, ds_id=self._ds_id)
+        self.nitro.request('del_ds', 
+                                parent_id = self.parent_id, ds_id=self._ds_id)
         
     def _ds_details(self):
         """
@@ -620,13 +589,10 @@ class DataSource(NitroDict):
             Don't create a situation where this gets called for every
             datasource as it will not scale.
         """
-        #self._method, self._data = self._get_params('ds_details')
-        #return self.post(self._method, self._data)
         return self.data_from_id(id=self._ds_id)
 
     def data_from_id(self, id):
         return self.nitro.request('ds_details', ds_id=id)
-
 
     @staticmethod
     def valid_ip(ipaddr):
@@ -647,7 +613,8 @@ class DataSource(NitroDict):
             return True
         except ValueError:
             return False
-     
+
+
 class DevTree(NitroList):
     """
     Interface to the ESM device tree.
@@ -713,8 +680,7 @@ class DevTree(NitroList):
         Initalize the DevTree object
         """
         super().__init__(*args, **kwargs)
-        if not DevTree._DevTree:
-            self._build_devtree()
+        self.build_devtree()
 
     def __len__(self):
         """
@@ -727,18 +693,22 @@ class DevTree(NitroList):
         Returns:
             Generator with datasource objects.
         """
-        self._ds_desc_ids = ['3', '256']
-        for self._ds in DevTree._DevTree:
-            if self._ds['desc_id'] in self._ds_desc_ids:
-                yield DataSource(adict=self._ds)
+        for ds in self.devtree:
+            yield ds
+
+    def __str__(self):
+        return json.dumps(self.devtree)
+
+
+    def __repr__(self):
+        return json.dumps(self.devtree)
 
     def __contains__(self, term):
         """
         Returns:
             bool: True/False the name or IP matches the provided search term.
         """
-        self._cterm = term
-        if self.search(self._cterm):
+        if self.search(term):
             return True
         else:
             return None
@@ -754,23 +724,19 @@ class DevTree(NitroList):
             Datasource object that matches the provided search term or None.
 
         """
-        self._term = term.lower()
-        self._rec_id = rec_id
-        self._zone_id = zone_id
+        search_fields = ['ds_ip', 'name', 'hostname', 'ds_id']
 
-        self._search_fields = ['ds_ip', 'name', 'hostname', 'ds_id']
+        found = [ds for ds in self.devtree
+                    for field in search_fields 
+                    if ds[field].lower() == term.lower()
+                    if ds['zone_id'] == zone_id]
 
-        self._found = [self._ds for self._ds in DevTree._DevTree 
-                            for self._field in self._search_fields 
-                            if self._ds[self._field].lower() == self._term 
-                            if self._ds['zone_id'] == self._zone_id]
-
-        if self._rec_id and len(self._found) > 1:
-            self._found = [self._ds for self._ds in self._found 
-                            if self._ds['parent_id'] == self._rec_id]
+        if rec_id and found:
+            found = [ds for ds in found 
+                        if ds['parent_id'] == rec_id]
         
-        if self._found:
-            return DataSource(**self._found[0])
+        if found:
+            return DataSource(**found[0])
         else:
             return None
 
@@ -787,18 +753,8 @@ class DevTree(NitroList):
         Raises:
             ValueError: if field or term are None
         """
-        self._field = field
-        self._term = term
-        self._zone_id = zone_id
-        
-        if not self._field:
-            raise ValueError('DataSource field required')
-
-        if not self._term:
-            raise ValueError('DataSource field value required')
-
-        return (DataSource(adict=self._ds) for self._ds in DevTree._DevTree
-                        if self._ds.get(self._field) == self._term)
+        return (DataSource(adict=ds) for ds in self.devtree
+                        if ds.get(field) == term)
                        
     def steptree(self):
         """
@@ -815,22 +771,22 @@ class DevTree(NitroList):
             List of tuples (int,str,str,str) (step, name, ip, parent_id)        
         """
         self._steptree = []
-        self._ones = ['14']
-        self._twos = ['2', '4', '10', '12', '15', '25']
-        self._threes = ['3', '5', '7', '17', '19', '20', '21', '24', '254']
-        self._fours = ['7','17', '23', '256']
+        _ones = ['14']
+        _twos = ['2', '4', '10', '12', '15', '25']
+        _threes = ['3', '5', '7', '17', '19', '20', '21', '24', '254']
+        _fours = ['7','17', '23', '256']
 
-        for self._ds in DevTree._DevTree:
-            if self._ds['desc_id'] in self._ones:
-                self._ds['depth'] = '1'
-            elif self._ds['desc_id'] in self._twos:
-                self._ds['depth'] = '2'
-            elif self._ds['desc_id'] in self._threes:
-                self._ds['depth'] = '3'
+        for ds in self.devtree:
+            if ds['desc_id'] in _ones:
+                ds['depth'] = '1'
+            elif ds['desc_id'] in _twos:
+                ds['depth'] = '2'
+            elif ds['desc_id'] in _threes:
+                ds['depth'] = '3'
             else:
-                self._ds['depth'] = '4'
-            self._steptree.append((self._ds['idx'], self._ds['name'], 
-                                    self._ds['ds_ip'], self._ds['depth'],))
+                ds['depth'] = '4'
+            self._steptree.append((ds['idx'], ds['name'], 
+                                    ds['ds_ip'], ds['depth'],))
         return self._steptree
 
                     
@@ -838,205 +794,205 @@ class DevTree(NitroList):
         """
         Rebuilds the devtree
         """
-        self._build_devtree()
+        self.build_devtree()
         
     def get_ds_times(self):
         """
         """
-        self._last_times = self._get_last_event_times()
-        self._insert_ds_last_times()#self._last_times)
-        return self._last_times
+        last_times = self._get_last_event_times()
+        self._insert_ds_last_times()
+        return last_times
         
     def recs(self):
         """
         Returns:
             list of Receiver dicts (str:str)
         """
-        return [self._rec for self._rec in DevTree._DevTree 
+        return [self._rec for self._rec in self.devtree
                     if self._rec['desc_id'] == '2']
     
-    def _build_devtree(self):
+    def build_devtree(self):
         """
         Coordinates assembly of the devtree object
         """
-        self._devtree = self._get_devtree()
-        self._devtree = self._devtree_to_lod()
-        self._devtree = self._insert_rec_info()
-        self._client_containers = self._get_client_containers()
+        devtree = self._get_devtree()        
+        devtree = self._format_devtree(devtree)
+        devtree = self._insert_rec_info(devtree)        
+        containers = self._get_client_containers(devtree)
+        devtree = self._merge_clients(containers, devtree)
+        zonetree = self._get_zonetree()
+        devtree = self._insert_zone_names(zonetree, devtree)
+        zone_map = self._get_zone_map()
+        devtree = self._insert_zone_ids(zone_map, devtree)            
+        last_times = self._get_last_times()
+        last_times = self._format_times(last_times)
+        self.devtree = self._insert_ds_last_times(last_times, devtree)
+        return self.devtree
 
-        """
-        This next bit of code gets and formats the clients for each
-        container and inserts them back into the devtree.
-        
-        The tricky part is keeping the devtree in order and keeping 
-        index labels consistent for all of the devices while 
-        inserting new devices into the middle with their own index
-        labels. Kind of like changing a tire on a moving car...
-        
-        pidx - parent idx is the original index value of the parent
-                this does not increment
-                
-        cidx - client idx is incremented starting after the pidx
-        
-        didx - stores the delta between different containers to 
-               keep it all in sync.
-        """
-        self._cidx = 0
-        self._didx = 0
-        for self._container in self._client_containers:
-            self._raw_clients = self._get_raw_clients(self._container['ds_id'])
-            self._clients_lod = self._clients_to_lod(self._raw_clients)
-            self._container['idx'] = self._container['idx'] + self._didx
-            self._pidx = self._container['idx']
-            self._cidx = self._pidx + 1 
-            for self._client in self._clients_lod:
-                self._client['parent_id'] = self._container['ds_id']
-                self._client['idx'] = self._cidx 
-                self._cidx += 1 
-                self._didx += 1
-            self._devtree[self._pidx:self._pidx] = self._clients_lod 
-            
-        self._zonetree = self._get_zonetree()
-        self._devtree = self._insert_zone_names()
-        self._zone_map = self._get_zone_map()
-        self._devtree = self._insert_zone_ids()            
-        self._devtree = self._insert_venmods()
-        self._devtree = self._insert_desc_names()
-        self._last_times = self._get_last_event_times()
-        self._insert_ds_last_times()
-        DevTree._DevTree = self._devtree
-               
     def _get_devtree(self):
         """
         Returns:
             ESM device tree; raw, but ordered, string.
             Does not include client datasources.
         """
-        #self._method, self._data = self._get_params('get_devtree')
-        #self._resp = self.post(self._method, self._data)
-        self._resp=self.nitro.request('get_devtree')
-        return dehexify(self._resp['ITEMS'])
+        resp = self.nitro.request('get_devtree')
+        return dehexify(resp['ITEMS'])
 
-    def _devtree_to_lod(self):
+    def _format_devtree(self, devtree):
         """
         Parse key fields from raw device strings into datasource dicts
-        
-        Returns: 
-            List of datasource dicts
-        """
-        self._devtree_io = StringIO(self._devtree)
-        self._devtree_csv = csv.reader(self._devtree_io, delimiter=',')
-        self._devtree_lod = []
 
-        for self._idx, self._row in enumerate(self._devtree_csv, start=1):
-            if len(self._row) == 0:
-                continue
-            
-            if self._row[0] == '16':  # Get rid of duplicate 'asset' devices
-                continue
-            
-            if self._row[2] == "3":  # Client group datasource group containers
-                self._row.pop(0)     # are fake datasources that seemingly have
-                self._row.pop(0)     # two uneeded fields at the beginning.
-
-            if self._row[16] == 'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT':
-                self._row[16] = '0'  # Get rid of weird type-id for N/A devices
-                
-            self._ds_fields = {'idx': self._idx,
-                                'desc_id': self._row[0],
-                                'name': self._row[1],
-                                'ds_id': self._row[2],
-                                'enabled': self._row[15],
-                                'ds_ip': self._row[27],
-                                'hostname' : self._row[28],
-                                'type_id': self._row[16],
-                                'vendor': '',
-                                'model': '',
-                                'tz_id': '',
-                                'date_order': '',
-                                'port': '',
-                                'syslog_tls': '',
-                                'client_groups': self._row[29],
-                                'zone_name': '',
-                                'zone_id': '',
-                                'client': False
-                              }
-            self._devtree_lod.append(self._ds_fields)
-        return self._devtree_lod
-
-    def _insert_rec_info(self):
-        """
-        Adds parent_ids to datasources in the tree based upon the 
-        ordered list provided by the ESM. All the datasources below
-        a Receiver row have it's id set as their parent ID.
-        
         Returns:
             List of datasource dicts
         """
-        self._pid = '0'
-        self._rec_name = ''
-        for self._ds in self._devtree:
-            if self._ds['desc_id'] in ['2', '4', '15']:
-                self._pid = self._ds['ds_id']
-                self._rec_name = self._ds['name']
+        devtree = StringIO(devtree)
+        devtree = csv.reader(devtree, delimiter=',')
+        devtree_lod = []
+        _ignore_remote_ds = False
+
+        for idx, row in enumerate(devtree, start=1):
+            if len(row) == 0:
+                continue
+
+            # Get rid of duplicate 'asset' devices
+            if row[0] == '16':  
+                continue
+
+            # Filter out distributed ESMs                
+            if row[0] == '9':  
+                _ignore_remote_ds = True
                 continue
             
-            if self._ds['desc_id'] in ['3', '5', '7', '17']:
-                self._ds['parent_id'] = self._pid
-                self._ds['rec_name'] = self._rec_name
-        return self._devtree
+            # Filter out distributed ESM data sources
+            if _ignore_remote_ds:  
+                if row[0] != '14':
+                    continue
+                else:
+                    _ignore_remote_ds = False
+            
+            if row[2] == "3":  # Client group datasource group containers
+                row.pop(0)     # are fake datasources that seemingly have
+                row.pop(0)     # two uneeded fields at the beginning.
+            if row[16] == 'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT':
+                row[16] = '0'  # Get rid of weird type-id for N/A devices
+            
+            if len(row) < 29:
+                #print('Unknown datasource: {}.'.format(self._row))
+                continue
+            
+            ds_fields = {'idx': idx,
+                            'desc_id': row[0],
+                            'name': row[1],
+                            'ds_id': row[2],
+                            'enabled': row[15],
+                            'ds_ip': row[27],
+                            'hostname': row[28],
+                            'type_id': row[16],
+                            'vendor': '',
+                            'model': '',
+                            'tz_id': '',
+                            'date_order': '',
+                            'port': '',
+                            'syslog_tls': '',
+                            'client_groups': row[29],
+                            'zone_name': '',
+                            'zone_id': '',
+                            'client': False
+                            }
+            devtree_lod.append(ds_fields)
+        return devtree_lod
 
-    def _get_client_containers(self):
+    def _insert_rec_info(self, devtree):
+        """
+        Adds parent_ids to datasources in the tree based upon the
+        ordered list provided by the ESM. All the datasources below
+        a Receiver row have it's id set as their parent ID.
+
+        Returns:
+            List of datasource dicts
+        """
+        _pid = '0'
+        esm_dev_id = ['14']
+        esm_mfe_dev_id = ['19', '21', '22', '24']
+        nitro_dev_id = ['2', '4', '10', '12', '13', '15']
+        datasource_dev_id = ['3', '5', '7', '17', '20', '23', '256']
+        
+                   
+        for device in devtree:
+            if device['desc_id'] in esm_dev_id:
+                esm_name = device['name']
+                esm_id = device['ds_id']
+                device['parent_name'] = 'n/a'
+                device['parent_id'] = '0'
+                continue
+
+            if device['desc_id'] in esm_mfe_dev_id:
+                parent_name = device['name']
+                parent_id = device['ds_id']
+                device['parent_name'] = 'n/a'
+                device['parent_id'] = '0'
+                continue
+            
+            if device['desc_id'] in nitro_dev_id:
+                device['parent_name'] = esm_name
+                device['parent_id'] = esm_id
+                parent_name = device['name']
+                pid = device['ds_id']
+                continue
+
+            if device['desc_id'] in datasource_dev_id:
+                device['parent_name'] = parent_name
+                device['parent_id'] = pid
+            else:
+                device['parent_name'] = 'n/a'
+                device['parent_id'] = 'n/a'
+
+        return devtree
+
+    def _get_client_containers(self, devtree):
         """
         Filters DevTree for datasources that have client datasources.
         
         Returns:
             List of datasource dicts that have clients
         """
-        return [self._ds for self._ds in self._devtree
-                                if self._ds['desc_id'] == "3" 
-                                if int(self._ds['client_groups']) > 0]
-        
-    def _get_raw_clients(self, ds_id):
+        return [ds for ds in devtree
+                if ds['desc_id'] == "3"
+                if int(ds['client_groups']) > 0]
+
+    def _merge_clients(self, containers, devtree):
+        _cidx = 0
+        _didx = 0
+        for cont in containers:
+            clients = self._get_clients(cont['ds_id'])
+            clients = self._format_clients(clients)
+            cont['idx'] = cont['idx'] + _didx
+            _pidx = cont['idx']
+            _cidx = _pidx + 1
+            for client in clients:
+                client['parent_id'] = cont['ds_id']
+                client['idx'] = _cidx
+                _cidx += 1
+                _didx += 1
+            devtree[_pidx:_pidx] = clients
+        return devtree
+
+    def _get_clients(self, ds_id):
         """
         Get list of raw client strings.
-        
+
         Args:
             ds_id (str): Parent ds_id(s) are collected on init
             ftoken (str): Set and used after requesting clients for ds_id
-            
+
         Returns:
             List of strings representing unparsed client datasources
         """
-        self._ds_id = ds_id
-        #self._method, self._data = self._get_params('req_client_str')
-        #self._resp = self.post(self._method, self._data)
 
-        self._resp = self.nitro.request('req_client_str', _ds_id=ds_id)
+        resp = self.nitro.request('req_client_str', ds_id=ds_id)
+        return self._get_rfile(resp['FTOKEN'])
 
-        self._ftoken = self._resp['FTOKEN']
-        return self._get_file(self._ftoken)
-
-    def _get_client_list(self, group_id):
-        """
-        Finds client group
-        
-        Args:
-            DSID (str): Parent datasource ID set to self._ds_id
-        
-        Returns:
-            Response dict with FTOKEN required to get the data file
-        
-        """
-        self.group_id = group_id
-
-        #self._method, self._data = self._get_params('req_client_str')
-        #self._resp = self.post(self._method, self._data)
-        self._resp = self.nitro.request('req_client_str', _ds_id=self._ds_id)
-
-        return self._resp
-
-    def _get_file(self, ftoken):
+    def _get_rfile(self, ftoken):
         """
         Exchanges token for file
         
@@ -1044,91 +1000,78 @@ class DevTree(NitroList):
             ftoken (str): instance name set by 
         
         """
-        self.ftoken = ftoken
+        resp = self.nitro.request('get_rfile', ftoken=ftoken)
+        return dehexify(resp['DATA'])
 
-        #self._method, self._data = self._get_params('get_rfile')
-        #self._resp = self.post(self._method, self._data)
-        
-        self._resp = self.nitro.request('get_rfile', _ftoken=ftoken)
 
-        self._resp = dehexify(self._resp['DATA'])
-        return self._resp
-
-    def _clients_to_lod(self, clients):
+    def _format_clients(self, clients):
         """
         Parse key fields from _get_clients() output.
-        
+
         Returns:
             list of dicts
         """
-        self._clients = clients
+        clients = StringIO(clients)
+        clients = csv.reader(clients, delimiter=',')
 
-        self._clients_io = StringIO(self._clients)
-        self._clients_csv = csv.reader(self._clients_io, delimiter=',')
-
-        self._clients_lod = []
-        for self._row in self._clients_csv:
-            if len(self._row) < 2:
+        clients_lod = []
+        for row in clients:
+            if len(row) < 13:
                 continue
 
-            self._ds_fields = {'desc_id': "256",
-                              'name': self._row[1],
-                              'ds_id': self._row[0],
-                              'enabled': self._row[2],
-                              'ds_ip': self._row[3],
-                              'hostname' : self._row[4],
-                              'type_id': self._row[5],
-                              'vendor': self._row[6],
-                              'model': self._row[7],
-                              'tz_id': self._row[8],
-                              'date_order': self._row[9],
-                              'port': self._row[11],
-                              'syslog_tls': self._row[12],
-                              'client_groups': "0",
-                              'zone_name': '',
-                              'zone_id': '',
-                              'client': True
-                              }
-            self._clients_lod.append(self._ds_fields)
-        return self._clients_lod
-            
+            ds_fields = {'desc_id': "256",
+                          'name': row[1],
+                          'ds_id': row[0],
+                          'enabled': row[2],
+                          'ds_ip': row[3],
+                          'hostname': row[4],
+                          'type_id': row[5],
+                          'vendor': row[6],
+                          'model': row[7],
+                          'tz_id': row[8],
+                          'date_order': row[9],
+                          'port': row[11],
+                          'syslog_tls': row[12],
+                          'client_groups': "0",
+                          'zone_name': '',
+                          'zone_id': '',
+                          'client': True
+                               }
+            clients_lod.append(ds_fields)
+        return clients_lod        
+
     def _get_zonetree(self):
         """
-        Abuses the device tree for zone data.
+        Retrieve zone data.
         
         Returns:
             str: device tree string sorted by zones
-        """
+        """        
+        resp = self.nitro.request('get_zones_devtree')
+        return dehexify(resp['ITEMS'])
         
-        #self._method, self._data = self._get_params('get_zones_devtree')
-        #self._resp = self.post(self._method, self._data)
-        self._resp=self.nitro.request('get_zones_devtree')
-        
-        return dehexify(self._resp['ITEMS'])
-        
-    def _insert_zone_names(self):
+    def _insert_zone_names(self, zonetree, devtree):
         """
         Args:
-            _zonetree (str): set in __init__
+            zonetree (str): Built by self._get_zonetree
         
         Returns:
             List of dicts (str: str) devices by zone
         """
-        self._zone_name = None
-        self._zonetree_io = StringIO(self._zonetree)
-        self._zonetree_csv = csv.reader(self._zonetree_io, delimiter=',')
-        self._zonetree_lod = []
+        zone_name = None
+        zonetree = StringIO(zonetree)
+        zonetree = csv.reader(zonetree, delimiter=',')
 
-        for self._row in self._zonetree_csv:
-            if self._row[0] == '1':
-                self._zone_name = self._row[1]
-                if self._zone_name == 'Undefined':
-                    self._zone_name = ''
+        for row in zonetree:
+            if row[0] == '1':
+                zone_name = row[1]
+                if zone_name == 'Undefined':
+                    zone_name = ''
                 continue
-            for self._dev in self._devtree:
-                if self._dev['ds_id'] == self._row[2]:
-                    self._dev['zone_name'] = self._zone_name
-        return self._devtree
+            for device in devtree:
+                if device['ds_id'] == row[2]:
+                    device['zone_name'] = zone_name
+        return devtree
 
     def _get_zone_map(self):
         """
@@ -1137,28 +1080,26 @@ class DevTree(NitroList):
         Returns:
             dict (str: str) zone name : zone ids
         """
-        self._zone_map = {}
+        zone_map = {}
+        resp = self.nitro.request('zonetree')
 
-        #self._method, self._data = self._get_params('zonetree')
-        #self._resp = self.post(self._method, self._data)
-
-        self._resp=self.nitro.request('zonetree')
-
-        for self._zone in self._resp:
-            self._zone_map[self._zone['name']] = self._zone['id']['value']
-            for self._szone in self._zone['subZones']:
-                self._zone_map[self._szone['name']] = self._szone['id']['value']
-        return self._zone_map
+        if not resp:
+            return zone_map
+        for zone in resp:
+            zone_map[zone['name']] = zone['id']['value']
+            for szone in zone['subZones']:
+                zone_map[szone['name']] = szone['id']['value']
+        return zone_map
         
-    def _insert_zone_ids(self):
+    def _insert_zone_ids(self, zone_map, devtree):
         """
         """
-        for self._dev in self._devtree:
-            if self._dev['zone_name'] in self._zone_map.keys():
-                self._dev['zone_id'] = self._zone_map.get(self._dev['zone_name'])
+        for device in devtree:
+            if device['zone_name'] in zone_map.keys():
+                device['zone_id'] = zone_map.get(device['zone_name'])
             else:
-                self._dev['zone_id'] = '0'
-        return self._devtree
+                device['zone_id'] = '0'
+        return devtree
         
     def _insert_venmods(self):
         """
@@ -1207,39 +1148,51 @@ class DevTree(NitroList):
                 self._ds['desc'] = self._type_map[self._ds['desc_id']]
         return self._devtree
         
-    def _get_client_grps(self):
-        """
-        Returns:
-            dict (str:str) fake datasource dicts that represent client 
-            containers on the device tree.
-        """
-        return [self._dev for self._dev in DevTree._DevTree 
-                        if int(self._dev['client_groups']) > 0 
-                        and self._dev['desc_id'] == '3']
                         
-    def _get_last_event_times(self):
+    def _get_last_times(self):
         """
         Returns:
             string with datasource names and last event times.
         """
-        #self._method, self._data = self._get_params('ds_last_times')
-        #self._resp = self.post(self._method, self._data)
+        resp = self.nitro.request('ds_last_times')
+        return dehexify(resp['ITEMS'])
 
-        self._resp = self.nitro.request('ds_last_times')
-        return dehexify(self._resp['ITEMS'])
+    def _format_times(self, last_times):
+        """
+        Formats the output of _get_last_times
 
-    def _insert_ds_last_times(self):
+        Args:
+            last_times (str): string output from _get_last_times()
+
+        Returns:
+            list of dicts - [{'name', 'model', 'last_time'}]
+        """
+            
+        last_times = StringIO(last_times)
+        last_times = csv.reader(last_times, delimiter=',')
+        last_times_lod = []
+        for row in last_times:
+            if len(row) == 5:
+                time_d = {}
+                time_d['name'] = row[0]
+                time_d['model'] = row[2]
+                if row[3]:
+                    time_d['last_time'] = row[3]
+                else:
+                    time_d['last_time'] = 'never'
+                last_times_lod.append(time_d)
+        return last_times_lod
+
+    def _insert_ds_last_times(self, last_times, devtree):
         """
         Parse event times str and insert it into the _devtree
-        
-        Returns: 
+
+        Returns:
             List of datasource dicts - the devtree
         """
-        self._last_times_io = StringIO(self._last_times)
-        self._last_times_csv = csv.reader(self._last_times_io, delimiter=',')
-        for self._row in self._last_times_csv:
-            for self._ds in self._devtree:
-                self._ds['last_time'] = self._row[3]
-            else: 
-                self._ds['last_time'] = ''
-        return self._devtree
+        for device in devtree:
+            for d_time in last_times:
+                if device['name'] == d_time['name']:
+                    device['model'] = d_time['model']
+                    device['last_time'] = d_time['last_time']
+        return devtree

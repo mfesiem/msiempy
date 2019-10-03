@@ -5,8 +5,8 @@ import time
 import json
 import abc
 import collections
-import datetime
 import logging
+from datetime import datetime
 log = logging.getLogger('msiempy')
 
 from . import NitroObject, NitroDict, NitroError, FilteredQueryList
@@ -14,7 +14,7 @@ from .__utils__ import timerange_gettimes, parse_query_result, format_fields_for
 
 class EventManager(FilteredQueryList):
     """Interface to query and manage events.
-    Inherits from `msiempy.query.FilteredQueryList`.
+    Inherits from `msiempy.FilteredQueryList`.
     """ 
 
     #Constants
@@ -46,11 +46,11 @@ class EventManager(FilteredQueryList):
             Structure must be in correct format
                 -> same as setting _order property directly.
         - `limit` : max number of rows per query, by default takes the value in config `default_rows` option.
-        - `filters` : list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.query.QueryFilter`
+        - `filters` : list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.QueryFilter`
         if you wish to use advanced filtering.
         - `compute_time_range` : False if you want to send the actualy time_range in parameter for the initial query.
             Defaulted to True cause the query splitting implies computing the time_range anyway.
-        - `*args, **kwargs` : Parameters passed to `msiempy.query.FilteredQueryList`
+        - `*args, **kwargs` : Parameters passed to `msiempy.FilteredQueryList`
            
             
         Notes :
@@ -156,15 +156,15 @@ class EventManager(FilteredQueryList):
     @property
     def filters(self):
         """
-        JSON SIEM formatted filters for the query by calling reccursively : `msiempy.query.QueryFilter.config_dict`.
-        See `msiempy.query.FilteredQueryList.filters`.
+        JSON SIEM formatted filters for the query by calling reccursively : `msiempy.event.QueryFilter.config_dict`.
+        See `msiempy.FilteredQueryList.filters`.
         """
         return([f.config_dict for f in self._filters])
 
     def add_filter(self, afilter):
         """
-        Concrete description of the `msiempy.query.FilteredQueryList` method.
-        It can take a `tuple(fiels, [values])` or a `msiempy.query.QueryFilter` subclass.
+        Concrete description of the `msiempy.FilteredQueryList` method.
+        It can take a `tuple(fiels, [values])` or a `msiempy.event.QueryFilter` subclass.
         """
         if isinstance(afilter, tuple) :
             self._filters.append(FieldFilter(afilter[0], afilter[1]))
@@ -184,7 +184,7 @@ class EventManager(FilteredQueryList):
     
     @property
     def time_range(self):
-        """Re-implemented the `msiempy.query.FilteredQueryList.time_range` to have better control on the property setter.
+        """Re-implemented the `msiempy.FilteredQueryList.time_range` to have better control on the property setter.
         If `compute_time_range` is True (by default it is), try to get a start and a end time with `msiempy.utils.timerange_gettimes()`
         """
         return(super().time_range)
@@ -218,15 +218,18 @@ class EventManager(FilteredQueryList):
         """
         return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
 
-    def _load_data(self, workers):
+    def qry_load_data(self, **kwargs):
         """"
-            Concrete helper method to execute the query and load the data : 
-                -> Submit the query -> wait -> get the events -> parse -
-                    -> convert to EventManager ->  set self.data and return 
-            Returns a tuple ( list of Events(1) ,the status of the query )
-                      tuple (items, completed).
-            
-            (1) aka EventManager
+        Concrete helper method to execute the query and load the data : 
+            -> Submit the query 
+            -> Wait the query to be executed
+            -> Get and parse the events
+        
+        Parameters :  
+        - `**kwargs` : Not used  
+
+        Returns : `tuple` : ( `msiempy.event.EventManager`, Status of the query : `completed` )
+
         """
         query_infos=dict()
 
@@ -267,19 +270,20 @@ class EventManager(FilteredQueryList):
         self.data=events
         return((events,len(events)<self.limit))
 
-    def load_data(self, **kwargs):
+    def load_data(self, *args, **kwargs):
         """
-        Specialized EventManager load_data method.
-        Use super load_data implementation.
-        You could decide not to use the splitting feature by 
-            calling directly _load_data() 
-            kwargs are passed to super().load_data()
+        Specialized EventManager load_data method.  
+        Use super load_data implementation.  
+        TODO : Use better polymorphism and do not cast here.
+        
+        Parameters :
+        - `*args, **kwargs` : See `msiempy.FilteredQueryList.load_data` and `msiempy.event.EventManager.qry_load_data`
         """
-        return EventManager(alist=super().load_data(**kwargs))
+        return EventManager(alist=super().load_data(*args, **kwargs))
 
     def _wait_for(self, resultID, sleep_time=0.35):
         """
-        Internal method called by _load_data
+        Internal method called by qry_load_data
         Wait and sleep - for `sleep_time` duration in seconds -
             until the query is completed
         
@@ -296,7 +300,7 @@ class EventManager(FilteredQueryList):
     def _get_events(self, resultID, startPos=0, numRows=None):
         """
         Internal method that will get the query events, 
-            called by _load_data
+            called by qry_load_data
         by default, numRows correspond to limit
         """
         
@@ -423,40 +427,56 @@ class Event(NitroDict):
         """
         Replace the notes by an empty string. Desctructive action.
         """
-        self.set_note('')
+        self.set_note('', no_date=True)
 
-    def set_note(self, note):
+    def set_note(self, note, no_date=False):
         """
         Set the event's note. Desctructive action.
         """
-        if len(note) >= 4000:
-            log.warning("The note is longer than 4000 characters, only the first 4000 characters will be kept. The maximum accepted by the SIEM is 4096 characters.")
-            note=note[:4000]+'\n\n----- MAXIMUM NOTE LENGHT REACHED, THE NOTE HAS BEEN TRUNCATED (sorry) -----'
+        the_id = self.data["Alert.IPSIDAlertID"] if "Alert.IPSIDAlertID" in self.data else str(self.data['ipsId']['id'])+'|'+str(self.data["alertId"]) if "alertId" in self.data else None
 
-        self.nitro.request("add_note_to_event", 
-            id=self.data["Alert.IPSIDAlertID"],
-            note="NOTE (msiempy-{}) : \\n{}".format(
-                str(datetime.datetime.now()),
-                note.replace('"','\\"').replace('\n','\\n')))
+        if isinstance(the_id, str):
+
+            if len(note) >= 4000:
+                log.warning("The note is longer than 4000 characters, only the" 
+                            "first 4000 characters will be kept. The maximum" 
+                            "accepted by the SIEM is 4096 characters.")
+                note=note[:4000]+'\n\n--NOTE HAS BEEN TRUNCATED--'
+            
+            if no_date==False:
+                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                note = note.replace('"','\\"').replace('\n','\\n')
+                note = timestamp + ' - ' + note
+            
+            self.nitro.request("add_note_to_event_int", 
+                id=the_id,
+                note=note)
+        else :
+            log.error("Couldn't set event's note, the event ID hasn't been found.")
 
     def add_note(self, note):
         """Deprecated, please use set_note() method instead."""
         log.warning(str(DeprecationWarning())+" Please use set_note() method instead.")
         self.set_note(note)
         
-        
     def data_from_id(self, id, use_query=False, extra_fields=[]):
         """
         Load event's data.  
-        Parameters : 
-        - `id` : The event ID. (i.e. : `144128388087414784|747122896`)
-        - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2.x.
-        - `extra_fields` : Only when `use_query=True`. Additionnal event fields to load in the query.
+
+        Parameters :   
+        - `id` : The event ID. (i.e. : `144128388087414784|747122896`)  
+        - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2.x.  
+        - `extra_fields` : Only when `use_query=True`. Additionnal event fields to load in the query.  
         """
         
         if use_query == True :
 
-            e = EventManager(time_range='CURRENT_YEAR', filters=[('IPSIDAlertID',id)], compute_time_range=False, fields=extra_fields).load_data()
+            e = EventManager(time_range='CURRENT_YEAR',
+                filters=[('IPSIDAlertID',id)],
+                compute_time_range=False,
+                fields=extra_fields,
+                limit=2).load_data()
+
             if len(e) == 1 :
                 return e[0]
             else :
@@ -520,8 +540,9 @@ class GroupFilter(QueryFilter):
 
     def __init__(self, filters, logic='AND') :
         """Parameters :  
-        - `filters` : a list of filters, it can be `msiempy.query.FieldFilter` or `msiempy.query.GroupFilter`
-        - `logic` : 'AND' or 'OR'
+
+        - `filters` : a list of filters, it can be `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter`  
+        - `logic` : 'AND' or 'OR'  
         """
         super().__init__()
         
@@ -584,7 +605,7 @@ class FieldFilter(QueryFilter):
             {'type':'EsmBasicValue',        'key':'value'},
             {'type':'EsmCompoundValue',     'key':'values'}]
     """
-    List of possible value type. See `msiempy.query.FieldFilter.add_value`.
+    List of possible value type. See `msiempy.event.FieldFilter.add_value`.
     """
 
 
@@ -592,9 +613,9 @@ class FieldFilter(QueryFilter):
         """
         Parameters:
 
-        - `name` : field name as string.
-        - `values` : list of values the field is going to be tested againts with the specified orperator.
-        - `orperator` : operator, see `msiempy.query.FieldFilter.POSSIBLE_OPERATORS`.
+        - `name` : field name as string.  
+        - `values` : list of values the field is going to be tested againts with the specified orperator.  
+        - `orperator` : operator, see `msiempy.event.FieldFilter.POSSIBLE_OPERATORS`.  
         """
         super().__init__()
         #Declaring attributes
@@ -652,12 +673,11 @@ class FieldFilter(QueryFilter):
     def values(self):
         """
         Values property.
-        Set a list of values by calling `msiempy.query.FilteredQueryList.add_value()` if value is a 
-        `dict` or calls `msiempy.query.FilteredQueryList.add_basic_value()` if value type is `int`, `float` or `str`.
+        Set a list of values by calling `msiempy.FilteredQueryList.add_value()` if value is a 
+        `dict` or calls `msiempy.FilteredQueryList.add_basic_value()` if value type is `int`, `float` or `str`.
         Values will always be added to the filter. To remove values, handle directly the `_values` property.
 
-        Example:  
-        ```
+        Example :  
             >>> filter = FieldFilter(name='DstIP',values=['10.1.13.0/24'],operator='IN')
             >>> filter.values=['10.1.14.0/8', {'type':'EsmWatchlistValue', 'watchlist':42}]
             >>> filter.config_dict
@@ -667,7 +687,6 @@ class FieldFilter(QueryFilter):
             'values': [{'type': 'EsmBasicValue', 'value': '10.1.13.0/24'},
                 {'type': 'EsmBasicValue', 'value': '10.1.14.0/8'},
                 {'type': 'EsmWatchlistValue', 'watchlist': 42}]}
-                ```
             
         """
         return (self._values)

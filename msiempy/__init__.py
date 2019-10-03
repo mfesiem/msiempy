@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
-"""# Welcome to the **msiempy** module documentation. The pythonic way to deal with McFee esm API.  
+"""# Welcome to the **msiempy** module documentation. The pythonic way to deal with McAfee SIEM API.  
 
-Classes listed in this module are used by other classes in sub-modules to build specialized objects and functions. If you with to see concrete example of code, **head to one of the sub-modules** !  
+GitHub : https://github.com/mfesiem/msiempy  
+
+Classes listed in this module are base to other classes in sub-modules that offers specialized objects and functions.  
 
 This API offers two main types of objects to interact with the SIEM : `msiempy.NitroList`, `msiempy.NitroDict`. 
 `msiempy.NitroList`s have default behaviours related to parallel execution, string representation generation and search feature.
-Whereas `msiempy.NitroDict` that doesn't have any specific behaviours. Both inheriths from `msiempy.NitroObject`.  
+Whereas `msiempy.NitroDict` that doesn't have any specific behaviours. Both inheriths from `msiempy.NitroObject` that handle a reference to a single `msiempy.NitroSession` object.  
 
 `msiempy.NitroSession` is the point of convergence of every request to the McFee ESM It provides standard dialogue with the esm.
 It uses `msiempy.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.  
 
-Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png. Packages : https://mfesiem.github.io/docs/msiempy/packages.png
+Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png  
+Packages : https://mfesiem.github.io/docs/msiempy/packages.png  
+
+Only working with SIEM version >=11.2.1 (and maybe >=10.4.1)
 """
 
 import logging
@@ -34,6 +39,7 @@ from prettytable import MSWORD_FRIENDLY
 import datetime
 import functools
 import textwrap
+import inspect
 
 from .__utils__ import regex_match, tob64, format_esm_time, convert_to_time_obj, timerange_gettimes, parse_timedelta, divide_times
 
@@ -46,7 +52,7 @@ except : pass
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 log = logging.getLogger('msiempy')
 
-
+__pdoc__={} #Init pdoc overwrite engine to document stuff dynamically
 
 class NitroError(Exception):
     """
@@ -59,9 +65,10 @@ class NitroConfig(configparser.ConfigParser):
     If a `.msiem/` directory exists in your current directory, the program will assume the `conf.ini` file is there, if not, it will create it with default values. 
     Secondly, if no `.msiem/` directory exists in the current directory, it will be automatically placed in a appropriate place depending of your platform:  
 
-    - For Windows:  %APPDATA%\\  
-    - For Mac :     $HOME/  
-    - For Linux :   $XDG_CONFIG_HOME/ or : $HOME/
+    For Windows: `%APPDATA%\.msiem\conf.ini`
+    For Mac : `$HOME/.msiem/conf.ini`
+    For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`
+    If `.msiem` folder exists in you local directory : `./.msiem/conf.ini`
 
     """
 
@@ -117,7 +124,7 @@ class NitroConfig(configparser.ConfigParser):
         self.read_dict(self.DEFAULT_CONF_DICT)
     
         if not path :
-            self._path = self._find_ini_location()
+            self._path = self.find_ini_location()
         else : 
             self._path = path
 
@@ -202,11 +209,12 @@ class NitroConfig(configparser.ConfigParser):
 
    
     @staticmethod
-    def _find_ini_location():
+    def find_ini_location():
         '''
-        Returns the location of a supposed conf.ini file the conf.ini file,
+        Returns the location of a supposed conf.ini file the `conf.ini` file.  
+        If `.msiem` folder exists in you local directory, assume the `conf.ini` file is in there.
         If the file doesn't exist, will still return the location.
-        Do not create a file nor directory.
+        Do not create a file nor directory, you must call `msiempy.NitroConfig.write`.
         '''
         conf_path_dir=None
 
@@ -232,17 +240,15 @@ class NitroConfig(configparser.ConfigParser):
 
 class NitroSession():
     '''NitroSession object represent the point of convergence of every request to the McFee ESM
-    It provides standard dialogue with the esm with agument interpolation with `msiempy.params`.
+    It provides standard dialogue with the esm with agument interpolation with `msiempy.NitroSession.PARAMS`.
     Internal `__dict__` refers to a unique instance of dict and thus, properties can be instanciated only once. 
     '''
 
     BASE_URL = 'https://{}/rs/esm/'
-    """API v2 base url.
-    """
+    __pdoc__['NitroSession.BASE_URL']="""API v2 base url: `%(url)s`""" % dict(url=BASE_URL)
 
     BASE_URL_PRIV = 'https://{}/ess/'
-    """Private API base URL.
-    """
+    __pdoc__['NitroSession.BASE_URL_PRIV']="""Private API base URL: `%(url)s`""" % dict(url=BASE_URL_PRIV)
 
     __initiated__ = False
     """
@@ -255,14 +261,9 @@ class NitroSession():
     
     config = None
     """
-    NitroConfig object.
+    `msiempy.NitroConfig` object.
     """
     
-    executor = None
-    """
-    Executor object.
-    """
-
     PARAMS = {
         "login": ("login",
                 """{"username": "%(username)s",
@@ -286,12 +287,12 @@ class NitroSession():
                         """),
 
         "req_client_str": ("DS_GETDSCLIENTLIST",
-                            """{"DSID": "%(_ds_id)s",
+                            """{"DSID": "%(ds_id)s",
                                 "SEARCH": ""}
                             """),
 
         "get_rfile": ("MISC_READFILE",
-                    """{"FNAME": "%(_ftoken)s",
+                    """{"FNAME": "%(ftoken)s",
                     "SPOS": "0",
                     "NBYTES": "0"}
                     """),
@@ -413,12 +414,11 @@ class NitroSession():
             "get_alarm_details_int": ("NOTIFY_GETTRIGGEREDNOTIFICATIONDETAIL", 
                                         """{"TID": "%(id)s"}"""),
 
+            "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
 
-            "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
+            "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
 
-            "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
-
-            "delete_alarms": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":%(ids)s}"""),
+            "delete_alarms": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
             
             "get_possible_filters" : ( """qryGetFilterFields""", None ),
 
@@ -465,11 +465,50 @@ class NitroSession():
                 "note": {"note": "%(note)s"}
             }"""),
 
+            "add_note_to_event_int": ("""IPS_ADDALERTNOTE""", """{"AID": "%(id)s",
+                                                               "NOTE": "%(note)s"}"""),
+
+            "get_wl_types": ("""sysGetWatchlistFields""", None),
             "get_watchlists_no_filters" : ("""sysGetWatchlists?hidden=%(hidden)s&dynamic=%(dynamic)s&writeOnly=%(writeOnly)s&indexedOnly=%(indexedOnly)s""", 
                 None),
 
             "get_watchlist_details": ("""sysGetWatchlistDetails""","""{"id": %(id)s}"""),
 
+            "add_watchlist": ("""sysAddWatchlist""", """{
+                "watchlist": {
+                    "name": "%(name)s",
+                    "type": {"name": "%(wl_type)s",
+                              "id": 0},
+                    "customType": {"name": "",
+                                   "id": 0},
+                    "dynamic": "False",
+                    "enabled": "True",
+                    "search": "",
+                    "source": 0,
+                    "updateType": "EVERY_SO_MANY_MINUTES",
+                    "updateDay": 0,
+                    "updateMin": 0,
+                    "ipsid": "0",
+                    "valueFile": {"fileToken": ""},
+                    "dbUrl": "",
+                    "mountPoint": "",    
+                    "path": "",
+                    "port": "22",
+                    "username": "",
+                    "password": "",
+                    "query": "",
+                    "lookup": "",
+                    "jobTrackerURL": "",
+                    "jobTrackerPort": "",
+                    "postArgs": "",
+                    "ignoreRegex": "",
+                    "method": 0,
+                    "matchRegex": "",
+                    "lineSkip": 0,
+                    "delimitRegex": "",
+                    "groups": 1
+                              }}"""),
+                                                            
             "add_watchlist_values": ("""sysAddWatchlistValues""","""{
                 "watchlist": %(watchlist)s,
                 "values": %(values)s,
@@ -477,33 +516,39 @@ class NitroSession():
 
             "get_watchlist_values": ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}"""),
 
+            "remove_watchlists": ("""sysRemoveWatchlist""", """{"ids": {"watchlistIdList": ["%(wl_id_list)s"]}}"""),
+
             "get_alert_data": ("""ipsGetAlertData""", """{"id": {"value":"%(id)s"}}"""),
             
             "get_sys_info"  : ("SYS_GETSYSINFO","""{}"""),
             
             "build_stamp" : ("essmgtGetBuildStamp",None)
     }
-    """
-    This structure provide a central place to aggregate API methods and parameters. 
-    The parameters are stored as docstrings to support string replacement.
+    __pdoc__['NitroSession.PARAMS'] = """This structure provide a central place to aggregate API methods and parameters. 
+    The parameters are stored as docstrings to support string replacement.  
 
-    Args:
+    Args:  
         method (str): Dict key associated with desired function
         Use normal dict access, PARAMS["method"], or PARAMS.get("method")
 
-    Returns:
-        tuple: (string, string)
-
-        The first string is the method name that is actually used as
+    Returns:  
+        - `tuple `: (string, string) : The first string is the method name that is actually used as
         the URI or passed to the ESM. The second string is the params
         required for that method. Some params require variables be
         interpolated as documented in the Attributes.
 
     Example:
-        method, params = params["login"].format(username, password)
+        `method, params = PARAMS.get("login").format(username, password)`. See : `msiempy.NitroSession.request`
 
-    Important note : Do not use sigle quotes (') to delimit data into the interpolated strings !
-    """
+    Important note : 
+        Do not use sigle quotes (') to delimit data into the interpolated strings !
+
+    Content :
+        %(content)s
+        """ % dict(content=json.dumps(PARAMS, indent=4).replace('\n',"""  
+    """)[:130]+""" [...] and more..  
+    See : https://github.com/mfesiem/msiempy/blob/master/msiempy/__init__.py#L266
+    """)
         
     def __str__(self):
         return repr(self.__unique_state__) 
@@ -523,9 +568,8 @@ class NitroSession():
         self.__dict__ = NitroSession.__unique_state__
         
         #Init properties only once
-        if not self.__initiated__ :
+        if NitroSession.__initiated__ == False :
             NitroSession.__initiated__ = True
-            log.info('New NitroSession instance')
             
             #Private attributes
             self._headers={'Content-Type': 'application/json'}
@@ -540,24 +584,46 @@ class NitroSession():
                 quiet=self.config.quiet,
                 logfile=self.config.logfile)
 
-    def _request(self, method, http, data=None, callback=None, raw=False, secure=False):
+            log.info('New NitroSession instance')
+
+
+    def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False):
         """
-        Helper method that format the request, handle the basic parsing of the SIEM result 
-        as well as other errors.        
-        If method is all upper cases, it's a private API call.
-        Private API is under /ess/ and public api is under /rs/esm
-        Returns None if HTTP error, Timeout or TooManyRedirects if raw=False
+        Helper method that format the request, handle the basic parsing of the SIEM result as well as other errors.          
+        If method is all upper cases, it's going to be formatted as a private API call. See `msiempy.NitroSession.format_params` and `msiempy.NitroSession.format_priv_resp` 
+        In any way, the ESM response is unpacked by `msiempy.NitroSession.unpack_resp`
+
+        Parameters :
+            - `method` : ESM API enpoint name and url parameters  
+            - `http`: HTTP method.  
+            - `data` : dict data to send  
+            - `callback` : function to apply afterwards  
+            - `raw` : If true will return the Response object from requests module.   
+            - `secure` : If true will not log the content of the request.   
+
+        Returns : 
+            - a `dict`, `list` or `str` object  
+            - the `resquest.Response` object if raw=True  
+            - `result.text` if `requests.HTTPError`,   
+            - `None` if Timeout or TooManyRedirects if raw=False  
+
+         Note : Private API is under /ess/ and public api is under /rs/esm  
+
         """
 
         url=str()
         privateApiCall=False
         result=None
 
+        #Logging the data request if not secure | Logs anyway the method
+        log.debug('Requesting HTTP '+str(http)+' '+ str(method) + 
+            (' with data '+str(data) if not secure else ' ***') )
+        
         #Handling private API calls formatting
         if method == method.upper():
             privateApiCall=True
             url = self.BASE_URL_PRIV
-            data = self._format_params(method, **data)
+            data = self.format_params(method, **data)
             log.debug('Private API call : '+str(method)+' Formatted params : '+str(data))
         
         #Normal API calls
@@ -565,10 +631,6 @@ class NitroSession():
             url = self.BASE_URL
             if data:
                 data = json.dumps(data)
-
-        #Logging the data request if not secure | Logs anyway the method
-        log.debug('Requesting HTTP '+http+' '+ method + 
-            (' with data '+str(data) if (data is not None and not secure) else '') )
 
         try :
             result = requests.request(
@@ -581,32 +643,29 @@ class NitroSession():
             )
 
             if raw :
-                log.debug('Returning raw requests Response object :'+str(result))
+                log.debug('Returning raw requests Response object : '+str(result)+ ' ' + str(result.text))
                 return result
 
             else:
                 try:
                     result.raise_for_status()
-
                 except requests.HTTPError as e :
-                    log.error(str(e)+' '+str(result.text))
-                    return result.text
+                    raise(requests.HTTPError(str(e)+ ' ' +str(result.text)+ ' ' + str(result.__dict__)))
                     """
                     #TODO handle expired session error, result unavailable / other siem errors
                     # _InvalidFilter (228)
                     # _IndexNotTurnedOn (49)
                     # Status Code 500: Error processing request, see server logs for more details 
-                    # <Response [400]>
-                    400 Client Error: 400 for url: https://207.179.200.58:4443/rs/esm/ipsGetAlertData Cannot construct instance of `com.mcafee.siem.api.data.alert.EsmAlertId`
                     # Input Validation Error
                     # By creating a new class
+                    # ERROR_InvalidSession (1)
                     """
 
                 else: #
-                    result = self._unpack_resp(result)
+                    result = self.unpack_resp(result)
 
                     if privateApiCall :
-                        result = self._format_priv_resp(result)
+                        result = self.format_priv_resp(result)
 
                     if callback:
                         result = callback(result)
@@ -623,10 +682,9 @@ class NitroSession():
             log.error(e)
             return None
         
-    def _login(self):
-        """
-        Internal method that will be called when the user is not logged yet.
-        Throws NitroError if login fails
+    def login(self):
+        """Authentication is done lazily upon the first call to `msiempy.NitroSession.request` method, but you can still do it manually by calling this method.  
+        Throws `msiempy.NitroError` if login fails
         """
         userb64 = tob64(self.config.user)
         passb64 = self.config.passwd
@@ -642,47 +700,57 @@ class NitroSession():
             self._headers['Cookie'] = resp.headers.get('Set-Cookie')
             self._headers['X-Xsrf-Token'] = resp.headers.get('Xsrf-Token')
     
+            self._logged=True
             return True
         else:
             raise NitroError('ESM Login Error: Response empty')
 
-    def request(self, request, http='post', callback=None, raw=False, secure=False, **params):
+    def request(self, request, **kwargs):
         """
             This method is the centralized interface of all requests going to the SIEM.  
+            It interpolates `**params` with `msiempy.NitroSession.PARAMS` docstrings and build a valid datastructure with `ast`.  
+            Wrapper around the `msiempy.NitroSession.esm_request` method.  
 
             Parameters:  
 
-            - `request`: Keyword corresponding to the request name in `msiempy.params` mapping.  
-            - `http`: HTTP method.  
-            - `callback`: A callable to execute on the returned object if needed.  
-            - `raw`: If true will return the Response object from requests module.  
-            - `secure`: If true will not log the content of the request.  
-            - `**params`: Interpolation parameters that will be match to `msiempy.params` templates. Check the file to be sure of the keyword arguments.  
+            - `request`: Keyword corresponding to the request name in `msiempy.NitroSession.PARAMS` mapping.  
+            - `**kwargs` Can contain :
+                - `msiempy.NitroSession.esm_request` arguments except `method` and `data`
+                - Interpolation parameters that will be match to `msiempy.NitroSession.PARAMS` templates. Check the file to be sure of the keyword arguments.  
 
-            Returns None if HTTP error, Timeout or TooManyRedirects if raw=False.
+            Returns : 
+            - a `dict`, `list` or `str` object  
+            - the `resquest.Response` object if raw=True  
+            - `result.text` if `requests.HTTPError`,   
+            - `None` if Timeout or TooManyRedirects if raw=False  
         """
-        log.debug("Calling nitro request : {} params={} http={} raw={} secure={} callback={}".format(
-            str(request), str(params) if not secure else '***', str(http), str(raw), str(secure), str(callback)
-        ))
+        log.debug("Calling nitro request : {} kwargs={}".format(
+            str(request), '***' if 'secure' in kwargs and kwargs['secure']==True else str(kwargs)))
 
         method, data = self.PARAMS.get(request)
 
         if data is not None :
-            data =  data % params
+            data =  data % kwargs
             data = ast.literal_eval((data.replace('\n','').replace('\t','')))
            
         if method is not None:
             try :
-                method = method % params
+                method = method % kwargs
             except TypeError as err :
                 if ('must be real number, not dict' in str(err)):
                     log.warning("Interpolation failed probably because of the private API calls formatting... Unexpected behaviours can happend.")
 
         if not self._logged and method != 'login':
-            self._logged=self._login()
+            self.login()
 
         try :
-            return self._request(method, http, data, callback, raw, secure)
+            #Dynamically checking the esm_request arguments so additionnal parameters can be passed afterwards.
+            esm_request_args = inspect.getargspec(self.esm_request)[0]
+            params={}
+            for arg in kwargs :
+                if arg in esm_request_args:
+                    params[arg]=kwargs[arg]
+            return self.esm_request(method=method, data=data, **params)
 
         except ConnectionError as e:
             log.critical(e)
@@ -709,11 +777,9 @@ class NitroSession():
 
         log.setLevel(logging.DEBUG)
 
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-
         std = logging.StreamHandler()
         std.setLevel(logging.DEBUG)
-        std.setFormatter(formatter)
+        std.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
 
         if verbose :
             std.setLevel(logging.DEBUG)
@@ -722,9 +788,6 @@ class NitroSession():
         else :
             std.setLevel(logging.INFO)
 
-        
-            
-            
         log.handlers=[]
         
         log.addHandler(std)
@@ -742,9 +805,9 @@ class NitroSession():
     
 
     @staticmethod
-    def _format_params(cmd, **params):
+    def format_params(cmd, **params):
         """
-        Format private API call.
+        Format private API call.  
         From mfe_saw project at https://github.com/andywalden/mfe_saw
         """
         params = {k: v for k, v in params.items() if v is not None}
@@ -757,9 +820,9 @@ class NitroSession():
         return params
 
     @staticmethod
-    def _format_priv_resp(resp):
+    def format_priv_resp(resp):
         """
-        Format response from private API
+        Format response from private API.  
         From mfe_saw project at https://github.com/andywalden/mfe_saw
         """
         resp = re.search('Response=(.*)', resp).group(1)
@@ -778,7 +841,7 @@ class NitroSession():
         return formatted
 
     @staticmethod
-    def _unpack_resp(response) :
+    def unpack_resp(response) :
         """Unpack data from response.
         Args: 
             response: requests.Response response object
@@ -957,7 +1020,7 @@ class NitroList(collections.UserList, NitroObject):
         return manager_keys
 
 
-    def get_text(self, compact=False, fields=None, max_column_width=120):
+    def get_text(self, compact=False, fields=None, max_column_width=120, get_text_nest_attr={}):
         """
         Return a acsii table string representation of the manager list
 
@@ -966,6 +1029,7 @@ class NitroList(collections.UserList, NitroObject):
         - `compact`: Returns a nice string table made with prettytable, else an '|' separated list.  
         - `fields`: list of fields you want in the table is None : default fields are returned by .keys attribute and sorted.  
         - `max_column_width`: when using prettytable (not compact)  
+        - `get_text_nest_attr`: attributes passed to the nested NitroList elements. Useful to control events appearence.
 
         It's an expesive thing to do on big ammount of data !
         """
@@ -987,7 +1051,7 @@ class NitroList(collections.UserList, NitroObject):
                     try :
                         table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=max_column_width))
                             if not isinstance(item[field], NitroList)
-                            else item[field].get_text() for field in fields])
+                            else item[field].get_text(**get_text_nest_attr) for field in fields])
                     
                     except (KeyError, IndexError) as err :
                         log.error("Inconsistent NitroList state, some fields aren't present in the dict keys. Try calling _norm_dicts() method : "+str(err))
@@ -1028,7 +1092,7 @@ class NitroList(collections.UserList, NitroObject):
 
     @property
     def text(self):
-        """The text properti is a shorcut to get_text() with no arguments.
+        """The text property is a shorcut to get_text() with no arguments.
         """
         return self.get_text()
         
@@ -1196,9 +1260,7 @@ class FilteredQueryList(NitroList):
     """
     
     DEFAULT_TIME_RANGE="CURRENT_DAY"
-    """
-    If you don't specify any `time_range`, act like if it was "CURRENT_DAY".
-    """
+    __pdoc__['FilteredQueryList.DEFAULT_TIME_RANGE']="""Default time range : %(default)s""" % dict(default=DEFAULT_TIME_RANGE)
 
     POSSIBLE_TIME_RANGE=[
             "CUSTOM",
@@ -1220,26 +1282,8 @@ class FilteredQueryList(NitroList):
             "CURRENT_YEAR",
             "PREVIOUS_YEAR"
     ]
-    """
-    List of possible time ranges : `"CUSTOM",
-            "LAST_MINUTE",
-            "LAST_10_MINUTES",
-            "LAST_30_MINUTES",
-            "LAST_HOUR",
-            "CURRENT_DAY",
-            "PREVIOUS_DAY",
-            "LAST_24_HOURS",
-            "LAST_2_DAYS",
-            "LAST_3_DAYS",
-            "CURRENT_WEEK",
-            "PREVIOUS_WEEK",
-            "CURRENT_MONTH",
-            "PREVIOUS_MONTH",
-            "CURRENT_QUARTER",
-            "PREVIOUS_QUARTER",
-            "CURRENT_YEAR",
-            "PREVIOUS_YEAR"`
-    """
+    __pdoc__['FilteredQueryList.POSSIBLE_TIME_RANGE']="""
+    List of possible time ranges : `%(timeranges)s`""" % dict(timeranges=', '.join(POSSIBLE_TIME_RANGE))
 
     def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
         load_async=True, requests_size=500, max_query_depth=0,
@@ -1250,7 +1294,7 @@ class FilteredQueryList(NitroList):
         Parameters:  
     
         - `time_range` : Query time range. String representation of a time range. 
-            See `msiempy.query.FilteredQueryList.POSSIBLE_TIME_RANGE`
+            See `msiempy.FilteredQueryList.POSSIBLE_TIME_RANGE`
         - `start_time` : Query starting time, can be a string or a datetime object. Parsed with dateutil.
         - `end_time` : Query endding time, can be a string or a datetime object. Parsed with dateutil.
         - `filters` : List of filters applied to the query.
@@ -1305,8 +1349,8 @@ class FilteredQueryList(NitroList):
     @property
     def time_range(self):
         """
-        Query time range. See `msiempy.query.FilteredQueryList.POSSIBLE_TIME_RANGE`.
-        Default to `msiempy.query.FilteredQueryList.DEFAULT_TIME_RANGE` (CURRENT_DAY).
+        Query time range. See `msiempy.FilteredQueryList.POSSIBLE_TIME_RANGE`.
+        Default to `msiempy.FilteredQueryList.DEFAULT_TIME_RANGE` (CURRENT_DAY).
         Note that the time range is upper cased automatically.
         Raises `VallueError` if unrecognized time range is set and `AttributeError` if not the right type.
         """
@@ -1332,9 +1376,9 @@ class FilteredQueryList(NitroList):
     @property
     def start_time(self):
         """
-        Start time of the query in the right SIEM format. See `msiempy\__utils__.format_esm_time()`
-        Use `_start_time` to get the datetime object. You can set the `star_time` as a `str` or a `datetime`.
-        If `None`, equivalent CURRENT_DAY start 00:00:00. Raises `ValueError` if not the right type.
+        Start time of the query in the right SIEM format.  
+        Use `_start_time` to get the datetime object. You can set the `star_time` as a `str` or a `datetime`.  
+        If `None`, equivalent CURRENT_DAY start 00:00:00. Raises `ValueError` if not the right type.  
         """
         return format_esm_time(self._start_time)
 
@@ -1352,9 +1396,9 @@ class FilteredQueryList(NitroList):
     @property
     def end_time(self):
         """
-        End time of the query in the right SIEM format.  See `msiempy\__utils__.format_esm_time()`
-        Use _end_time to get the datetime object. You can set the `end_time` as a `str` or a `datetime`.
-        If `None`, equivalent CURRENT_DAY ends now. Raises `ValueError` if not the right type.
+        End time of the query in the right SIEM format.  
+        Use `_end_time` property to get the datetime object. You can set the `end_time` as a `str` or a `datetime`.  
+        If `None`, equivalent CURRENT_DAY. Raises `ValueError` if not the right type.
         """
         return format_esm_time(self._end_time)
 
@@ -1373,9 +1417,9 @@ class FilteredQueryList(NitroList):
     def filters(self):
         """ 
         Filter property : Returns a list of filters.
-        Can be set with list of tuple(field, [values]) or `msiempy.query.QueryFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted. 
-        None value will call `msiempy.query.FilteredQueryList.clear_filters()`
-        Raises `AttributeError` if type not supported.
+        Can be set with list of tuple(field, [values]) or `msiempy.event.QueryFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted.  
+        `None value will call `msiempy.query.FilteredQueryList.clear_filters()`.  
+        Raises : `AttributeError` if type not supported.
         TODO find a better solution to integrate the filter propertie
         """
         raise NotImplementedError()
@@ -1409,41 +1453,37 @@ class FilteredQueryList(NitroList):
         pass 
 
     @abc.abstractmethod
-    def _load_data(self, workers):
+    def qry_load_data(self, **kwargs):
         """
+        Method to load the data from the SIEM.
         Rturn a tuple (items, completed).
         completed = True if all the data that should be load is loaded.
         """
         pass
 
     @abc.abstractmethod
-    def load_data(self, workers=15, slots=4, delta='24h', *args, **kwargs):
-        """
-        Method to load the data from the SIEM.
-        Split the query in defferents time slots if the query apprears not to be completed.
-        Splitting is done by duplicating current object, setting different times,
-        and re-loading results. First your query time is split in slots of size `delta` 
-        if the sub queries are not completed, divide them in the number of `slots`, this step is
-        If you're looking for `max_query_depth`, it's define at the creation of the query list.
+    def load_data(self, workers=10, slots=10, delta=None, **kwargs):
+        """Load the data from the SIEM into the manager list.  
+        Split the query in defferents time slots if the query apprears not to be completed. It wraps around `msiempy.FilteredQueryList.qry_load_data`.    
+        If you're looking for `max_query_depth`, it's define at the creation of the `msiempy.FilteredQueryList`.
 
-        Returns a FilteredQueryList.
-        
-        Note :
-            IF you looking for load_async = True/False, you should pass this to the constructor method `msiempy.query.FilteredQueryList`
-                or by setting the attribute manually like `manager.load_asynch=True`
-            Only the first query is loaded asynchronously.
+        Note :  
+        If you looking for `load_async`, you should pass this to the constructor method `msiempy.FilteredQueryList` or by setting the attribute manually like `manager.load_asynch=True`
+        Only the first query is loaded asynchronously.
 
         Parameters:  
     
-        - `workers` : numbre of parrallels task
+        - `workers` : numbre of parrallels task  
         - `slots` : number of time slots the query can be divided. The loading bar is 
-            divided according to the number of slots
-        - `delta` : exemple : '24h', the query will be firstly divided in chuncks according to the time delta read
-            with dateutil.
-        
+            divided according to the number of slots  
+        - `delta` : exemple : '6h30m', the query will be firstly divided in chuncks according to the time delta read
+            with dateutil.  
+        - `**kwargs` : concrete additionnal `qry_load_data` parameters  
+
+        Returns : `msiempy.FilteredQueryList`
         """
 
-        items, completed = self._load_data(workers=workers, *args, **kwargs)
+        items, completed = self.qry_load_data(workers=workers, **kwargs)
 
         if not completed :
             #If not completed the query is split and items aren't actually used
@@ -1460,14 +1500,16 @@ class FilteredQueryList(NitroList):
                     #if it's the first query and delta is speficied, cut the time_range in slots according to the delta
                     times=divide_times(start, end, delta=parse_timedelta(delta))
                     
-                else :times=divide_times(start, end, slots=slots)
-                        #IGONORING THE CONFIG ### : self.nitro.config.slots)
+                else : 
+                    times=divide_times(start, end, slots=slots)
+
+                if workers > len(times) :
+                    log.warning("The numbre of slots is smaller than the number of workers, only "+str(len(times))+" asynch workers will be used when you could use up to "+str(workers)+". Number of slots should be greater than the number of workers for better performance.")
                 
                 sub_queries=list()
 
                 for time in times :
-                    """
-                    """
+                    #Divide the query in sub queries
                     sub_query = copy.copy(self)
                     sub_query.__parent__=self
                     sub_query.compute_time_range=False
@@ -1476,9 +1518,8 @@ class FilteredQueryList(NitroList):
                     sub_query.end_time=time[1].isoformat()
                     sub_query.load_async=False
                     sub_query.query_depth_ttl=self.query_depth_ttl-1
-                    #sub_query.requests_size=requests_size
+                    
                     sub_queries.append(sub_query)
-
             
                 results = self.perform(FilteredQueryList.load_data, sub_queries, 
                     #The sub query is asynch only when it's set to True and it's the first query
@@ -1493,9 +1534,9 @@ class FilteredQueryList(NitroList):
                 
             else :
                 if not self.__root_parent__.not_completed :
-                    log.warning("The query won't fully complete. Try to divide in more slots or increase the requests_size")
+                    log.warning("The query is not complete... Try to divide in more slots or increase the requests_size, page_size or limit")
                     self.__root_parent__.not_completed=True
 
         self.data=items
-        return(NitroList(alist=items)) #return self ?
+        return(self)
 
