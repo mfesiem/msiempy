@@ -41,6 +41,7 @@ import datetime
 import functools
 import textwrap
 import inspect
+import time
 
 from .__utils__ import regex_match, tob64, format_esm_time, convert_to_time_obj, timerange_gettimes, parse_timedelta, divide_times
 
@@ -588,7 +589,7 @@ class NitroSession():
             log.info('New ESM session instance is created with : '+str(self.config.host))
 
 
-    def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False):
+    def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False, retry=True):
         """
         Helper method that format the request, handle the basic parsing of the SIEM result as well as other errors.          
         If method is all upper cases, it's going to be formatted as a private API call. See `msiempy.NitroSession.format_params` and `msiempy.NitroSession.format_priv_resp` 
@@ -651,6 +652,18 @@ class NitroSession():
                 try:
                     result.raise_for_status()
                 except requests.HTTPError as e :
+
+                    if retry == True :
+                        if 'ERROR_InvalidSession' in result.text :
+                            log.warning('Invalid session, retrying with authentication')
+                            self._logged=False
+                            self.login()
+                        else:
+                            log.warning('An HTTP error occured ({}), retrying request'.format(result.text))
+
+                        time.sleep(0.2)
+                        return self.esm_request(method, data, http, callback, raw, secure, retry=False)
+
                     log.error('\n' + str(e)+ ' ' +str(result.text) + '\nSee debug log for more infos.')
                     log.debug(str(e)+ ' ' +str(result.text)+ ' ' + str(result.__dict__))
                     exit(423)
@@ -770,7 +783,6 @@ class NitroSession():
         """
         self.request('logout', http='delete')
         self._logged=False
-        NitroSession.__initiated__ = False
 
     @staticmethod
     def _init_log(verbose=False, quiet=False, logfile=None):
