@@ -35,14 +35,14 @@ class T(unittest.TestCase):
 
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_YEAR',
-            filters=[('severity', [50,80,85,90,95,100])],
+            filters=[('severity', [80,90])],
             max_query_depth=0,
             page_size=50
             )
             
         alarms.load_data()
 
-        self.assertGreater(50,len(alarms), "The filter don't seem to have filtered any alarm from the list")
+        self.assertGreater(51,len(alarms), "The filter don't seem to have filtered any alarm from the list")
 
         for alarm in alarms :
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
@@ -107,12 +107,13 @@ class T(unittest.TestCase):
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_YEAR',
             max_query_depth=0,
-            page_size=3
+            page_size=2
         )
         
-        alarms_without_events = alarms.load_data(no_detailed_filter=True)
-        alarms_with_query_events = alarms.load_data(use_query=True)
-        alarms_with_alert_data_events = alarms.load_data()
+        alarms_without_events_nor_details = list(alarms.load_data(alarms_details=False))
+        alarms_without_events_but_with_details = list(alarms.load_data(events_details=False))
+        alarms_with_query_events = list(alarms.load_data(use_query=True))
+        alarms_with_alert_data_events = list(alarms.load_data())
 
         """
         self.assertGreater(len(alarms_without_events),0)
@@ -129,9 +130,14 @@ class T(unittest.TestCase):
                 self.assertEqual(event_sum['ruleMessage'], event_genuine['Rule.msg'], 'getting event details is in trouble')
             """
 
-        print('ALARMS WITHOUT EVENTS\n'+alarms_without_events.json)
-        print('ALARMS WITH QUERYIED EVENTS\n'+alarms_with_query_events.json)
-        print('ALARMS WITH ALERT DATA EVENTS\n'+alarms_with_alert_data_events.json)
+        print('ALARMS WITHOUT EVENTS NOR DETAILS')
+        pprint.pprint(alarms_without_events_nor_details)
+        print('ALARMS WITHOUT EVENTS BUT WITH DETAILS')
+        pprint.pprint(alarms_without_events_but_with_details)
+        print('ALARMS WITH QUERYIED EVENTS')
+        pprint.pprint(alarms_with_query_events)
+        print('ALARMS WITH ALERT DATA EVENTS')
+        pprint.pprint(alarms_with_alert_data_events)
 
     def test_paged_request(self):
         alarms = msiempy.alarm.AlarmManager(

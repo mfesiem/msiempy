@@ -185,9 +185,10 @@ class AlarmManager(FilteredQueryList):
 
     def load_data(self, pages=1, **kwargs):
         """
-        Shortcut for `msiempy.alarm.AlarmManager.qry_load_data`.  
-        #TODO : Implement pagging
+        Implements automatic paging over `msiempy.alarm.AlarmManager.qry_load_data`.  
+        
         Parameters :
+        - `pages` : Automatic pagging count (not asynchronous). Events and Alarms loading are though !
         - `**kwargs` : Same as `msiempy.alarm.AlarmManager.qry_load_data`
 
         Returns : `msiempy.alarm.AlarmManager`
@@ -196,20 +197,26 @@ class AlarmManager(FilteredQueryList):
         #Casting items to Alarms
         alarms=[Alarm(adict=item) for item in items]
 
+        #Iterative automatic paging (not asynchronous)
         if not completed and pages>1 :
-            if 'page_number' in kwargs :
-                kwargs['page_number']=kwargs['page_number']+1
-            else:
-                kwargs['page_number']=2
+            next_kwargs={}
+            if 'page_number' in kwargs : next_kwargs['page_number']=kwargs['page_number']+1
+            else: next_kwargs['page_number']=2
 
-            log.info('Reqesting next alarm page : {}'.format(kwargs['page_number']))
-            alarms=alarms+list(self.load_data(pages=pages-1, **kwargs))
+            log.info('Loading pages... ({})'.format(next_kwargs['page_number']))
+            alarms=alarms+list(self.load_data(pages=pages-1, **next_kwargs))
 
         self.data=alarms
-        log.info(str(len(alarms)) + " alarms are matching your filter(s)")
+
+        if 'page_number' not in kwargs:
+            log.info(str(len(alarms)) + " alarms are matching your filter(s)")
+
         return(self)
 
-    def qry_load_data(self, workers=10, no_detailed_filter=False, use_query=False, extra_fields=[], page_number=1):
+    def qry_load_data(self, workers=10, 
+        #no_detailed_filter=False, 
+        alarms_details=True, events_details=True,
+        use_query=False, extra_fields=[], page_number=1):
         """
         Method that loads the data :
             -> Fetch the list of alarms and load alarms details  
@@ -253,7 +260,7 @@ class AlarmManager(FilteredQueryList):
         #Casting to list of Alarms to be able to call load_details etc...        
         alarm_based_filtered = [Alarm(adict=a) for a in no_filtered_alarms if self._alarm_match(a)]
 
-        if not no_detailed_filter :
+        if alarms_details :
 
             log.info("Getting alarms infos...")
             alarm_detailed = self.perform(Alarm.load_details,
@@ -262,18 +269,25 @@ class AlarmManager(FilteredQueryList):
                 progress=True,
                 workers=workers)
 
-            log.info("Getting events infos...")
-            event_detailed = self.perform(Alarm.load_events, 
-                list(alarm_detailed),
-                func_args=dict(use_query=use_query, extra_fields=extra_fields),
-                asynch=True, 
-                progress=True, 
-                workers=workers)
+            #Casting to list of Alarms to be able to call load_details etc...        
+            detailed_alarm_based_filtered = [Alarm(adict=a) for a in alarm_detailed if self._alarm_match(a)]
 
-            filtered_alarms = [a for a in event_detailed if self._event_match(a)]
+            if events_details :
+                log.info("Getting events infos...")
+                event_detailed = self.perform(Alarm.load_events, 
+                    list(alarm_detailed),
+                    func_args=dict(use_query=use_query, extra_fields=extra_fields),
+                    asynch=True, 
+                    progress=True, 
+                    workers=workers)
 
+                filtered_alarms = [a for a in event_detailed if self._event_match(a)]
+            else:
+                log.warning('Field based Event filters are ignored when `events_details is False`. You can use `event` keyword in alarms filters to match str representation.')
+                filtered_alarms=detailed_alarm_based_filtered
         else :
             filtered_alarms = alarm_based_filtered
+            log.warning('Event filters and some Alarm filters are ignored when `alarms_details is False`')
 
         return (( filtered_alarms , len(no_filtered_alarms)<self.page_size ))
 

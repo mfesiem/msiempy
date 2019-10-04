@@ -43,6 +43,7 @@ import textwrap
 import inspect
 import time
 
+from io import StringIO
 from .__utils__ import regex_match, tob64, format_esm_time, convert_to_time_obj, timerange_gettimes, parse_timedelta, divide_times
 
 
@@ -299,6 +300,15 @@ class NitroSession():
                     "NBYTES": "0"}
                     """),
 
+        "del_rfile": ("ESSMGT_DELETEFILE",
+                    """{"FN": "%(ftoken)s"}"""),
+
+        "get_rfile2": ("MISC_READFILE",
+                    """{"FNAME": "%(ftoken)s",
+                    "SPOS": "%(pos)s",
+                    "NBYTES": "%(nbytes)s"}
+                    """),
+
         "get_wfile": ("MISC_WRITEFILE",
                     """{"DATA1": "%(_ds_id)s",
                     """),
@@ -516,7 +526,8 @@ class NitroSession():
                 "values": %(values)s,
                 }"""),
 
-            "get_watchlist_values": ("""sysGetWatchlistValues?pos=%(pos)s&count=%(count)s""", """{"file": {"id": "%(id)s"}}"""),
+            "get_watchlist_values": ("SYS_GETWATCHLISTDETAILS",
+                                            """{"WID": "%(id)s", "LIM": "T"}"""),
 
             "remove_watchlists": ("""sysRemoveWatchlist""", """{"ids": {"watchlistIdList": ["%(wl_id_list)s"]}}"""),
 
@@ -641,7 +652,9 @@ class NitroSession():
                 data=data, 
                 headers=self._headers,
                 verify=self.config.ssl_verify,
-                timeout=self.config.timeout
+                timeout=self.config.timeout,
+                # Uncomment for debugging.
+                #proxies={"http": "http://127.0.0.1:8888", "https":"http:127.0.0.1:8888"}
             )
 
             if raw :
@@ -1036,13 +1049,18 @@ class NitroList(collections.UserList, NitroObject):
         return manager_keys
 
 
-    def get_text(self, compact=False, fields=None, max_column_width=120, get_text_nest_attr={}):
+    def get_text(self, format='pprint', fields=None, 
+                        max_column_width=120, get_text_nest_attr={}):
         """
         Return a acsii table string representation of the manager list
 
         Parameters:  
 
-        - `compact`: Returns a nice string table made with prettytable, else an '|' separated list.  
+        - `format`: 
+              pprint: Returns a spaced table separated by |
+              compact: Returns a non-spaced table separated by |
+              csv: Returns data with header and comma separated values. 
+              
         - `fields`: list of fields you want in the table is None : default fields are returned by .keys attribute and sorted.  
         - `max_column_width`: when using prettytable (not compact)  
         - `get_text_nest_attr`: attributes passed to the nested NitroList elements. Useful to control events appearence.
@@ -1056,7 +1074,35 @@ class NitroList(collections.UserList, NitroObject):
         if len(self) == 0 :
             return('The list is empty')
 
-        if not compact : #Table
+        if format == 'csv':
+            file = StringIO()
+            dw = csv.DictWriter(file, self.data[0].keys())
+            dw.writeheader()
+            dw.writerows(self.data)
+            text = file.getvalue()
+        elif format == 'compact':
+            text='|_'
+            for field in fields :
+                text+=field
+                text+='_|_'
+            text=text[0:len(text)-1]
+            text+='\n'
+            for item in self.data:
+                if isinstance(item, (dict, NitroDict)):
+                    text+='| '
+                    for field in fields :
+                        if isinstance(item[field], NitroList):
+                            text+=item[field].get_text(format='compact')
+                        else:
+                            text+=(str(item[field]))
+                            text+=' | '
+                    text=text[0:len(text)-1]
+                else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
+                    #text+=textwrap.wrap(str(item),width=max_column_width)
+                text+='\n'
+            text=text[0:len(text)-1]
+            
+        else:
             table = prettytable.PrettyTable()
             table.set_style(MSWORD_FRIENDLY)
             table.field_names=fields
@@ -1076,34 +1122,9 @@ class NitroList(collections.UserList, NitroObject):
                     except Exception as err :
                         if "Row has incorrect number of values" in str(err):
                             log.error("Inconsistent NitroList state, some fields aren't present or too many are present : {}".format(str(err)))
-
                 else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
-
             text=table.get_string()
-
-        elif compact is True :
-            text='|_'
-            for field in fields :
-                text+=field
-                text+='_|_'
-            text=text[0:len(text)-1]
-            text+='\n'
-            for item in self.data:
-                if isinstance(item, (dict, NitroDict)):
-                    text+='| '
-                    for field in fields :
-                        if isinstance(item[field], NitroList):
-                            text+=item[field].get_text(compact=True)
-                        else:
-                            text+=(str(item[field]))
-                            text+=' | '
-                    text=text[0:len(text)-1]
-                else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
-                    #text+=textwrap.wrap(str(item),width=max_column_width)
-                text+='\n'
-            text=text[0:len(text)-1]
         return text
-
 
 
     @property
