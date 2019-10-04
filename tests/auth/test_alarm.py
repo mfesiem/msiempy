@@ -14,7 +14,7 @@ class T(unittest.TestCase):
             page_size=5,
             status_filter='unacknowledged')
 
-        alarms.load_data(no_detailed_filter=True)
+        alarms.load_data(alarms_details=False)
         
         self.assertEqual(type(alarms), msiempy.alarm.AlarmManager, 'Type error')
 
