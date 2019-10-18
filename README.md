@@ -46,9 +46,8 @@ timeout = 30
 ssl_verify = no
 output = text
 ```
-To generate the password's base64, you can use `base64` unix command like : `echo 'p@ss0rd' | base64`
 
-You can also edit the configuration dynamically with python. 
+To set the password, you can edit the configuration dynamically with python. 
 ```python
 >>> from msiempy import NitroConfig
 >>> config=NitroConfig()
@@ -63,6 +62,13 @@ Configuration file : /Users/username/.msiem/conf.ini
 >>>config.write()
 ```
 
+You can also directly paste the password's base64 in the config file by doing
+```python
+>>> import base64
+>>> passwd = 'P@assW0rd'
+>>> print(base64.b64encode(passwd.encode('utf-8')).decode())
+UEBhc3NXMHJk
+```
 ### Examples
 
 #### Alarm
@@ -150,7 +156,7 @@ If you like the project and think you could help with making it better, there ar
 - Help with improving the documentation
 - Spread a word about the project to your collegues, friends, blogs or any other channels
 - Any other things you could imagine
-- Any contribution would be of great help and I will highly appreciate it! If you have any questions, please create a new issue, or concact me via tris.la.tr@gmail.com
+- Any contribution would be of great help and I will highly appreciate it! If you have any questions, please create a new issue.
 
 ### Run tests
 ```
