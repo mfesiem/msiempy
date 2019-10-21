@@ -99,8 +99,8 @@ events = msiempy.event.EventManager(
         time_range='LAST_3_DAYS',
         fields=['HostID', 'UserIDSrc'],
         filters=[
-                msiempy.query.FieldFilter('DstIP', ['8.8.0.0/8',]),
-                msiem.query.FieldFilter('HostID', ['mydomain.local'], operator='CONTAINS') ],
+                msiempy.event.FieldFilter('DstIP', ['8.8.0.0/8',]),
+                msiem.event.FieldFilter('HostID', ['mydomain.local'], operator='CONTAINS') ],
         limit=500,
         max_query_depth=2)
 events.load_data(delta='2h', slots='4', workers=5)
