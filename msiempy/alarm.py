@@ -289,7 +289,7 @@ class AlarmManager(FilteredQueryList):
             filtered_alarms = alarm_based_filtered
             log.warning('Event filters and some Alarm filters are ignored when `alarms_details is False`')
 
-        return (( filtered_alarms , len(no_filtered_alarms)<self.page_size ))
+        return (( filtered_alarms , len(no_filtered_alarms) < int(self.page_size) ))
 
     def _alarm_match(self, alarm):
         """
