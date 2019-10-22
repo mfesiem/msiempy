@@ -312,9 +312,10 @@ class NitroSession():
         "get_wfile": ("MISC_WRITEFILE",
                     """{"DATA1": "%(_ds_id)s",
                     """),
+        
+        "get_rule_history": ("PLCY_GETRULECHANGEINFO", 
+                            """{"SHOW": "F"}"""),
 
-                    
-                    
         "map_dtree": ("map_dtree",
                     """{"dev_type": "%(dev_type)s",
                     "name": "%(ds_name)s",
