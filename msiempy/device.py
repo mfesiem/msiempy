@@ -327,7 +327,47 @@ class ESM(Device):
             if vendor == venmod[1]:
                 if model == venmod[2]:
                     return str(venmod[0])
+
+    def rules_history(self):
+        """
+        Returns: 
+            Policy Editor rule history.
+        """
+        file = self.nitro.request('get_rule_history')['TK']
+
+        pos = 0
+        nbytes = 0
+        resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
+
+
+        if resp['FSIZE'] == resp['BREAD']:
+            data = resp['DATA']
+            #data = resp['DATA'].split('\n')
+            self.nitro.request('del_rfile', ftoken=file)
+            return data
         
+        data = []
+        data.append(resp['DATA'])
+        file_size = int(resp['FSIZE'])
+        collected = int(resp['BREAD'])
+
+        while file_size > collected:
+            pos += int(resp['BREAD'])
+            nbytes = file_size - collected
+            resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
+            collected += int(resp['BREAD'])
+            data.append(resp['DATA'])
+
+        resp = self.nitro.request('del_rfile', ftoken=file)
+        return ''.join(data)
+
+    def _format_rules_history(self, rules_history):
+        """[summary]
+        
+        Arguments:
+            rules_history {[type]} -- [description]
+        """
+
     @lru_cache(maxsize=None)   
     def _get_ds_types(self):
         """

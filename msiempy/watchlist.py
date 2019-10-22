@@ -168,7 +168,6 @@ class Watchlist(NitroDict):
         resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
 
         if resp['FSIZE'] == resp['BREAD']:
-            print('Single file. Size: {}. BREAD: {}'.format(resp['FSIZE'], resp['BREAD']))
             self.data['values'] = resp['DATA'].split('\n')
             self.nitro.request('del_rfile', ftoken=file)
             return
