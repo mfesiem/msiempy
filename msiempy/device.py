@@ -80,6 +80,7 @@ class ESM(Device):
             obj. ESM object
         """
         super().__init__(*args, **kwargs)
+        self.version = self.version()
         
     def refresh(self):
         super().refresh()
