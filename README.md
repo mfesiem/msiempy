@@ -84,7 +84,7 @@ alarms=msiempy.alarm.AlarmManager(
         filters=[
                 ('alarmName', 'IPS alarm'),
                 ('ruleMessage','Wordpress')],
-        page_zize='400')
+        page_size='400')
         
 alarms.load_data()
 print(alarms)
