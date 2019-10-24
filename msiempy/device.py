@@ -534,67 +534,6 @@ class DataSource(NitroDict):
         return {prop: pval
             for prop, pval in self.__dict__.items()
             if not prop.startswith('_')}
-                    
-    def add(self, client=False):
-        """
-        Adds a datasource
-        
-        Returns:
-            None 
-        
-        Raises:
-            ESMException: Will be raised if trying to add a duplicate
-            datasource or if something else goes wrong.
-        """
-        #self._search_dups = partial(self._devtree.search, rec_id=self.parent_id)
-        #if self._search_dups(self.name, zone_id=self.zone_id):
-        #    raise NitroError('Datasource name already exists.'
-        #                        'Cannot add datasource: {}'.format(self.name))
-        #if self._search_dups(self.ds_ip, zone_id=self.zone_id):
-        #    raise NitroError('Datasource IP already exists.' 
-        #                        'Cannot add datasource: {}'.format(self.ds_ip))
-        if client:
-            resp=self.nitro.request('add_client',
-                                    parent_id=self.parent_id,
-                                    name=self.name, 
-                                    enabled=self.enabled, 
-                                    ds_ip=self.ds_ip,
-                                    hostname=self.hostname, 
-                                    type_id=self.data['type_id'], 
-                                    tz_id=self.tz_id, 
-                                    dorder=self.dorder, 
-                                    maskflag=self.maskflag, 
-                                    port=self.port, 
-                                    syslog_tls=self.syslog_tls)
-        else:
-            resp=self.nitro.request('add_ds', 
-                                    parent_id=self.parent_id,
-                                    name=self.name, 
-                                    #ds_id=self.data['ds_id'], 
-                                    type_id=self.data['type_id'], 
-                                    child_enabled=self.child_enabled, 
-                                    child_count=self.child_count, 
-                                    child_type=self.child_type, 
-                                    ds_ip=self.ds_ip, 
-                                    zone_id=self.zone_id, 
-                                    url=self.url, 
-                                    enabled=self.enabled, 
-                                    idm_id=self.idm_id, 
-                                    parameters=self.parameters)
-
-        if client:
-            try:
-                err_code = resp['EC']
-                if err_code == '0':
-                    return None
-            except KeyError:
-                raise NitroError('Unexpected error occured. ' 
-                                    'DS may not have been added.')
-        try:
-            ds_id = resp.get('id')
-            return None
-        except (KeyError, AttributeError):
-            pass
         
     def delete(self):
         """
@@ -1258,4 +1197,3 @@ class DevTree(NitroList):
         """
         type_filter = ['1', '16', '254']
         return [ds for ds in devtree if ds['desc_id'] not in type_filter]
-
