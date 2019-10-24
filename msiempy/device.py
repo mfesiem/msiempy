@@ -721,13 +721,13 @@ class DevTree(NitroList):
         Initalize the DevTree object
         """
         super().__init__(*args, **kwargs)
-        self.build_devtree()
+        self.devtree = self.build_devtree()
 
     def __len__(self):
         """
         Returns the count of devices in the device tree.
         """
-        return len(DevTree._DevTree)
+        return len(self.devtree)
         
     def __iter__(self):
         """
@@ -867,8 +867,9 @@ class DevTree(NitroList):
         devtree = self._insert_zone_ids(zone_map, devtree)            
         last_times = self._get_last_times()
         last_times = self._format_times(last_times)
-        self.devtree = self._insert_ds_last_times(last_times, devtree)
-        return self.devtree
+        devtree = self._insert_ds_last_times(last_times, devtree)
+        devtree = self._filter_bogus_ds(devtree)
+        return devtree
 
     def _get_devtree(self):
         """
@@ -1030,22 +1031,30 @@ class DevTree(NitroList):
             List of strings representing unparsed client datasources
         """
 
-        resp = self.nitro.request('req_client_str', ds_id=ds_id)
-        return self._get_rfile(resp['FTOKEN'])
+        file = self.nitro.request('req_client_str', ds_id=ds_id)['FTOKEN']
+        pos = 0
+        nbytes = 0
+        resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
 
-    def _get_rfile(self, ftoken):
-        """
-        Exchanges token for file
+        if resp['FSIZE'] == resp['BREAD']:
+            data = resp['DATA']
+            self.nitro.request('del_rfile', ftoken=file)
+            return dehexify(data)
         
-        Args:
-            ftoken (str): instance name set by 
-        
-        """
-        # Need to test ESM with large client list to see if
-        # multiple requests may be necessary here.
+        data = []
+        data.append(resp['DATA'])
+        file_size = int(resp['FSIZE'])
+        collected = int(resp['BREAD'])
 
-        resp = self.nitro.request('get_rfile', ftoken=ftoken)
-        return dehexify(resp['DATA'])
+        while file_size > collected:
+            pos += int(resp['BREAD'])
+            nbytes = file_size - collected
+            resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
+            collected += int(resp['BREAD'])
+            data.append(resp['DATA'])
+
+        resp = self.nitro.request('del_rfile', ftoken=file)
+        return dehexify(''.join(data))
 
 
     def _format_clients(self, clients):
@@ -1240,3 +1249,13 @@ class DevTree(NitroList):
                     device['model'] = d_time['model']
                     device['last_time'] = d_time['last_time']
         return devtree
+
+    def _filter_bogus_ds(self, devtree):
+        """Filters objects that inaccurately show up as datasources sometimes.
+        
+        Arguments:
+            devtree (list) -- the devtree
+        """
+        type_filter = ['1', '16', '254']
+        return [ds for ds in devtree if ds['desc_id'] not in type_filter]
+
