@@ -80,7 +80,6 @@ class ESM(Device):
             obj. ESM object
         """
         super().__init__(*args, **kwargs)
-        self.version = self.version()
         
     def refresh(self):
         super().refresh()
@@ -92,26 +91,6 @@ class ESM(Device):
     @property
     def json(self):
         return (dict(self))
-
-    def version(self):
-        """
-        Returns:
-            str. ESM short version.
-
-        Example:
-            '10.0.2'
-        """
-        return self.buildstamp().split()[0]
-
-    def buildstamp(self):
-        """
-        Returns:
-            str. ESM buildstamp.
-
-        Example:
-            '10.0.2 20170516001031'
-        """
-        return self.nitro.request('build_stamp')['buildStamp']
 
     def time(self):
         """
@@ -1197,3 +1176,149 @@ class DevTree(NitroList):
         """
         type_filter = ['1', '16', '254']
         return [ds for ds in devtree if ds['desc_id'] not in type_filter]
+
+    def add(self, kwargs):
+            """
+            Adds a datasource. 
+
+            Args:
+                **kwargs: datasource attributes
+            
+            Attributes:
+                client (bool): designate a client datasource (not child)
+                name (str): name of datasource (req)
+                parent_id (str): id of parent device (req)
+                ds_ip (str): ip of datasource (ip or hostname required)
+                hostname (str): hostname of datasource 
+                type_id (str): type of datasource (req)
+                enabled (bool): enabled or not (default: True)
+                tz_id (str): timezone of datasource (default UTC: 8)
+                    Examples (tz_id only): PST: 27, MST: 12, CST: 11, EST: 32 
+                syslog_tls (bool): datasource uses syslog tls
+            
+            Returns:
+                datasource id (str)
+                    or None on Error            
+            """
+            p = self._validate_ds_params(kwargs)
+
+            if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
+                ds_id = self.nitro.request('add_ds_11_1_3', 
+                                            parent_id=p['parent_id'],
+                                            name=p['name'],
+                                            ds_ip=p['ds_ip'],
+                                            type_id=p['type_id'],
+                                            zone_id=p['zone_id'],
+                                            enabled=p['enabled'],
+                                            url=p['url'],
+                                            ds_id=0,
+                                            child_enabled='false',
+                                            child_count=0,
+                                            child_type=0,
+                                            idm_id=0,
+                                            parameters=p['parameters'])
+            else:
+                ds_id = self.nitro.request('add_ds_11_2_1', 
+                                            parent_id=p['parent_id'],
+                                            name=p['name'],
+                                            ds_ip=p['ds_ip'],
+                                            type_id=p['type_id'],
+                                            zone_id=p['zone_id'],
+                                            enabled=p['enabled'],
+                                            url=p['url'],
+                                            parameters=p['parameters'])
+            return ds_id
+
+    def _validate_ds_params(self, p):
+        """Validate parameters for new datasource.
+        
+        Arguments:
+            p (dict) -- datasource parameters
+        
+        Returns:
+            datasource dict with normalized values
+        
+            or False if something is invalid.
+        """
+        if not p.get('name'):
+            logging.error('Error: New datasource requires "name".')
+            return
+
+        if not p.get('ds_ip'):
+             if p.get('ip'):
+                 p['ds_ip'] = p['ip']
+             else:
+                if not p.get('hostname'):
+                    logging.error('Error: New datasource requires "ip" or "hostname".')
+                    return
+        
+        if not p.get('hostname'):
+            p['hostname'] = ''
+
+        if not p.get('parent_id'):
+            p['parent_id'] = 0
+
+        #p = self._validate_ds_tz_id(p)
+        #if not p:
+        #   return
+
+        if p.get('enabled') == False:
+            p['enabled'] = 'false'
+        else:
+            p['enabled'] = 'true'
+
+        if p.get('client'):
+            if not p.get('dorder'):
+                p['dorder'] = 0
+
+            if not p.get('maskflag'):
+                p['maskflag'] = 'true'
+
+            if not p.get('port'):
+                p['port'] = 0
+
+            if not p.get('syslog_tls'):
+                p['syslog_tls'] = 'F'
+        else:
+            if not p.get('type_id'):
+                logging.error('Error: New datasource requires "type_id".')
+                return
+
+            if not p.get('zone_id'):
+                p['zone_id'] = 0
+
+            if not p.get('url'):
+                p['url'] = ''
+
+        _base_vars = ['name', 'ds_ip', 'ip', 'client', 'hostname', 'parent_id', 
+                            'enabled', 'zone_id', 'type_id', 'childEnabled', 'childCount',
+                            'idmId', 'url', 'parameters', 'childType']
+        p['parameters'] = []
+        for key, val in p.items():
+            if key not in _base_vars:
+                p['parameters'].append({key: val})
+        p = {k: v for k, v in p.items() if k in _base_vars}
+
+        return p
+
+    def _validate_ds_tz_id(self, p):
+        """Validates datasource time zone id.
+        
+        Arguments:
+            p (dict): datasource param
+        
+        Returns:
+            dict of datasource params or None if invalid
+        """
+        if p.get('tz_id'):
+            try:
+                if not 0 <= int(p.get('tz_id')) <= 75:
+                    logging.error('Error: New datasource "tz_id" must be int between 1-74.')
+                    return
+            except ValueError:
+                logging.error('Error: New datasource "tz_id" must be int between 1-74.')
+                return
+        else:
+            p['tz_id'] = 0
+        
+        return p
