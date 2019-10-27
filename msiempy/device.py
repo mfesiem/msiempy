@@ -102,6 +102,12 @@ class ESM(Device):
         """
         return self.nitro.request("get_esm_time")['value']
 
+    def buildstamp(self):
+        return self.nitro.buildstamp
+    
+    def version(self):
+        return self.nitro.version
+
     def status(self):
         """
         Returns:
