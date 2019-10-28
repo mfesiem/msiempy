@@ -333,23 +333,35 @@ class NitroSession():
                     "client_groups": "%(client_groups)s"
                     }
                     """),
-                    
-        "add_ds": ("dsAddDataSource", 
+
+        "add_ds_11_1_3": ("dsAddDataSource", 
                     """{"datasource": {
                             "parentId": {"id": "%(parent_id)s"},
                             "name": "%(name)s",
-                            "id": {"id": "%(ds_id)s"},
+                            "ipAddress": "%(ds_ip)s",
                             "typeId": {"id": "%(type_id)s"},
+                            "zoneId": "%(zone_id)s",
+                            "enabled": "%(enabled)s",
+                            "url": "%(url)s",
+                            "id": {"id": "%(ds_id)s"},
                             "childEnabled": "%(child_enabled)s",
                             "childCount": "%(child_count)s",
                             "childType": "%(child_type)s",
-                            "ipAddress": "%(ds_ip)s",
-                            "zoneId": "%(zone_id)s",
-                            "url": "%(url)s",
-                            "enabled": "%(enabled)s",
                             "idmId": "%(idm_id)s",
                             "parameters": %(parameters)s
                         }}"""),
+
+        "add_ds_11_2_1": ("dsAddDataSources", 
+                        """{"receiverId": "%(parent_id)s",
+                            "datasources": [{
+                                "name": "%(name)s",
+                                "ipAddress": "%(ds_ip)s",
+                                "typeId": {"id": "%(type_id)s"},
+                                "zoneId": "%(zone_id)s",
+                                "enabled": "%(enabled)s",
+                                "url": "%(url)s",
+                                "parameters": %(parameters)s
+                                }]}"""),
 
         "add_client": ("DS_ADDDSCLIENT", 
                         """{"PID": "%(parent_id)s",
@@ -736,6 +748,27 @@ class NitroSession():
         else:
             raise NitroError('ESM Login Error: Response empty')
 
+    def version(self):
+        """
+        Returns:
+            str. ESM short version.
+
+        Example:
+            '10.0.2'
+        """
+        return self.buildstamp().split()[0]
+
+    def buildstamp(self):
+        """
+        Returns:
+            str. ESM buildstamp.
+
+        Example:
+            '10.0.2 20170516001031'
+        """
+        return self.request('build_stamp')['buildStamp']
+
+
     def request(self, request, **kwargs):
         """
             This method is the centralized interface of all requests going to the SIEM.  
@@ -773,7 +806,7 @@ class NitroSession():
 
         if not self._logged and method != 'login':
             self.login()
-
+            self.version = self.version()
         try :
             #Dynamically checking the esm_request arguments so additionnal parameters can be passed afterwards.
             esm_request_args = inspect.getargspec(self.esm_request)[0]
