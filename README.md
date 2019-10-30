@@ -155,13 +155,13 @@ See: [WatchlistManager](https://mfesiem.github.io/docs/msiempy/watchlist.html#ms
 
 ### Contribute
 If you like the project and think you could help with making it better, there are many ways you can do it:
-
+- If you have any questions, please create a new issue.
 - Create new issue for new feature proposal or a bug
 - Implement existing issues
 - Help with improving the documentation
 - Spread a word about the project to your collegues, friends, blogs or any other channels
 - Any other things you could imagine
-- Any contribution would be of great help and I will highly appreciate it! If you have any questions, please create a new issue.
+- Any contribution would be of great help and I will highly appreciate it! 
 
 ### Run tests
 ```
@@ -179,4 +179,4 @@ Configure log file reporting in the configuration file and execute :
  ```cat /path/to/your/log/file | cut -c 25-500 | grep -i error | sort | uniq```
 
 ### Disclaimer
-This is an **UNOFFICIAL** project and is **NOT** sponsored or supported by **McAfee, Inc**. If you accidentally delete all of your datasources, don't call support (or me). Product access will always be limited to 'safe' methods and with respect to McAfee's intellectual property.
+This is an **UNOFFICIAL** project and is **NOT** sponsored or supported by **McAfee, Inc**. If you accidentally delete all of your datasources, don't call support (or me). Product access will always be in respect to McAfee's intellectual property.
