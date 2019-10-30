@@ -458,10 +458,12 @@ class NitroSession():
                         "timeRange": "%(time_range)s",
                         "customStart": "%(start_time)s",
                         "customEnd": "%(end_time)s",
-                        "fields":%(fields)s,
-                        "filters":%(filters)s,
-                        "limit":%(limit)s,
-                        "offset":%(offset)s
+                        "fields": %(fields)s,
+                        "filters": %(filters)s,
+                        "limit": %(limit)s,
+                        "offset": %(offset)s,
+                        "order": [{"field": {"name": "%(order_field)s"},
+                                             "direction": "%(order_direction)s"}]
                         }
                         }"""),
 

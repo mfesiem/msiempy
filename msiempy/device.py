@@ -513,7 +513,9 @@ class DevTree(NitroList):
                         if ds['parent_id'] == rec_id]
         
         if found:
-            return DataSource(**found[0])
+            # Temporary until DataSource() class is rebuilt.
+            #return DataSource(**found[0])
+            return found
         else:
             return None
 
@@ -1140,3 +1142,8 @@ class DevTree(NitroList):
             p['tz_id'] = 0
         
         return p
+
+class DataSource(NitroDict):
+    def __init__(self, *arg, **kwargs):
+        super().__init__(*arg, **kwargs)
+        
