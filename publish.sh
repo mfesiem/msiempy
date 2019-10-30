@@ -29,14 +29,10 @@ while getopts ":htd:p" arg; do
             ;;
         t) #Run tests
             echo "[BEGIN] Testing"
+            echo "[RUNNING] python3 setup.py test | tee ~/static/tests.txt"
             python3 setup.py test | tee ~/static/tests.txt
-            echo "[RETURN CODE] $?"
-            git add ~/static/tests.txt
-            echo "[RETURN CODE] $?"
-            git commit -m "Generate tests $(date)"
-            echo "[RETURN CODE] $?"
-            git push
-            echo "[RETURN CODE] $?"
+            echo "[RUNNING] git add ~/static/tests.txt && git commit -m "Generate tests $(date)" && git push"
+            git add ~/static/tests.txt && git commit -m "Generate tests $(date)" && git push
             echo "[SUCCESS] Tests results pushed"
             ;;
 
