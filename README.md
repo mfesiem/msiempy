@@ -2,18 +2,22 @@
 ## McAfee SIEM API Python wrapper
 [![Build Status](https://travis-ci.org/mfesiem/msiempy.svg?branch=master)](https://travis-ci.org/mfesiem/msiempy)
 
-This project aims to provide a basic API wrapper around the McAfee SIEM API to help make it more 
+This module aims to provide a basic API wrapper around the McAfee SIEM API to help make it more 
 accessible and pythonic.
 
  This python module is currently experimental 
 
 ### Main features
-- ESM monitoring (work in progress)
+- ESM monitoring
 - Datasource operations : add, edit, delete - including client datasources (work in progress)
-- Alarm operations and querying : filter, [un]acknowledge, delete  
+- Alarm operations and querying : filter, [un]acknowledge, delete, get triggering (events)
 - Event querying and builtin workaround SIEM query `limit`
 - Watchlist operations : list watchlists, add values (work in progress)
 - Single stable session handler and built-in asynchronous jobs
+
+### Known module implementations
+- esm_healthmon : [Monitors ESM alarm and device operations (CLI)](https://github.com/andywalden/esm_healthmon)
+- msiem : [Query and manage ESM alarms (CLI)](https://github.com/tristanlatr/msiem)
 
 ### Documentation and links
 - [Module documentation](https://mfesiem.github.io/docs/msiempy/index.html)
@@ -76,16 +80,17 @@ Print all `unacknowledged` alarms of the year who's name match `'IPS alarm'` and
 
 The number of alarms retreived is defined by the `page_size` property.
 ```python
-import msiempy.alarm
+from msiempy.alarm import AlarmManager
 
-alarms=msiempy.alarm.AlarmManager(
+AlarmManager(
         time_range='CURRENT_YEAR',
         status_filter='unacknowledged',
         filters=[
-                ('alarmName', 'IPS alarm'),
+                ('alarmName', 'IPS alarm')],
+        events_filters=[
                 ('ruleMessage','Wordpress')],
-        page_size='400')
-        
+        page_size=400)
+
 alarms.load_data()
 print(alarms)
 
