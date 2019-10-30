@@ -37,78 +37,65 @@ while getopts ":htd:p" arg; do
             echo "[RETURN CODE] $?"
             git push
             echo "[RETURN CODE] $?"
-            echo "[IMPORTANT] Tests results pushed"
+            echo "[SUCCESS] Tests results pushed"
             ;;
 
         d) #Docs
             echo "[BEGIN] Documentation"
 
             #Gen diagrams and  :
+            echo "[RUNNING] pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy"
             pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-            echo "[RETURN CODE] $?"
 
             #Generate and publish the documentation
             if [[ ! -d mfesiem.github.io ]]; then
+                echo "[RUNNING] git clone https://github.com/mfesiem/mfesiem.github.io"
                 git clone https://github.com/mfesiem/mfesiem.github.io
-                echo "[RETURN CODE] $?"
+            else
+                echo "[RUNNING] cd mfesiem.github.io && git pull -v && cd .."
+                cd mfesiem.github.io && git pull -v && cd ..
             fi
 
-            #mfesiem.github.io
-            cd mfesiem.github.io
-            echo "[RETURN CODE] $?"
-            git pull -v
-            echo "[RETURN CODE] $?"
             folder=${OPTARG}
             if [ "$folder" = "master" ]; then
-                pdoc msiempy --output-dir ./docs --html --force
-                echo "[RETURN CODE] $?"
-                cp ../classes.png ./docs/msiempy
-                echo "[RETURN CODE] $?"
-                cp ../packages.png ./docs/msiempy
+                echo "[RUNNING] pdoc3 msiempy --output-dir ./mfesiem.github.io/docs --html --force"
+                rm -rf ./mfesiem.github.io/docs/msiempy/
+                pdoc3 msiempy --output-dir ./mfesiem.github.io/docs --html --force
+                mv ./classes.png ./mfesiem.github.io/docs/msiempy
+                mv ./packages.png ./mfesiem.github.io/docs/msiempy
             else
-                pdoc msiempy --output-dir ./docs/${folder} --html --force
-                echo "[RETURN CODE] $?"
-                cp ../classes.png ./docs/${folder}/msiempy
-                echo "[RETURN CODE] $?"
-                cp ../packages.png ./docs/${folder}/msiempy
+                echo "[RUNNING] pdoc3 msiempy --output-dir ./mfesiem.github.io/docs/${folder} --html --force"
+                rm -rf ./mfesiem.github.io/docs/${folder}/msiempy
+                pdoc3 msiempy --output-dir ./mfesiem.github.io/docs/${folder} --html --force
+                mv ./classes.png ./mfesiem.github.io/docs/${folder}/msiempy
+                mv ./packages.png ./mfesiem.github.io/docs/${folder}/msiempy
             fi
-
-            git add .
-            git commit -m "Generate ${folder} docs $(date)"
-            echo "[RETURN CODE] $?"
-            git push origin master
-            echo "[RETURN CODE] $?"
-
-            cd ..
-
-            #msiempy
-            #push to current branch
-            git add ./packages.png
-            git add ./classes.png
-            git commit -m "Generate diagrams $(date)"
-            echo "[RETURN CODE] $?"
-            git push
-            echo "[RETURN CODE] $?"
             
+            echo "[RUNNING] cd mfesiem.github.io && git add . && git commit -m \"Generate ${folder} docs $(date)\" && git push origin master && cd .."
+            cd mfesiem.github.io && git add . && git commit -m "Generate ${folder} docs $(date)" && git push origin master && cd ..
+
             if [ "$folder" = "master" ]; then
-                url="https://mfesiem.github.io/docs/msiempy/"
+                url="https://mfesiem.github.io/docs/msiempy/index.html"
             else
-                url="https://mfesiem.github.io/docs/${folder}/msiempy/"
+                url="https://mfesiem.github.io/docs/${folder}/msiempy/index.html"
             fi
             
-            echo "[IMPORTANT] Documentation on line at : ${url}"
+            echo "[SUCCESS] Documentation on line at : ${url}"
             ;;
 
         p) ##Publish on the python index
-            echo "[BEGIN] PyPI upload"x
+            echo "[BEGIN] PyPI upload"
             rm -rf dist
+
+            echo "[RUNNING] python3 setup.py build check sdist bdist_wheel"
             python3 setup.py build check sdist bdist_wheel
-            echo "[RETURN CODE] $?"
+            
+            echo "[RUNNING] twine upload --verbose dist/*"
             echo 'Dont forget to bump __version__'
             echo 'Hit ctrl+C to cancel PyPI upload'
             twine upload --verbose dist/*
-            echo "[RETURN CODE] $?"
-            echo "[IMPORTANT] Module published at : https://pypi.org/project/msiempy/"
+            
+            echo "[SUCCESS] Module published at : https://pypi.org/project/msiempy/"
             python3 setup.py clean
             ;;
 
