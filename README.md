@@ -16,7 +16,7 @@ accessible and pythonic.
 - Single stable session handler and built-in asynchronous jobs
 
 ### Known module implementations
-- esm_healthmon : [Monitors ESM alarm and device operations (CLI)](https://github.com/andywalden/esm_healthmon)
+- esm_healthmon : [Monitors ESM operations (CLI)](https://github.com/andywalden/esm_healthmon)
 - msiem : [Query and manage ESM alarms (CLI)](https://github.com/tristanlatr/msiem)
 
 ### Documentation and links
@@ -82,43 +82,38 @@ The number of alarms retreived is defined by the `page_size` property.
 ```python
 from msiempy.alarm import AlarmManager
 
-AlarmManager(
+alarms=AlarmManager(
         time_range='CURRENT_YEAR',
         status_filter='unacknowledged',
         filters=[
                 ('alarmName', 'IPS alarm')],
-        events_filters=[
+        event_filters=[
                 ('ruleMessage','Wordpress')],
         page_size=400)
 
-alarms.load_data()
-print(alarms)
-
-alarms.load_events(extra_fields=['HostID','UserIDSrc'])
-[ print alarm['events'].json for alarm in alarms ]
+alarms.load_data(extra_fields=['HostID','UserIDSrc'])
+print(alarm.json)
 ```
 See: [FilteredQueryList](https://mfesiem.github.io/docs/msiempy/index.html#msiempy.FilteredQueryList), [AlarmManager](https://mfesiem.github.io/docs/msiempy/alarm.html#msiempy.alarm.AlarmManager), [Alarm](https://mfesiem.github.io/docs/msiempy/alarm.html#msiempy.alarm.Alarm)
 
 #### Event
 Query events according to destination IP and hostname filters, load the data with comprensive parralel tasks working around the SIEM query `limit` and printing selected data fields. 
-
-The `max_query_depth` parameter specify the number of sub-divisions the query can take at most (zero by default). The query is divided only if it hasn't completed with the current query settings. The first division is done by dividing the query's time range into slots of `delta` duration, then the query would be divided into the specified number of `slots`. Control the number of asyncronous jobs using `workers` parameter.
 ```python
-import msiempy.event
+from  msiempy.event import EventManager, FieldFilter
 
-events = msiempy.event.EventManager(
+events = EventManager(
         time_range='LAST_3_DAYS',
         fields=['HostID', 'UserIDSrc'],
         filters=[
-                msiempy.event.FieldFilter('DstIP', ['8.8.0.0/8',]),
-                msiem.event.FieldFilter('HostID', ['mydomain.local'], operator='CONTAINS') ],
-        limit=500,
-        max_query_depth=2)
-events.load_data(delta='2h', slots='4', workers=5)
+                FieldFilter('DstIP', ['8.8.0.0/8',]),
+                FieldFilter('HostID', ['mydomain.local'], operator='CONTAINS') ],
+        limit=400)
 
-print(events.get_text(fields=['Alert.LastTime','Alert.SrcIP', 'Alert.BIN(4', 'Alert.BIN(7)', 'Rule.msg']))
+events.load_data()
+print(events.get_text(fields=['Alert.LastTime','Alert.SrcIP', 'Rule.msg']))
 ```
 See: [FilteredQueryList](https://mfesiem.github.io/docs/msiempy/index.html#msiempy.FilteredQueryList), [EventManager](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.EventManager), [FieldFilter](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.FieldFilter), [Event](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.Event)
+`load_data()` method accept several parameters. The `max_query_depth` parameter specify the number of sub-divisions the query can take at most (zero by default). The query is divided only if it hasn't completed with the current query settings. The first division is done by dividing the query's time range into slots of `delta` duration, then the query would be divided into the specified number of `slots`. Control the number of asyncronous jobs using `workers` parameter. See medule module documentation for more infos.
 
 #### ESM
 Print a few esm infos. This is still work in progress.
@@ -153,9 +148,11 @@ print(watchlists)
 ```
 See: [WatchlistManager](https://mfesiem.github.io/docs/msiempy/watchlist.html#msiempy.watchlist.WatchlistManager), [Watchlist](https://mfesiem.github.io/docs/msiempy/watchlist.html#msiempy.watchlist.Watchlist)
 
+### Questions ?
+If you have any questions, please create a new issue.
+
 ### Contribute
 If you like the project and think you could help with making it better, there are many ways you can do it:
-- If you have any questions, please create a new issue.
 - Create new issue for new feature proposal or a bug
 - Implement existing issues
 - Help with improving the documentation

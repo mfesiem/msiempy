@@ -213,8 +213,7 @@ class AlarmManager(FilteredQueryList):
 
         return(self)
 
-    def qry_load_data(self, workers=10, 
-        #no_detailed_filter=False, 
+    def qry_load_data(self, workers=10,
         alarms_details=True, events_details=True,
         use_query=False, extra_fields=[], page_number=1):
         """
