@@ -336,13 +336,6 @@ class ESM(Device):
         file = self.nitro.request('get_rule_history')['TK']
         return self.nitro.get_internal_file(file)
 
-    def _format_rules_history(self, rules_history):
-        """[summary]
-        
-        Arguments:
-            rules_history {[type]} -- [description]
-        """
-
     @lru_cache(maxsize=None)   
     def _get_ds_types(self):
         """
