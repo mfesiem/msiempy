@@ -451,6 +451,8 @@ class NitroSession():
 
             "get_esm_time" : ( """essmgtGetESSTime""",None),
 
+            "get_alerts_now" : ("""IPS_GETALERTSNOW""", """{"IPSID": "%(ds_id)s"}"""),
+
             "logout" : ( """userLogout""", None ),
 
             "get_user_locale" : ( """getUserLocale""", None ),

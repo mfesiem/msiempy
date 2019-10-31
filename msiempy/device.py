@@ -212,6 +212,20 @@ class ESM(Device):
         return {self.key: self.val for self.key, self.val in self.status().items()
                 if self.key in self._fields}
 
+    def get_alerts(self, ds_id, flows=False):
+        """Tells the ESM to retrieve alerts from the provided device ID.
+        
+        Arguments:
+            ds_id (str): IPSID for the device, e.g. 144116287587483648
+            flows (bool): Also get flows from the device (default: False)
+        
+        Returns:
+            None
+        """
+        self.nitro.request('get_alerts_now', ds_id=ds_id)
+        if flows:
+            self.nitro.request('get_flows_now', ds_i=ds_id)
+
     @lru_cache(maxsize=None)    
     def recs(self):
         """
@@ -324,7 +338,6 @@ class ESM(Device):
         pos = 0
         nbytes = 0
         resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
-
 
         if resp['FSIZE'] == resp['BREAD']:
             data = resp['DATA']
