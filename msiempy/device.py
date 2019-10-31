@@ -224,7 +224,7 @@ class ESM(Device):
         """
         self.nitro.request('get_alerts_now', ds_id=ds_id)
         if flows:
-            self.nitro.request('get_flows_now', ds_i=ds_id)
+            self.nitro.request('get_flows_now', ds_id=ds_id)
 
     @lru_cache(maxsize=None)    
     def recs(self):
