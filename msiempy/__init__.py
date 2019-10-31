@@ -439,12 +439,18 @@ class NitroSession():
             "get_alarm_details_int": ("NOTIFY_GETTRIGGEREDNOTIFICATIONDETAIL", 
                                         """{"TID": "%(id)s"}"""),
 
-            "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
+            "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":[{"value":%(ids)s}]}"""),
 
-            "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
+            "ack_alarms_11_2_1": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":[%(ids)s]}}"""),
 
-            "delete_alarms": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
+            "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":[{"value":%(ids)s}]}"""),
+
+            "unack_alarms_11_2_1": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":[%(ids)s]}}"""),
+
+            "delete_alarms": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":[{"value":%(ids)s}]}"""),
             
+            "delete_alarms_11_2_1": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":[%(ids)s]}}"""),
+
             "get_possible_filters" : ( """qryGetFilterFields""", None ),
 
             "get_possible_fields" : ( """qryGetSelectFields?type=%(type)s&groupType=%(groupType)s""", None ),
