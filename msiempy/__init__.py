@@ -453,6 +453,8 @@ class NitroSession():
 
             "get_alerts_now" : ("""IPS_GETALERTSNOW""", """{"IPSID": "%(ds_id)s"}"""),
 
+            "get_flows_now" : ("""IPS_GETALERTSNOW""", """{"IPSID": "%(ds_id)s"}"""),
+
             "logout" : ( """userLogout""", None ),
 
             "get_user_locale" : ( """getUserLocale""", None ),
@@ -772,6 +774,34 @@ class NitroSession():
             '10.0.2 20170516001031'
         """
         return self.request('build_stamp')['buildStamp']
+
+    def get_internal_file(self, file_token):
+        """Uses the private API to retrieve, assemble and delete a temp file from the ESM.
+        
+        Arguments:
+            file_token (str): File token ID
+        """
+        resp = self.request('get_rfile2', ftoken=file_token, pos=0, nbytes=0)
+
+        if resp['FSIZE'] == resp['BREAD']:
+            data = resp['DATA']
+            self.request('del_rfile', ftoken=file_token)
+            return data
+        
+        data = []
+        data.append(resp['DATA'])
+        file_size = int(resp['FSIZE'])
+        collected = int(resp['BREAD'])
+
+        while file_size > collected:
+            pos += int(resp['BREAD'])
+            nbytes = file_size - collected
+            resp = self.request('get_rfile2', ftoken=file_token, pos=pos, nbytes=nbytes)
+            collected += int(resp['BREAD'])
+            data.append(resp['DATA'])
+
+        resp = self.request('del_rfile', ftoken=file_token)
+        return ''.join(data)
 
 
     def request(self, request, **kwargs):
