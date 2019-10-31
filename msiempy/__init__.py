@@ -781,7 +781,9 @@ class NitroSession():
         Arguments:
             file_token (str): File token ID
         """
-        resp = self.request('get_rfile2', ftoken=file_token, pos=0, nbytes=0)
+        pos = 0
+        nbytes = 0
+        resp = self.request('get_rfile2', ftoken=file_token, pos=pos, nbytes=nbytes)
 
         if resp['FSIZE'] == resp['BREAD']:
             data = resp['DATA']
