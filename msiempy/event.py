@@ -125,16 +125,15 @@ class EventManager(FilteredQueryList):
 
         self.requests_size=self.limit
 
-        if isinstance(order, list): #if a list is passed for the prder, will replace the whole param supposed in correct SIEM format
-            self._order=order
+        if order:
+            try:
+                self.order_direction = order[0]
+                self.order_field = order[1]
+            except IndexError:
+                raise ValueError('Order must be tuple (direction, field).')
         else:
-            self._order=[{
-                "direction": 'DESCENDING',
-                "field": {
-                    "name": 'LastTime'
-                    }
-                }]
-            self.order=order #if a tuple is passed , will set the first order according to (direction, fields)
+            self.order_direction = 'DESCENDING'
+            self.order_field = 'LastTime'
 
         #TODO : find a solution not to use this
         #callign super().filters=filters #https://bugs.python.org/issue14965
@@ -256,11 +255,12 @@ class EventManager(FilteredQueryList):
                 time_range=self.time_range,
                 start_time=self.start_time,
                 end_time=self.end_time,
-                #order=self.order, TODO support order
+                order_direction=self.order_direction,
+                order_field=self.order_field,
                 fields=format_fields_for_query(self.fields),
                 filters=self.filters,
                 limit=self.limit,
-                offset=0, #TODO remove old ref that is useless
+                offset=0,
                 includeTotal=False
                 )
 

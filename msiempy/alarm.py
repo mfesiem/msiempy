@@ -19,7 +19,7 @@ class AlarmManager(FilteredQueryList):
     Interface to query and manage Alarms.
     Inherits from FilteredQueryList.
     """
-    def __init__(self, status_filter='all', page_size=500, filters=None, event_filters=None,
+    def __init__(self, status_filter='all', page_size=20, filters=None, event_filters=None,
          *args, **kwargs):
 
         """
@@ -408,18 +408,29 @@ class Alarm(NitroDict):
     def acknowledge(self):
         """Mark the alarm as acknowledged.
         """
-        self.nitro.request('ack_alarms', ids=[self.data['id']['value']])
+        print(self.nitro.version)
+        if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
+            self.nitro.request('ack_alarms', ids=self.data['id']['value'])
+        else:
+            self.nitro.request('ack_alarms_11_2_1', ids=self.data['id']['value'])
 
     def unacknowledge(self):
-        """Mark the alarm as unacknowledge.    
+        """Mark the alarm as unacknowledge.
         """
-        self.nitro.request('unack_alarms', ids=[self.data['id']['value']])
+        if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
+            self.nitro.request('unack_alarms', ids=self.data['id']['value'])
+        else:
+            self.nitro.request('unack_alarms_11_2_1', ids=self.data['id']['value'])
+
 
     def delete(self):
         """Destructive action!
         Delete the alarm.
         """
-        self.nitro.request('delete_alarms', ids=[self.data['id']['value']])
+        if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
+            self.nitro.request('delete_alarms', ids=self.data['id']['value'])
+        else:
+            self.nitro.request('delete_alarms_11_2_1', ids=self.data['id']['value'])
 
     def ceate_case(self):
         """Not implemented : TODO
