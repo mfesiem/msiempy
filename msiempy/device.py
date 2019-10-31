@@ -752,30 +752,7 @@ class DevTree(NitroList):
         """
 
         file = self.nitro.request('req_client_str', ds_id=ds_id)['FTOKEN']
-        pos = 0
-        nbytes = 0
-        resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
-
-        if resp['FSIZE'] == resp['BREAD']:
-            data = resp['DATA']
-            self.nitro.request('del_rfile', ftoken=file)
-            return dehexify(data)
-        
-        data = []
-        data.append(resp['DATA'])
-        file_size = int(resp['FSIZE'])
-        collected = int(resp['BREAD'])
-
-        while file_size > collected:
-            pos += int(resp['BREAD'])
-            nbytes = file_size - collected
-            resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
-            collected += int(resp['BREAD'])
-            data.append(resp['DATA'])
-
-        resp = self.nitro.request('del_rfile', ftoken=file)
-        return dehexify(''.join(data))
-
+        return dehexify(self.nitro.get_internal_file(file))
 
     def _format_clients(self, clients):
         """
