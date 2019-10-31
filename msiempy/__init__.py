@@ -744,9 +744,10 @@ class NitroSession():
        
             self._headers['Cookie'] = resp.headers.get('Set-Cookie')
             self._headers['X-Xsrf-Token'] = resp.headers.get('Xsrf-Token')
-    
-            self._logged=True
-            return True
+            
+            self.user_tz_id = dict(resp.json())['tzId']
+            self._logged = True
+            return
         else:
             raise NitroError('ESM Login Error: Response empty')
 
