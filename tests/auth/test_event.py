@@ -39,10 +39,10 @@ class T(unittest.TestCase):
             limit=5,
             max_query_depth=1
         )
-        events.load_data(delta='12h', slots=2)
+        events.load_data()
 
         for e in events :
-             self.assertNotEqual(e['Alert.SrcIP'],"An event doesn't have proper source IP")
+            self.assertNotEqual(e['Alert.SrcIP'], '', "An event doesn't have proper source IP")
             #self.assertRegex(e['Alert.SrcIP'],'^10.','Filterring in a reccursive query is problematic')
             #self.assertRegex(e['Alert.DstIP'],'^10.','Filterring in a reccursive query is problematic')
 
