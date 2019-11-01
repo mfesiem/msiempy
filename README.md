@@ -165,13 +165,7 @@ If you like the project and think you could help with making it better, there ar
 ### Run tests
 ```
 ./setup.py test
-[...]
-----------------------------------------------------------------------
-Ran 13 tests in 182.815s
-
-OK
 ```
-It souldn't take more than 5 minutes
 
 ### Error report
 Configure log file reporting in the configuration file and execute :  
