@@ -480,8 +480,7 @@ class DevTree(NitroList):
                 else:
                     return self.devtree[key]
 
-
-    def search(self, term, rec_id=None, zone_id='0'):
+    def search(self, term, zone_id='0'):
         """
         Args:
             term (str): Datasource name, IP, hostname or ds_id
@@ -489,26 +488,23 @@ class DevTree(NitroList):
             zone_id (int): Provide zone_id to limit search to a specific zone
 
         Returns:
-            Datasource object that matches the provided search term or None.
+            Datasource object that matches the provided search term or empty list.
 
         """
         search_fields = ['ds_ip', 'name', 'hostname', 'ds_id']
 
         found = [ds for ds in self.devtree
                     for field in search_fields 
-                    if str(ds[field]).lower() == str(term).lower()
+                    if str(term).lower() == str(ds[field]).lower()
                     if ds['zone_id'] == zone_id]
-
-        if rec_id and found:
-            found = [ds for ds in found 
-                        if ds['parent_id'] == rec_id]
         
-        if found:
-            # Temporary until DataSource() class is rebuilt.
-            #return DataSource(**found[0])
-            return found
-        else:
-            return None
+        results = []
+        for ds in found:
+            if ds['desc_id'] == '3':
+                results.append(DataSource(adict=ds))
+            else:
+                results.append(ds)
+        return results
 
     def search_ds_group(self, field, term, zone_id='0'):
         """
@@ -605,7 +601,6 @@ class DevTree(NitroList):
         # Matches up idx value with position in devtree
         for ds in devtree:
             ds['idx'] = ds['idx'] - 1
-
         return devtree
 
     def _get_devtree(self):
@@ -1014,7 +1009,7 @@ class DevTree(NitroList):
                                                 idm_id=0,
                                                 parameters=p['parameters'])
             else:
-                ['ds_id'] = self.nitro.request('add_ds_11_2_1', 
+                p['ds_id'] = self.nitro.request('add_ds_11_2_1', 
                                                parent_id=p['parent_id'],
                                                 name=p['name'],
                                                 ds_ip=p['ds_ip'],
