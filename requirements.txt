@@ -1,8 +1,4 @@
-urllib3
-requests
-tqdm
-PTable
-python-dateutil
-pylint>=2.3
+pylint
 pdoc3
 Graphviz
+twine
