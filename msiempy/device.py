@@ -999,30 +999,31 @@ class DevTree(NitroList):
             p = self._validate_ds_params(kwargs)
 
             if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
-                ds_id = self.nitro.request('add_ds_11_1_3', 
-                                            parent_id=p['parent_id'],
-                                            name=p['name'],
-                                            ds_ip=p['ds_ip'],
-                                            type_id=p['type_id'],
-                                            zone_id=p['zone_id'],
-                                            enabled=p['enabled'],
-                                            url=p['url'],
-                                            ds_id=0,
-                                            child_enabled='false',
-                                            child_count=0,
-                                            child_type=0,
-                                            idm_id=0,
-                                            parameters=p['parameters'])
+                p['ds_id'] = self.nitro.request('add_ds_11_1_3', 
+                                                parent_id=p['parent_id'],
+                                                name=p['name'],
+                                                ds_ip=p['ds_ip'],
+                                                type_id=p['type_id'],
+                                                zone_id=p['zone_id'],
+                                                enabled=p['enabled'],
+                                                url=p['url'],
+                                                ds_id=0,
+                                                child_enabled='false',
+                                                child_count=0,
+                                                child_type=0,
+                                                idm_id=0,
+                                                parameters=p['parameters'])
             else:
-                ds_id = self.nitro.request('add_ds_11_2_1', 
-                                            parent_id=p['parent_id'],
-                                            name=p['name'],
-                                            ds_ip=p['ds_ip'],
-                                            type_id=p['type_id'],
-                                            zone_id=p['zone_id'],
-                                            enabled=p['enabled'],
-                                            url=p['url'],
-                                            parameters=p['parameters'])
+                ['ds_id'] = self.nitro.request('add_ds_11_2_1', 
+                                               parent_id=p['parent_id'],
+                                                name=p['name'],
+                                                ds_ip=p['ds_ip'],
+                                                type_id=p['type_id'],
+                                                zone_id=p['zone_id'],
+                                                enabled=p['enabled'],
+                                                url=p['url'],
+                                                parameters=p['parameters'])
+            self.devtree.append(p)
             return ds_id
 
     def _validate_ds_params(self, p):
