@@ -95,9 +95,10 @@ while getopts ":hp:" arg; do
                 echo "[SUCCESS] Module published at : https://test.pypi.org/project/msiempy/"
             fi
 
-            python3 setup.py clean
-            
             echo "[SUCCESS] Documentation on line at : ${url}"
+
+            python3 setup.py clean
+
             ;;
 
         *)
