@@ -65,7 +65,8 @@ while getopts ":hp:" arg; do
             fi
             
             echo "[RUNNING] cd mfesiem.github.io && git add . && git commit -m \"Generate ${keyword} docs $(date)\" && git push origin master && cd .."
-            cd mfesiem.github.io && git add . && git commit -m "Generate ${keyword} docs $(date)" && git push origin master && cd ..
+            cd mfesiem.github.io && git add . && git commit -m "Generate ${keyword} docs $(date)" && git push origin master
+            cd ..
 
             if [ "$keyword" = "master" ]; then
                 url="https://mfesiem.github.io/docs/msiempy/index.html"
@@ -86,11 +87,25 @@ while getopts ":hp:" arg; do
             echo '[INFO] Hit ctrl+C to cancel PyPI upload'
 
             if [ "$keyword" = "master" ]; then
+                version=`grep __version__ ./msiempy/__version__.py | cut -d "'" -f 2`
+
+                if [ -n `git tag -l "${version}-test"` ]; then
+                    echo "[RUNNING] git tag -d ${version}-test && git push origin --delete ${version}-test"
+                    git tag -d ${version}-test && git push origin --delete ${version}-test
+                fi
+
+                echo "[RUNNING] git tag -a ${version} -m "Version ${version}" && git push --tags"
+                git tag -a ${version} -m "Version ${version}" && git push --tags
+
                 echo "[RUNNING] twine upload --verbose dist/*"
                 twine upload --verbose dist/*
                 echo "[SUCCESS] Module published at : https://pypi.org/project/msiempy/"
             fi
             if [ "$keyword" = "test" ]; then
+                version=`grep __version__ ./msiempy/__version__.py | cut -d "'" -f 2`
+                echo "[RUNNING] git tag -a ${version}-test -m "Version ${version}-test" && git push --tags"
+                git tag -a ${version}-test -m "Version ${version}-test" && git push --tags
+
                 echo "[RUNNING] twine upload --repository-url https://test.pypi.org/legacy/ dist/*"
                 twine upload --repository-url https://test.pypi.org/legacy/ dist/*
                 echo "[SUCCESS] Module published at : https://test.pypi.org/project/msiempy/"
