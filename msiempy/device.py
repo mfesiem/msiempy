@@ -576,7 +576,11 @@ class DevTree(NitroList):
         """
         Coordinates assembly of the devtree object
         """
-        devtree = self._get_devtree()        
+        devtree = self._get_devtree()
+        if devtree == 'ITEMS':
+            print('Device tree is empty. Must add at least one datasource for this to work.')
+            self.devicetree = []
+            return
         devtree = self._format_devtree(devtree)
         devtree = self._insert_rec_info(devtree)        
         containers = self._get_client_containers(devtree)
