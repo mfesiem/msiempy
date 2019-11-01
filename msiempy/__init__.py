@@ -439,17 +439,27 @@ class NitroSession():
             "get_alarm_details_int": ("NOTIFY_GETTRIGGEREDNOTIFICATIONDETAIL", 
                                         """{"TID": "%(id)s"}"""),
 
-            "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
+            "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":[{"value":%(ids)s}]}"""),
 
-            "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
+            "ack_alarms_11_2_1": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":[%(ids)s]}}"""),
 
-            "delete_alarms": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":%(ids)s}}"""),
+            "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":[{"value":%(ids)s}]}"""),
+
+            "unack_alarms_11_2_1": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":[%(ids)s]}}"""),
+
+            "delete_alarms": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":[{"value":%(ids)s}]}"""),
             
+            "delete_alarms_11_2_1": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":[%(ids)s]}}"""),
+
             "get_possible_filters" : ( """qryGetFilterFields""", None ),
 
             "get_possible_fields" : ( """qryGetSelectFields?type=%(type)s&groupType=%(groupType)s""", None ),
 
             "get_esm_time" : ( """essmgtGetESSTime""",None),
+
+            "get_alerts_now" : ("""IPS_GETALERTSNOW""", """{"IPSID": "%(ds_id)s"}"""),
+
+            "get_flows_now" : ("""IPS_GETALERTSNOW""", """{"IPSID": "%(ds_id)s"}"""),
 
             "logout" : ( """userLogout""", None ),
 
@@ -460,10 +470,12 @@ class NitroSession():
                         "timeRange": "%(time_range)s",
                         "customStart": "%(start_time)s",
                         "customEnd": "%(end_time)s",
-                        "fields":%(fields)s,
-                        "filters":%(filters)s,
-                        "limit":%(limit)s,
-                        "offset":%(offset)s
+                        "fields": %(fields)s,
+                        "filters": %(filters)s,
+                        "limit": %(limit)s,
+                        "offset": %(offset)s,
+                        "order": [{"field": {"name": "%(order_field)s"},
+                                             "direction": "%(order_direction)s"}]
                         }
                         }"""),
 
@@ -742,9 +754,10 @@ class NitroSession():
        
             self._headers['Cookie'] = resp.headers.get('Set-Cookie')
             self._headers['X-Xsrf-Token'] = resp.headers.get('Xsrf-Token')
-    
-            self._logged=True
-            return True
+            
+            self.user_tz_id = dict(resp.json())['tzId']
+            self._logged = True
+            return
         else:
             raise NitroError('ESM Login Error: Response empty')
 
@@ -767,6 +780,36 @@ class NitroSession():
             '10.0.2 20170516001031'
         """
         return self.request('build_stamp')['buildStamp']
+
+    def get_internal_file(self, file_token):
+        """Uses the private API to retrieve, assemble and delete a temp file from the ESM.
+        
+        Arguments:
+            file_token (str): File token ID
+        """
+        pos = 0
+        nbytes = 0
+        resp = self.request('get_rfile2', ftoken=file_token, pos=pos, nbytes=nbytes)
+
+        if resp['FSIZE'] == resp['BREAD']:
+            data = resp['DATA']
+            self.request('del_rfile', ftoken=file_token)
+            return data
+        
+        data = []
+        data.append(resp['DATA'])
+        file_size = int(resp['FSIZE'])
+        collected = int(resp['BREAD'])
+
+        while file_size > collected:
+            pos += int(resp['BREAD'])
+            nbytes = file_size - collected
+            resp = self.request('get_rfile2', ftoken=file_token, pos=pos, nbytes=nbytes)
+            collected += int(resp['BREAD'])
+            data.append(resp['DATA'])
+
+        resp = self.request('del_rfile', ftoken=file_token)
+        return ''.join(data)
 
 
     def request(self, request, **kwargs):

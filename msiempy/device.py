@@ -212,6 +212,20 @@ class ESM(Device):
         return {self.key: self.val for self.key, self.val in self.status().items()
                 if self.key in self._fields}
 
+    def get_alerts(self, ds_id, flows=False):
+        """Tells the ESM to retrieve alerts from the provided device ID.
+        
+        Arguments:
+            ds_id (str): IPSID for the device, e.g. 144116287587483648
+            flows (bool): Also get flows from the device (default: False)
+        
+        Returns:
+            None
+        """
+        self.nitro.request('get_alerts_now', ds_id=ds_id)
+        if flows:
+            self.nitro.request('get_flows_now', ds_id=ds_id)
+
     @lru_cache(maxsize=None)    
     def recs(self):
         """
@@ -320,39 +334,7 @@ class ESM(Device):
             Policy Editor rule history.
         """
         file = self.nitro.request('get_rule_history')['TK']
-
-        pos = 0
-        nbytes = 0
-        resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
-
-
-        if resp['FSIZE'] == resp['BREAD']:
-            data = resp['DATA']
-            #data = resp['DATA'].split('\n')
-            self.nitro.request('del_rfile', ftoken=file)
-            return data
-        
-        data = []
-        data.append(resp['DATA'])
-        file_size = int(resp['FSIZE'])
-        collected = int(resp['BREAD'])
-
-        while file_size > collected:
-            pos += int(resp['BREAD'])
-            nbytes = file_size - collected
-            resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
-            collected += int(resp['BREAD'])
-            data.append(resp['DATA'])
-
-        resp = self.nitro.request('del_rfile', ftoken=file)
-        return ''.join(data)
-
-    def _format_rules_history(self, rules_history):
-        """[summary]
-        
-        Arguments:
-            rules_history {[type]} -- [description]
-        """
+        return self.nitro.get_internal_file(file)
 
     @lru_cache(maxsize=None)   
     def _get_ds_types(self):
@@ -513,7 +495,9 @@ class DevTree(NitroList):
                         if ds['parent_id'] == rec_id]
         
         if found:
-            return DataSource(**found[0])
+            # Temporary until DataSource() class is rebuilt.
+            #return DataSource(**found[0])
+            return found
         else:
             return None
 
@@ -768,30 +752,7 @@ class DevTree(NitroList):
         """
 
         file = self.nitro.request('req_client_str', ds_id=ds_id)['FTOKEN']
-        pos = 0
-        nbytes = 0
-        resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
-
-        if resp['FSIZE'] == resp['BREAD']:
-            data = resp['DATA']
-            self.nitro.request('del_rfile', ftoken=file)
-            return dehexify(data)
-        
-        data = []
-        data.append(resp['DATA'])
-        file_size = int(resp['FSIZE'])
-        collected = int(resp['BREAD'])
-
-        while file_size > collected:
-            pos += int(resp['BREAD'])
-            nbytes = file_size - collected
-            resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
-            collected += int(resp['BREAD'])
-            data.append(resp['DATA'])
-
-        resp = self.nitro.request('del_rfile', ftoken=file)
-        return dehexify(''.join(data))
-
+        return dehexify(self.nitro.get_internal_file(file))
 
     def _format_clients(self, clients):
         """
@@ -1140,3 +1101,8 @@ class DevTree(NitroList):
             p['tz_id'] = 0
         
         return p
+
+class DataSource(NitroDict):
+    def __init__(self, *arg, **kwargs):
+        super().__init__(*arg, **kwargs)
+        

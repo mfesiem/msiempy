@@ -162,26 +162,5 @@ class Watchlist(NitroDict):
             file = wl_details['WLVFILE']
         except KeyError:
             print('ESM Error: Is watchlist valid?')
-
-        pos = 0
-        nbytes = 0
-        resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
-
-        if resp['FSIZE'] == resp['BREAD']:
-            self.data['values'] = resp['DATA'].split('\n')
-            self.nitro.request('del_rfile', ftoken=file)
-            return
-
-        data = []
-        data.append(resp['DATA'])
-        file_size = int(resp['FSIZE'])
-        collected = int(resp['BREAD'])
-
-        while file_size > collected:
-            pos += int(resp['BREAD'])
-            nbytes = file_size - collected
-            resp = self.nitro.request('get_rfile2', ftoken=file, pos=pos, nbytes=nbytes)
-            collected += int(resp['BREAD'])
-            data.append(resp['DATA'])
+        data = self.nitro.get_internal_file(file)
         self.data['values'] = ''.join(data).split('\n')
-        resp = self.nitro.request('del_rfile', ftoken=file)
