@@ -10,7 +10,7 @@ accessible and pythonic.
 ### Main features
 - ESM monitoring
 - Datasource operations : add, edit, delete - including client datasources (work in progress)
-- Alarm operations and querying : filter, [un]acknowledge, delete, get triggering (events)
+- Alarm operations and querying : filter, [un]acknowledge, delete, get triggering event(s)
 - Event querying and builtin workaround SIEM query `limit`
 - Watchlist operations : list watchlists, add values (work in progress)
 - Single stable session handler and built-in asynchronous jobs
@@ -92,7 +92,7 @@ alarms=AlarmManager(
         page_size=400)
 
 alarms.load_data(extra_fields=['HostID','UserIDSrc'])
-print(alarm.json)
+print(alarms.json)
 ```
 See: [FilteredQueryList](https://mfesiem.github.io/docs/msiempy/index.html#msiempy.FilteredQueryList), [AlarmManager](https://mfesiem.github.io/docs/msiempy/alarm.html#msiempy.alarm.AlarmManager), [Alarm](https://mfesiem.github.io/docs/msiempy/alarm.html#msiempy.alarm.Alarm)
 
