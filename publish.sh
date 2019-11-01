@@ -110,4 +110,4 @@ while getopts ":hp:" arg; do
     esac
 done
 shift $((OPTIND-1))
-echo "[END] usage: $0 [-h] [-t] [-p] [-d]"
+echo "[END] usage: $0 [-h] [-p <keyword>]"
