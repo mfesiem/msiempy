@@ -115,7 +115,10 @@ events.load_data()
 print(events.get_text(fields=['Alert.LastTime','Alert.SrcIP', 'Rule.msg']))
 ```
 See: [FilteredQueryList](https://mfesiem.github.io/docs/msiempy/index.html#msiempy.FilteredQueryList), [EventManager](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.EventManager), [FieldFilter](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.FieldFilter), [Event](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.Event)
-`load_data()` method accept several parameters. The `max_query_depth` parameter specify the number of sub-divisions the query can take at most (zero by default). The query is divided only if it hasn't completed with the current query settings. The first division is done by dividing the query's time range into slots of `delta` duration, then the query would be divided into the specified number of `slots`. Control the number of asyncronous jobs using `workers` parameter. See medule module documentation for more infos.
+`load_data()` method accept several parameters. The `max_query_depth` parameter specify the number of sub-divisions the query can take at most (zero by default). The query is divided only if it hasn't completed with the current query settings. The first division is done by dividing the query's time range into slots of `delta` duration, then the query would be divided into the specified number of `slots`. Control the number of asyncronous jobs using `workers` parameter. See medule module documentation for more infos.  
+
+See [filters](https://github.com/mfesiem/msiempy/blob/master/static/all_filters.json) list you can use to filter events.  
+See [fields](https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json) list you can request.
 
 #### ESM
 Print a few esm infos. This is still work in progress.
