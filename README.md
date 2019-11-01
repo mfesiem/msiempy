@@ -18,6 +18,7 @@ accessible and pythonic.
 ### Known module implementations
 - esm_healthmon : [Monitors ESM operations (CLI)](https://github.com/andywalden/esm_healthmon)
 - msiem : [Query and manage ESM alarms (CLI)](https://github.com/tristanlatr/msiem)
+- See [samples folder](https://github.com/mfesiem/msiempy/tree/master/samples) for other implementation examples and scripts !
 
 ### Documentation and links
 - [Module documentation](https://mfesiem.github.io/docs/msiempy/index.html)
@@ -28,6 +29,7 @@ accessible and pythonic.
 ```
 pip install msiempy
 ```
+See [project on pypi.org](https://pypi.org/project/msiempy/)
 
 ### Authentication and configuration setup
 The module offers a single point of authentication against your SIEM, so you don't have to worry about authentication when writting your scripts. This means that you need to preconfigure the authentication using the configuration file.
