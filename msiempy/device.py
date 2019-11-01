@@ -471,7 +471,16 @@ class DevTree(NitroList):
             return True
         else:
             return None
-            
+
+    def __getitem__(self, key):
+        for ds in self.devtree:
+            if ds['idx'] == key:
+                if ds['desc_id'] == '3':
+                    return DataSource(adict=ds)
+                else:
+                    return self.devtree[key]
+
+
     def search(self, term, rec_id=None, zone_id='0'):
         """
         Args:
