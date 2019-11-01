@@ -1111,6 +1111,6 @@ class DevTree(NitroList):
         return p
 
 class DataSource(NitroDict):
-    def __init__(self, *arg, **kwargs):
-        super().__init__(*arg, **kwargs)
+    def data_from_id(self):
+        pass
         
