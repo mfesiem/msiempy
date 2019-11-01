@@ -81,22 +81,23 @@ while getopts ":hp:" arg; do
             echo "[RUNNING] python3 setup.py build check sdist bdist_wheel"
             python3 setup.py build check sdist bdist_wheel
 
+            echo '[INFO] Dont forget to bump __version__'
+            echo '[INFO] Hit ctrl+C to cancel PyPI upload'
+
             if [ "$keyword" = "master" ]; then
                 echo "[RUNNING] twine upload --verbose dist/*"
-                echo 'Dont forget to bump __version__'
-                echo 'Hit ctrl+C to cancel PyPI upload'
                 twine upload --verbose dist/*
                 echo "[SUCCESS] Module published at : https://pypi.org/project/msiempy/"
             fi
             if [ "$keyword" = "test" ]; then
                 echo "[RUNNING] twine upload --repository-url https://test.pypi.org/legacy/ dist/*"
-                echo 'Dont forget to bump __version__'
-                echo 'Hit ctrl+C to cancel PyPI upload'
                 twine upload --repository-url https://test.pypi.org/legacy/ dist/*
                 echo "[SUCCESS] Module published at : https://test.pypi.org/project/msiempy/"
             fi
 
             python3 setup.py clean
+            
+            echo "[SUCCESS] Documentation on line at : ${url}"
             ;;
 
         *)
