@@ -487,7 +487,7 @@ class DevTree(NitroList):
 
         found = [ds for ds in self.devtree
                     for field in search_fields 
-                    if ds[field].lower() == term.lower()
+                    if str(ds[field]).lower() == str(term).lower()
                     if ds['zone_id'] == zone_id]
 
         if rec_id and found:
