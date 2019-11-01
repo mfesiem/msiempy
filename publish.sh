@@ -39,7 +39,7 @@ while getopts ":hp:" arg; do
 
             if [ "$keyword" = "master" ]; then
                 docs_folder="mfesiem.github.io/docs"
-                repository_url="https://pypi.org/"
+                repository_url="https://pypi.org"
                 # Deleting '-test' tag
                 if [ -n `git tag -l "${version}-test"` ]; then
                     echo "[RUNNING] git tag -d ${version}-test && git push origin --delete ${version}-test"
@@ -98,11 +98,15 @@ while getopts ":hp:" arg; do
             python3 setup.py --quiet build check sdist bdist_wheel
             
             # Publish to PyPi
-            echo "[RUNNING] twine upload --repository-url ${repository_url} dist/*"
-            twine upload --repository-url ${repository_url}/legacy/ dist/*
+            echo "[RUNNING] twine upload dist/*"
+            if [ "$keyword" = "master" ]; then
+                twine upload dist/*
+            else
+                twine upload --repository-url ${repository_url}/legacy/ dist/*
+            fi
             python3 setup.py --quiet clean
 
-            echo "[SUCCESS] Module published at : https://${docs_folder}/msiempy/"
+            echo "[SUCCESS] Module published at : https://${repository_url}/project/msiempy/"
             ;;
 
         *)
