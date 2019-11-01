@@ -593,6 +593,10 @@ class DevTree(NitroList):
         last_times = self._format_times(last_times)
         devtree = self._insert_ds_last_times(last_times, devtree)
         devtree = self._filter_bogus_ds(devtree)
+        # Matches up idx value with position in devtree
+        for ds in devtree:
+            ds['idx'] = ds['idx'] - 1
+
         return devtree
 
     def _get_devtree(self):
