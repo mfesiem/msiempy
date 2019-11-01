@@ -80,8 +80,9 @@ while getopts ":hp:" arg; do
 
             echo "[RUNNING] python3 setup.py build check sdist bdist_wheel"
             python3 setup.py build check sdist bdist_wheel
-
-            echo '[INFO] Dont forget to bump __version__'
+            
+            echo '[INFO] Dont forget to run tests with ./setup.py test'
+            echo '[INFO] And dont forget to bump __version__'
             echo '[INFO] Hit ctrl+C to cancel PyPI upload'
 
             if [ "$keyword" = "master" ]; then
