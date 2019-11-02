@@ -37,7 +37,7 @@ class T(unittest.TestCase):
             time_range='CURRENT_DAY',
             filters=[('severity', [80,90])],
             max_query_depth=0,
-            page_size=50
+            page_size=10
             )
             
         alarms.load_data()
@@ -60,7 +60,7 @@ class T(unittest.TestCase):
             time_range='CURRENT_DAY',
             filters=[('srcIp', ['10','159.33'])],
             max_query_depth=0,
-            page_size=50
+            page_size=10
         )   
         alarms.load_data()
 
@@ -75,7 +75,7 @@ class T(unittest.TestCase):
             filters=[],
             event_filters=[('srcIp', ['10','159.33'])],
             max_query_depth=0,
-            page_size=50
+            page_size=10
             )
             
         alarms.load_data()
@@ -92,7 +92,7 @@ class T(unittest.TestCase):
             time_range='CURRENT_DAY',
             filters=[('Alert.SrcIP', ['10','159.33'])],
             max_query_depth=0,
-            page_size=50
+            page_size=10
             )
             
         alarms.load_data(use_query=True)
