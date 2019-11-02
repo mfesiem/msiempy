@@ -1072,17 +1072,17 @@ class DevTree(NitroList):
         """
         for k, v in d.items():
             if isinstance(v, dict):
-                _normalize_bool_vals(v)
+                DevTree._normalize_bool_vals(v)
             if isinstance(v, list):
                 for items in v:
-                    _normalize_bool_vals(items)
+                    DevTree._normalize_bool_vals(items)
             elif v in ['T', 'F']:
                 if v == 'T':
                     d[k] = True
                 else:
                     d[k] = False
         return d
-        
+
 class DataSource(NitroDict):
     """DataSource class
     
@@ -1130,7 +1130,8 @@ class DataSource(NitroDict):
             details = self.nitro.request('ds_details1', ds_id=self.data['ds_id'])
         else:
             details = self.nitro.request('ds_details2', ds_id=self.data['ds_id'])
-        
+        self._map_parameters(details)
+
     def delete(self):
         """This deletes the datasource and all the data. Be careful.
         """
@@ -1149,13 +1150,22 @@ class DataSource(NitroDict):
         Arguments:
             p (dict): datasource parameters
         """
-        try:
-            self.data['ds_name'] = p.pop(['name'])
-            self.data['ds_ip'] = p.pop('ipAddress')
-            self.data['ds_id'] = p.pop('pdsId')
-            self.data['parent_id'] = p.pop('parentId').pop('id')
-            self.data['type_id'] = p.pop('typeId').pop('id')
-            self.data['zone_id'] = p.pop('zoneId')
-
+        p = DevTree._normalize_bool_vals(p)
+        self.data['ds_name'] = p.pop('name')
+        self.data['ds_ip'] = p.pop('ipAddress')
+        self.data['ds_id'] = p.pop('pdsId')
+        self.data['parent_id'] = p.pop('parentId').pop('id')
+        self.data['type_id'] = p.pop('typeId').pop('id')
+        self.data['zone_id'] = p.pop('zoneId')
+        self.data['child_enabled'] = p.pop('childEnabled')
+        self.data['idm_id'] = p.pop('idmId')
+        self.data['child_count'] = p.pop('childCount')
+        self.data['child_type'] = p.pop('childType')
+        if p.get('parameters'):
+            for d in p['parameters']:
+                # The key is called "key" and the value is the key. 
+                # The value is called value and the value is the value.
+                print(d.get('key'), d.get('value'))
+                self.data[d.get('key')] = d.get('value')
         except KeyError:
             pass
