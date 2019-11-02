@@ -1116,6 +1116,23 @@ class DevTree(NitroList):
         return p
 
 class DataSource(NitroDict):
+    def __init__(self, *args, **kwargs):
+        """
+        Initalize the DevTree object
+        """
+        super().__init__(*args, **kwargs)
+
     def data_from_id(self):
         pass
         
+    def delete(self):
+        """This deletes the datasource and all the data. Be careful.
+        """
+        if self.data['desc_id'] != '3':
+            print('Only a DataSource can be deleted with this method.')
+            return
+
+        if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
+            self.nitro.request('del_ds1', parent_id=self.data['parent_id'], ds_id=self.data['ds_id'])
+        else:
+            self.nitro.request('del_ds2', parent_id=self.data['parent_id'], ds_id=self.data['ds_id'])

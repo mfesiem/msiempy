@@ -386,11 +386,16 @@ class NitroSession():
                             }
                         """),
                         
-        "del_ds": ("dsDeleteDataSource",
+        "del_ds1": ("dsDeleteDataSource",
                     """{"receiverId": {"id": "%(parent_id)s"},
                         "datasourceId": {"id": "%(ds_id)s"}}
                     """),
-                    
+
+        "del_ds2": ("dsDeleteDataSources",
+                    """{"receiverId": {"value": "%(parent_id)s"},
+                        "datasourceIds": [{"value": "%(ds_id)s"}]}
+                    """),
+
         "del_client": ("DS_DELETEDSCLIENTS",None
                         ),
                         
