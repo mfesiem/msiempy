@@ -537,6 +537,7 @@ class DevTree(NitroList):
         devtree = self._insert_rec_info(devtree)        
         containers = self._get_client_containers(devtree)
         devtree = self._merge_clients(containers, devtree)
+        devtree = [self._normalize_bool_vals(ds) for ds in devtree if ds]
         zonetree = self._get_zonetree()
         devtree = self._insert_zone_names(zonetree, devtree)
         zone_map = self._get_zone_map()
@@ -1062,6 +1063,26 @@ class DevTree(NitroList):
         
         return p
 
+    @staticmethod
+    def _normalize_bool_vals(d):
+        """Recursively changes strings 'T', 'F' to bool
+        
+        Arguments:
+            d (dict) -- nested dicts and lists okay
+        """
+        for k, v in d.items():
+            if isinstance(v, dict):
+                _normalize_bool_vals(v)
+            if isinstance(v, list):
+                for items in v:
+                    _normalize_bool_vals(items)
+            elif v in ['T', 'F']:
+                if v == 'T':
+                    d[k] = True
+                else:
+                    d[k] = False
+        return d
+        
 class DataSource(NitroDict):
     """DataSource class
     
