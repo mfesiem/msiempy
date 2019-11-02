@@ -941,7 +941,7 @@ class DevTree(NitroList):
             """
             p = self._validate_ds_params(kwargs)
 
-            if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
+            if self.nitro.api_v ==1:
                 p['ds_id'] = self.nitro.request('add_ds_11_1_3', 
                                                 parent_id=p['parent_id'],
                                                 name=p['name'],
@@ -1126,7 +1126,7 @@ class DataSource(NitroDict):
 
     def load_details(self):
         """DataSource object is lazy. This gets the rest of the parameters."""
-        if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
+        if self.nitro.api_v ==1:
             details = self.nitro.request('ds_details1', ds_id=self.data['ds_id'])
         else:
             details = self.nitro.request('ds_details2', ds_id=self.data['ds_id'])
@@ -1139,7 +1139,7 @@ class DataSource(NitroDict):
             print('Only a DataSource can be deleted with this method.')
             return
 
-        if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
+        if self.nitro.api_v ==1:
             self.nitro.request('del_ds1', parent_id=self.data['parent_id'], ds_id=self.data['ds_id'])
         else:
             self.nitro.request('del_ds2', parent_id=self.data['parent_id'], ds_id=self.data['ds_id'])
@@ -1165,5 +1165,4 @@ class DataSource(NitroDict):
             for d in p['parameters']:
                 # The key is called "key" and the value is the key. 
                 # The value is called value and the value is the value.
-                print(d.get('key'), d.get('value'))
                 self.data[d.get('key')] = d.get('value')
