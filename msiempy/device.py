@@ -28,7 +28,7 @@ class ESM(Device):
     """
     ESM class
     
-    Puvlic Methods:
+    Public Methods:
     
         version()       Returns simple version string, '10.1.0'
         
@@ -1063,19 +1063,57 @@ class DevTree(NitroList):
         return p
 
 class DataSource(NitroDict):
+    """DataSource class
+    
+    Arguments:
+        adict (dict): datasource parameters
+        
+    Best instantiated from DevTree():
+        >>> dt = DevTree()
+        >>> ds = dt[25]
+        or
+        >>> ds = dt.search('10.10.1.1')
+
+    Parameters:
+        name (str): name of the datasource
+        ds_ip (str): IP of the datasource
+        hostname (str): hostname for the datasource
+        ds_id (str): internal datasource ID (e.g 144234544545444)
+        type_id (str): numeric internal datasource type id
+        desc_id (str): always '3' a datasource or '254' for a client
+        parent_id (str): internal ds_id for the parent device
+        parent_name (str): name of the parent device
+        enabled (str): 'T' or 'F'
+        client (bool): Client datasource or not
+        zone_id (str): numeric zone_id
+        zone_name (str): name of the zone
+        tz_id (str): internal numeric timezone ID
+        vendor (str): vendor of datasource (e.g. Microsoft)
+        model (str): model of datasource (e.g. Windows)
+        syslog_tls (str): 
+        url (str): URL of the datasource
+
+    """
     def __init__(self, *args, **kwargs):
         """
-        Initalize the DevTree object
+        Initalize the DataSource object
         """
         super().__init__(*args, **kwargs)
 
     def data_from_id(self):
         pass
+
+    def load_details(self):
+        """DataSource object is lazy. This gets the rest of the parameters."""
+        if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
+            details = self.nitro.request('ds_details1', ds_id=self.data['ds_id'])
+        else:
+            details = self.nitro.request('ds_details2', ds_id=self.data['ds_id'])
         
     def delete(self):
         """This deletes the datasource and all the data. Be careful.
         """
-        if self.data['desc_id'] != '3':
+        if self.data['desc_id'] not in ['3','254']:
             print('Only a DataSource can be deleted with this method.')
             return
 

@@ -429,10 +429,16 @@ class NitroSession():
                                 "256": "client"}
                             """),
                             
-            "ds_details": ("dsGetDataSourceDetail",
+            "ds_details1": ("dsGetDataSourceDetail",
                             """{"datasourceId": 
                                 {"id": "%(ds_id)s"}}
                             """),
+
+            "ds_details2": ("dsGetDataSourceDetail",
+                            """{"datasourceId": 
+                                {"value": "%(ds_id)s"}}
+                            """),
+
 
             "get_alarms_custom_time": ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&customStart=%(start_time)s&customEnd=%(end_time)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""",
                         None),
