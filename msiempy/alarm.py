@@ -408,8 +408,7 @@ class Alarm(NitroDict):
     def acknowledge(self):
         """Mark the alarm as acknowledged.
         """
-        print(self.nitro.version)
-        if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
+        if self.nitro.api_v == 1:
             self.nitro.request('ack_alarms', ids=self.data['id']['value'])
         else:
             self.nitro.request('ack_alarms_11_2_1', ids=self.data['id']['value'])
@@ -417,7 +416,7 @@ class Alarm(NitroDict):
     def unacknowledge(self):
         """Mark the alarm as unacknowledge.
         """
-        if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
+        if self.nitro.api_v == 1:
             self.nitro.request('unack_alarms', ids=self.data['id']['value'])
         else:
             self.nitro.request('unack_alarms_11_2_1', ids=self.data['id']['value'])
@@ -427,7 +426,7 @@ class Alarm(NitroDict):
         """Destructive action!
         Delete the alarm.
         """
-        if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
+        if self.nitro.api_v == 1:
             self.nitro.request('delete_alarms', ids=self.data['id']['value'])
         else:
             self.nitro.request('delete_alarms_11_2_1', ids=self.data['id']['value'])
