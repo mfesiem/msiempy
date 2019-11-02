@@ -487,23 +487,10 @@ class Event(NitroDict):
         "Zone_ZoneSrc",
         ]
 
-   
+    # Minimal default query fields
     DEFAULTS_EVENT_FIELDS=[
-        "Rule.msg",
-        "Alert.SrcPort",
-        "Alert.DstPort", 
-        "Alert.SrcIP", 
-        "Alert.DstIP", 
-        "Alert.SrcMac",
-        "Alert.DstMac", 
-        "Alert.LastTime",
-        "Rule.NormID",
-        "Alert.DSIDSigID",
-        "Alert.IPSIDAlertID"
-        ]
-    """Relatively common event fields that could be useful to have.
-    """
-
+        'Rule.msg',
+        'Alert.LastTime']
 
     def __getitem__(self, key):
         """
