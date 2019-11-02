@@ -1151,16 +1151,19 @@ class DataSource(NitroDict):
             p (dict): datasource parameters
         """
         p = DevTree._normalize_bool_vals(p)
-        self.data['ds_name'] = p.pop('name')
-        self.data['ds_ip'] = p.pop('ipAddress')
-        self.data['ds_id'] = p.pop('pdsId')
-        self.data['parent_id'] = p.pop('parentId').pop('id')
-        self.data['type_id'] = p.pop('typeId').pop('id')
-        self.data['zone_id'] = p.pop('zoneId')
-        self.data['child_enabled'] = p.pop('childEnabled')
-        self.data['idm_id'] = p.pop('idmId')
-        self.data['child_count'] = p.pop('childCount')
-        self.data['child_type'] = p.pop('childType')
+        self.data['name'] = p.get('name')
+        self.data['ds_ip'] = p.get('ipAddress')
+        if isinstance(p.get('pdsId'), int):
+            self.data['ds_id'] = p.get('pdsId')
+        else:
+            self.data['ds_id'] = p.get('pdsId').get('value')
+        self.data['parent_id'] = p.get('parentId').get('id')
+        self.data['type_id'] = p.get('typeId').get('id')
+        self.data['zone_id'] = p.get('zoneId')
+        self.data['child_enabled'] = p.get('childEnabled')
+        self.data['idm_id'] = p.get('idmId')
+        self.data['child_count'] = p.get('childCount')
+        self.data['child_type'] = p.get('childType')
         if p.get('parameters'):
             for d in p['parameters']:
                 # The key is called "key" and the value is the key. 
