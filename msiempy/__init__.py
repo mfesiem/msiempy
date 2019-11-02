@@ -861,6 +861,14 @@ class NitroSession():
         if not self._logged and method != 'login':
             self.login()
             self.version = self.version()
+            # Shorthanding the version check 
+            # 1 for pre 11.2.1, 2 for 11.2.1 and later
+            # Not be confused with the ESM API v1 and v2 which are different.
+            if self.version.startswith(('9', '10', '11.0', '11.1')):
+                self.api_v = 1
+            else:
+                self.api_v = 2
+    
         try :
             #Dynamically checking the esm_request arguments so additionnal parameters can be passed afterwards.
             esm_request_args = inspect.getargspec(self.esm_request)[0]
