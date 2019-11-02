@@ -1167,5 +1167,3 @@ class DataSource(NitroDict):
                 # The value is called value and the value is the value.
                 print(d.get('key'), d.get('value'))
                 self.data[d.get('key')] = d.get('value')
-        except KeyError:
-            pass
