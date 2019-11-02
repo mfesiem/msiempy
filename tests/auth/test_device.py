@@ -15,3 +15,8 @@ class T(unittest.TestCase):
         esm = msiempy.device.ESM()
 
         print(str(esm.status()) + '\n' + str(esm.buildstamp()) + '\n' + str(esm.recs()))
+
+    def test_devtree(self):
+        print('Building Devtree()')
+        dt = msiempy.device.DevTree()
+        self.assertGreater(len(dt), 0)
