@@ -1121,3 +1121,20 @@ class DataSource(NitroDict):
             self.nitro.request('del_ds1', parent_id=self.data['parent_id'], ds_id=self.data['ds_id'])
         else:
             self.nitro.request('del_ds2', parent_id=self.data['parent_id'], ds_id=self.data['ds_id'])
+    
+    def _map_parameters(self, p):
+        """Map the internal ESM field names to msiempy style
+        
+        Arguments:
+            p (dict): datasource parameters
+        """
+        try:
+            self.data['ds_name'] = p.pop(['name'])
+            self.data['ds_ip'] = p.pop('ipAddress')
+            self.data['ds_id'] = p.pop('pdsId')
+            self.data['parent_id'] = p.pop('parentId').pop('id')
+            self.data['type_id'] = p.pop('typeId').pop('id')
+            self.data['zone_id'] = p.pop('zoneId')
+
+        except KeyError:
+            pass
