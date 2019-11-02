@@ -395,26 +395,7 @@ class DevTree(NitroList):
                                     - tz_id = '51'
                                     - tz_name = 'Darwin'
                                     - zone_id = '7'
-                                    
-        steptree()  Returns an ordered list of lists representing the 
-                       default 'Physical Display' device tree on the ESM.
-                       This is useful to recreate a graphical representation
-                       of the device tree.
-                    
-                       Inner list fields: [tree_id, ds_name, ds_ip, depth]
-
-                       tree_id: The order in which the datasource 
-                                 appears in the ESM 'Physical Display'
-                                 
-                       name:   Datasource name
-                        
-                       IP:     Datasource IP
-                        
-                       depth:  1 = ESM
-                                2 = ERC/ADM/DEM/ACE/ELM/ELS
-                                3 = Datasources including EPO/NSM
-                                4 = Children and Clients
-                        
+                                                            
         last_times(days=,       Returns a list of DataSource objects that 
                    hours=,      the ESM has NOT heard from since the
                    minutes=)    provided timeframe.
@@ -522,40 +503,6 @@ class DevTree(NitroList):
         return (DataSource(adict=ds) for ds in self.devtree
                         if ds.get(field) == term)
                        
-    def steptree(self):
-        """
-        Summarizes the devtree into names and IPs. 
-        
-        Includes depth count to indicate how many steps from the root 
-        of the tree the device would be if this data were presented 
-        graphically. 
-        
-        Also includes parent_id as another method to group datasources 
-        under another device.
-        
-        Returns:
-            List of tuples (int,str,str,str) (step, name, ip, parent_id)        
-        """
-        self._steptree = []
-        _ones = ['14']
-        _twos = ['2', '4', '10', '12', '15', '25']
-        _threes = ['3', '5', '7', '17', '19', '20', '21', '24', '254']
-        _fours = ['7','17', '23', '256']
-
-        for ds in self.devtree:
-            if ds['desc_id'] in _ones:
-                ds['depth'] = '1'
-            elif ds['desc_id'] in _twos:
-                ds['depth'] = '2'
-            elif ds['desc_id'] in _threes:
-                ds['depth'] = '3'
-            else:
-                ds['depth'] = '4'
-            self._steptree.append((ds['idx'], ds['name'], 
-                                    ds['ds_ip'], ds['depth'],))
-        return self._steptree
-
-                    
     def refresh(self):
         """
         Rebuilds the devtree
