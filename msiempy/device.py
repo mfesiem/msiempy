@@ -936,13 +936,13 @@ class DevTree(NitroList):
                 syslog_tls (bool): datasource uses syslog tls
             
             Returns:
-                datasource id (str)
+                result id (str): id of the result. Not the ds_id as of 11.2.1
                     or None on Error            
             """
             p = self._validate_ds_params(kwargs)
 
             if self.nitro.api_v == 1:
-                p['ds_id'] = self.nitro.request('add_ds_11_1_3', 
+                result_id = self.nitro.request('add_ds_11_1_3', 
                                                 parent_id=p['parent_id'],
                                                 name=p['name'],
                                                 ds_ip=p['ds_ip'],
@@ -957,7 +957,7 @@ class DevTree(NitroList):
                                                 idm_id=0,
                                                 parameters=p['parameters'])
             else:
-                p['ds_id'] = self.nitro.request('add_ds_11_2_1', 
+                result_id = self.nitro.request('add_ds_11_2_1', 
                                                parent_id=p['parent_id'],
                                                 name=p['name'],
                                                 ds_ip=p['ds_ip'],
@@ -967,7 +967,7 @@ class DevTree(NitroList):
                                                 url=p['url'],
                                                 parameters=p['parameters'])
             self.devtree.append(p)
-            return ds_id
+            return result_id
 
     def _validate_ds_params(self, p):
         """Validate parameters for new datasource.
