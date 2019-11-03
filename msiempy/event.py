@@ -489,8 +489,13 @@ class Event(NitroDict):
 
     # Minimal default query fields
     DEFAULTS_EVENT_FIELDS=[
-        'Rule.msg',
-        'Alert.LastTime']
+        "Rule.msg",
+        "Alert.SrcIP",
+        "Alert.DstIP", 
+        "Alert.SrcMac",
+        "Alert.LastTime",
+        "Alert.DSIDSigID",
+        "Alert.IPSIDAlertID"]
 
     def __getitem__(self, key):
         """
