@@ -682,21 +682,27 @@ class DevTree(NitroList):
                 if int(ds['client_groups']) > 0]
 
     def _merge_clients(self, containers, devtree):
-        _cidx = 0
-        _didx = 0
-        for cont in containers:
-            clients = self._get_clients(cont['ds_id'])
-            clients = self._format_clients(clients)
-            cont['idx'] = cont['idx'] + _didx
-            _pidx = cont['idx']
-            _cidx = _pidx + 1
-            for client in clients:
-                client['parent_id'] = cont['ds_id']
-                client['idx'] = _cidx
-                _cidx += 1
-                _didx += 1
-            devtree[_pidx:_pidx] = clients
-        return devtree
+        ds_idx = 0
+        merged_tree = []
+        for ds in devtree:
+            
+            # These are client group folders. No way to associate to the clients.
+            if ds['desc_id'] == '254': continue
+            
+            ds['idx'] = ds_idx
+            print(ds['name'], ds['idx'])
+            merged_tree.append(ds)
+            ds_idx += 1
+
+            if ds in containers:
+                clients = self._get_clients(ds['ds_id'])
+                clients = self._format_clients(clients)
+                for client in clients:
+                    client['idx'] = ds_idx
+                    ds_idx += 1
+                    client['parent_id'] = ds['ds_id']
+                    merged_tree.append(client)
+        return merged_tree
 
     def _get_clients(self, ds_id):
         """
