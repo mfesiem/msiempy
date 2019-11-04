@@ -40,7 +40,8 @@ while getopts ":hp:" arg; do
             if [ "$keyword" = "master" ]; then
                 docs_folder="mfesiem.github.io/docs"
                 repository_url="https://pypi.org/"
-                # Deleting '-test' tag
+
+                # Deleting '-test' tag if it exists
                 if [ -n `git tag -l "${version}-test"` ]; then
                     echo "[RUNNING] git tag -d ${version}-test && git push origin --delete ${version}-test"
                     git tag -d ${version}-test && git push origin --delete ${version}-test
@@ -55,9 +56,20 @@ while getopts ":hp:" arg; do
                     docs_folder="mfesiem.github.io/docs/test"
                     repository_url="https://test.pypi.org"
 
-                    # Test tag
-                    echo "[RUNNING] git tag -a ${version}-test -m "Version ${version}-test" && git push --tags"
-                    git tag -a ${version}-test -m "Version ${version}-test" && git push --tags
+                    read -p "[QUESTION] Do you want to tag this version with a '-test' flag? [y/n]" -n 1 -r
+                    echo    # (optional) move to a new line
+                    if [[ $REPLY =~ ^[Yy]$ ]]
+                    then
+                        # Deleting '-test' tag if it exists
+                        if [ -n `git tag -l "${version}-test"` ]; then
+                            echo "[RUNNING] git tag -d ${version}-test && git push origin --delete ${version}-test"
+                            git tag -d ${version}-test && git push origin --delete ${version}-test
+                        fi
+                        # Test tag
+                        echo "[RUNNING] git tag -a ${version}-test -m "Version ${version}-test" && git push --tags"
+                        git tag -a ${version}-test -m "Version ${version}-test" && git push --tags
+                    fi
+                    
                 
                 else
                     echo "[ERROR] The keyword must be 'test' or 'master'"
@@ -65,6 +77,12 @@ while getopts ":hp:" arg; do
                 fi
             fi
 
+            read -p "[QUESTION] Are you sure? " -n 1 -r
+            echo    # (optional) move to a new line
+            if [[ $REPLY =~ ^[Yy]$ ]]
+            then
+                echo "do dangerous stuff"
+            fi
             # Generating diagrams
             echo "[RUNNING] pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy"
             pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
