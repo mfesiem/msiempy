@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""# Welcome to the **msiempy** module documentation. The pythonic way to deal with McAfee SIEM API.  
+"""Welcome to the **msiempy** module documentation. The pythonic way to deal with McAfee SIEM API.  
 
 GitHub : https://github.com/mfesiem/msiempy  
 
 Classes listed in this module are base to other classes in sub-modules that offers specialized objects and functions.  
 
 This API offers two main types of objects to interact with the SIEM : `msiempy.NitroList`, `msiempy.NitroDict`. 
-`msiempy.NitroList`s have default behaviours related to parallel execution, string representation generation and search feature.
+`msiempy.NitroList` have default behaviours related to parallel execution, string representation generation and search feature.
 Whereas `msiempy.NitroDict` that doesn't have any specific behaviours. Both inheriths from `msiempy.NitroObject` that handle a reference to a single `msiempy.NitroSession` object.  
 
 `msiempy.NitroSession` is the point of convergence of every request to the McFee ESM It provides standard dialogue with the esm.
@@ -14,8 +14,6 @@ It uses `msiempy.NitroConfig` to setup authentication, other configuration like 
 
 Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png  
 Packages : https://mfesiem.github.io/docs/msiempy/packages.png  
-
-Only working with SIEM version >=11.2.1 (and maybe >=10.4.1)
 """
 
 import logging
@@ -562,11 +560,11 @@ class NitroSession():
             
             "build_stamp" : ("essmgtGetBuildStamp",None)
     }
-    __pdoc__['NitroSession.PARAMS'] = """This structure provide a central place to aggregate API methods and parameters. 
+    __pdoc__['NitroSession.PARAMS'] = """This structure provide a central place to aggregate API methods and parameters.  
     The parameters are stored as docstrings to support string replacement.  
 
     Args:  
-        method (str): Dict key associated with desired function
+        - `method` (str): Dict key associated with desired function
         Use normal dict access, PARAMS["method"], or PARAMS.get("method")
 
     Returns:  
@@ -576,7 +574,7 @@ class NitroSession():
         interpolated as documented in the Attributes.
 
     Example:
-        `method, params = PARAMS.get("login").format(username, password)`. See : `msiempy.NitroSession.request`
+        `method, params = PARAMS.get("login").format(username, password)`. See : `msiempy.NitroSession.request`  
 
     Important note : 
         Do not use sigle quotes (') to delimit data into the interpolated strings !
@@ -584,7 +582,8 @@ class NitroSession():
     Content :
         %(content)s
         """ % dict(content=json.dumps(PARAMS, indent=4).replace('\n',"""  
-    """)[:130]+""" [...] and more..  
+    """)[:500]+""" [...] and more...
+
     See : https://github.com/mfesiem/msiempy/blob/master/msiempy/__init__.py#L266
     """)
         
@@ -1268,21 +1267,36 @@ class NitroList(collections.UserList, NitroObject):
 
     def perform(self, func, data=None, func_args=None, confirm=False, asynch=False,  workers=None , progress=False, message=None):
         """
-        Wrapper arround executable and the data list of `msiempy.NitroList` object.
-        Will execute the callable the list.
+        Wrapper arround executable and the a list of elements, typically `msiempy.NitroList` object.  
 
         Parameters:  
         
-        - `func`: callable stateless function. func is going to be called like `func(item, **func_args)` on all items in data.
-        - `data`: if stays None, will perform the action on all rows, else it will perfom the action on the data list.
-        - `func_args`: dict that will be passed by default to func in all calls.
+        - `func`: callable function. `func` is going to be called like `func(item, **func_args)` on all items in data.  This function can be stateless (static) or statefull (first argument is `self`),
+        it doesn't really matter as the element will always be passed as the first argument of the function. On thing really important, the function must not
+        set/delete/change any global variable, as a result, you'll see your varible beeing potentially corrupted or chalenged with conccurent accesses.
+        - `data`: if stays `None`, will perform the action on all list's rows (aka `self.data`), else it will perfom the action on the `data` list.
+        - `func_args`: arguments that will be passed by default to `func` in all calls.
         - `confirm`: will ask interactively confirmation.
-        - `asynch`: execute the task asynchronously with `msiempy.NitroSession` executor.
-        - `workers`: mandatory if asynch is true.
+        - `asynch`: execute the task asynchronously with `concurrent.futures.ThreadPoolExecutor`. It will create a new executor object, so be carefull not to nest 2 asynchronous executions within eachother,
+        it will be a mess.
+        - `workers`: number of parrallel tasks, mandatory if asynch is true.
         - `progress`: to show progress bar with ETA (tqdm).
-        - `message` : To show to the user.
+        - `message` : To show to the user.  
 
-        Returns a list of returned results
+        This method is where the core of asynchronous tasks resides. `func` will be executed on all `data` elements.  
+        Basically, if `asynch=True`, will return :  
+            ```
+            returned=list(concurrent.futures.ThreadPoolExecutor(
+                        max_workers=workers ).map(
+                            func, data))
+            ```  
+        if `asynch=False`, will iterate and return :
+            ```
+            for index_or_item in data:
+                returned.append(func(index_or_item))
+            ```  
+
+        Returns a list of returned results.
         """
 
         log.debug('Calling perform func='+str(func)+
