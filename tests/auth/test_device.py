@@ -33,7 +33,7 @@ class T(unittest.TestCase):
                 datasource = self.devtree[ds['idx']]
                 self.assertTrue(type(datasource) is msiempy.device.DataSource)
                 print('DataSource Type Matches:', type(datasource) is msiempy.device.DataSource)
-                continue
+                break
                 
     def test_devtree4_check_old_test_datasource(self):
         print('4. Checking for old test datasource...')

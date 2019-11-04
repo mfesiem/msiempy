@@ -996,8 +996,10 @@ class DevTree(NitroList):
         for ds in self.devtree:
             if ds['ds_id'] == p['parent_id']:
                 if ds['desc_id'] != '3':
-                    print('Error: Parent must be a datasource with a client.')
+                    print('Error: Client parent must be matching datasource'
+                           'not "{}".'.format(ds['name']))
                     return
+
 
         result_id = self.nitro.request('add_client1',
                             parent_id=p['parent_id'],
