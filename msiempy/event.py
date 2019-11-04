@@ -348,7 +348,7 @@ class EventManager(FilteredQueryList):
                     sub_query = EventManager(fields=self.fields, 
                         order=((self.order_direction, self.order_field)), 
                         limit=self.limit,
-                        filters=self.filters,
+                        filters=self._filters,
                         max_query_depth=self.query_depth_ttl-1,
                         __parent__=self,
                         time_range='CUSTOM',
