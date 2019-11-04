@@ -13,9 +13,6 @@ log = logging.getLogger('msiempy')
 from . import NitroObject, NitroDict, NitroError, FilteredQueryList
 from .__utils__ import timerange_gettimes, parse_query_result, format_fields_for_query, divide_times, parse_timedelta
 
-class InDepthQueryList(FilteredQueryList):
-    pass
-
 class EventManager(FilteredQueryList):
     """Interface to query and manage events.
     Inherits from `msiempy.FilteredQueryList`.
@@ -348,6 +345,18 @@ class EventManager(FilteredQueryList):
 
                 for time in times :
                     #Divide the query in sub queries
+                    sub_query = EventManager(fields=self.fields, 
+                        order=((self.order_direction, self.order_field)), 
+                        limit=self.limit,
+                        filters=self.filters,
+                        max_query_depth=self.query_depth_ttl-1,
+                        __parent__=self,
+                        time_range='CUSTOM',
+                        start_time=time[0].isoformat(),
+                        end_time=time[1].isoformat(),
+                        load_async=False
+                        )
+                    """
                     sub_query = copy.copy(self)
                     sub_query.__parent__=self
                     sub_query.compute_time_range=False
@@ -356,7 +365,8 @@ class EventManager(FilteredQueryList):
                     sub_query.end_time=time[1].isoformat()
                     sub_query.load_async=False
                     sub_query.query_depth_ttl=self.query_depth_ttl-1
-                    
+                    """
+
                     sub_queries.append(sub_query)
             
                 results = self.perform(EventManager.load_data, sub_queries, 
