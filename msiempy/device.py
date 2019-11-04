@@ -1081,14 +1081,27 @@ class DevTree(NitroList):
             if not p.get('url'):
                 p['url'] = ''
 
-            _base_vars = ['name', 'ds_ip', 'ip', 'client', 'hostname', 'parent_id', 
-                                'enabled', 'zone_id', 'type_id', 'childEnabled', 'childCount',
-                                'idmId', 'url', 'parameters', 'childType']
+            _v2_base_vars = ['client', 'parent_id', 'name', 'ds_ip', 'type_id', 
+                                'zone_id', 'enabled', 'url', 'parameters']
+            
+            _v1_base_vars = _v2_base_vars + ['ds_id', 'childEnabled', 
+                                                'childCount', 'childType', 'idmId']
+
             p['parameters'] = []
+            popme = []
             for key, val in p.items():
-                if key not in _base_vars:
-                    p['parameters'].append({key: val})
-            p = {k: v for k, v in p.items() if k in _base_vars}
+                if self.nitro.api_v == 1:
+                    if key not in _v1_base_vars:
+                        p['parameters'].append({'key': key,
+                                                'value': val})
+                        popme.append(key)  
+                elif self.nitro.api_v == 2:
+                    if key not in _v2_base_vars:
+                        p['parameters'].append({'key': key,
+                                                'value': val})
+                        popme.append(key)  
+            for key in popme:
+                p.pop(key)              
         return p
 
     def _validate_ds_tz_id(self, p):
