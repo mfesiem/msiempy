@@ -413,8 +413,6 @@ class DevTree(NitroList):
                         hostname or ds_id exist in the device tree.
                         
     """
-    _DevTree = []
-
     def __init__(self, *args, **kwargs):
         """
         Initalize the DevTree object
@@ -465,7 +463,7 @@ class DevTree(NitroList):
             zone_id (int): Provide zone_id to limit search to a specific zone
 
         Returns:
-            Datasource object that matches the provided search term or empty list.
+            Datasource object that matches the provided search term or None
 
         """
         search_fields = ['ds_ip', 'name', 'hostname', 'ds_id']
@@ -475,13 +473,8 @@ class DevTree(NitroList):
                     if str(term).lower() == str(ds[field]).lower()
                     if ds['zone_id'] == zone_id]
         
-        results = []
-        for ds in found:
-            if ds['desc_id'] == '3':
-                results.append(DataSource(adict=ds))
-            else:
-                results.append(ds)
-        return results
+        if found:
+            return found[0]        
 
     def search_ds_group(self, field, term, zone_id='0'):
         """
@@ -503,7 +496,7 @@ class DevTree(NitroList):
         """
         Rebuilds the devtree
         """
-        self.build_devtree()
+        self.devtree = self.build_devtree()
         
     def get_ds_times(self):
         """
@@ -918,9 +911,6 @@ class DevTree(NitroList):
             if dev['desc_id'] in ['3','256']:
                 self.devtree[int(dev['idx'])] = DataSource(dev)
                 
-
-
-
     def duplicate_datasource(self, p):
         """Check for duplicate dataname name or IP address.
         
@@ -941,7 +931,7 @@ class DevTree(NitroList):
             result = self.search(p['name'])
             if not result:
                 result = self.search(p['ds_ip'])
-        return result[0]
+        return result
 
     def add(self, kwargs):
             """
@@ -974,7 +964,7 @@ class DevTree(NitroList):
                     .format(dd['name'], dd['ds_ip']))
                 return
 
-            if p['client']:
+            if p.get('client'):
                 self.add_client(p)
                 return
 
