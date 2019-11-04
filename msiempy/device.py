@@ -1220,7 +1220,7 @@ class DataSource(NitroDict):
     def delete(self):
         """This deletes the datasource and all the data. Be careful.
         """
-        if self.data['desc_id'] not in ['3','254','256']:
+        if self.data['desc_id'] not in ['3','256']:
             print('Only a DataSource can be deleted with this method.')
             return
 
