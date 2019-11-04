@@ -687,7 +687,6 @@ class DevTree(NitroList):
             if ds['desc_id'] == '254': continue
             
             ds['idx'] = ds_idx
-            print(ds['name'], ds['idx'])
             merged_tree.append(ds)
             ds_idx += 1
 
@@ -918,6 +917,28 @@ class DevTree(NitroList):
         type_filter = ['1', '16', '254']
         return [ds for ds in devtree if ds['desc_id'] not in type_filter]
 
+    def duplicate_datasource(self, p):
+        """Check for duplicate dataname name or IP address.
+        
+        Arguments:
+            p (dict) -- datasource params 
+
+        Parameters:
+            name (str): datasource name
+            ds_ip (str): datasource IP
+            zone_id (str): optional zone_id
+        """
+        
+        if p.get('zone_id'):
+            result = self.search(p['name'], zone_id=['zone_id'])
+            if not result:
+                result = self.search(p['ds_ip'], zone_id=['zone_id'])
+        else:
+            result = self.search(p['name'])
+            if not result:
+                result = self.search(p['ds_ip'])
+        return result[0]
+
     def add(self, kwargs):
             """
             Adds a datasource. 
@@ -934,6 +955,7 @@ class DevTree(NitroList):
                 type_id (str): type of datasource (req)
                 enabled (bool): enabled or not (default: True)
                 tz_id (str): timezone of datasource (default UTC: 8)
+                zone_id (str): numberic ESM id for zone (default: 0)
                     Examples (tz_id only): PST: 27, MST: 12, CST: 11, EST: 32 
                 require_tls (bool): datasource uses syslog tls
             
@@ -942,6 +964,12 @@ class DevTree(NitroList):
                     or None on Error            
             """
             p = self._validate_ds_params(kwargs)
+            dd = self.duplicate_datasource(p)
+            if dd:
+                print('Error: Cannot add Datasource. Duplicate name: {} or IP Address: {}'
+                    .format(dd['name'], dd['ds_ip']))
+                return
+
             if p['client']:
                 self.add_client(p)
                 return
