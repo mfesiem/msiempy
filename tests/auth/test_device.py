@@ -55,16 +55,21 @@ class T(unittest.TestCase):
         ds_config['type_id'] = '65'
         print('5. Adding datasource...')
         print('Result ID: ', self.devtree.add(ds_config))
-        print('Sleeping for 15 seconds before refresh...')
-        time.sleep(15)
 
     def test_devtree6_load_ds_details(self):
         print('6. Loading DataSource details...')
-        for ds in self.devtree:
-            if ds['name'] == 'msiempy_test_datasource_delete_me':
-                ds = self.devtree[ds['idx']]
+        ds = self.devtree.search('msiempy_test_datasource_delete_me')
+        if ds:
+            ds.load_details()
+        else:
+            print('New datasource not found. Waiting 60 seconds and rechecking...')
+            time.sleep(60)
+            self.devtree.refresh()
+            ds = self.devtree.search('msiempy_test_datasource_delete_me')
+            if ds:
                 ds.load_details()
-                print('DETAILS: {}'.format(ds.json))
+
+        print('DETAILS: {}'.format(ds.json))
 
     def test_devtree7_del_datasource(self):
          print('7. Deleting Datasource...')

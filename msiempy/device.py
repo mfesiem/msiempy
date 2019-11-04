@@ -420,7 +420,7 @@ class DevTree(NitroList):
         super().__init__(*args, **kwargs)
         self.devtree = self.build_devtree()
         self._cast_datasources()
-
+        
     def __len__(self):
         """
         Returns the count of devices in the device tree.
@@ -497,6 +497,7 @@ class DevTree(NitroList):
         Rebuilds the devtree
         """
         self.devtree = self.build_devtree()
+        self._cast_datasources()
         
     def get_ds_times(self):
         """
@@ -732,7 +733,6 @@ class DevTree(NitroList):
                           'date_order': row[9],
                           'port': row[11],
                           'require_tls': row[12],
-                          'client_groups': "0",
                           'zone_name': '',
                           'zone_id': '',
                           'client': True
@@ -1145,7 +1145,7 @@ class DevTree(NitroList):
                 logging.error('Error: New datasource "tz_id" must be int between 1-74 or GMT.')
                 return
         else:
-            p['tz_id'] = 0
+            p['tz_id'] = 26
         return p
 
     @staticmethod
@@ -1238,19 +1238,26 @@ class DataSource(NitroDict):
         p = DevTree._normalize_bool_vals(p)
         self.data['name'] = p.get('name')
         self.data['ds_ip'] = p.get('ipAddress')
-        if isinstance(p.get('pdsId'), int):
-            self.data['ds_id'] = p.get('pdsId')
-        else:
-            self.data['ds_id'] = p.get('pdsId').get('value')
-        self.data['parent_id'] = p.get('parentId').get('id')
-        self.data['type_id'] = p.get('typeId').get('id')
         self.data['zone_id'] = p.get('zoneId')
-        self.data['child_enabled'] = p.get('childEnabled')
-        self.data['idm_id'] = p.get('idmId')
-        self.data['child_count'] = p.get('childCount')
-        self.data['child_type'] = p.get('childType')
-        if p.get('parameters'):
-            for d in p['parameters']:
-                # The key is called "key" and the value is the key. 
-                # The value is called value and the value is the value.
-                self.data[d.get('key')] = d.get('value')
+        self.data['enabled'] = p.get('enabled')
+
+        if self.nitro.api_v == 1:
+            self.data['ds_id'] = p.get('pdsId')
+            self.data['parent_id'] = p.get('parentId').get('id')
+        elif self.nitro.api_v == 2:
+            self.data['ds_id'] = p.get('pdsId').get('value')
+            self.data['parent_id'] = p.get('parentId').get('value')
+
+        if self.data['desc_id'] == '256':
+           self.data['tz_id'] = p.get('tz_id')
+        else:
+            self.data['child_enabled'] = p.get('childEnabled')
+            self.data['idm_id'] = p.get('idmId')
+            self.data['child_count'] = p.get('childCount')
+            self.data['child_type'] = p.get('childType')
+            self.data['type_id'] = p.get('typeId').get('id')
+            if p.get('parameters'):
+                for d in p['parameters']:
+                    # The key is called "key" and the value is the key. 
+                    # The value is called value and the value is the value.
+                    self.data[d.get('key')] = d.get('value')
