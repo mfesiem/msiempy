@@ -421,6 +421,7 @@ class DevTree(NitroList):
         """
         super().__init__(*args, **kwargs)
         self.devtree = self.build_devtree()
+        self._cast_datasources()
 
     def __len__(self):
         """
@@ -916,6 +917,14 @@ class DevTree(NitroList):
         """
         type_filter = ['1', '16', '254']
         return [ds for ds in devtree if ds['desc_id'] not in type_filter]
+
+    def _cast_datasources(self):
+        for dev in self.devtree:
+            if dev['desc_id'] in ['3','256']:
+                self.devtree[int(dev['idx'])] = DataSource(dev)
+                
+
+
 
     def duplicate_datasource(self, p):
         """Check for duplicate dataname name or IP address.
