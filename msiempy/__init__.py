@@ -363,7 +363,7 @@ class NitroSession():
                                 "parameters": %(parameters)s
                                 }]}"""),
 
-        "add_client": ("DS_ADDDSCLIENT", 
+        "add_client1": ("DS_ADDDSCLIENT", 
                         """{"PID": "%(parent_id)s",
                         "NAME": "%(name)s",
                         "ENABLED": "%(enabled)s",
@@ -374,7 +374,7 @@ class NitroSession():
                         "DORDER": "%(dorder)s",
                         "MASKFLAG": "%(maskflag)s",
                         "PORT": "%(port)s",
-                        "USETLS": "%(syslog_tls)s"
+                        "USETLS": "%(require_tls)s"
                         }"""),
                         
         "get_recs": ("devGetDeviceList?filterByRights=false",

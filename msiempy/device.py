@@ -390,7 +390,7 @@ class DevTree(NitroList):
                                     - type_id = '65'
                                     - vendor = 'Intersect Alliance'
                                     - model = 'Snare for Windows'
-                                    - syslog_tls = 'T'
+                                    - require_tls = 'T'
                                     - port = '514'
                                     - tz_id = '51'
                                     - tz_name = 'Darwin'
@@ -599,7 +599,6 @@ class DevTree(NitroList):
                 row[16] = '0'  # Get rid of weird type-id for N/A devices
             
             if len(row) < 29:
-                #print('Unknown datasource: {}.'.format(self._row))
                 continue
             
             ds_fields = {'idx': idx,
@@ -615,7 +614,7 @@ class DevTree(NitroList):
                             'tz_id': '',
                             'date_order': '',
                             'port': '',
-                            'syslog_tls': '',
+                            'require_tls': '',
                             'client_groups': row[29],
                             'zone_name': '',
                             'zone_id': '',
@@ -741,7 +740,7 @@ class DevTree(NitroList):
                           'tz_id': row[8],
                           'date_order': row[9],
                           'port': row[11],
-                          'syslog_tls': row[12],
+                          'require_tls': row[12],
                           'client_groups': "0",
                           'zone_name': '',
                           'zone_id': '',
@@ -933,13 +932,16 @@ class DevTree(NitroList):
                 enabled (bool): enabled or not (default: True)
                 tz_id (str): timezone of datasource (default UTC: 8)
                     Examples (tz_id only): PST: 27, MST: 12, CST: 11, EST: 32 
-                syslog_tls (bool): datasource uses syslog tls
+                require_tls (bool): datasource uses syslog tls
             
             Returns:
                 result id (str): id of the result. Not the ds_id as of 11.2.1
                     or None on Error            
             """
             p = self._validate_ds_params(kwargs)
+            if p['client']:
+                self.add_client(p)
+                return
 
             if self.nitro.api_v == 1:
                 result_id = self.nitro.request('add_ds_11_1_3', 
@@ -969,6 +971,46 @@ class DevTree(NitroList):
             self.devtree.append(p)
             return result_id
 
+    def add_client(self, p):
+        """Add a datasource client
+        
+        Arguments:
+            p (dict)) -- datasource parameters
+        
+        Parameters:
+            parent_id (str): datasource id of the client group datasource
+            name (str): name of the client
+            enabled (bool): enabled or not (default: True
+            ds_ip (str): IP address for client 
+            hostname (str): hostname for client
+            type_id (str): numeric ESM type-id
+            tz_id (str): numeric ESM timezone id or GMT
+            dorder (str): Date order
+            maskflag (str): 
+            port (str): IP port to use
+            require_tls (bool): use syslog-TLS (default: False)
+        """
+        for ds in self.devtree:
+            if ds['ds_id'] == p['parent_id']:
+                if ds['desc_id'] != '3':
+                    print('Error: Parent must be a datasource with a client.')
+                    return
+
+        result_id = self.nitro.request('add_client1',
+                            parent_id=p['parent_id'],
+                            name=p['name'],
+                            enabled=p['enabled'] or 'T',
+                            ds_ip=p['ds_ip'],
+                            hostname=p['hostname'],
+                            type_id=p['type_id'],
+                            tz_id=p['tz_id'],
+                            dorder=p['dorder'],
+                            maskflag=p['maskflag'],
+                            port=p['port'],
+                            require_tls=['require_tls'])
+        return
+
+
     def _validate_ds_params(self, p):
         """Validate parameters for new datasource.
         
@@ -980,6 +1022,7 @@ class DevTree(NitroList):
         
             or False if something is invalid.
         """
+        # Common for all datasources
         if not p.get('name'):
             logging.error('Error: New datasource requires "name".')
             return
@@ -998,9 +1041,7 @@ class DevTree(NitroList):
         if not p.get('parent_id'):
             p['parent_id'] = 0
 
-        #p = self._validate_ds_tz_id(p)
-        #if not p:
-        #   return
+        p = self._validate_ds_tz_id(p)
 
         if p.get('enabled') == False:
             p['enabled'] = 'false'
@@ -1017,8 +1058,12 @@ class DevTree(NitroList):
             if not p.get('port'):
                 p['port'] = 0
 
-            if not p.get('syslog_tls'):
-                p['syslog_tls'] = 'F'
+            if not p.get('require_tls'):
+                p['require_tls'] = 'F'
+
+            if not p.get('type_id'):
+                p['type_id'] = 0
+
         else:
             if not p.get('type_id'):
                 logging.error('Error: New datasource requires "type_id".')
@@ -1030,15 +1075,14 @@ class DevTree(NitroList):
             if not p.get('url'):
                 p['url'] = ''
 
-        _base_vars = ['name', 'ds_ip', 'ip', 'client', 'hostname', 'parent_id', 
-                            'enabled', 'zone_id', 'type_id', 'childEnabled', 'childCount',
-                            'idmId', 'url', 'parameters', 'childType']
-        p['parameters'] = []
-        for key, val in p.items():
-            if key not in _base_vars:
-                p['parameters'].append({key: val})
-        p = {k: v for k, v in p.items() if k in _base_vars}
-
+            _base_vars = ['name', 'ds_ip', 'ip', 'client', 'hostname', 'parent_id', 
+                                'enabled', 'zone_id', 'type_id', 'childEnabled', 'childCount',
+                                'idmId', 'url', 'parameters', 'childType']
+            p['parameters'] = []
+            for key, val in p.items():
+                if key not in _base_vars:
+                    p['parameters'].append({key: val})
+            p = {k: v for k, v in p.items() if k in _base_vars}
         return p
 
     def _validate_ds_tz_id(self, p):
@@ -1051,16 +1095,17 @@ class DevTree(NitroList):
             dict of datasource params or None if invalid
         """
         if p.get('tz_id'):
+            if p['tz_id'] == 'GMT':
+                return p
             try:
                 if not 0 <= int(p.get('tz_id')) <= 75:
-                    logging.error('Error: New datasource "tz_id" must be int between 1-74.')
+                    logging.error('Error: New datasource "tz_id" must be int between 1-74 or GMT.')
                     return
             except ValueError:
-                logging.error('Error: New datasource "tz_id" must be int between 1-74.')
+                logging.error('Error: New datasource "tz_id" must be int between 1-74 or GMT.')
                 return
         else:
             p['tz_id'] = 0
-        
         return p
 
     @staticmethod
@@ -1111,7 +1156,7 @@ class DataSource(NitroDict):
         tz_id (str): internal numeric timezone ID
         vendor (str): vendor of datasource (e.g. Microsoft)
         model (str): model of datasource (e.g. Windows)
-        syslog_tls (str): 
+        require_tls (str): Use syslog over TLS
         url (str): URL of the datasource
 
     """
@@ -1135,7 +1180,7 @@ class DataSource(NitroDict):
     def delete(self):
         """This deletes the datasource and all the data. Be careful.
         """
-        if self.data['desc_id'] not in ['3','254', '256']:
+        if self.data['desc_id'] not in ['3','254','256']:
             print('Only a DataSource can be deleted with this method.')
             return
 
