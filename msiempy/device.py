@@ -1224,11 +1224,22 @@ class DataSource(NitroDict):
             print('Only a DataSource can be deleted with this method.')
             return
 
-        if self.nitro.api_v == 1:
-            self.nitro.request('del_ds1', parent_id=self.data['parent_id'], ds_id=self.data['ds_id'])
+        if self.data['desc_id'] == '256':
+            self.delete_client()
         else:
-            self.nitro.request('del_ds2', parent_id=self.data['parent_id'], ds_id=self.data['ds_id'])
+            if self.nitro.api_v == 1:
+                self.nitro.request('del_ds1', parent_id=self.data['parent_id'], ds_id=self.data['ds_id'])
+            elif self.nitro.api_v == 2:
+                self.nitro.request('del_ds2', parent_id=self.data['parent_id'], ds_id=self.data['ds_id'])
     
+    def delete_client(self):
+        file = self.nitro.request('get_wfile', ds_id=self.data['ds_id'])['TK']
+        job_id = self.nitro.request('del_client', 
+                                        parent_id=self.data['parent_id'], ftoken=file)['JID']
+        status = self.nitro.request('get_job_status', job_id=job_id)['JS']
+        while status == 0:
+            status = self.nitro.request('get_job_status', job_id=job_id)['JS']
+
     def _map_parameters(self, p):
         """Map the internal ESM field names to msiempy style
         

@@ -310,8 +310,9 @@ class NitroSession():
                     """),
 
         "get_wfile": ("MISC_WRITEFILE",
-                    """{"DATA1": "%(_ds_id)s",
-                    """),
+                    """{"DATA1": "%(ds_id)s",
+                         "PATH": "21",
+                         "ND": "1"} """),
         
         "get_rule_history": ("PLCY_GETRULECHANGEINFO", 
                             """{"SHOW": "F"}"""),
@@ -396,9 +397,14 @@ class NitroSession():
                         "datasourceIds": [{"value": "%(ds_id)s"}]}
                     """),
 
-        "del_client": ("DS_DELETEDSCLIENTS",None
+        "del_client": ("DS_DELETEDSCLIENTS", 
+                        """{"DID": "%(parent_id)s",
+                             "FTOKEN": "%(ftoken)s"}"""
                         ),
-                        
+
+        "get_job_status": ("MISC_JOBSTATUS",
+                            """{"JID": "%(job_id)s"}"""),
+
         "ds_last_times": ("QRY%5FGETDEVICELASTALERTTIME","""{}"""),
                         
         "zonetree": ("zoneGetZoneTree",None),
@@ -435,9 +441,7 @@ class NitroSession():
                             """),
 
             "ds_details2": ("dsGetDataSourceDetail",
-                            """{"datasourceId": 
-                                {"value": "%(ds_id)s"}}
-                            """),
+                            """{"datasourceId": {"value": "%(ds_id)s"}}"""),
 
 
             "get_alarms_custom_time": ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&customStart=%(start_time)s&customEnd=%(end_time)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""",
@@ -446,7 +450,7 @@ class NitroSession():
             "get_alarms": ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""", None),
 
             "get_alarm_details": ("""notifyGetTriggeredNotification""", """{"id":%(id)s}"""),
-            
+
             "get_alarm_details_int": ("NOTIFY_GETTRIGGEREDNOTIFICATIONDETAIL", 
                                         """{"TID": "%(id)s"}"""),
 
