@@ -478,6 +478,8 @@ class Alarm(NitroDict):
         return self
 
     def map_alarm_int_fields(self, alarm_details):
+        """Map the internal ESM field names to msiempy style"""
+
         for key, val in alarm_details.items():
             if alarm_details[key] == key:
                 alarm_details[key] = None
