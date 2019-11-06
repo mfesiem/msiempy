@@ -28,7 +28,7 @@ class ESM(Device):
     """
     ESM class
     
-    Puvlic Methods:
+    Public Methods:
     
         version()       Returns simple version string, '10.1.0'
         
@@ -103,7 +103,7 @@ class ESM(Device):
         return self.nitro.request("get_esm_time")['value']
 
     def buildstamp(self):
-        return self.nitro.buildstamp
+        return self.nitro.buildstamp()
     
     def version(self):
         return self.nitro.version
@@ -390,31 +390,12 @@ class DevTree(NitroList):
                                     - type_id = '65'
                                     - vendor = 'Intersect Alliance'
                                     - model = 'Snare for Windows'
-                                    - syslog_tls = 'T'
+                                    - require_tls = 'T'
                                     - port = '514'
                                     - tz_id = '51'
                                     - tz_name = 'Darwin'
                                     - zone_id = '7'
-                                    
-        steptree()  Returns an ordered list of lists representing the 
-                       default 'Physical Display' device tree on the ESM.
-                       This is useful to recreate a graphical representation
-                       of the device tree.
-                    
-                       Inner list fields: [tree_id, ds_name, ds_ip, depth]
-
-                       tree_id: The order in which the datasource 
-                                 appears in the ESM 'Physical Display'
-                                 
-                       name:   Datasource name
-                        
-                       IP:     Datasource IP
-                        
-                       depth:  1 = ESM
-                                2 = ERC/ADM/DEM/ACE/ELM/ELS
-                                3 = Datasources including EPO/NSM
-                                4 = Children and Clients
-                        
+                                                            
         last_times(days=,       Returns a list of DataSource objects that 
                    hours=,      the ESM has NOT heard from since the
                    minutes=)    provided timeframe.
@@ -432,15 +413,14 @@ class DevTree(NitroList):
                         hostname or ds_id exist in the device tree.
                         
     """
-    _DevTree = []
-
     def __init__(self, *args, **kwargs):
         """
         Initalize the DevTree object
         """
         super().__init__(*args, **kwargs)
         self.devtree = self.build_devtree()
-
+        self._cast_datasources()
+        
     def __len__(self):
         """
         Returns the count of devices in the device tree.
@@ -471,8 +451,11 @@ class DevTree(NitroList):
             return True
         else:
             return None
-            
-    def search(self, term, rec_id=None, zone_id='0'):
+
+    def __getitem__(self, key):
+        return self.devtree[key]
+
+    def search(self, term, zone_id='0'):
         """
         Args:
             term (str): Datasource name, IP, hostname or ds_id
@@ -480,26 +463,18 @@ class DevTree(NitroList):
             zone_id (int): Provide zone_id to limit search to a specific zone
 
         Returns:
-            Datasource object that matches the provided search term or None.
+            Datasource object that matches the provided search term or None
 
         """
         search_fields = ['ds_ip', 'name', 'hostname', 'ds_id']
 
         found = [ds for ds in self.devtree
                     for field in search_fields 
-                    if ds[field].lower() == term.lower()
+                    if str(term).lower() == str(ds[field]).lower()
                     if ds['zone_id'] == zone_id]
-
-        if rec_id and found:
-            found = [ds for ds in found 
-                        if ds['parent_id'] == rec_id]
         
         if found:
-            # Temporary until DataSource() class is rebuilt.
-            #return DataSource(**found[0])
-            return found
-        else:
-            return None
+            return found[0]        
 
     def search_ds_group(self, field, term, zone_id='0'):
         """
@@ -517,45 +492,12 @@ class DevTree(NitroList):
         return (DataSource(adict=ds) for ds in self.devtree
                         if ds.get(field) == term)
                        
-    def steptree(self):
-        """
-        Summarizes the devtree into names and IPs. 
-        
-        Includes depth count to indicate how many steps from the root 
-        of the tree the device would be if this data were presented 
-        graphically. 
-        
-        Also includes parent_id as another method to group datasources 
-        under another device.
-        
-        Returns:
-            List of tuples (int,str,str,str) (step, name, ip, parent_id)        
-        """
-        self._steptree = []
-        _ones = ['14']
-        _twos = ['2', '4', '10', '12', '15', '25']
-        _threes = ['3', '5', '7', '17', '19', '20', '21', '24', '254']
-        _fours = ['7','17', '23', '256']
-
-        for ds in self.devtree:
-            if ds['desc_id'] in _ones:
-                ds['depth'] = '1'
-            elif ds['desc_id'] in _twos:
-                ds['depth'] = '2'
-            elif ds['desc_id'] in _threes:
-                ds['depth'] = '3'
-            else:
-                ds['depth'] = '4'
-            self._steptree.append((ds['idx'], ds['name'], 
-                                    ds['ds_ip'], ds['depth'],))
-        return self._steptree
-
-                    
     def refresh(self):
         """
         Rebuilds the devtree
         """
-        self.build_devtree()
+        self.devtree = self.build_devtree()
+        self._cast_datasources()
         
     def get_ds_times(self):
         """
@@ -576,11 +518,16 @@ class DevTree(NitroList):
         """
         Coordinates assembly of the devtree object
         """
-        devtree = self._get_devtree()        
+        devtree = self._get_devtree()
+        if devtree == 'ITEMS':
+            print('Device tree is empty. Must add at least one datasource for this to work.')
+            self.devicetree = []
+            return
         devtree = self._format_devtree(devtree)
         devtree = self._insert_rec_info(devtree)        
         containers = self._get_client_containers(devtree)
         devtree = self._merge_clients(containers, devtree)
+        devtree = [self._normalize_bool_vals(ds) for ds in devtree if ds]
         zonetree = self._get_zonetree()
         devtree = self._insert_zone_names(zonetree, devtree)
         zone_map = self._get_zone_map()
@@ -639,7 +586,6 @@ class DevTree(NitroList):
                 row[16] = '0'  # Get rid of weird type-id for N/A devices
             
             if len(row) < 29:
-                #print('Unknown datasource: {}.'.format(self._row))
                 continue
             
             ds_fields = {'idx': idx,
@@ -655,7 +601,7 @@ class DevTree(NitroList):
                             'tz_id': '',
                             'date_order': '',
                             'port': '',
-                            'syslog_tls': '',
+                            'require_tls': '',
                             'client_groups': row[29],
                             'zone_name': '',
                             'zone_id': '',
@@ -723,21 +669,26 @@ class DevTree(NitroList):
                 if int(ds['client_groups']) > 0]
 
     def _merge_clients(self, containers, devtree):
-        _cidx = 0
-        _didx = 0
-        for cont in containers:
-            clients = self._get_clients(cont['ds_id'])
-            clients = self._format_clients(clients)
-            cont['idx'] = cont['idx'] + _didx
-            _pidx = cont['idx']
-            _cidx = _pidx + 1
-            for client in clients:
-                client['parent_id'] = cont['ds_id']
-                client['idx'] = _cidx
-                _cidx += 1
-                _didx += 1
-            devtree[_pidx:_pidx] = clients
-        return devtree
+        ds_idx = 0
+        merged_tree = []
+        for ds in devtree:
+            
+            # These are client group folders. No way to associate to the clients.
+            if ds['desc_id'] == '254': continue
+            
+            ds['idx'] = ds_idx
+            merged_tree.append(ds)
+            ds_idx += 1
+
+            if ds in containers:
+                clients = self._get_clients(ds['ds_id'])
+                clients = self._format_clients(clients)
+                for client in clients:
+                    client['idx'] = ds_idx
+                    ds_idx += 1
+                    client['parent_id'] = ds['ds_id']
+                    merged_tree.append(client)
+        return merged_tree
 
     def _get_clients(self, ds_id):
         """
@@ -781,8 +732,7 @@ class DevTree(NitroList):
                           'tz_id': row[8],
                           'date_order': row[9],
                           'port': row[11],
-                          'syslog_tls': row[12],
-                          'client_groups': "0",
+                          'require_tls': row[12],
                           'zone_name': '',
                           'zone_id': '',
                           'client': True
@@ -956,6 +906,33 @@ class DevTree(NitroList):
         type_filter = ['1', '16', '254']
         return [ds for ds in devtree if ds['desc_id'] not in type_filter]
 
+    def _cast_datasources(self):
+        for dev in self.devtree:
+            if dev['desc_id'] in ['3','256']:
+                self.devtree[int(dev['idx'])] = DataSource(dev)
+                
+    def duplicate_datasource(self, p):
+        """Check for duplicate dataname name or IP address.
+        
+        Arguments:
+            p (dict) -- datasource params 
+
+        Parameters:
+            name (str): datasource name
+            ds_ip (str): datasource IP
+            zone_id (str): optional zone_id
+        """
+        
+        if p.get('zone_id'):
+            result = self.search(p['name'], zone_id=['zone_id'])
+            if not result:
+                result = self.search(p['ds_ip'], zone_id=['zone_id'])
+        else:
+            result = self.search(p['name'])
+            if not result:
+                result = self.search(p['ds_ip'])
+        return result
+
     def add(self, kwargs):
             """
             Adds a datasource. 
@@ -972,41 +949,94 @@ class DevTree(NitroList):
                 type_id (str): type of datasource (req)
                 enabled (bool): enabled or not (default: True)
                 tz_id (str): timezone of datasource (default UTC: 8)
+                zone_id (str): numberic ESM id for zone (default: 0)
                     Examples (tz_id only): PST: 27, MST: 12, CST: 11, EST: 32 
-                syslog_tls (bool): datasource uses syslog tls
+                require_tls (bool): datasource uses syslog tls
             
             Returns:
-                datasource id (str)
+                result id (str): id of the result. Not the ds_id as of 11.2.1
                     or None on Error            
             """
             p = self._validate_ds_params(kwargs)
+            dd = self.duplicate_datasource(p)
+            if dd:
+                print('Error: Cannot add Datasource. Duplicate name: {} or IP Address: {}'
+                    .format(dd['name'], dd['ds_ip']))
+                return
 
-            if self.nitro.version.startswith(('9', '10', '11.0', '11.1')):
-                ds_id = self.nitro.request('add_ds_11_1_3', 
-                                            parent_id=p['parent_id'],
-                                            name=p['name'],
-                                            ds_ip=p['ds_ip'],
-                                            type_id=p['type_id'],
-                                            zone_id=p['zone_id'],
-                                            enabled=p['enabled'],
-                                            url=p['url'],
-                                            ds_id=0,
-                                            child_enabled='false',
-                                            child_count=0,
-                                            child_type=0,
-                                            idm_id=0,
-                                            parameters=p['parameters'])
+            if p.get('client'):
+                self.add_client(p)
+                return
+
+            if self.nitro.api_v == 1:
+                result_id = self.nitro.request('add_ds_11_1_3', 
+                                                parent_id=p['parent_id'],
+                                                name=p['name'],
+                                                ds_ip=p['ds_ip'],
+                                                type_id=p['type_id'],
+                                                zone_id=p['zone_id'],
+                                                enabled=p['enabled'],
+                                                url=p['url'],
+                                                ds_id=0,
+                                                child_enabled='false',
+                                                child_count=0,
+                                                child_type=0,
+                                                idm_id=0,
+                                                parameters=p['parameters'])
             else:
-                ds_id = self.nitro.request('add_ds_11_2_1', 
-                                            parent_id=p['parent_id'],
-                                            name=p['name'],
-                                            ds_ip=p['ds_ip'],
-                                            type_id=p['type_id'],
-                                            zone_id=p['zone_id'],
-                                            enabled=p['enabled'],
-                                            url=p['url'],
-                                            parameters=p['parameters'])
-            return ds_id
+                result_id = self.nitro.request('add_ds_11_2_1', 
+                                               parent_id=p['parent_id'],
+                                                name=p['name'],
+                                                ds_ip=p['ds_ip'],
+                                                type_id=p['type_id'],
+                                                zone_id=p['zone_id'],
+                                                enabled=p['enabled'],
+                                                url=p['url'],
+                                                parameters=p['parameters'])
+            self.devtree.append(p)
+            return result_id
+
+    def add_client(self, p):
+        """Add a datasource client
+        
+        Arguments:
+            p (dict)) -- datasource parameters
+        
+        Parameters:
+            parent_id (str): datasource id of the client group datasource
+            name (str): name of the client
+            enabled (bool): enabled or not (default: True
+            ds_ip (str): IP address for client 
+            hostname (str): hostname for client
+            type_id (str): numeric ESM type-id
+            tz_id (str): numeric ESM timezone id or GMT
+            dorder (str): Date order
+            maskflag (str): 
+            port (str): IP port to use
+            require_tls (bool): use syslog-TLS (default: False)
+        """
+        for ds in self.devtree:
+            if ds['ds_id'] == p['parent_id']:
+                if ds['desc_id'] != '3':
+                    print('Error: Client parent must be matching datasource'
+                           'not "{}".'.format(ds['name']))
+                    return
+
+
+        result_id = self.nitro.request('add_client1',
+                            parent_id=p['parent_id'],
+                            name=p['name'],
+                            enabled=p['enabled'] or 'T',
+                            ds_ip=p['ds_ip'],
+                            hostname=p['hostname'],
+                            type_id=p['type_id'],
+                            tz_id=p['tz_id'],
+                            dorder=p['dorder'],
+                            maskflag=p['maskflag'],
+                            port=p['port'],
+                            require_tls=['require_tls'])
+        return
+
 
     def _validate_ds_params(self, p):
         """Validate parameters for new datasource.
@@ -1019,6 +1049,7 @@ class DevTree(NitroList):
         
             or False if something is invalid.
         """
+        # Common for all datasources
         if not p.get('name'):
             logging.error('Error: New datasource requires "name".')
             return
@@ -1037,9 +1068,7 @@ class DevTree(NitroList):
         if not p.get('parent_id'):
             p['parent_id'] = 0
 
-        #p = self._validate_ds_tz_id(p)
-        #if not p:
-        #   return
+        p = self._validate_ds_tz_id(p)
 
         if p.get('enabled') == False:
             p['enabled'] = 'false'
@@ -1056,8 +1085,12 @@ class DevTree(NitroList):
             if not p.get('port'):
                 p['port'] = 0
 
-            if not p.get('syslog_tls'):
-                p['syslog_tls'] = 'F'
+            if not p.get('require_tls'):
+                p['require_tls'] = 'F'
+
+            if not p.get('type_id'):
+                p['type_id'] = 0
+
         else:
             if not p.get('type_id'):
                 logging.error('Error: New datasource requires "type_id".')
@@ -1069,15 +1102,27 @@ class DevTree(NitroList):
             if not p.get('url'):
                 p['url'] = ''
 
-        _base_vars = ['name', 'ds_ip', 'ip', 'client', 'hostname', 'parent_id', 
-                            'enabled', 'zone_id', 'type_id', 'childEnabled', 'childCount',
-                            'idmId', 'url', 'parameters', 'childType']
-        p['parameters'] = []
-        for key, val in p.items():
-            if key not in _base_vars:
-                p['parameters'].append({key: val})
-        p = {k: v for k, v in p.items() if k in _base_vars}
+            _v2_base_vars = ['client', 'parent_id', 'name', 'ds_ip', 'type_id', 
+                                'zone_id', 'enabled', 'url', 'parameters']
+            
+            _v1_base_vars = _v2_base_vars + ['ds_id', 'childEnabled', 
+                                                'childCount', 'childType', 'idmId']
 
+            p['parameters'] = []
+            popme = []
+            for key, val in p.items():
+                if self.nitro.api_v == 1:
+                    if key not in _v1_base_vars:
+                        p['parameters'].append({'key': key,
+                                                'value': val})
+                        popme.append(key)  
+                elif self.nitro.api_v == 2:
+                    if key not in _v2_base_vars:
+                        p['parameters'].append({'key': key,
+                                                'value': val})
+                        popme.append(key)  
+            for key in popme:
+                p.pop(key)              
         return p
 
     def _validate_ds_tz_id(self, p):
@@ -1090,19 +1135,140 @@ class DevTree(NitroList):
             dict of datasource params or None if invalid
         """
         if p.get('tz_id'):
+            if p['tz_id'] == 'GMT':
+                return p
             try:
                 if not 0 <= int(p.get('tz_id')) <= 75:
-                    logging.error('Error: New datasource "tz_id" must be int between 1-74.')
+                    logging.error('Error: New datasource "tz_id" must be int between 1-74 or GMT.')
                     return
             except ValueError:
-                logging.error('Error: New datasource "tz_id" must be int between 1-74.')
+                logging.error('Error: New datasource "tz_id" must be int between 1-74 or GMT.')
                 return
         else:
-            p['tz_id'] = 0
-        
+            p['tz_id'] = 26
         return p
 
-class DataSource(NitroDict):
-    def __init__(self, *arg, **kwargs):
-        super().__init__(*arg, **kwargs)
+    @staticmethod
+    def _normalize_bool_vals(d):
+        """Recursively changes strings 'T', 'F' to bool
         
+        Arguments:
+            d (dict) -- nested dicts and lists okay
+        """
+        for k, v in d.items():
+            if isinstance(v, dict):
+                DevTree._normalize_bool_vals(v)
+            if isinstance(v, list):
+                for items in v:
+                    DevTree._normalize_bool_vals(items)
+            elif v in ['T', 'F']:
+                if v == 'T':
+                    d[k] = True
+                else:
+                    d[k] = False
+        return d
+
+class DataSource(NitroDict):
+    """DataSource class
+    
+    Arguments:
+        adict (dict): datasource parameters
+        
+    Best instantiated from DevTree():
+        >>> dt = DevTree()
+        >>> ds = dt[25]
+        or
+        >>> ds = dt.search('10.10.1.1')
+
+    Parameters:
+        name (str): name of the datasource
+        ds_ip (str): IP of the datasource
+        hostname (str): hostname for the datasource
+        ds_id (str): internal datasource ID (e.g 144234544545444)
+        type_id (str): numeric internal datasource type id
+        desc_id (str): always '3' a datasource or '254' for a client
+        parent_id (str): internal ds_id for the parent device
+        parent_name (str): name of the parent device
+        enabled (str): 'T' or 'F'
+        client (bool): Client datasource or not
+        zone_id (str): numeric zone_id
+        zone_name (str): name of the zone
+        tz_id (str): internal numeric timezone ID
+        vendor (str): vendor of datasource (e.g. Microsoft)
+        model (str): model of datasource (e.g. Windows)
+        require_tls (str): Use syslog over TLS
+        url (str): URL of the datasource
+
+    """
+    def __init__(self, *args, **kwargs):
+        """
+        Initalize the DataSource object
+        """
+        super().__init__(*args, **kwargs)
+
+    def data_from_id(self):
+        pass
+
+    def load_details(self):
+        """DataSource object is lazy. This gets the rest of the parameters."""
+        if self.nitro.api_v == 1:
+            details = self.nitro.request('ds_details1', ds_id=self.data['ds_id'])
+        else:
+            details = self.nitro.request('ds_details2', ds_id=self.data['ds_id'])
+        self._map_parameters(details)
+
+    def delete(self):
+        """This deletes the datasource and all the data. Be careful.
+        """
+        if self.data['desc_id'] not in ['3','256']:
+            print('Only a DataSource can be deleted with this method.')
+            return
+
+        if self.data['desc_id'] == '256':
+            self.delete_client()
+        else:
+            if self.nitro.api_v == 1:
+                self.nitro.request('del_ds1', parent_id=self.data['parent_id'], ds_id=self.data['ds_id'])
+            elif self.nitro.api_v == 2:
+                self.nitro.request('del_ds2', parent_id=self.data['parent_id'], ds_id=self.data['ds_id'])
+    
+    def delete_client(self):
+        file = self.nitro.request('get_wfile', ds_id=self.data['ds_id'])['TK']
+        job_id = self.nitro.request('del_client', 
+                                        parent_id=self.data['parent_id'], ftoken=file)['JID']
+        status = self.nitro.request('get_job_status', job_id=job_id)['JS']
+        while status == 0:
+            status = self.nitro.request('get_job_status', job_id=job_id)['JS']
+
+    def _map_parameters(self, p):
+        """Map the internal ESM field names to msiempy style
+        
+        Arguments:
+            p (dict): datasource parameters
+        """
+        p = DevTree._normalize_bool_vals(p)
+        self.data['name'] = p.get('name')
+        self.data['ds_ip'] = p.get('ipAddress')
+        self.data['zone_id'] = p.get('zoneId')
+        self.data['enabled'] = p.get('enabled')
+
+        if self.nitro.api_v == 1:
+            self.data['ds_id'] = p.get('pdsId')
+            self.data['parent_id'] = p.get('parentId').get('id')
+        elif self.nitro.api_v == 2:
+            self.data['ds_id'] = p.get('pdsId').get('value')
+            self.data['parent_id'] = p.get('parentId').get('value')
+
+        if self.data['desc_id'] == '256':
+           self.data['tz_id'] = p.get('tz_id')
+        else:
+            self.data['child_enabled'] = p.get('childEnabled')
+            self.data['idm_id'] = p.get('idmId')
+            self.data['child_count'] = p.get('childCount')
+            self.data['child_type'] = p.get('childType')
+            self.data['type_id'] = p.get('typeId').get('id')
+            if p.get('parameters'):
+                for d in p['parameters']:
+                    # The key is called "key" and the value is the key. 
+                    # The value is called value and the value is the value.
+                    self.data[d.get('key')] = d.get('value')

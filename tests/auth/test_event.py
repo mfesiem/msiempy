@@ -8,8 +8,8 @@ class T(unittest.TestCase):
     def test_query(self):
 
         events = msiempy.event.EventManager(
-                    time_range='LAST_3_DAYS',
-                    fields=['HostID', 'UserIDSrc', 'Alert.HostIDCat', 'Alert.UserIDSrcCat'],
+                    time_range='CURRENT_DAY',
+                    fields=['HostID', 'UserIDSrc', 'Alert.HostIDCat', 'Alert.SrcIP'],
                     #filters=[('SrcIP', ['0.0.0.0/0',])],
                     #filters=[msiempy.query.FieldFilter('SrcIP', ['0.0.0.0/0',])],
                     limit=10,
@@ -35,7 +35,8 @@ class T(unittest.TestCase):
                 msiempy.event.FieldFilter(name='SrcIP', values=['0.0.0.0/0'])],
                 logic='AND'
                 )],
-            time_range='LAST_3_DAYS',
+            fields=['HostID', 'UserIDSrc', 'Alert.HostIDCat', 'Alert.SrcIP'],
+            time_range='CURRENT_DAY',
             limit=5,
             max_query_depth=1
         )
@@ -56,7 +57,7 @@ class T(unittest.TestCase):
 
         events = msiempy.event.EventManager(
             filters=[('SrcIP', ['0.0.0.0/0']),], # ('NormID', ['408944640'])],
-            time_range='LAST_3_DAYS',
+            time_range='CURRENT_DAY',
             limit=2,
             max_query_depth=0
         )
