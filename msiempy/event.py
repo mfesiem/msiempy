@@ -7,7 +7,7 @@ import abc
 import collections
 import logging
 import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 log = logging.getLogger('msiempy')
 
 from . import NitroObject, NitroDict, NitroError, FilteredQueryList
@@ -33,8 +33,7 @@ class EventManager(FilteredQueryList):
 
     def __init__(self, fields=None, 
         order=None, limit=500, filters=None, 
-        compute_time_range=True, #to remove ~> use it just when max_query_depth>0
-        max_query_depth=0, #to move to load_data()
+        max_query_depth=0,
         __parent__=None,
         *args, **kwargs):
         """
@@ -50,8 +49,6 @@ class EventManager(FilteredQueryList):
         - `limit` : max number of rows per query, by default takes the value in config `default_rows` option.
         - `filters` : list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.QueryFilter`
         if you wish to use advanced filtering.
-        - `compute_time_range` : False if you want to send the actualy time_range in parameter for the initial query.
-            Defaulted to True cause the query splitting implies computing the time_range anyway.
         - `max_query_depth` : maximum number of supplement reccursions of division of the query times
             Meaning, if limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
             the list is (500*5)*(500*5)*(500*5) = 15625000000
@@ -62,12 +59,10 @@ class EventManager(FilteredQueryList):
         self.__parent__=__parent__
 
         #Store the query ttl
-        self.__init_max_query_depth__=max_query_depth
-        self.query_depth_ttl=max_query_depth
+        self.max_query_depth=max_query_depth
 
         #Declaring attributes
         self._filters=list()
-        self._order=dict()
 
         #Setting the default fields
         self.fields=Event.DEFAULTS_EVENT_FIELDS
@@ -75,9 +70,6 @@ class EventManager(FilteredQueryList):
         #Adds the specified fields and make sure there is no duplicates
         if fields :
             self.fields=list(set(self.fields+fields))
-
-        #Set the compute_time_range propertir that is going to be used when time_range setter is called
-        self.compute_time_range=compute_time_range
 
         #Calling super constructor : time_range set etc...
         super().__init__(*args, **kwargs)
@@ -109,6 +101,9 @@ class EventManager(FilteredQueryList):
     def order(self, order):
         if order:
             try:
+                if order[0] not in self.POSSBILE_ROW_ORDER :
+                    raise AttributeError('Order direction must be in '+str(POSSBILE_ROW_ORDER))
+
                 self._order_direction = order[0]
                 self._order_field = order[1]
             except IndexError:
@@ -144,35 +139,6 @@ class EventManager(FilteredQueryList):
         Acts like the is not filters.
         """ 
         self._filters=[FieldFilter('SrcIP', ['0.0.0.0/0',])]
-    
-    @property
-    def time_range(self):
-        """Re-implemented the `msiempy.FilteredQueryList.time_range` to have better control on the property setter.
-        If `compute_time_range` is True (by default it is), try to get a start and a end time with `msiempy.utils.timerange_gettimes()`
-        """
-        return(super().time_range)
-
-    @time_range.setter
-    def time_range(self, time_range):
-        if time_range!=None and time_range!='CUSTOM' and self.compute_time_range :
-            try :
-                times = timerange_gettimes(time_range)
-                self._time_range='CUSTOM'
-                self._start_time=times[0]
-                self._end_time=times[1]
-            # timerange_gettimes raises AttributeError until
-            # all timeranges are supported
-            except AttributeError as err:
-                log.warning(err)
-                #TODO : find a soltuion not to use this
-                #Calling super().time_range=time_range
-                #https://bugs.python.org/issue14965
-                super(self.__class__, self.__class__).time_range.__set__(self, time_range)
-            except :
-                raise
-        else :
-            #TODO : find a soltuion not to use this
-            super(self.__class__, self.__class__).time_range.__set__(self, time_range)
 
     def get_possible_fields(self):
         """
@@ -188,7 +154,7 @@ class EventManager(FilteredQueryList):
             -> Wait the query to be executed
             -> Get and parse the events
 
-        Returns : `tuple` : ( `msiempy.event.EventManager`, Status of the query : `completed` )
+        Returns : `tuple` : ( `msiempy.event.EventManager`, Status of the query (completed?) `True/False` )
 
         """
         query_infos=dict()
@@ -213,6 +179,8 @@ class EventManager(FilteredQueryList):
             query_infos=self.nitro.request(
                 'event_query',
                 time_range=self.time_range,
+                order_direction=self._order_direction,
+                order_field=self._order_field,
                 fields=format_fields_for_query(self.fields),
                 filters=self.filters,
                 limit=self.limit,
@@ -225,24 +193,9 @@ class EventManager(FilteredQueryList):
         events_raw=self._get_events(query_infos['resultID'])
 
         events=EventManager(alist=events_raw)
-        #log.debug("Data loaded : "+str(events))
         
         self.data=events
         return((events,len(events)<self.limit))
-
-    '''
-    def load_data(self, *args, **kwargs):
-        """
-        Specialized EventManager load_data method.  
-        Use super load_data implementation.  
-        TODO : Use better polymorphism and do not cast here.
-        
-        Parameters :
-        - `*args, **kwargs` : See `msiempy.FilteredQueryList.load_data` and `msiempy.event.EventManager.qry_load_data`
-        """
-        return EventManager(alist=super().load_data(*args, **kwargs))
-        '''
-        
 
     def load_data(self, workers=10, slots=10, delta=None, **kwargs):
         """Load the data from the SIEM into the manager list.  
@@ -270,7 +223,7 @@ class EventManager(FilteredQueryList):
         if not completed :
             #If not completed the query is split and items aren't actually used
 
-            if self.query_depth_ttl > 0 :
+            if self.max_query_depth > 0 :
                 #log.info("The query data couldn't be loaded in one request, separating it in sub-queries...")
 
                 if self.time_range != 'CUSTOM': #can raise a NotImplementedError if unsupported time_range
@@ -293,10 +246,10 @@ class EventManager(FilteredQueryList):
                 for time in reversed(times) :
                     #Divide the query in sub queries
                     sub_query = EventManager(fields=self.fields, 
-                        order=((self._order_direction, self._order_field)), 
+                        order=self.order, 
                         limit=self.limit,
                         filters=self._filters,
-                        max_query_depth=self.query_depth_ttl-1,
+                        max_query_depth=self.max_query_depth-1,
                         __parent__=self,
                         time_range='CUSTOM',
                         start_time=time[0].isoformat(),
@@ -310,7 +263,7 @@ class EventManager(FilteredQueryList):
                     #The sub query is asynch only when it's the first query (root parent)
                     asynch=self.__parent__==None,
                     progress=self.__parent__==None, 
-                    message='Loading data from '+self.start_time+' to '+self.end_time+'. In {} slots'.format(len(times)),
+                    message='Loading data from '+start+' to '+end+'. In {} slots'.format(len(times)),
                     func_args=dict(slots=slots),
                     workers=workers)
 
@@ -437,9 +390,21 @@ class Event(NitroDict):
     # Minimal default query fields
     DEFAULTS_EVENT_FIELDS=[
         "Rule.msg",
+        "Alert.LastTime",
+        "Alert.IPSIDAlertID"]
+
+    # Regular query fields
+    REGULAR_EVENT_FIELDS=[
+        "Rule.msg",
         "Alert.SrcIP",
         "Alert.DstIP", 
         "Alert.SrcMac",
+        "Alert.DstMac",
+        "Rule.NormID",
+        "HostID",
+        "UserIDSrc",
+        "ObjectID",
+        "Alert.Severity",
         "Alert.LastTime",
         "Alert.DSIDSigID",
         "Alert.IPSIDAlertID"]
@@ -519,9 +484,10 @@ class Event(NitroDict):
         
         if use_query == True :
 
-            e = EventManager(time_range='CURRENT_YEAR',
+            e = EventManager(time_range='CUSTOM',
+                start_time=datetime.now()-timedelta(days=365),
+                end_time=datetime.now()+timedelta(days=1),
                 filters=[('IPSIDAlertID',id)],
-                compute_time_range=False,
                 fields=extra_fields,
                 limit=2).load_data()
 

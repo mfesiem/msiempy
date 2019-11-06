@@ -498,7 +498,9 @@ class NitroSession():
                         "fields":%(fields)s,
                         "filters":%(filters)s,
                         "limit":%(limit)s,
-                        "offset":%(offset)s
+                        "offset":%(offset)s,
+                        "order": [{"field": {"name": "%(order_field)s"},
+                                             "direction": "%(order_direction)s"}]
                         }
                         }"""),
 
@@ -874,7 +876,7 @@ class NitroSession():
     
         try :
             #Dynamically checking the esm_request arguments so additionnal parameters can be passed afterwards.
-            esm_request_args = inspect.getargspec(self.esm_request)[0]
+            esm_request_args = inspect.getfullargspec(self.esm_request)[0]
             params={}
             for arg in kwargs :
                 if arg in esm_request_args:
@@ -1005,8 +1007,6 @@ class NitroObject(abc.ABC):
         def default(self, obj): # pylint: disable=E0202
             if isinstance(obj,(NitroDict, NitroList)):
                 return obj.data
-            #elif isinstance(obj, (QueryFilter)):
-                #return obj.config_dict
             else:
                 return json.JSONEncoder.default(self, obj) 
 
@@ -1015,17 +1015,6 @@ class NitroObject(abc.ABC):
         """Creates the object session.
         """
         self.nitro=NitroSession()
-
-    def __str__(self):
-        """str(obj) -> return text string.
-        Can be a table if the object is a NitroList.
-        """
-        return self.text
-
-    def __repr__(self):
-        """repr(obj) -> return json string.
-        """
-        return self.json
 
     @abc.abstractproperty
     def text(self):
@@ -1074,6 +1063,17 @@ class NitroDict(collections.UserDict, NitroObject):
             if isinstance(self.data[key], list):
                 self.data[key]=NitroList(alist=self.data[key])
 
+    def __str__(self):
+        """str(obj) -> return text string.
+        Can be a table if the object is a NitroList.
+        """
+        return self.text
+
+    def __repr__(self):
+        """repr(obj) -> return json string.
+        """
+        return self.json
+
     @property
     def json(self):
         """JSON representation of a item. Basic dict.
@@ -1087,7 +1087,7 @@ class NitroDict(collections.UserDict, NitroObject):
         return(', '.join([str(val) for val in self.values()]))
 
     def refresh(self):
-        """Not implemented here
+        """Default behaviour
         """
         log.debug('NOT Refreshing item :'+str(self)+' '+str(NotImplementedError()))
 
@@ -1121,6 +1121,17 @@ class NitroList(collections.UserList, NitroObject):
                 )
         else :
             raise ValueError('NitroList can only be initiated based on a list')
+
+    def __str__(self):
+        """str(obj) -> return text string.
+        Can be a table if the object is a NitroList.
+        """
+        return self.text
+
+    def __repr__(self):
+        """repr(obj) -> return json string.
+        """
+        return self.json
 
     def _norm_dicts(self):
         """
