@@ -334,20 +334,13 @@ class Event(NitroDict):
     """        
     Default event field keys :  
     - `Rule.msg`  
-    - `Alert.SrcPort`  
-    - `Alert.DstPort`  
-    - `Alert.SrcIP`  
-    - `Alert.DstIP`  
-    - `Alert.SrcMac`  
-    - `Alert.DstMac`  
     - `Alert.LastTime`  
-    - `Rule.NormID`  
-    - `Alert.DSIDSigID`  
     - `Alert.IPSIDAlertID`  
     
-    You can request more fields by passing a list of fields to the `msiempy.event.EventManager` object.
+    You can request more fields by passing a list of fields to the `msiempy.event.EventManager` object. 
+    `msiempy.event.Event.REGULAR_EVENT_FIELDS` offer a base list of regular fields that may be useful.
     See msiempy/static JSON files to browse complete list : https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json  
-    Prefixes 'Alert.', 'Rule.', etc are optionnal, prefix autocompletion is computed in any case :)
+    Prefixes 'Alert.', 'Rule.', etc are optionnal, prefix autocompletion is computed in any case ;)
 
     """
    
@@ -434,7 +427,6 @@ class Event(NitroDict):
                 #Todo : table of corespondance UserIDSrc = BIN(7) etc...
                 #Map the table to getitem
                 raise
-        
 
     def clear_notes(self):
         """

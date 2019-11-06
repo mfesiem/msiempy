@@ -6,7 +6,6 @@ import pprint
 
 class T(unittest.TestCase):
 
-
     def test_no_detailed_filter(self):
 
         alarms = msiempy.alarm.AlarmManager(
@@ -55,24 +54,9 @@ class T(unittest.TestCase):
             
     def test_events_filter(self):
 
-        #old way to pass event filters
-        alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_DAY',
-            filters=[('srcIp', ['10','159.33'])],
-            max_query_depth=0,
-            page_size=10
-        )   
-        alarms.load_data()
-
-        for alarm in alarms :
-            self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
-            self.assertEqual(type(alarm['events'][0]), msiempy.event.Event, 'Type error')
-            self.assertRegex(str(alarm['events'][0]['srcIp']), '10|159.33', 'Filtering alarms is not working')
-
         #new way to pass event filters
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_DAY',
-            filters=[],
             event_filters=[('srcIp', ['10','159.33'])],
             max_query_depth=0,
             page_size=10
@@ -83,19 +67,18 @@ class T(unittest.TestCase):
         for alarm in alarms :
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
             self.assertEqual(type(alarm['events'][0]), msiempy.event.Event, 'Type error')
-
             self.assertRegex(str(alarm['events'][0]['srcIp']), '10|159.33', 'Filtering alarms is not working')
 
     def test_events_filter_using_query(self):
 
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_DAY',
-            filters=[('Alert.SrcIP', ['10','159.33'])],
+            event_filters=[('Alert.SrcIP', ['10','159.33'])],
             max_query_depth=0,
             page_size=10
             )
             
-        alarms.load_data(use_query=True)
+        alarms.load_data(use_query=True, extra_fields=['Alert.SrcIP'])
 
         for alarm in alarms :
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')

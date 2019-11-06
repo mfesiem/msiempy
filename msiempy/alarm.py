@@ -19,7 +19,7 @@ class AlarmManager(FilteredQueryList):
     Interface to query and manage Alarms.
     Inherits from FilteredQueryList.
     """
-    def __init__(self, status_filter='all', page_size=20, filters=None, event_filters=None,
+    def __init__(self, status_filter='all', page_size=200, filters=None, event_filters=None,
          *args, **kwargs):
 
         """
@@ -193,6 +193,7 @@ class AlarmManager(FilteredQueryList):
 
         Returns : `msiempy.alarm.AlarmManager`
         """
+
         items, completed = self.qry_load_data(**kwargs)
         #Casting items to Alarms
         alarms=[Alarm(adict=item) for item in items]
@@ -217,7 +218,7 @@ class AlarmManager(FilteredQueryList):
         alarms_details=True, events_details=True,
         use_query=False, extra_fields=[], page_number=1):
         """
-        Method that loads the data :
+        Method that loads the alarms data :
             -> Fetch the list of alarms and load alarms details  
             -> Filter depending on alarms related filters  
             -> Load the events details  
@@ -226,8 +227,9 @@ class AlarmManager(FilteredQueryList):
         Parameters :  
 
         - `workers` : Number of asynchronous workers  
-        - `no_detailed_filter` : Don't load detailed alarms and events infos, you can only filter based on `msiempy.alarm.Alarm.ALARM_FILTER_FIELDS` values  
-        - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2.1 or greater  
+        - `alarms_details` : Load detailed alarms infos. If `False` only `msiempy.alarm.Alarm.ALARM_FILTER_FIELDS` values  are loaded.
+        - `events_details` : Load detailed events infos.
+        - `use_query` : Uses the query module to retreive event data. Only works with SIEM v 11.2.1 or greater.  
         - `extra_fields` :  Only when `use_query=True`. Additionnal event fields to load in the query. See : `msiempy.event.EventManager`  
         - `page_number` : Page number, default to 1. Do not touch if you're using `pages` parameter
         
@@ -282,7 +284,7 @@ class AlarmManager(FilteredQueryList):
 
                 filtered_alarms = [a for a in event_detailed if self._event_match(a)]
             else:
-                log.warning('Field based Event filters are ignored when `events_details is False`. You can use `event` keyword in alarms filters to match str representation.')
+                log.warning('Field based Event filters are ignored when `events_details is False`. You can use `events` keyword in alarms filters to match str representation.')
                 filtered_alarms=detailed_alarm_based_filtered
         else :
             filtered_alarms = alarm_based_filtered
