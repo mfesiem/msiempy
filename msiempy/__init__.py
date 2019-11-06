@@ -3,17 +3,10 @@
 
 GitHub : https://github.com/mfesiem/msiempy  
 
-Classes listed in this module are base to other classes in sub-modules that offers specialized objects and functions.  
-
-This API offers two main types of objects to interact with the SIEM : `msiempy.NitroList`, `msiempy.NitroDict`. 
-`msiempy.NitroList` have default behaviours related to parallel execution, string representation generation and search feature.
-Whereas `msiempy.NitroDict` that doesn't have any specific behaviours. Both inheriths from `msiempy.NitroObject` that handle a reference to a single `msiempy.NitroSession` object.  
-
-`msiempy.NitroSession` is the point of convergence of every request to the McFee ESM It provides standard dialogue with the esm.
-It uses `msiempy.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.  
+Classes listed in this module are base to other classes in sub-modules that offers concrete objects and functions.  
 
 Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png  
-Packages : https://mfesiem.github.io/docs/msiempy/packages.png  
+Packages diagram : https://mfesiem.github.io/docs/msiempy/packages.png  
 """
 
 import logging
@@ -240,10 +233,12 @@ class NitroConfig(configparser.ConfigParser):
         return(conf_path)
 
 class NitroSession():
-    '''NitroSession object represent the point of convergence of every request to the McFee ESM
-    It provides standard dialogue with the esm with agument interpolation with `msiempy.NitroSession.PARAMS`.
-    Internal `__dict__` refers to a unique instance of dict and thus, properties can be instanciated only once. 
-    '''
+    """
+    `msiempy.NitroSession` is the point of convergence of every request to the McAfee ESM.  
+    It provides standard dialogue with the ESM by doing agument interpolation with `msiempy.NitroSession.PARAMS`.  
+    Internal `__dict__` refers to a unique instance of dict and thus, properties can be instanciated only once.  
+    It uses `msiempy.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.
+    """
 
     BASE_URL = 'https://{}/rs/esm/'
     __pdoc__['NitroSession.BASE_URL']="""API v2 base url: `%(url)s`""" % dict(url=BASE_URL)
