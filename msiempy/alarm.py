@@ -31,10 +31,6 @@ class AlarmManager(FilteredQueryList):
         - `filters` : [(field, [values]), (field, [values])]
         - `event_filters` : [(field, [values]), (field, [values])]
         - `*args, **kwargs` : Parameters passed to `msiempy.base.FilteredQueryList.__init__()`
-            
-        Examples:  
-        ```>>>alarm_list=AlarmManager(status_filter='unacknowledged',
-            filters=[('sourceIp','^10.*'), ('ruleMessage','Wordpress')]).load_data()```
         """
 
         super().__init__(*args, **kwargs)
@@ -48,15 +44,13 @@ class AlarmManager(FilteredQueryList):
         self.status_filter=status_filter
         self.page_size=page_size
 
-        #Seeting events filters before alarms filters cause it would overwrite it
-        self.event_filters=event_filters
-
         #uses the parent filter setter
-        #TODO : find a soltuion not to use this stinky tric
+        #TODO : find a soltuion not to use this
         #callign super().filters=filters #https://bugs.python.org/issue14965
         super(self.__class__, self.__class__).filters.__set__(self, filters)
 
-        
+        #Seeting events filters after alarms filters cause it would overwrite it
+        self.event_filters=event_filters
 
         #Casting all data to Alarms objects, better way to do it ?
         collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, NitroDict))])
@@ -200,7 +194,7 @@ class AlarmManager(FilteredQueryList):
 
         #Iterative automatic paging (not asynchronous)
         if not completed and pages>1 :
-            next_kwargs={}
+            next_kwargs={**kwargs}
             if 'page_number' in kwargs : next_kwargs['page_number']=kwargs['page_number']+1
             else: next_kwargs['page_number']=2
 
