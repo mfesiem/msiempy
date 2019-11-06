@@ -44,20 +44,16 @@ class EventManager(FilteredQueryList):
             Get the list of possible fields by calling `msiempy.event.EventManager.get_possible_fields()` method or see 
             `msiempy.event.Event`.
             Some defaults fields will always be present unless removed with `remove()` method, see notes.
-        - `order` : **Not implemented yet** . 
+        - `order` :
             tuple (direction, field) or a list of filters in the SIEM format.
             will set the first order according to (direction, fields).
-                -> same as using the property setter.
-            If you pass a list here, will use the this raw list as the SIEM `order` field.
-            Structure must be in correct format
-                -> same as setting _order property directly.
         - `limit` : max number of rows per query, by default takes the value in config `default_rows` option.
         - `filters` : list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.QueryFilter`
         if you wish to use advanced filtering.
         - `compute_time_range` : False if you want to send the actualy time_range in parameter for the initial query.
             Defaulted to True cause the query splitting implies computing the time_range anyway.
         - `max_query_depth` : maximum number of supplement reccursions of division of the query times
-            Meaning, if requests_size=500, slots=5 and max_query_depth=3, then the maximum capacity of 
+            Meaning, if limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
             the list is (500*5)*(500*5)*(500*5) = 15625000000
         - `*args, **kwargs` : Parameters passed to `msiempy.FilteredQueryList`                
         """
@@ -90,20 +86,8 @@ class EventManager(FilteredQueryList):
         #TODO Try to load queries with a limit of 10k and get result as chucks of 500 with starPost nbRows
         #   and compare efficiency
         self.limit=int(limit)
-        #we can ignore Access to member 'requests_size' before its definition line 95pylint(access-member-before-definition)
-        #It's define in FilteredQueryList __init__()
-
-        self.requests_size=self.limit
-
-        if order:
-            try:
-                self.order_direction = order[0]
-                self.order_field = order[1]
-            except IndexError:
-                raise ValueError('Order must be tuple (direction, field).')
-        else:
-            self.order_direction = 'DESCENDING'
-            self.order_field = 'LastTime'
+        
+        self.order=order
 
         #TODO : find a solution not to use this
         #callign super().filters=filters #https://bugs.python.org/issue14965
@@ -117,30 +101,21 @@ class EventManager(FilteredQueryList):
     def order(self):
         """
         Orders representing the what the SIEM is expecting as the 'order'.
-        The `order` must be tuple (direction, field). Only the first order can be set by this property.
-        Use _order to set with SIEM format.
-        Note that `order` property handling is **not implemented yet**.
+        The `order` must be tuple (direction, field).
         """
-        return(self._order)
+        return((self._order_direction, self._order_field))
 
     @order.setter
     def order(self, order):
-        if order is None :
-            self._order=[{
-                "direction": 'DESCENDING',
-                "field": {
-                    "name": 'LastTime'
-                    }
-                }]
-        elif isinstance(order, tuple) :
-            if order[0] in self.POSSBILE_ROW_ORDER:
-                self._order[0]['direction']=order[0]
-                self._order[0]['field']['name']=order[1]
-            else:
-                raise AttributeError("Illegal order value : "+str(order[0])+". The order must be in :"+str(self.POSSBILE_ROW_ORDER))
-        else :
-            raise AttributeError("Illegal type for argument order. Can onyl be a tuple is using the property setter. You can diretly specify a list of orders (SIEM format) by setting _order property.")
-
+        if order:
+            try:
+                self._order_direction = order[0]
+                self._order_field = order[1]
+            except IndexError:
+                raise ValueError('Order must be tuple (direction, field).')
+        else:
+            self._order_direction = 'DESCENDING'
+            self._order_field = 'LastTime'
     @property
     def filters(self):
         """
@@ -225,8 +200,8 @@ class EventManager(FilteredQueryList):
                 time_range=self.time_range,
                 start_time=self.start_time,
                 end_time=self.end_time,
-                order_direction=self.order_direction,
-                order_field=self.order_field,
+                order_direction=self._order_direction,
+                order_field=self._order_field,
                 fields=format_fields_for_query(self.fields),
                 filters=self.filters,
                 limit=self.limit,
@@ -238,11 +213,10 @@ class EventManager(FilteredQueryList):
             query_infos=self.nitro.request(
                 'event_query',
                 time_range=self.time_range,
-                #order=self.order, TODO support order
                 fields=format_fields_for_query(self.fields),
                 filters=self.filters,
                 limit=self.limit,
-                offset=0, #TODO remove old ref that is useless
+                offset=0,
                 includeTotal=False
                 )
         
@@ -319,7 +293,7 @@ class EventManager(FilteredQueryList):
                 for time in reversed(times) :
                     #Divide the query in sub queries
                     sub_query = EventManager(fields=self.fields, 
-                        order=((self.order_direction, self.order_field)), 
+                        order=((self._order_direction, self._order_field)), 
                         limit=self.limit,
                         filters=self._filters,
                         max_query_depth=self.query_depth_ttl-1,
