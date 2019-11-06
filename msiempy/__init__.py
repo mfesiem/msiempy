@@ -308,8 +308,9 @@ class NitroSession():
                     """),
 
         "get_wfile": ("MISC_WRITEFILE",
-                    """{"DATA1": "%(_ds_id)s",
-                    """),
+                    """{"DATA1": "%(ds_id)s",
+                         "PATH": "21",
+                         "ND": "1"} """),
         
         "get_rule_history": ("PLCY_GETRULECHANGEINFO", 
                             """{"SHOW": "F"}"""),
@@ -361,7 +362,7 @@ class NitroSession():
                                 "parameters": %(parameters)s
                                 }]}"""),
 
-        "add_client": ("DS_ADDDSCLIENT", 
+        "add_client1": ("DS_ADDDSCLIENT", 
                         """{"PID": "%(parent_id)s",
                         "NAME": "%(name)s",
                         "ENABLED": "%(enabled)s",
@@ -372,7 +373,7 @@ class NitroSession():
                         "DORDER": "%(dorder)s",
                         "MASKFLAG": "%(maskflag)s",
                         "PORT": "%(port)s",
-                        "USETLS": "%(syslog_tls)s"
+                        "USETLS": "%(require_tls)s"
                         }"""),
                         
         "get_recs": ("devGetDeviceList?filterByRights=false",
@@ -384,14 +385,24 @@ class NitroSession():
                             }
                         """),
                         
-        "del_ds": ("dsDeleteDataSource",
+        "del_ds1": ("dsDeleteDataSource",
                     """{"receiverId": {"id": "%(parent_id)s"},
                         "datasourceId": {"id": "%(ds_id)s"}}
                     """),
-                    
-        "del_client": ("DS_DELETEDSCLIENTS",None
+
+        "del_ds2": ("dsDeleteDataSources",
+                    """{"receiverId": {"value": "%(parent_id)s"},
+                        "datasourceIds": [{"value": "%(ds_id)s"}]}
+                    """),
+
+        "del_client": ("DS_DELETEDSCLIENTS", 
+                        """{"DID": "%(parent_id)s",
+                             "FTOKEN": "%(ftoken)s"}"""
                         ),
-                        
+
+        "get_job_status": ("MISC_JOBSTATUS",
+                            """{"JID": "%(job_id)s"}"""),
+
         "ds_last_times": ("QRY%5FGETDEVICELASTALERTTIME","""{}"""),
                         
         "zonetree": ("zoneGetZoneTree",None),
@@ -422,10 +433,14 @@ class NitroSession():
                                 "256": "client"}
                             """),
                             
-            "ds_details": ("dsGetDataSourceDetail",
+            "ds_details1": ("dsGetDataSourceDetail",
                             """{"datasourceId": 
                                 {"id": "%(ds_id)s"}}
                             """),
+
+            "ds_details2": ("dsGetDataSourceDetail",
+                            """{"datasourceId": {"value": "%(ds_id)s"}}"""),
+
 
             "get_alarms_custom_time": ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&customStart=%(start_time)s&customEnd=%(end_time)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""",
                         None),
@@ -433,7 +448,7 @@ class NitroSession():
             "get_alarms": ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""", None),
 
             "get_alarm_details": ("""notifyGetTriggeredNotification""", """{"id":%(id)s}"""),
-            
+
             "get_alarm_details_int": ("NOTIFY_GETTRIGGEREDNOTIFICATIONDETAIL", 
                                         """{"TID": "%(id)s"}"""),
 
@@ -849,6 +864,14 @@ class NitroSession():
         if not self._logged and method != 'login':
             self.login()
             self.version = self.version()
+            # Shorthanding the version check 
+            # 1 for pre 11.2.1, 2 for 11.2.1 and later
+            # Not be confused with the ESM API v1 and v2 which are different.
+            if self.version.startswith(('9', '10', '11.0', '11.1')):
+                self.api_v = 1
+            else:
+                self.api_v = 2
+    
         try :
             #Dynamically checking the esm_request arguments so additionnal parameters can be passed afterwards.
             esm_request_args = inspect.getargspec(self.esm_request)[0]

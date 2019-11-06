@@ -10,7 +10,7 @@ class T(unittest.TestCase):
     def test_no_detailed_filter(self):
 
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_YEAR',
+            time_range='CURRENT_DAY',
             page_size=5,
             status_filter='unacknowledged')
 
@@ -34,10 +34,10 @@ class T(unittest.TestCase):
     def test_alarm_filter(self):
 
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_YEAR',
+            time_range='CURRENT_DAY',
             filters=[('severity', [80,90])],
             max_query_depth=0,
-            page_size=50
+            page_size=10
             )
             
         alarms.load_data()
@@ -57,10 +57,10 @@ class T(unittest.TestCase):
 
         #old way to pass event filters
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_YEAR',
+            time_range='CURRENT_DAY',
             filters=[('srcIp', ['10','159.33'])],
             max_query_depth=0,
-            page_size=50
+            page_size=10
         )   
         alarms.load_data()
 
@@ -71,11 +71,11 @@ class T(unittest.TestCase):
 
         #new way to pass event filters
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_YEAR',
+            time_range='CURRENT_DAY',
             filters=[],
             event_filters=[('srcIp', ['10','159.33'])],
             max_query_depth=0,
-            page_size=50
+            page_size=10
             )
             
         alarms.load_data()
@@ -89,10 +89,10 @@ class T(unittest.TestCase):
     def test_events_filter_using_query(self):
 
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_YEAR',
+            time_range='CURRENT_DAY',
             filters=[('Alert.SrcIP', ['10','159.33'])],
             max_query_depth=0,
-            page_size=50
+            page_size=10
             )
             
         alarms.load_data(use_query=True)
@@ -105,7 +105,7 @@ class T(unittest.TestCase):
     def test_print_and_compare(self):
 
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_YEAR',
+            time_range='CURRENT_DAY',
             max_query_depth=0,
             page_size=2
         )
@@ -141,7 +141,7 @@ class T(unittest.TestCase):
 
     def test_paged_request(self):
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_YEAR',
+            time_range='CURRENT_DAY',
             filters=[('Alert.SrcIP', ['10','159.33'])],
             page_size=10
             )
