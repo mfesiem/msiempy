@@ -59,34 +59,7 @@ class EventManager(FilteredQueryList):
         - `max_query_depth` : maximum number of supplement reccursions of division of the query times
             Meaning, if requests_size=500, slots=5 and max_query_depth=3, then the maximum capacity of 
             the list is (500*5)*(500*5)*(500*5) = 15625000000
-        - `*args, **kwargs` : Parameters passed to `msiempy.FilteredQueryList`
-           
-            
-        Notes :
-            
-        - `__init__()` parameters are also properties.
-        ```
-            >>>em=EventManager(fields=['SrcIP','DstIP'],
-                    order=('DESCENDING''LastTime'),
-                    filters=[('DstIP','4.4.0.0/16','8.8.0.0/16')])
-            >>>em.load_data()
-        ```
-
-        is equivalent to :
-        ```
-            >>>em=EventManager()
-            >>>em.fields=['SrcIP','DstIP'],
-            >>>em._order=[{  "direction": 'DESCENDING',
-                            "field": { "name": 'LastTime' }  }]
-            >>>em.filters=[('DstIP','4.4.0.0/16','8.8.0.0/16')]
-            >>>em.load_data()
-        ```
-        - You can remove fields from default `msiempy.event.Event` fields.
-        ```
-            >>>em=EventManager()
-            >>>em.fields.remove('SrcIP')
-        ```
-                
+        - `*args, **kwargs` : Parameters passed to `msiempy.FilteredQueryList`                
         """
 
         #Store the query parent 
@@ -343,7 +316,7 @@ class EventManager(FilteredQueryList):
                 
                 sub_queries=list()
 
-                for time in times :
+                for time in reversed(times) :
                     #Divide the query in sub queries
                     sub_query = EventManager(fields=self.fields, 
                         order=((self.order_direction, self.order_field)), 
@@ -356,17 +329,7 @@ class EventManager(FilteredQueryList):
                         end_time=time[1].isoformat(),
                         load_async=False
                         )
-                    """
-                    sub_query = copy.copy(self)
-                    sub_query.__parent__=self
-                    sub_query.compute_time_range=False
-                    sub_query.time_range='CUSTOM'
-                    sub_query.start_time=time[0].isoformat()
-                    sub_query.end_time=time[1].isoformat()
-                    sub_query.load_async=False
-                    sub_query.query_depth_ttl=self.query_depth_ttl-1
-                    """
-
+                    
                     sub_queries.append(sub_query)
             
                 results = self.perform(EventManager.load_data, sub_queries, 
