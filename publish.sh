@@ -89,9 +89,12 @@ while getopts ":hp:" arg; do
             fi
             
             # Generating documentation
-            echo "[RUNNING] pdoc3 msiempy --output-dir ./mfesiem.github.io/docs --html --force"
+            echo "[RUNNING] pdoc3 msiempy --output-dir ./mfesiem.github.io/docs --html --force --config ..."
             rm -rf ./${docs_folder}/msiempy/
-            pdoc3 msiempy --output-dir ./${docs_folder} --html --force
+            pdoc3 msiempy --output-dir ./${docs_folder} --html --force \
+                --config sort_identifiers=False \
+                --config show_type_annotations=True
+
             mv ./classes.png ./${docs_folder}/msiempy
             mv ./packages.png ./${docs_folder}/msiempy
             
