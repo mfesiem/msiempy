@@ -7,14 +7,11 @@ import abc
 import collections
 import logging
 import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 log = logging.getLogger('msiempy')
 
 from . import NitroObject, NitroDict, NitroError, FilteredQueryList
 from .__utils__ import timerange_gettimes, parse_query_result, format_fields_for_query, divide_times, parse_timedelta
-
-class InDepthQueryList(FilteredQueryList):
-    pass
 
 class EventManager(FilteredQueryList):
     """Interface to query and manage events.
@@ -36,8 +33,7 @@ class EventManager(FilteredQueryList):
 
     def __init__(self, fields=None, 
         order=None, limit=500, filters=None, 
-        compute_time_range=True, #to remove ~> use it just when max_query_depth>0
-        max_query_depth=0, #to move to load_data()
+        max_query_depth=0,
         __parent__=None,
         *args, **kwargs):
         """
@@ -47,61 +43,26 @@ class EventManager(FilteredQueryList):
             Get the list of possible fields by calling `msiempy.event.EventManager.get_possible_fields()` method or see 
             `msiempy.event.Event`.
             Some defaults fields will always be present unless removed with `remove()` method, see notes.
-        - `order` : **Not implemented yet** . 
+        - `order` :
             tuple (direction, field) or a list of filters in the SIEM format.
             will set the first order according to (direction, fields).
-                -> same as using the property setter.
-            If you pass a list here, will use the this raw list as the SIEM `order` field.
-            Structure must be in correct format
-                -> same as setting _order property directly.
         - `limit` : max number of rows per query, by default takes the value in config `default_rows` option.
         - `filters` : list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.QueryFilter`
         if you wish to use advanced filtering.
-        - `compute_time_range` : False if you want to send the actualy time_range in parameter for the initial query.
-            Defaulted to True cause the query splitting implies computing the time_range anyway.
         - `max_query_depth` : maximum number of supplement reccursions of division of the query times
-            Meaning, if requests_size=500, slots=5 and max_query_depth=3, then the maximum capacity of 
+            Meaning, if limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
             the list is (500*5)*(500*5)*(500*5) = 15625000000
-        - `*args, **kwargs` : Parameters passed to `msiempy.FilteredQueryList`
-           
-            
-        Notes :
-            
-        - `__init__()` parameters are also properties.
-        ```
-            >>>em=EventManager(fields=['SrcIP','DstIP'],
-                    order=('DESCENDING''LastTime'),
-                    filters=[('DstIP','4.4.0.0/16','8.8.0.0/16')])
-            >>>em.load_data()
-        ```
-
-        is equivalent to :
-        ```
-            >>>em=EventManager()
-            >>>em.fields=['SrcIP','DstIP'],
-            >>>em._order=[{  "direction": 'DESCENDING',
-                            "field": { "name": 'LastTime' }  }]
-            >>>em.filters=[('DstIP','4.4.0.0/16','8.8.0.0/16')]
-            >>>em.load_data()
-        ```
-        - You can remove fields from default `msiempy.event.Event` fields.
-        ```
-            >>>em=EventManager()
-            >>>em.fields.remove('SrcIP')
-        ```
-                
+        - `*args, **kwargs` : Parameters passed to `msiempy.FilteredQueryList`                
         """
 
         #Store the query parent 
         self.__parent__=__parent__
 
         #Store the query ttl
-        self.__init_max_query_depth__=max_query_depth
-        self.query_depth_ttl=max_query_depth
+        self.max_query_depth=max_query_depth
 
         #Declaring attributes
         self._filters=list()
-        self._order=dict()
 
         #Setting the default fields
         self.fields=Event.DEFAULTS_EVENT_FIELDS
@@ -110,9 +71,6 @@ class EventManager(FilteredQueryList):
         if fields :
             self.fields=list(set(self.fields+fields))
 
-        #Set the compute_time_range propertir that is going to be used when time_range setter is called
-        self.compute_time_range=compute_time_range
-
         #Calling super constructor : time_range set etc...
         super().__init__(*args, **kwargs)
 
@@ -120,20 +78,8 @@ class EventManager(FilteredQueryList):
         #TODO Try to load queries with a limit of 10k and get result as chucks of 500 with starPost nbRows
         #   and compare efficiency
         self.limit=int(limit)
-        #we can ignore Access to member 'requests_size' before its definition line 95pylint(access-member-before-definition)
-        #It's define in FilteredQueryList __init__()
-
-        self.requests_size=self.limit
-
-        if order:
-            try:
-                self.order_direction = order[0]
-                self.order_field = order[1]
-            except IndexError:
-                raise ValueError('Order must be tuple (direction, field).')
-        else:
-            self.order_direction = 'DESCENDING'
-            self.order_field = 'LastTime'
+        
+        self.order=order
 
         #TODO : find a solution not to use this
         #callign super().filters=filters #https://bugs.python.org/issue14965
@@ -147,30 +93,24 @@ class EventManager(FilteredQueryList):
     def order(self):
         """
         Orders representing the what the SIEM is expecting as the 'order'.
-        The `order` must be tuple (direction, field). Only the first order can be set by this property.
-        Use _order to set with SIEM format.
-        Note that `order` property handling is **not implemented yet**.
+        The `order` must be tuple (direction, field).
         """
-        return(self._order)
+        return((self._order_direction, self._order_field))
 
     @order.setter
     def order(self, order):
-        if order is None :
-            self._order=[{
-                "direction": 'DESCENDING',
-                "field": {
-                    "name": 'LastTime'
-                    }
-                }]
-        elif isinstance(order, tuple) :
-            if order[0] in self.POSSBILE_ROW_ORDER:
-                self._order[0]['direction']=order[0]
-                self._order[0]['field']['name']=order[1]
-            else:
-                raise AttributeError("Illegal order value : "+str(order[0])+". The order must be in :"+str(self.POSSBILE_ROW_ORDER))
-        else :
-            raise AttributeError("Illegal type for argument order. Can onyl be a tuple is using the property setter. You can diretly specify a list of orders (SIEM format) by setting _order property.")
+        if order:
+            try:
+                if order[0] not in self.POSSBILE_ROW_ORDER :
+                    raise AttributeError('Order direction must be in '+str(POSSBILE_ROW_ORDER))
 
+                self._order_direction = order[0]
+                self._order_field = order[1]
+            except IndexError:
+                raise ValueError('Order must be tuple (direction, field).')
+        else:
+            self._order_direction = 'DESCENDING'
+            self._order_field = 'LastTime'
     @property
     def filters(self):
         """
@@ -199,35 +139,6 @@ class EventManager(FilteredQueryList):
         Acts like the is not filters.
         """ 
         self._filters=[FieldFilter('SrcIP', ['0.0.0.0/0',])]
-    
-    @property
-    def time_range(self):
-        """Re-implemented the `msiempy.FilteredQueryList.time_range` to have better control on the property setter.
-        If `compute_time_range` is True (by default it is), try to get a start and a end time with `msiempy.utils.timerange_gettimes()`
-        """
-        return(super().time_range)
-
-    @time_range.setter
-    def time_range(self, time_range):
-        if time_range!=None and time_range!='CUSTOM' and self.compute_time_range :
-            try :
-                times = timerange_gettimes(time_range)
-                self._time_range='CUSTOM'
-                self._start_time=times[0]
-                self._end_time=times[1]
-            # timerange_gettimes raises AttributeError until
-            # all timeranges are supported
-            except AttributeError as err:
-                log.warning(err)
-                #TODO : find a soltuion not to use this
-                #Calling super().time_range=time_range
-                #https://bugs.python.org/issue14965
-                super(self.__class__, self.__class__).time_range.__set__(self, time_range)
-            except :
-                raise
-        else :
-            #TODO : find a soltuion not to use this
-            super(self.__class__, self.__class__).time_range.__set__(self, time_range)
 
     def get_possible_fields(self):
         """
@@ -243,7 +154,7 @@ class EventManager(FilteredQueryList):
             -> Wait the query to be executed
             -> Get and parse the events
 
-        Returns : `tuple` : ( `msiempy.event.EventManager`, Status of the query : `completed` )
+        Returns : `tuple` : ( `msiempy.event.EventManager`, Status of the query (completed?) `True/False` )
 
         """
         query_infos=dict()
@@ -255,8 +166,8 @@ class EventManager(FilteredQueryList):
                 time_range=self.time_range,
                 start_time=self.start_time,
                 end_time=self.end_time,
-                order_direction=self.order_direction,
-                order_field=self.order_field,
+                order_direction=self._order_direction,
+                order_field=self._order_field,
                 fields=format_fields_for_query(self.fields),
                 filters=self.filters,
                 limit=self.limit,
@@ -268,11 +179,12 @@ class EventManager(FilteredQueryList):
             query_infos=self.nitro.request(
                 'event_query',
                 time_range=self.time_range,
-                #order=self.order, TODO support order
+                order_direction=self._order_direction,
+                order_field=self._order_field,
                 fields=format_fields_for_query(self.fields),
                 filters=self.filters,
                 limit=self.limit,
-                offset=0, #TODO remove old ref that is useless
+                offset=0,
                 includeTotal=False
                 )
         
@@ -281,24 +193,9 @@ class EventManager(FilteredQueryList):
         events_raw=self._get_events(query_infos['resultID'])
 
         events=EventManager(alist=events_raw)
-        #log.debug("Data loaded : "+str(events))
         
         self.data=events
         return((events,len(events)<self.limit))
-
-    '''
-    def load_data(self, *args, **kwargs):
-        """
-        Specialized EventManager load_data method.  
-        Use super load_data implementation.  
-        TODO : Use better polymorphism and do not cast here.
-        
-        Parameters :
-        - `*args, **kwargs` : See `msiempy.FilteredQueryList.load_data` and `msiempy.event.EventManager.qry_load_data`
-        """
-        return EventManager(alist=super().load_data(*args, **kwargs))
-        '''
-        
 
     def load_data(self, workers=10, slots=10, delta=None, **kwargs):
         """Load the data from the SIEM into the manager list.  
@@ -326,7 +223,7 @@ class EventManager(FilteredQueryList):
         if not completed :
             #If not completed the query is split and items aren't actually used
 
-            if self.query_depth_ttl > 0 :
+            if self.max_query_depth > 0 :
                 #log.info("The query data couldn't be loaded in one request, separating it in sub-queries...")
 
                 if self.time_range != 'CUSTOM': #can raise a NotImplementedError if unsupported time_range
@@ -346,16 +243,19 @@ class EventManager(FilteredQueryList):
                 
                 sub_queries=list()
 
-                for time in times :
+                for time in reversed(times) :
                     #Divide the query in sub queries
-                    sub_query = copy.copy(self)
-                    sub_query.__parent__=self
-                    sub_query.compute_time_range=False
-                    sub_query.time_range='CUSTOM'
-                    sub_query.start_time=time[0].isoformat()
-                    sub_query.end_time=time[1].isoformat()
-                    sub_query.load_async=False
-                    sub_query.query_depth_ttl=self.query_depth_ttl-1
+                    sub_query = EventManager(fields=self.fields, 
+                        order=self.order, 
+                        limit=self.limit,
+                        filters=self._filters,
+                        max_query_depth=self.max_query_depth-1,
+                        __parent__=self,
+                        time_range='CUSTOM',
+                        start_time=time[0].isoformat(),
+                        end_time=time[1].isoformat(),
+                        load_async=False
+                        )
                     
                     sub_queries.append(sub_query)
             
@@ -363,7 +263,7 @@ class EventManager(FilteredQueryList):
                     #The sub query is asynch only when it's the first query (root parent)
                     asynch=self.__parent__==None,
                     progress=self.__parent__==None, 
-                    message='Loading data from '+self.start_time+' to '+self.end_time+'. In {} slots'.format(len(times)),
+                    message='Loading data from '+start+' to '+end+'. In {} slots'.format(len(times)),
                     func_args=dict(slots=slots),
                     workers=workers)
 
@@ -434,20 +334,13 @@ class Event(NitroDict):
     """        
     Default event field keys :  
     - `Rule.msg`  
-    - `Alert.SrcPort`  
-    - `Alert.DstPort`  
-    - `Alert.SrcIP`  
-    - `Alert.DstIP`  
-    - `Alert.SrcMac`  
-    - `Alert.DstMac`  
     - `Alert.LastTime`  
-    - `Rule.NormID`  
-    - `Alert.DSIDSigID`  
     - `Alert.IPSIDAlertID`  
     
-    You can request more fields by passing a list of fields to the `msiempy.event.EventManager` object.
+    You can request more fields by passing a list of fields to the `msiempy.event.EventManager` object. 
+    `msiempy.event.Event.REGULAR_EVENT_FIELDS` offer a base list of regular fields that may be useful.
     See msiempy/static JSON files to browse complete list : https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json  
-    Prefixes 'Alert.', 'Rule.', etc are optionnal, prefix autocompletion is computed in any case :)
+    Prefixes 'Alert.', 'Rule.', etc are optionnal, prefix autocompletion is computed in any case ;)
 
     """
    
@@ -490,9 +383,21 @@ class Event(NitroDict):
     # Minimal default query fields
     DEFAULTS_EVENT_FIELDS=[
         "Rule.msg",
+        "Alert.LastTime",
+        "Alert.IPSIDAlertID"]
+
+    # Regular query fields
+    REGULAR_EVENT_FIELDS=[
+        "Rule.msg",
         "Alert.SrcIP",
         "Alert.DstIP", 
         "Alert.SrcMac",
+        "Alert.DstMac",
+        "Rule.NormID",
+        "HostID",
+        "UserIDSrc",
+        "ObjectID",
+        "Alert.Severity",
         "Alert.LastTime",
         "Alert.DSIDSigID",
         "Alert.IPSIDAlertID"]
@@ -522,7 +427,6 @@ class Event(NitroDict):
                 #Todo : table of corespondance UserIDSrc = BIN(7) etc...
                 #Map the table to getitem
                 raise
-        
 
     def clear_notes(self):
         """
@@ -572,9 +476,10 @@ class Event(NitroDict):
         
         if use_query == True :
 
-            e = EventManager(time_range='CURRENT_YEAR',
+            e = EventManager(time_range='CUSTOM',
+                start_time=datetime.now()-timedelta(days=365),
+                end_time=datetime.now()+timedelta(days=1),
                 filters=[('IPSIDAlertID',id)],
-                compute_time_range=False,
                 fields=extra_fields,
                 limit=2).load_data()
 

@@ -1,6 +1,11 @@
 #!/usr/local/bin/python3
 #Requirement :  msiempy (https://github.com/mfesiem/msiempy)
 
+"""
+Usage example : ./ack_irrelevants.py -t last_24_hours -r 404,403,503,error -s login.php --force
+This script is designed to auto acknowledge irrelevant alarms triggered by McAfee IPS (also known as NSM) because they refer to pages that are inexistant for exemple.
+"""
+
 import msiempy.alarm
 import re
 import argparse
@@ -9,8 +14,8 @@ from urllib.parse import urljoin, urlparse
 
 def parse_args():
     parser = argparse.ArgumentParser(description="""Acknowledge irrelevants IPS - High Severity Event alarms""")
-    parser.add_argument('--time_range','-t', metavar='time_range', help='Timerange, choose from '+', '.join(msiempy.FilteredQueryList.POSSIBLE_TIME_RANGE),  
-        choices=msiempy.FilteredQueryList.POSSIBLE_TIME_RANGE, default='CURRENT_DAY')
+
+    parser.add_argument('--time_range','-t', metavar='time_range', help='Timerange, choose from '+', '.join(msiempy.FilteredQueryList.POSSIBLE_TIME_RANGE), required=True)    
     parser.add_argument('--start_time','--t1', metavar='time', help='Start trigger date')
     parser.add_argument('--end_time','--t2', metavar='time', help='End trigger date')
     '''
@@ -21,7 +26,7 @@ def parse_args():
     parser.add_argument('--page_size', '-p', metavar='page_size', help='Size of alarms list', default=100, type=int)
     parser.add_argument('--response_codes', '-r', metavar='response codes', help='List of response codes to acknowledge. Commas separated values. Example : "403,404". Use "error" to include network errored requests.', default='404')
     parser.add_argument('--resources', '-s', metavar='resources', help='List of string matches url resources to acknowledge. Acknowledge any resources if not specified. Commas separated values. Example : "setup.cgi,login.cgi,user.php"', default='')
-    parser.add_argument('--force', help="Will not prompt for confirmation before ackniwledging alarms", action="store_true")
+    parser.add_argument('--force', help="Will not prompt for confirmation before acknowledging alarms", action="store_true")
 
     return (parser.parse_args())
 

@@ -11,13 +11,12 @@ usage(){
     echo -e "\t-h\tPrint this help message."
     echo -e "\t-p\t<test/master>\tGit tag, push the technical documentation and publish to PyPi. In this order."
     echo
-    echo -e "\t\t'test' keyword : "
-    echo -e "\t\t\t- Tag version with '-test' flag"
+    echo -e "\t\t'test' keyword :"
     echo -e "\t\t\t- Publish docs to https://mfesiem.github.io/docs/test/msiempy/"
     echo -e "\t\t\t- Publish module to https://test.pypi.org/project/msiempy/"
     echo
-    echo -e "\t\t'master' keyword : "
-    echo -e "\t\t\t- Delete '-test' tag and tag version"
+    echo -e "\t\t'master' keyword :"
+    echo -e "\t\t\t- Tag version"
     echo -e "\t\t\t- Publish docs to https://mfesiem.github.io/docs/msiempy/"
     echo -e "\t\t\t- Publish module to https://pypi.org/project/msiempy/"
     echo
@@ -40,11 +39,12 @@ while getopts ":hp:" arg; do
             if [ "$keyword" = "master" ]; then
                 docs_folder="mfesiem.github.io/docs"
                 repository_url="https://pypi.org"
-                # Deleting '-test' tag
-                if [ -n `git tag -l "${version}-test"` ]; then
-                    echo "[RUNNING] git tag -d ${version}-test && git push origin --delete ${version}-test"
-                    git tag -d ${version}-test && git push origin --delete ${version}-test
-                fi
+
+                # # Deleting '-test' tag  if it exists
+                # if [ -n `git tag -l "${version}-test"` ]; then
+                #     echo "[RUNNING] git tag -d ${version}-test && git push origin --delete ${version}-test"
+                #     git tag -d ${version}-test && git push origin --delete ${version}-test
+                # fi
 
                 # Tag
                 echo "[RUNNING] git tag -a ${version} -m "Version ${version}" && git push --tags"
@@ -55,10 +55,20 @@ while getopts ":hp:" arg; do
                     docs_folder="mfesiem.github.io/docs/test"
                     repository_url="https://test.pypi.org"
 
-                    # Test tag
-                    echo "[RUNNING] git tag -a ${version}-test -m "Version ${version}-test" && git push --tags"
-                    git tag -a ${version}-test -m "Version ${version}-test" && git push --tags
-                
+                    # read -p "[QUESTION] Do you want to tag this version with a '-test' flag? [y/n]" -n 1 -r
+                    # echo    # (optional) move to a new line
+                    # if [[ $REPLY =~ ^[Yy]$ ]]
+                    # then
+                    #     # Deleting '-test' tag if it exists
+                    #     if [ -n `git tag -l "${version}-test"` ]; then
+                    #         echo "[RUNNING] git tag -d ${version}-test && git push origin --delete ${version}-test"
+                    #         git tag -d ${version}-test && git push origin --delete ${version}-test
+                    #     fi
+                    #     # Test tag
+                    #     echo "[RUNNING] git tag -a ${version}-test -m "Version ${version}-test" && git push --tags"
+                    #     git tag -a ${version}-test -m "Version ${version}-test" && git push --tags
+                    # fi
+                    
                 else
                     echo "[ERROR] The keyword must be 'test' or 'master'"
                     exit -1
@@ -79,9 +89,12 @@ while getopts ":hp:" arg; do
             fi
             
             # Generating documentation
-            echo "[RUNNING] pdoc3 msiempy --output-dir ./mfesiem.github.io/docs --html --force"
+            echo "[RUNNING] pdoc3 msiempy --output-dir ./mfesiem.github.io/docs --html --force --config ..."
             rm -rf ./${docs_folder}/msiempy/
-            pdoc3 msiempy --output-dir ./${docs_folder} --html --force
+            pdoc3 msiempy --output-dir ./${docs_folder} --html --force \
+                --config sort_identifiers=False \
+                --config show_type_annotations=True
+
             mv ./classes.png ./${docs_folder}/msiempy
             mv ./packages.png ./${docs_folder}/msiempy
             

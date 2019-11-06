@@ -1,19 +1,36 @@
 import msiempy.event
-from msiempy.__utils__ import format_esm_time
+from msiempy.__utils__ import format_esm_time, parse_timedelta
 import unittest
 
 
 class T(unittest.TestCase):
 
+    def test_event(self):
+        events = msiempy.event.EventManager(
+                    time_range='CURRENT_DAY',
+                    limit=1
+                )
+        events.load_data()
+        event=events[0]
+
+        id = event['IPSIDAlertID']
+
+        event_from_ips_get_alert_data=msiempy.event.Event(id=id)
+        self.assertEqual(event['IPSIDAlertID'], '|'.join(
+            [str(event_from_ips_get_alert_data['ipsId']['id']),
+            str(event_from_ips_get_alert_data['alertId'])]))
+        
+        if msiempy.NitroSession().api_v == 2 :
+            event_from_direct_id_query = msiempy.event.Event(
+                    adict=msiempy.event.Event().data_from_id(id=id, use_query=True))
+            self.assertEqual(event, event_from_direct_id_query)
+
     def test_query(self):
 
         events = msiempy.event.EventManager(
                     time_range='CURRENT_DAY',
-                    fields=['HostID', 'UserIDSrc', 'Alert.HostIDCat', 'Alert.SrcIP'],
-                    #filters=[('SrcIP', ['0.0.0.0/0',])],
-                    #filters=[msiempy.query.FieldFilter('SrcIP', ['0.0.0.0/0',])],
-                    limit=10,
-                    max_query_depth=0
+                    fields=msiempy.event.Event.REGULAR_EVENT_FIELDS,
+                    limit=10
                 )
         events.load_data()
 
@@ -24,47 +41,63 @@ class T(unittest.TestCase):
 
         print('EVENTS KEYS\n'+str(events.keys))
         print('EVENTS TEXT\n'+str(events))
-        print('EVENT JSON\n'+events.json)
-            
-        
+        print('EVENT JSON\n'+events.json)        
 
     def test_query_splitted(self):
+        events_no_split = msiempy.event.EventManager(
+            time_range='CURRENT_DAY',
+            limit=10,
+        )
+        events_no_split.load_data()
+        print('events_no_split'.upper())
+        print(events_no_split)
+
         events = msiempy.event.EventManager(
-            filters=[msiempy.event.GroupFilter(
-                [msiempy.event.FieldFilter(name='DstIP', values=['0.0.0.0/0']),
-                msiempy.event.FieldFilter(name='SrcIP', values=['0.0.0.0/0'])],
-                logic='AND'
-                )],
-            fields=['HostID', 'UserIDSrc', 'Alert.HostIDCat', 'Alert.SrcIP'],
             time_range='CURRENT_DAY',
             limit=5,
             max_query_depth=1
         )
-        events.load_data()
+        events.load_data(slots=2)
+        print('events_splitted'.upper())
+        print(events)
+        self.assertEqual(events_no_split[:5], events[:5], 'Firts part of the splitted query doesn\'t correspond to the genuine query. This can happen when some event are generated at the exact same moment the query is submitted, retry the test ?')
 
-        for e in events :
-            self.assertNotEqual(e['Alert.SrcIP'], '', "An event doesn't have proper source IP")
-            #self.assertRegex(e['Alert.SrcIP'],'^10.','Filterring in a reccursive query is problematic')
-            #self.assertRegex(e['Alert.DstIP'],'^10.','Filterring in a reccursive query is problematic')
+    def test_filtered_query(self):
+        qry_filters = [msiempy.event.GroupFilter(
+            [msiempy.event.FieldFilter(name='DstIP', values=['0.0.0.0/0']),
+            msiempy.event.FieldFilter(name='SrcIP', values=['0.0.0.0/0'])],
+            logic='AND'
+            )]
+        
+        #todo
 
-        self.assertGreater(len(events),0)
-        print('EVENTS KEYS\n'+str(events.keys))
-        print('EVENTS TEXT\n'+str(events))
-        #print('EVENT JSON\n'+events.json)
+    def test_ordered_query(self):
+        events_no_split = msiempy.event.EventManager(
+            fields=['Alert.AlertID'],
+            time_range='CURRENT_DAY',
+            order=(('ASCENDING', 'AlertID')),
+            limit=10,
+        )
+        events_no_split.load_data()
+
+        last_event=None
+        for event in events_no_split :
+            if not last_event :
+                last_event=event
+                continue
+            self.assertGreater(int(event['Alert.AlertID']),int(last_event['Alert.AlertID']))
+            last_event=event
 
     def test_add_note(self):
-        #to refactor
 
         events = msiempy.event.EventManager(
-            filters=[('SrcIP', ['0.0.0.0/0']),], # ('NormID', ['408944640'])],
             time_range='CURRENT_DAY',
-            limit=2,
-            max_query_depth=0
+            limit=2
         )
         events.load_data()
-        print('EVENTS KEYS\n'+str(events.keys))
-        print('EVENTS TEXT\n'+str(events))
 
         for event in events :
-            event.add_note("Test note ! ")
-            print("A test note has been added to the event : \n"+str(event.json))
+            event.set_note("Test note")
+            genuine_event = msiempy.event.Event(id=event['IPSIDAlertID'])
+            self.assertRegexpMatches(genuine_event['note'], "Test note", "The doesn't seem to have been added to the event \n"+str(event))
+

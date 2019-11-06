@@ -6,7 +6,6 @@ import pprint
 
 class T(unittest.TestCase):
 
-
     def test_no_detailed_filter(self):
 
         alarms = msiempy.alarm.AlarmManager(
@@ -36,7 +35,6 @@ class T(unittest.TestCase):
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_DAY',
             filters=[('severity', [80,90])],
-            max_query_depth=0,
             page_size=10
             )
             
@@ -55,26 +53,10 @@ class T(unittest.TestCase):
             
     def test_events_filter(self):
 
-        #old way to pass event filters
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_DAY',
-            filters=[('srcIp', ['10','159.33'])],
-            max_query_depth=0,
-            page_size=10
-        )   
-        alarms.load_data()
-
-        for alarm in alarms :
-            self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
-            self.assertEqual(type(alarm['events'][0]), msiempy.event.Event, 'Type error')
-            self.assertRegex(str(alarm['events'][0]['srcIp']), '10|159.33', 'Filtering alarms is not working')
-
-        #new way to pass event filters
-        alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_DAY',
-            filters=[],
-            event_filters=[('srcIp', ['10','159.33'])],
-            max_query_depth=0,
+            filters=[('alarmName',['Test','IPS'])],
+            event_filters=[('srcIp', ['10','159.33','22'])],
             page_size=10
             )
             
@@ -83,24 +65,26 @@ class T(unittest.TestCase):
         for alarm in alarms :
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
             self.assertEqual(type(alarm['events'][0]), msiempy.event.Event, 'Type error')
-
-            self.assertRegex(str(alarm['events'][0]['srcIp']), '10|159.33', 'Filtering alarms is not working')
+            self.assertRegex(str(alarm['events'][0]['srcIp']), '10|159.33|22', 'Filtering alarms is not working')
 
     def test_events_filter_using_query(self):
 
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_DAY',
-            filters=[('Alert.SrcIP', ['10','159.33'])],
-            max_query_depth=0,
+            filters=[('alarmName',['Test','IPS'])],
+            event_filters=[('Alert.SrcIP', ['10','159.33','22'])],
             page_size=10
             )
-            
-        alarms.load_data(use_query=True)
+        
+        print(alarms.__dict__)
+        alarms.load_data(use_query=True, extra_fields=['Alert.SrcIP'])
+
+        print(alarms.get_text(fields=['alarmName','events']))
 
         for alarm in alarms :
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
             self.assertEqual(type(alarm['events'][0]), msiempy.event.Event, 'Type error')
-            self.assertRegex(str(alarm['events'][0]['Alert.SrcIP']), '10|159.33', 'Filtering alarms is not working')
+            self.assertRegex(str(alarm['events'][0]['Alert.SrcIP']), '10|159.33|22', 'Filtering alarms is not working')
         
     def test_print_and_compare(self):
 
@@ -139,16 +123,32 @@ class T(unittest.TestCase):
         print('ALARMS WITH ALERT DATA EVENTS')
         pprint.pprint(alarms_with_alert_data_events)
 
-    def test_paged_request(self):
+    def test_paged_request_simple(self):
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_DAY',
-            filters=[('Alert.SrcIP', ['10','159.33'])],
             page_size=10
             )
-        alarms.load_data(use_query=True, pages=3)
+        alarms.load_data(alarms_details=False, pages=3)
+        
+        self.assertEqual(len(alarms), 30)
+
+        for alarm in alarms :
+            self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
+
+    def test_paged_request_filtered(self):
+        alarms = msiempy.alarm.AlarmManager(
+            time_range='CURRENT_DAY',
+            filters=[('alarmName',['Test','IPS'])],
+            event_filters=[('srcIp', ['10','159.33','22'])],
+            page_size=10
+            )
+        alarms.load_data(pages=3)
+        
+        self.assertEqual(len(alarms), 30)
+
         for alarm in alarms :
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
             self.assertEqual(type(alarm['events'][0]), msiempy.event.Event, 'Type error')
-            self.assertRegex(str(alarm['events'][0]['Alert.SrcIP']), '10|159.33', 'Filtering alarms is not working')
+            self.assertRegex(str(alarm['events'][0]['srcIp']), '10|159.33|22', 'Filtering alarms is not working')
 
 

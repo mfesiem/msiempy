@@ -62,8 +62,8 @@ class T(unittest.TestCase):
         if ds:
             ds.load_details()
         else:
-            print('New datasource not found. Waiting 60 seconds and rechecking...')
-            time.sleep(60)
+            print('New datasource not found. Waiting 15 seconds and rechecking...')
+            time.sleep(15)
             self.devtree.refresh()
             ds = self.devtree.search('msiempy_test_datasource_delete_me')
             if ds:

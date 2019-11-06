@@ -93,7 +93,7 @@ alarms=AlarmManager(
                 ('ruleMessage','Wordpress')],
         page_size=400)
 
-alarms.load_data(extra_fields=['HostID','UserIDSrc'])
+alarms.load_data()
 print(alarms.json)
 ```
 See: [FilteredQueryList](https://mfesiem.github.io/docs/msiempy/index.html#msiempy.FilteredQueryList), [AlarmManager](https://mfesiem.github.io/docs/msiempy/alarm.html#msiempy.alarm.AlarmManager), [Alarm](https://mfesiem.github.io/docs/msiempy/alarm.html#msiempy.alarm.Alarm)
@@ -105,7 +105,7 @@ from  msiempy.event import EventManager, FieldFilter
 
 events = EventManager(
         time_range='LAST_3_DAYS',
-        fields=['HostID', 'UserIDSrc'],
+        fields=['Alert.SrcIP'], # Alert.SrcIP is not queried by default
         filters=[
                 FieldFilter('DstIP', ['8.8.0.0/8',]),
                 FieldFilter('HostID', ['mydomain.local'], operator='CONTAINS') ],
@@ -115,7 +115,10 @@ events.load_data()
 print(events.get_text(fields=['Alert.LastTime','Alert.SrcIP', 'Rule.msg']))
 ```
 See: [FilteredQueryList](https://mfesiem.github.io/docs/msiempy/index.html#msiempy.FilteredQueryList), [EventManager](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.EventManager), [FieldFilter](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.FieldFilter), [Event](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.Event)
-`load_data()` method accept several parameters. The `max_query_depth` parameter specify the number of sub-divisions the query can take at most (zero by default). The query is divided only if it hasn't completed with the current query settings. The first division is done by dividing the query's time range into slots of `delta` duration, then the query would be divided into the specified number of `slots`. Control the number of asyncronous jobs using `workers` parameter. See medule module documentation for more infos.  
+
+`EventManager` `__init__()` can take other parameter like `order` or `max_query_depth`. `max_query_depth` parameter specify the number of sub-divisions the query can take at most (zero by default). The query is divided only if it hasn't completed with the current query settings.  
+
+`load_data()` method accept also several parameters. It controls the query's division time range into slots of `delta` duration, then the query would be divided into the specified number of `slots`. Control also the number of asyncronous jobs using `workers` parameter. See  module documentation for more infos.  
 
 See [filters](https://github.com/mfesiem/msiempy/blob/master/static/all_filters.json) list you can use to filter events.  
 See [fields](https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json) list you can request.
