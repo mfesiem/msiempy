@@ -512,7 +512,7 @@ class DevTree(NitroList):
             list of Receiver dicts (str:str)
         """
         return [self._rec for self._rec in self.devtree
-                    if self._rec['desc_id'] == '2']
+                    if self._rec['desc_id'] in ['2','13']]
     
     def build_devtree(self):
         """
@@ -829,6 +829,7 @@ class DevTree(NitroList):
                         '7': 'Policy Auditor',
                         '10': 'Application Data Monitor (ADM)',
                         '12': 'ELM',
+                        '13': 'McAfee Event Receiver/ELM',
                         '14': 'Local ESM',
                         '15': 'Advanced Correlation Engine (ACE)',
                         '16': 'Asset datasource',
