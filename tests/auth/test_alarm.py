@@ -151,4 +151,34 @@ class T(unittest.TestCase):
             self.assertEqual(type(alarm['events'][0]), msiempy.event.Event, 'Type error')
             self.assertRegex(str(alarm['events'][0]['srcIp']), '10|159.33|22', 'Filtering alarms is not working')
 
+    def test_loading_part_of_the_alarm_details_and_events(self):
+        alarms = msiempy.alarm.AlarmManager(
+            time_range='CURRENT_DAY',
+            page_size=5
+            )
+        alarms.load_data(alarms_details=False)
+
+        for alarm in alarms :
+            self.assertEqual(alarm.get('events'), None)
+
+        detailed = alarms.perform(msiempy.alarm.Alarm.load_details, 
+            data=[alarms[1], alarms[2], alarms[3]], 
+            asynch=True, workers=3, progress=True, 
+            message="Just loading details of the first 3 alarms of the list")
+
+        for alarm in detailed :
+            events = alarm.get('events')
+            self.assertTrue(type(events) == str)
+
+        detailed_w_events = alarms.perform(msiempy.alarm.Alarm.load_events, 
+            data=[alarms[1]], 
+            message="Just loading event of the first alarm of the list")
+
+        for alarm in detailed_w_events :
+            events = alarm.get('events')
+            self.assertTrue(type(events[0]) == msiempy.event.Event)
+
+        print(alarms.json)
+
+
 
