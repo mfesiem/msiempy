@@ -1187,21 +1187,11 @@ class NitroList(collections.UserList, NitroObject):
 
             for item in self.data:
                 if isinstance(item, (dict, NitroDict)):
-                    try :
-                        table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=max_column_width))
-                            if not isinstance(item[field], NitroList)
-                            else item[field].get_text(**get_text_nest_attr) for field in fields])
+                    table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=max_column_width))
+                        if not isinstance(item[field], NitroList)
+                        else item[field].get_text(**get_text_nest_attr) for field in fields])
                     
-                    except (KeyError, IndexError) as err :
-                        log.error("Inconsistent NitroList state, some fields aren't present in the dict keys. Try printing as CSV. "+str(err))
-                        raise
-
-                    except Exception as err :
-                        if "Row has incorrect number of values" in str(err):
-                            log.error("Inconsistent NitroList state, some fields aren't present or too many are present : {}".format(str(err)))
-                        raise
-
-                else : log.warning("Unnapropriate list element type, doesn't show on the list : {}".format(str(item)))
+                else : log.warning("Unnapropriate list element type, won't show on the prettytable : {}".format(str(item)))
 
             text=table.get_string()
         
