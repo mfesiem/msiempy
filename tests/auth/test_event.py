@@ -101,3 +101,45 @@ class T(unittest.TestCase):
             genuine_event = msiempy.event.Event(id=event['IPSIDAlertID'])
             self.assertRegexpMatches(genuine_event['note'], "Test note", "The doesn't seem to have been added to the event \n"+str(event))
 
+    def test_getitem(self):
+        events = msiempy.event.EventManager(
+            time_range='CURRENT_DAY',
+            fields=msiempy.event.Event.REGULAR_EVENT_FIELDS,
+            limit=5
+        )
+        events.load_data()
+
+        print(events)
+
+        print(events.get_text(fields=[
+            "msg",
+            "SrcIP",
+            "DstIP", 
+            "SrcMac",
+            "DstMac",
+            "NormID",
+            "HostID",
+            "UserIDSrc",
+            "ObjectID",
+            "Severity",
+            "LastTime",
+            "DSIDSigID",
+            "IPSIDAlertID"], format='csv'))
+
+        print(events.get_text(fields=[
+            "msg",
+            "SrcIP",
+            "DstIP", 
+            "SrcMac",
+            "DstMac",
+            "NormID",
+            "HostID",
+            "UserIDSrc",
+            "ObjectID",
+            "Severity",
+            "LastTime",
+            "DSIDSigID",
+            "IPSIDAlertID"], format='prettytable', max_column_width=50))
+
+
+
