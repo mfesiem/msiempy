@@ -706,7 +706,7 @@ class Event(NitroDict):
 
     def __getitem__(self, key):
         """
-        Best effort to autocomplete the field name.
+        Best effort to match or autocomplete the field name.
         """
         try :
             val = collections.UserDict.__getitem__(self, key)
