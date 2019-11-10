@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
                     #Getting the url
                     try:
-                        response = requests.get(url, verify=False, headers = {'User-Agent': 'ack_irrelevants.py'})
+                        response = requests.get(url, verify=False, headers = {'User-Agent': 'ack_irrelevants.py'}, timeout=60)
                     except Exception as err :
                         response = err
 

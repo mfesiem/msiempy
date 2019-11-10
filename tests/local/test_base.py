@@ -73,9 +73,6 @@ class T(unittest.TestCase):
         print('CSV')
         print(manager.get_text(format='csv'))
 
-        print('COMPACT')
-        print(manager.get_text(format='compact'))
-
         print('NORMAL')
         print(manager.text)
 
