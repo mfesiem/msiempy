@@ -1153,7 +1153,7 @@ class NitroList(collections.UserList, NitroObject):
 
 
     def get_text(self, format='prettytable', fields=None, 
-                        max_column_width=25, get_text_nest_attr={}):
+                        max_column_width=80, get_text_nest_attr={}):
         """
         Return a csv or table string representation of the list
 
