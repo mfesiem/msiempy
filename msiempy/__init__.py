@@ -64,7 +64,39 @@ class NitroConfig(configparser.ConfigParser):
     For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`
     If `.msiem` folder exists in you local directory : `./.msiem/conf.ini`
 
+    Parameters:  
+
+        - `path`: Config file special path, if path is left None, will automatically look for it.  
+        - `config`: Manual config dict. ex: `{'general':{'verbose':True}}`.
+        - `*args, **kwargs` : Passed to `configparser.ConfigParser.__init__()` method.
+
     """
+    def __init__(self, path=None, config=None, *arg, **kwarg):
+
+        super().__init__(*arg, **kwarg)
+
+        self.read_dict(self.DEFAULT_CONF_DICT)
+    
+        if not path :
+            self._path = self.find_ini_location()
+        else : 
+            self._path = path
+
+        try :
+            files=self.read(self._path)
+            if len(files) == 0:
+                raise FileNotFoundError
+
+        except :
+            log.info("Config file inexistant or currupted, applying defaults")
+
+            if not os.path.exists(os.path.dirname(self._path)):
+                os.makedirs(os.path.dirname(self._path))
+            self.write()
+
+        if config is not None :
+            log.info("Reading config_dict : "+str(self))
+            self.read_dict(config)
 
     CONFIG_FILE_NAME='.msiem/conf.ini'
     """`.msiem/conf.ini`"""
@@ -104,39 +136,6 @@ class NitroConfig(configparser.ConfigParser):
         """Custom str() method that lists all config fields.
         """
         return('Configuration file : '+ self._path+'\n'+str({section: dict(self[section]) for section in self.sections()}))
-
-    def __init__(self, path=None, config=None, *arg, **kwarg):
-        """Parameters:  
-
-        - `path`: Config file special path, if path is left None, will automatically look for it.  
-        - `config`: Manual config dict. ex: `{'general':{'verbose':True}}`.
-        - `*args, **kwargs` : Passed to `configparser.ConfigParser.__init__()` method.
-        """
-
-        super().__init__(*arg, **kwarg)
-
-        self.read_dict(self.DEFAULT_CONF_DICT)
-    
-        if not path :
-            self._path = self.find_ini_location()
-        else : 
-            self._path = path
-
-        try :
-            files=self.read(self._path)
-            if len(files) == 0:
-                raise FileNotFoundError
-
-        except :
-            log.info("Config file inexistant or currupted, applying defaults")
-
-            if not os.path.exists(os.path.dirname(self._path)):
-                os.makedirs(os.path.dirname(self._path))
-            self.write()
-
-        if config is not None :
-            log.info("Reading config_dict : "+str(self))
-            self.read_dict(config)
 
     def write(self):
         """Write the config file to the predetermined path.
@@ -238,7 +237,38 @@ class NitroSession():
     It provides standard dialogue with the ESM by doing agument interpolation with `msiempy.NitroSession.PARAMS`.  
     Internal `__dict__` refers to a unique instance of dict and thus, properties can be instanciated only once.  
     It uses `msiempy.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.
+
+    The init method is called every time you call NitroSession() constructor.
+        But the properties are actually initiated only once.
+        Use logout() to reinstanciate NitroSession.  
+
+        Parameters:  
+
+        - `conf_path` : Configuration file path.  
+        - `conf_dict` : Manual config dict. ex: `{'general':{'verbose':True}}`. See `msiempy.NitroConfig` class to have full details.
     """
+    def __init__(self, conf_path=None, conf_dict=None):
+        global log
+        self.__dict__ = NitroSession.__unique_state__
+        
+        #Init properties only once
+        if NitroSession.__initiated__ == False :
+            NitroSession.__initiated__ = True
+            
+            #Private attributes
+            self._headers={'Content-Type': 'application/json'}
+            self._logged=False
+            
+            #Config parsing
+            self.config = NitroConfig(path=conf_path, config=conf_dict)
+            NitroSession.config=self.config
+
+            #Set the logging configuration
+            self._init_log(verbose=self.config.verbose,
+                quiet=self.config.quiet,
+                logfile=self.config.logfile)
+
+            log.info('New ESM session instance is created with : '+str(self.config.host))
 
     BASE_URL = 'https://{}/rs/esm/'
     __pdoc__['NitroSession.BASE_URL']="""API v2 base url: `%(url)s`""" % dict(url=BASE_URL)
@@ -602,38 +632,7 @@ class NitroSession():
     def __str__(self):
         return repr(self.__unique_state__) 
 
-    def __init__(self, conf_path=None, conf_dict=None):
-        """
-        The init method is called every time you call NitroSession() constructor.
-        But the properties are actually initiated only once.
-        Use logout() to reinstanciate NitroSession.  
 
-        Parameters:  
-
-        - `conf_path` : Configuration file path.  
-        - `conf_dict` : Manual config dict. ex: `{'general':{'verbose':True}}`. See `msiempy.NitroConfig` class to have full details.
-        """
-        global log
-        self.__dict__ = NitroSession.__unique_state__
-        
-        #Init properties only once
-        if NitroSession.__initiated__ == False :
-            NitroSession.__initiated__ = True
-            
-            #Private attributes
-            self._headers={'Content-Type': 'application/json'}
-            self._logged=False
-            
-            #Config parsing
-            self.config = NitroConfig(path=conf_path, config=conf_dict)
-            NitroSession.config=self.config
-
-            #Set the logging configuration
-            self._init_log(verbose=self.config.verbose,
-                quiet=self.config.quiet,
-                logfile=self.config.logfile)
-
-            log.info('New ESM session instance is created with : '+str(self.config.host))
 
 
     def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False, retry=True):
@@ -1034,17 +1033,16 @@ class NitroDict(collections.UserDict, NitroObject):
     Base class that represent any SIEM data that can be represented as a item of a list.
     Exemple : Event, Alarm, etc...
     Inherits from dict.
-    """
-    def __init__(self, adict=None, id=None):
-        """
-        Initiate the NitroObject and UserDict objects, load the data if id is specified, use adict agument 
+
+    Initiate the NitroObject and UserDict objects, load the data if id is specified, use adict agument 
         and update dict values accordingly.
 
         Parameters:  
 
         - `adict`: dict object to wrap.  
         - `id`: ESM obejct unique identifier. Alert.IPSIDAlertID for exemple. 
-        """
+    """
+    def __init__(self, adict=None, id=None):
         NitroObject.__init__(self)
         collections.UserDict.__init__(self, adict)
         
@@ -1054,9 +1052,9 @@ class NitroDict(collections.UserDict, NitroObject):
         if isinstance(adict, dict):
             self.data=adict
 
-        for key in self.data :
-            if isinstance(self.data[key], list):
-                self.data[key]=NitroList(alist=self.data[key])
+        for key in list(self) :
+            if isinstance(self[key], list):
+                self[key]=NitroList(alist=self[key])
 
     def __str__(self):
         """str(obj) -> return text string.
@@ -1094,22 +1092,26 @@ class NitroDict(collections.UserDict, NitroObject):
 class NitroList(collections.UserList, NitroObject):
     """
     Base class for NitroList objects. It offers callable execution management, search and other data list actions.  
-    TODO better polymorphism to cast every sub-NitroList class's item dynamcally in `__init__` method
+    TODO better polymorphism to cast every sub-NitroList class's item dynamcally in `__init__` method  
+    
+    Subclassing requirements: Subclasses of UserList are expected to offer a constructor which can be called with either no arguments or one argument. List operations which return a new sequence attempt to create an instance of the actual implementation class. To do so, it assumes that the constructor can be called with a single parameter, which is a sequence object used as a data source.
+    If a derived class does not wish to comply with this requirement, all of the special methods supported by this class will need to be overridden; please consult the sources for information about the methods which need to be provided in that case.
+    See : https://docs.python.org/3.8/library/collections.html?highlight=userdict#userlist-objects  
+
+    Parameters:  
+
+        - `alist`: list object to wrap.
     """
 
     def __init__(self, alist=None):
-        """
-        Parameters:  
-
-        - `alist`: list object to wrap.
-        """
         NitroObject.__init__(self)
         if alist is None:
             collections.UserList.__init__(self, [])
         
         elif isinstance(alist , (list, NitroList)):
             collections.UserList.__init__(
-                self, alist #[NitroDict(adict=item) for item in alist if isinstance(item, (dict, NitroDict))] 
+                self, alist 
+                #[NitroDict(adict=item) for item in alist if isinstance(item, (dict, NitroDict))] 
                 #Can't instanciate NitroDict, so Concrete classes have to cast the items afterwards!
                 #TODO better polymorphism to cast every sub-NitroList class's item dynamcally !
                 )
@@ -1119,7 +1121,7 @@ class NitroList(collections.UserList, NitroObject):
     def __str__(self):
         """str(obj) -> return text string.
         """
-        return "{} containing {} elements ; keys={}".format(str(super()), len(self.data), self.keys)
+        return "{} containing {} elements ; keys={}".format(str(super()), len(list(self)), self.keys)
 
     def __repr__(self):
         """repr(obj) -> return json string.
@@ -1132,7 +1134,7 @@ class NitroList(collections.UserList, NitroObject):
     #     All dict should have the same set of keys.
     #     Creating keys in dicts.
     #     """
-    #     for item in self.data :
+    #     for item in list(self) :
     #         if isinstance(item, (dict, NitroDict)):
     #             for key in self.keys :
     #                 if key not in item :
@@ -1145,7 +1147,7 @@ class NitroList(collections.UserList, NitroObject):
         #If new fields are added it won't show on text repr. Only json.
         
         manager_keys=set()
-        for item in self.data:
+        for item in list(self):
             if isinstance(item, (dict,NitroDict)):
                 manager_keys.update(item.keys())
 
@@ -1153,7 +1155,7 @@ class NitroList(collections.UserList, NitroObject):
 
 
     def get_text(self, format='prettytable', fields=None, 
-                        max_column_width=80, get_text_nest_attr={}):
+                        max_column_width=80, get_text_nest_attr={}, retry=True):
         """
         Return a csv or table string representation of the list
 
@@ -1172,31 +1174,47 @@ class NitroList(collections.UserList, NitroObject):
         if not fields :
             fields=sorted(self.keys)
 
-        if format == 'csv':
-            file = StringIO()
-            dw = csv.DictWriter(file, fields, extrasaction='ignore')
-            dw.writeheader()
-            dw.writerows(self.data)
-            text = file.getvalue()
+        try:
+            
+            if format == 'csv':
+                file = StringIO()
+                dw = csv.DictWriter(file, fields, extrasaction='ignore')
+                dw.writeheader()
+                dw.writerows(list(self))
+                text = file.getvalue()
 
-        elif format == 'prettytable':
-            table = prettytable.PrettyTable()
-            table.set_style(MSWORD_FRIENDLY)
-            table.field_names=fields
-            #self._norm_dicts()
+            elif format == 'prettytable':
+                table = prettytable.PrettyTable()
+                table.set_style(MSWORD_FRIENDLY)
 
-            for item in self.data:
-                if isinstance(item, (dict, NitroDict)):
-                    table.add_row(['\n'.join(textwrap.wrap(str(item[field]), width=max_column_width))
-                        if not isinstance(item[field], NitroList)
-                        else item[field].get_text(**get_text_nest_attr) for field in fields])
-                    
-                else : log.warning("Unnapropriate list element type, won't show on the prettytable : {}".format(str(item)))
+                #table_csv = [item for item in csv.DictReader(StringIO(initial_value=text), delimiter=',')]
 
-            text=table.get_string()
+                table.field_names=fields
+
+                for item in list(self):
+                    if isinstance(item, (dict, NitroDict)):
+                        values=list()
+                        for field in fields:
+                            obj=None
+                            try:obj=item[field]
+                            except KeyError : pass
+
+                            if isinstance(obj, NitroList):
+                                values.append(obj.get_text(**get_text_nest_attr))
+                            else:
+                                values.append('\n'.join(textwrap.wrap(str(obj), width=max_column_width)))
+
+                        table.add_row(values)
+                        
+                    else : log.warning("Unnapropriate list element type, won't show on the prettytable : {}".format(str(item)))
+
+                text=table.get_string()
+            
+            else :
+                raise AttributeError("Unknown `NitroList.get_text` format : {}. Accepted values are 'prettytable' or 'csv'.".format(format))
         
-        else :
-            raise AttributeError("Unknown `NitroList.get_text` format : {}. Accepted values are 'prettytable' or 'csv'.".format(format))
+        except KeyError :
+            raise
 
         return text
 
@@ -1211,7 +1229,7 @@ class NitroList(collections.UserList, NitroObject):
     def json(self):
         """Dumps a JSON list of dicts representing the current list.
         """
-        return(json.dumps([dict(item) for item in self.data], indent=4, cls=NitroObject.NitroJSONEncoder))
+        return(json.dumps([dict(item) for item in list(self)], indent=4, cls=NitroObject.NitroJSONEncoder))
 
     def search(self, invert=False, match_prop='json', *pattern):
         """
@@ -1245,7 +1263,7 @@ class NitroList(collections.UserList, NitroObject):
         matching_items=list()
         
         if isinstance(apattern, str):
-            for item in self.data :
+            for item in list(self) :
                 if regex_match(apattern, getattr(item, match_prop) if isinstance(item, NitroDict) else str(item)) is not invert :
                     matching_items.append(item)
             log.debug("You're search returned {} rows : {}".format(
@@ -1319,7 +1337,7 @@ class NitroList(collections.UserList, NitroObject):
         returned=list()
 
         #Usethe self contained data if not speficed otherwise
-        elements=self.data
+        elements=list(self)
         if isinstance(data, list) and data is not None:
             elements=data
         else :
@@ -1384,38 +1402,8 @@ class FilteredQueryList(NitroList):
     Base class for query based managers : AlarmManager, EventManager
     FilteredQueryList object can handle time_ranges and time splitting.
     Provide time ranged filtered query wrapper.
-    """
-    
-    DEFAULT_TIME_RANGE="CURRENT_DAY"
-    __pdoc__['FilteredQueryList.DEFAULT_TIME_RANGE']="""Default time range : %(default)s""" % dict(default=DEFAULT_TIME_RANGE)
 
-    POSSIBLE_TIME_RANGE=[
-            "CUSTOM",
-            "LAST_MINUTE",
-            "LAST_10_MINUTES",
-            "LAST_30_MINUTES",
-            "LAST_HOUR",
-            "CURRENT_DAY",
-            "PREVIOUS_DAY",
-            "LAST_24_HOURS",
-            "LAST_2_DAYS",
-            "LAST_3_DAYS",
-            "CURRENT_WEEK",
-            "PREVIOUS_WEEK",
-            "CURRENT_MONTH",
-            "PREVIOUS_MONTH",
-            "CURRENT_QUARTER",
-            "PREVIOUS_QUARTER",
-            "CURRENT_YEAR",
-            "PREVIOUS_YEAR"
-    ]
-    __pdoc__['FilteredQueryList.POSSIBLE_TIME_RANGE']="""
-    List of possible time ranges : `%(timeranges)s`""" % dict(timeranges=', '.join(POSSIBLE_TIME_RANGE))
-
-    def __init__(self, time_range=None, start_time=None, end_time=None, filters=None, 
-        load_async=True, *arg, **kwargs):
-        """
-        Abstract base class that handles the time ranges operations, loading data from the SIEM.
+     Abstract base class that handles the time ranges operations, loading data from the SIEM.
 
         Parameters:  
     
@@ -1425,8 +1413,9 @@ class FilteredQueryList(NitroList):
         - `end_time` : Query endding time, can be a string or a datetime object. Parsed with dateutil.
         - `filters` : List of filters applied to the query.
         - `load_async` : Load asynchonously the sub-queries. Defaulted to True.       
-            
-        """
+    """
+    def __init__(self, *arg, time_range=None, start_time=None, end_time=None, filters=None, 
+        load_async=True, **kwargs):
 
         #handled eventual deprecated arguments
         if 'max_query_depth' in kwargs :
@@ -1463,6 +1452,32 @@ class FilteredQueryList(NitroList):
             self.time_range=time_range
 
         self.load_async=load_async
+    
+    DEFAULT_TIME_RANGE="CURRENT_DAY"
+    __pdoc__['FilteredQueryList.DEFAULT_TIME_RANGE']="""Default time range : %(default)s""" % dict(default=DEFAULT_TIME_RANGE)
+
+    POSSIBLE_TIME_RANGE=[
+            "CUSTOM",
+            "LAST_MINUTE",
+            "LAST_10_MINUTES",
+            "LAST_30_MINUTES",
+            "LAST_HOUR",
+            "CURRENT_DAY",
+            "PREVIOUS_DAY",
+            "LAST_24_HOURS",
+            "LAST_2_DAYS",
+            "LAST_3_DAYS",
+            "CURRENT_WEEK",
+            "PREVIOUS_WEEK",
+            "CURRENT_MONTH",
+            "PREVIOUS_MONTH",
+            "CURRENT_QUARTER",
+            "PREVIOUS_QUARTER",
+            "CURRENT_YEAR",
+            "PREVIOUS_YEAR"
+    ]
+    __pdoc__['FilteredQueryList.POSSIBLE_TIME_RANGE']="""
+    List of possible time ranges : `%(timeranges)s`""" % dict(timeranges=', '.join(POSSIBLE_TIME_RANGE))
 
     @property
     def time_range(self):

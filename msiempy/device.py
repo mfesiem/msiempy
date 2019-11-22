@@ -90,7 +90,8 @@ class ESM(Device):
 
     @property
     def json(self):
-        return (dict(self))
+        raise NotImplementedError()
+        #return (dict(self))
 
     def time(self):
         """
@@ -418,29 +419,29 @@ class DevTree(NitroList):
         Initalize the DevTree object
         """
         super().__init__(*args, **kwargs)
-        self.devtree = self.build_devtree()
+        self.data = self.build_devtree()
         self._cast_datasources()
         
-    def __len__(self):
-        """
-        Returns the count of devices in the device tree.
-        """
-        return len(self.devtree)
-        
-    def __iter__(self):
-        """
-        Returns:
-            Generator with datasource objects.
-        """
-        for ds in self.devtree:
-            yield ds
+    # DevTree uses data property so it implements list    
+    # def __len__(self):
+    #     """
+    #     Returns the count of devices in the device tree.
+    #     """
+    #     return len(self.data)
+    # def __iter__(self):
+    #     """
+    #     Returns:
+    #         Generator with datasource objects.
+    #     """
+    #     for ds in self.data:
+    #         yield ds
+    # def __str__(self):
+    #     return json.dumps(self.data)
+    # def __repr__(self):
+    #     return json.dumps(self.data)
+    # def __getitem__(self, key):
+    #     return self.data[key]
 
-    def __str__(self):
-        return json.dumps(self.devtree)
-
-
-    def __repr__(self):
-        return json.dumps(self.devtree)
 
     def __contains__(self, term):
         """
@@ -452,9 +453,7 @@ class DevTree(NitroList):
         else:
             return None
 
-    def __getitem__(self, key):
-        return self.devtree[key]
-
+   
     def search(self, term, zone_id='0'):
         """
         Args:
@@ -468,7 +467,7 @@ class DevTree(NitroList):
         """
         search_fields = ['ds_ip', 'name', 'hostname', 'ds_id']
 
-        found = [ds for ds in self.devtree
+        found = [ds for ds in self.data
                     for field in search_fields 
                     if str(term).lower() == str(ds[field]).lower()
                     if ds['zone_id'] == zone_id]
@@ -489,29 +488,30 @@ class DevTree(NitroList):
         Raises:
             ValueError: if field or term are None
         """
-        return (DataSource(adict=ds) for ds in self.devtree
+        return (DataSource(adict=ds) for ds in self.data
                         if ds.get(field) == term)
                        
     def refresh(self):
         """
         Rebuilds the devtree
         """
-        self.devtree = self.build_devtree()
+        self.data = self.build_devtree()
         self._cast_datasources()
-        
-    def get_ds_times(self):
-        """
-        """
-        last_times = self._get_last_event_times()
-        self._insert_ds_last_times()
-        return last_times
+
+    # Unused bugged method    
+    # def get_ds_times(self):
+    #     """
+    #     """
+    #     last_times = self._get_last_event_times()
+    #     self._insert_ds_last_times()
+    #     return last_times
         
     def recs(self):
         """
         Returns:
             list of Receiver dicts (str:str)
         """
-        return [self._rec for self._rec in self.devtree
+        return [self._rec for self._rec in self.data
                     if self._rec['desc_id'] == '2']
     
     def build_devtree(self):
@@ -800,53 +800,53 @@ class DevTree(NitroList):
             else:
                 device['zone_id'] = '0'
         return devtree
+   
+    # Unused method 
+    # def _insert_venmods(self):
+    #     """
+    #     Populates vendor/model fields for any datasources 
         
-    def _insert_venmods(self):
-        """
-        Populates vendor/model fields for any datasources 
+    #     Returns:
+    #         List of datasource dicts - devtree
+    #     """
+    #     for self._ds in self._devtree:
+    #         if not self._ds['vendor'] and self._ds['desc_id'] == '3': 
+    #             self._ds['vendor'], self._ds['model'] = ESM().type_id_to_venmod(self._ds['type_id'])
+    #     return self._devtree_lod
+    # Unused method 
+    # def _insert_desc_names(self):
+    #     """
+    #     Populates the devtree with desc_names matching the desc_ids
         
-        Returns:
-            List of datasource dicts - devtree
-        """
-        for self._ds in self._devtree:
-            if not self._ds['vendor'] and self._ds['desc_id'] == '3': 
-                self._ds['vendor'], self._ds['model'] = ESM().type_id_to_venmod(self._ds['type_id'])
-        return self._devtree_lod
-    
-    def _insert_desc_names(self):
-        """
-        Populates the devtree with desc_names matching the desc_ids
+    #     Returns:
+    #         List of datasource dicts - devtree
         
-        Returns:
-            List of datasource dicts - devtree
-        
-        """
-        self._type_map = {'1': 'zone',
-                        '2': 'ERC',
-                        '3': 'datasource',
-                        '4': 'Database Event Monitor (DBM)',
-                        '5': 'DBM Database',
-                        '7': 'Policy Auditor',
-                        '10': 'Application Data Monitor (ADM)',
-                        '12': 'ELM',
-                        '14': 'Local ESM',
-                        '15': 'Advanced Correlation Engine (ACE)',
-                        '16': 'Asset datasource',
-                        '17': 'Score-based Correlation',
-                        '19': 'McAfee ePolicy Orchestrator (ePO)',
-                        '20': 'EPO',
-                        '21': 'McAfee Network Security Manager (NSM)',
-                        '22': 'McAfee Network Security Platform (NSP)',
-                        '23': 'NSP Port',
-                        '24': 'McAfee Vulnerability Manager (MVM)',
-                        '25': 'Enterprise Log Search (ELS)',
-                        '254': 'client_group',
-                        '256': 'client'}
-
-        for self._ds in self._devtree:
-            if self._ds['desc_id'] in self._type_map:
-                self._ds['desc'] = self._type_map[self._ds['desc_id']]
-        return self._devtree
+    #     """
+    #     self._type_map = {'1': 'zone',
+    #                     '2': 'ERC',
+    #                     '3': 'datasource',
+    #                     '4': 'Database Event Monitor (DBM)',
+    #                     '5': 'DBM Database',
+    #                     '7': 'Policy Auditor',
+    #                     '10': 'Application Data Monitor (ADM)',
+    #                     '12': 'ELM',
+    #                     '14': 'Local ESM',
+    #                     '15': 'Advanced Correlation Engine (ACE)',
+    #                     '16': 'Asset datasource',
+    #                     '17': 'Score-based Correlation',
+    #                     '19': 'McAfee ePolicy Orchestrator (ePO)',
+    #                     '20': 'EPO',
+    #                     '21': 'McAfee Network Security Manager (NSM)',
+    #                     '22': 'McAfee Network Security Platform (NSP)',
+    #                     '23': 'NSP Port',
+    #                     '24': 'McAfee Vulnerability Manager (MVM)',
+    #                     '25': 'Enterprise Log Search (ELS)',
+    #                     '254': 'client_group',
+    #                     '256': 'client'}
+        # for self._ds in self._devtree:
+        #     if self._ds['desc_id'] in self._type_map:
+        #         self._ds['desc'] = self._type_map[self._ds['desc_id']]
+        # return self._devtree
         
                         
     def _get_last_times(self):
@@ -907,9 +907,9 @@ class DevTree(NitroList):
         return [ds for ds in devtree if ds['desc_id'] not in type_filter]
 
     def _cast_datasources(self):
-        for dev in self.devtree:
+        for dev in self.data:
             if dev['desc_id'] in ['3','256']:
-                self.devtree[int(dev['idx'])] = DataSource(dev)
+                self.data[int(dev['idx'])] = DataSource(dev)
                 
     def duplicate_datasource(self, p):
         """Check for duplicate dataname name or IP address.
@@ -993,7 +993,7 @@ class DevTree(NitroList):
                                                 enabled=p['enabled'],
                                                 url=p['url'],
                                                 parameters=p['parameters'])
-            self.devtree.append(p)
+            self.data.append(p)
             return result_id
 
     def add_client(self, p):
@@ -1015,7 +1015,7 @@ class DevTree(NitroList):
             port (str): IP port to use
             require_tls (bool): use syslog-TLS (default: False)
         """
-        for ds in self.devtree:
+        for ds in self.data:
             if ds['ds_id'] == p['parent_id']:
                 if ds['desc_id'] != '3':
                     print('Error: Client parent must be matching datasource'

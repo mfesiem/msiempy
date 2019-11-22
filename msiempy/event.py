@@ -16,6 +16,23 @@ from .__utils__ import timerange_gettimes, parse_query_result, format_fields_for
 class EventManager(FilteredQueryList):
     """Interface to query and manage events.
     Inherits from `msiempy.FilteredQueryList`.
+
+    Paramters:  
+           
+        - `fields` : list of strings representing all fields you want to apprear in the Events records.
+            Get the list of possible fields by calling `msiempy.event.EventManager.get_possible_fields()` method or see 
+            `msiempy.event.Event`.
+            Some defaults fields will always be present unless removed with `remove()` method, see notes.
+        - `order` :
+            tuple (direction, field) or a list of filters in the SIEM format.
+            will set the first order according to (direction, fields).
+        - `limit` : max number of rows per query, by default takes the value in config `default_rows` option.
+        - `filters` : list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.QueryFilter`
+        if you wish to use advanced filtering.
+        - `max_query_depth` : maximum number of supplement reccursions of division of the query times
+            Meaning, if limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
+            the list is (500*5)*(500*5)*(500*5) = 15625000000
+        - `*args, **kwargs` : Parameters passed to `msiempy.FilteredQueryList`   
     """ 
 
     #Constants
@@ -31,29 +48,12 @@ class EventManager(FilteredQueryList):
     # event fields, should be loaded once (when the session start ?)
     _possible_fields = []
 
-    def __init__(self, fields=None, 
+    def __init__(self, *args, fields=None, 
         order=None, limit=500, filters=None, 
         max_query_depth=0,
-        __parent__=None,
-        *args, **kwargs):
-        """
-        Paramters:  
-           
-        - `fields` : list of strings representing all fields you want to apprear in the Events records.
-            Get the list of possible fields by calling `msiempy.event.EventManager.get_possible_fields()` method or see 
-            `msiempy.event.Event`.
-            Some defaults fields will always be present unless removed with `remove()` method, see notes.
-        - `order` :
-            tuple (direction, field) or a list of filters in the SIEM format.
-            will set the first order according to (direction, fields).
-        - `limit` : max number of rows per query, by default takes the value in config `default_rows` option.
-        - `filters` : list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.QueryFilter`
-        if you wish to use advanced filtering.
-        - `max_query_depth` : maximum number of supplement reccursions of division of the query times
-            Meaning, if limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
-            the list is (500*5)*(500*5)*(500*5) = 15625000000
-        - `*args, **kwargs` : Parameters passed to `msiempy.FilteredQueryList`                
-        """
+        __parent__=None, **kwargs):
+        #Calling super constructor : time_range set etc...
+        super().__init__(*args, **kwargs)
 
         #Store the query parent 
         self.__parent__=__parent__
@@ -63,16 +63,11 @@ class EventManager(FilteredQueryList):
 
         #Declaring attributes
         self._filters=list()
-
-        #Setting the default fields
-        self.fields=Event.DEFAULTS_EVENT_FIELDS
         
-        #Adds the specified fields and make sure there is no duplicates
-        if fields :
-            self.fields=list(set(self.fields+fields))
-
-        #Calling super constructor : time_range set etc...
-        super().__init__(*args, **kwargs)
+        #Setting the default fields Adds the specified fields and make sure there is no duplicates
+        #print('{}\n DEBUG FIELDS : {}'.format(locals(), fields))
+        if isinstance(fields, list):self.fields=set(Event.DEFAULTS_EVENT_FIELDS+fields)
+        else:self.fields=Event.DEFAULTS_EVENT_FIELDS
 
         #Setting limit according to config or limit argument
         #TODO Try to load queries with a limit of 10k and get result as chucks of 500 with starPost nbRows
@@ -243,7 +238,7 @@ class EventManager(FilteredQueryList):
                 
                 sub_queries=list()
 
-                for time in reversed(times) :
+                for time in times : #reversed(times) :
                     #Divide the query in sub queries
                     sub_query = EventManager(fields=self.fields, 
                         order=self.order, 
@@ -732,7 +727,7 @@ class Event(NitroDict):
                     # log.debug('Errored __getitem__(self, {}.{})'.format(table, key))
                     pass
 
-            log.error('The SIEM dict keys are not always the same are the requested fields. Check `.keys()`.')
+            log.error('KeyError : {}. The SIEM dict keys are not always the same are the requested fields. Check `.keys()`.'.format(key))
             raise
 
     def clear_notes(self):
@@ -848,14 +843,14 @@ class GroupFilter(QueryFilter):
     """
         Based on EsmFilterGroup. See SIEM api doc.
         Used to dump groups of filters in the right format.
-    """
 
-    def __init__(self, filters, logic='AND') :
-        """Parameters :  
+        Parameters :  
 
         - `filters` : a list of filters, it can be `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter`  
         - `logic` : 'AND' or 'OR'  
-        """
+    """
+
+    def __init__(self, filters, logic='AND') :
         super().__init__()
         
         #Declaring attributes
@@ -878,6 +873,12 @@ class FieldFilter(QueryFilter):
     """
     Based on EsmFieldFilter. See SIEM api doc.
     Used to dump a filter in the right format.
+
+    Parameters:
+
+        - `name` : field name as string.  
+        - `values` : list of values the field is going to be tested againts with the specified orperator.  
+        - `orperator` : operator, see `msiempy.event.FieldFilter.POSSIBLE_OPERATORS`.  
     """
 
     """List of possibles operators        
@@ -922,13 +923,6 @@ class FieldFilter(QueryFilter):
 
 
     def __init__(self, name, values, operator='IN') :
-        """
-        Parameters:
-
-        - `name` : field name as string.  
-        - `values` : list of values the field is going to be tested againts with the specified orperator.  
-        - `orperator` : operator, see `msiempy.event.FieldFilter.POSSIBLE_OPERATORS`.  
-        """
         super().__init__()
         #Declaring attributes
         self._name=str()

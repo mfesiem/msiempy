@@ -18,20 +18,20 @@ class AlarmManager(FilteredQueryList):
     AlarmManager class.
     Interface to query and manage Alarms.
     Inherits from FilteredQueryList.
-    """
-    def __init__(self, status_filter='all', page_size=200, filters=None, event_filters=None,
-         *args, **kwargs):
 
-        """
-        Parameters:  
+    Parameters:  
+    
+    - `status_filter` : status of the alarms to query
+    - `page_size` : max number of rows per query, by default takes the value in config `default_rows` option.
+    - `page_number` : defaulted to 1.
+    - `filters` : [(field, [values]), (field, [values])]
+    - `event_filters` : [(field, [values]), (field, [values])]
+    - `*args, **kwargs` : Parameters passed to `msiempy.base.FilteredQueryList.__init__()`
+    
+    """
+    def __init__(self, *args, status_filter='all', page_size=200, filters=None, event_filters=None, **kwargs):
+
         
-        - `status_filter` : status of the alarms to query
-        - `page_size` : max number of rows per query, by default takes the value in config `default_rows` option.
-        - `page_number` : defaulted to 1.
-        - `filters` : [(field, [values]), (field, [values])]
-        - `event_filters` : [(field, [values]), (field, [values])]
-        - `*args, **kwargs` : Parameters passed to `msiempy.base.FilteredQueryList.__init__()`
-        """
 
         super().__init__(*args, **kwargs)
 
