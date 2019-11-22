@@ -512,7 +512,7 @@ class DevTree(NitroList):
             list of Receiver dicts (str:str)
         """
         return [self._rec for self._rec in self.data
-                    if self._rec['desc_id'] == '2']
+                    if self._rec['desc_id'] in ['2','13']]
     
     def build_devtree(self):
         """
@@ -820,7 +820,6 @@ class DevTree(NitroList):
         
     #     Returns:
     #         List of datasource dicts - devtree
-        
     #     """
     #     self._type_map = {'1': 'zone',
     #                     '2': 'ERC',
