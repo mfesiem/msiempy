@@ -994,7 +994,8 @@ class NitroSession():
 
 class NitroObject(abc.ABC):
     """
-    Base class for all nitro objects. All objects have a reference to the single `msiempy.NitroSession` object that handle the esm requests.
+    Base class for all nitro objects. All objects have a reference to the single `msiempy.NitroSession` object that handle the esm requests.  
+    Creates the object session.
     """
 
     class NitroJSONEncoder(json.JSONEncoder):
@@ -1011,8 +1012,6 @@ class NitroObject(abc.ABC):
 
     @abc.abstractmethod
     def __init__(self):
-        """Creates the object session.
-        """
         self.nitro=NitroSession()
 
     @abc.abstractproperty

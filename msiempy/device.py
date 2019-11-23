@@ -106,11 +106,12 @@ class ESM(NitroObject):
         """
         Returns: Backup status and timestamps.  
         Example :  
+        ```
             {'autoBackupEnabled': True,  
             'autoBackupDay': 7,  
             'autoBackupHour': 0,  
             'backupLastTime': '07/03/2017 08:59:36',  
-            'backupNextTime': '07/10/2017 08:59'}  
+            'backupNextTime': '07/10/2017 08:59'}  ```
         """
         fields = ['autoBackupEnabled',
                    'autoBackupDay',
@@ -132,9 +133,10 @@ class ESM(NitroObject):
         """
         Returns: Rules autocheck status and timestamps.  
         Example:  
+        ```
             { 'rulesAndSoftwareCheckEnabled': True
             'rulesAndSoftLastCheck': '07/06/2017 10:28:43',
-            'rulesAndSoftNextCheck': '07/06/2017 22:28:43',}
+            'rulesAndSoftNextCheck': '07/06/2017 22:28:43',} ```
 
         """
         self._fields = ['rulesAndSoftwareCheckEnabled',
@@ -328,9 +330,9 @@ class DevTree(NitroList):
    
     def search(self, term, zone_id='0'):
         """
-        Arguments:
-        - `term` (`str`): Datasource name, IP, hostname or ds_id. Matching the `name`, `IPv4/IPv6 address`, `hostname` or `device ID`.  
-        - `zone_id` (`int`): Provide zone_id to limit search to a specific zone  
+        Arguments:  
+        - `term` (`str`): Datasource name, IP, hostname or ds_id. Matching the `name`, `IPv4/IPv6 address`, `hostname` or `device ID`.   
+        - `zone_id` (`int`): Provide zone_id to limit search to a specific zone   
 
         Returns: `Datasource` object that matches the provided search term or None.
         """
@@ -346,7 +348,7 @@ class DevTree(NitroList):
 
     def search_ds_group(self, field, term, zone_id='0'):
         """
-        Arguments:
+        Arguments:  
         - `field` (`str`): Valid DS config field to search  
         - `term` (`str`): Data to search for in specified field  
 
@@ -1027,10 +1029,11 @@ class DataSource(NitroDict):
     - `adict` (`dict`): datasource parameters
         
     Best instantiated from DevTree():
+    ```
         >>> dt = DevTree()
         >>> ds = dt[25]
         or
-        >>> ds = dt.search('10.10.1.1')
+        >>> ds = dt.search('10.10.1.1')```
 
     Dict keys:  
     - `name` (`str`): name of the datasource  
@@ -1081,6 +1084,7 @@ class DataSource(NitroDict):
                 self.nitro.request('del_ds2', parent_id=self.data['parent_id'], ds_id=self.data['ds_id'])
     
     def delete_client(self):
+        """This deletes the datasource's clients and all the data. Be careful."""
         file = self.nitro.request('get_wfile', ds_id=self.data['ds_id'])['TK']
         job_id = self.nitro.request('del_client', 
                                         parent_id=self.data['parent_id'], ftoken=file)['JID']
