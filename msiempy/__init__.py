@@ -829,11 +829,16 @@ class NitroSession():
             Wrapper around the `msiempy.NitroSession.esm_request` method.  
 
             Parameters:  
-
             - `request`: Keyword corresponding to the request name in `msiempy.NitroSession.PARAMS` mapping.  
-            - `**kwargs` Can contain :
-                - `msiempy.NitroSession.esm_request` arguments except `method` and `data`
-                - Interpolation parameters that will be match to `msiempy.NitroSession.PARAMS` templates. Check the file to be sure of the keyword arguments.  
+
+            Parameters to `msiempy.NitroSession.esm_request` :
+            - `http`: HTTP method.  
+            - `callback` : function to apply afterwards  
+            - `raw` : If true will return the Response object from requests module.   
+            - `secure` : If true will not log the content of the request.   
+            
+            Interpolation parameters :  
+            - `**kwargs` : Interpolation parameters that will be match to `msiempy.NitroSession.PARAMS` templates. Dynamic keyword arguments.  
 
             Returns : 
             - a `dict`, `list` or `str` object  
@@ -1399,20 +1404,17 @@ class NitroList(collections.UserList, NitroObject):
 
 class FilteredQueryList(NitroList):
     """
-    Base class for query based managers : AlarmManager, EventManager
-    FilteredQueryList object can handle time_ranges and time splitting.
-    Provide time ranged filtered query wrapper.
+    Base class for query based managers : `msiempy.alarm.AlarmManager`, `msiempy.event.EventManager`.  
+    FilteredQueryList object can handle time_ranges and time splitting.  
+    Abstract base class that provide time ranged filtered query wrapper.  
 
-     Abstract base class that handles the time ranges operations, loading data from the SIEM.
-
-        Parameters:  
-    
-        - `time_range` : Query time range. String representation of a time range. 
-            See `msiempy.FilteredQueryList.POSSIBLE_TIME_RANGE`
-        - `start_time` : Query starting time, can be a string or a datetime object. Parsed with dateutil.
-        - `end_time` : Query endding time, can be a string or a datetime object. Parsed with dateutil.
-        - `filters` : List of filters applied to the query.
-        - `load_async` : Load asynchonously the sub-queries. Defaulted to True.       
+    Parameters:  
+    - `time_range` : Query time range. String representation of a time range. 
+        See `msiempy.FilteredQueryList.POSSIBLE_TIME_RANGE`.  
+    - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
+    - `end_time` : Query endding time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
+    - `filters` : List of filters applied to the query.  
+    - `load_async` : Load asynchonously the sub-queries. Defaulted to `True`.  
     """
     def __init__(self, *arg, time_range=None, start_time=None, end_time=None, filters=None, 
         load_async=True, **kwargs):
