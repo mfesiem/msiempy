@@ -1039,13 +1039,12 @@ class NitroDict(collections.UserDict, NitroObject):
     Exemple : Event, Alarm, etc...
     Inherits from dict.
 
-    Initiate the NitroObject and UserDict objects, load the data if id is specified, use adict agument 
-        and update dict values accordingly.
+    Initiate the NitroObject and UserDict objects, load the data if id is specified, use adict agument and update dict values accordingly.
 
-        Parameters:  
+    Parameters:  
 
-        - `adict`: dict object to wrap.  
-        - `id`: ESM obejct unique identifier. Alert.IPSIDAlertID for exemple. 
+    - `adict`: dict object to wrap.  
+    - `id`: ESM obejct unique identifier. Alert.IPSIDAlertID for exemple. 
     """
     def __init__(self, adict=None, id=None):
         NitroObject.__init__(self)
@@ -1104,8 +1103,7 @@ class NitroList(collections.UserList, NitroObject):
     See : https://docs.python.org/3.8/library/collections.html?highlight=userdict#userlist-objects  
 
     Parameters:  
-
-        - `alist`: list object to wrap.
+    - `alist`: list object to wrap.
     """
 
     def __init__(self, alist=None):
@@ -1295,7 +1293,7 @@ class NitroList(collections.UserList, NitroObject):
         - `func`: callable function. `func` is going to be called like `func(item, **func_args)` on all items in data.  This function can be stateless (static) or statefull (first argument is `self`),
         it doesn't really matter as the element will always be passed as the first argument of the function. On thing really important, the function must not
         set/delete/change any global variable, as a result, you'll see your varible beeing potentially corrupted or chalenged with conccurent accesses.
-        - `data`: if stays `None`, will perform the action on all list's rows (aka `self.data`), else it will perfom the action on the `data` list.
+        - `data`: if stays `None`, will perform the action on itself (`list(self)`) else it will perfom the action on the `data` list.
         - `func_args`: arguments that will be passed by default to `func` in all calls.
         - `confirm`: will ask interactively confirmation.
         - `asynch`: execute the task asynchronously with `concurrent.futures.ThreadPoolExecutor`. It will create a new executor object, so be carefull not to nest 2 asynchronous executions within eachother,
@@ -1305,17 +1303,14 @@ class NitroList(collections.UserList, NitroObject):
         - `message` : To show to the user.  
 
         This method is where the core of asynchronous tasks resides. `func` will be executed on all `data` elements.  
-        Basically, if `asynch=True`, will return :  
-            ```
+        Basically, if `asynch==True`, will return :  
             returned=list(concurrent.futures.ThreadPoolExecutor(
                         max_workers=workers ).map(
-                            func, data))
-            ```  
-        if `asynch=False`, will iterate and return :
-            ```
+                            func, data))  
+
+        if `asynch==False`, will iterate and return :
             for index_or_item in data:
                 returned.append(func(index_or_item))
-            ```  
 
         Returns a list of returned results.
         """
@@ -1513,7 +1508,8 @@ class FilteredQueryList(NitroList):
         """
         Start time of the query in the right SIEM format.  
         Use `_start_time` to get the datetime object. You can set the `star_time` as a `str` or a `datetime`.  
-        If `None`, equivalent CURRENT_DAY start 00:00:00. Raises `ValueError` if not the right type.  
+        If `None`, equivalent CURRENT_DAY start 00:00:00.  
+        Raises: `ValueError` if not the right type.  
         """
         return format_esm_time(self._start_time)
 
@@ -1533,7 +1529,8 @@ class FilteredQueryList(NitroList):
         """
         End time of the query in the right SIEM format.  
         Use `_end_time` property to get the datetime object. You can set the `end_time` as a `str` or a `datetime`.  
-        If `None`, equivalent CURRENT_DAY. Raises `ValueError` if not the right type.
+        If `None`, equivalent CURRENT_DAY.  
+        Raises `ValueError` if not the right type.
         """
         return format_esm_time(self._end_time)
 
@@ -1553,11 +1550,12 @@ class FilteredQueryList(NitroList):
         """ 
         Filter property : Returns a list of filters.
         Can be set with list of tuple(field, [values]) or `msiempy.event.QueryFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted.  
-        `None value will call `msiempy.query.FilteredQueryList.clear_filters()`.  
+        `None` value will call `msiempy.query.FilteredQueryList.clear_filters()`.  
         Raises : `AttributeError` if type not supported.
+        Abstract declaration.
         TODO find a better solution to integrate the filter propertie
         """
-        raise NotImplementedError()
+        pass
 
     @filters.setter
     def filters(self, filters):
@@ -1593,8 +1591,7 @@ class FilteredQueryList(NitroList):
     def qry_load_data(self, *args, **kwargs):
         """
         Method to load the data from the SIEM.  
-        Rturn a tuple (items, completed).  
-        completed = True if all the data that should be load is loaded.  
+        Rturns a `tuple ((items, completed))`.  
         Abstract declaration.
         """
         pass

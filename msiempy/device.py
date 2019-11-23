@@ -18,72 +18,50 @@ from functools import partial, lru_cache
 from . import NitroDict, NitroList, NitroError, NitroObject
 from .__utils__ import dehexify
 
-class Device(NitroObject):
-    pass
-
-class ERC(Device):
-    pass
-
-class ESM(Device):
-    """
-    ESM class
+class ESM(NitroObject):
+    """Enterprise Security Manager interface
     
-    Public Methods:
+    Methods:
     
-        version()       Returns simple version string, '10.1.0'
-        
-        buildstamp()    Returns buildstamp string, '10.0.2 20170516001031'
-        
-        time()          Returns ESM time (GMT)
-        
-        disks()         Returns string of disk status
-        
-        ram()           Returns string of disk status
-        
-        backup_status()     Returns dict with keys:
-                             - autoBackupEnabled: bool
-                             - autoBackupDay: int
-                             - backupLastTime: str (timestamp)
-                             - backupNextTime: str (timestamp)
-        
-        callhome()      Returns True/False if callhome is active/not active
-        
-        rulestatus()    Returns dict with keys:
-                        - rulesAndSoftwareCheckEnabled: bool
-                        - rulesAndSoftLastCheck: str (timestamp)
-                        - rulesAndSoftNextCheck: str (timestamp)
+    `disks()`         Returns string of disk status
+    
+    `ram()`           Returns string of disk status
+    
+    `backup_status()`     Returns dict with keys:
+                            - autoBackupEnabled: bool
+                            - autoBackupDay: int
+                            - backupLastTime: str (timestamp)
+                            - backupNextTime: str (timestamp)
+    
+    `callhome()`      Returns True/False if callhome is active/not active
+    
+    `rulestatus()`    Returns dict with keys:
+                    - rulesAndSoftwareCheckEnabled: bool
+                    - rulesAndSoftLastCheck: str (timestamp)
+                    - rulesAndSoftNextCheck: str (timestamp)
 
-        status()        Returns dict with the status outputs above plus a few
-                        other less interesting details.
-               
-        timezones()     Returns dict (str, str)
-                            timezone_id: timezone_name
-        
-        tz_name_to_id(id)         Returns timezone name matching given timezone ID.
-        
-        tz_id_to_name(tz_name)    Returns timezone ID matching given timezone name.
-        
-        tz_offsets()    Returns list of timezone tuples. 
-                        (tz_id, tz_name, tz_offset)
-                        [(1, 'Midway Island, Samoa', '-11:00'),
-                         (2, 'Hawaii', '-10:00'),
+    `status()`        Returns dict with the status outputs above plus a few
+                    other less interesting details.
             
-        type_id_to_venmod(type_id)     Returns tuple. (vendor, model) matching
-                                       provided type_id.
+    `timezones()`     Returns dict (str, str)
+                        timezone_id: timezone_name
+    
+    `tz_name_to_id(id)`         Returns timezone name matching given timezone ID.
+    
+    `tz_id_to_name(tz_name)`    Returns timezone ID matching given timezone name.
+    
+    `tz_offsets()`    Returns list of timezone tuples. 
+                    (tz_id, tz_name, tz_offset)
+                    [(1, 'Midway Island, Samoa', '-11:00'),
+                        (2, 'Hawaii', '-10:00'),
         
-        venmod_to_type_id(vendor, model)    Returns string of matching type_id
+    `type_id_to_venmod(type_id)`     Returns tuple. (vendor, model) matching
+                                    provided type_id.
+    
+    `venmod_to_type_id(vendor, model)`    Returns string of matching type_id
         
     """
-    def __init__(self, *args, **kwargs):
-        """
-        Returns:
-            obj. ESM object
-        """
-        super().__init__(*args, **kwargs)
-        
-    def refresh(self):
-        super().refresh()
-
+    
     @property
     def text(self):
         return str('ESM object')
@@ -94,38 +72,46 @@ class ESM(Device):
         #return (dict(self))
 
     def time(self):
-        """
-        Returns:
-            str. ESM time (GMT).
-
-        Example:
-            '2017-07-06T12:21:59.0+0000'
+        """Returns: string of ESM time (GMT)  
+        Example: `2017-07-06T12:21:59.0+0000`
         """
         return self.nitro.request("get_esm_time")['value']
 
     def buildstamp(self):
+        """Returns: buildstamp string  
+        Example: `10.0.2 20170516001031`
+        """
         return self.nitro.buildstamp()
     
     def version(self):
+        """
+        Returns: simple version string  
+        Example: `10.1.0`
+        """
         return self.nitro.version
 
     def status(self):
         """
-        Returns:
-            dict. ESM stats.
-            including:
-                - processor status
-                - hdd status
-                - ram status
-                - rule update status
-                - backup status
-                - list of top level devices
+        Returns: `dict`
+        ESM statuses including :
+        - `cpu`, example: `Avail: 7977MB, Used: 7857MB, Free: 119MB`  
+        - `hdd`, example: `sda3     Size:  491GB, Used:   55GB(12%), Available:  413GB, Mount: /`  
+        - `ram`  
+        - `callHomeIp`  
+        - `autoBackupEnabled`  
+        - `autoBackupHour`  
+        - `autoBackupDay`  
+        - `backupNextTime`  
+        - `backupLastTime`  
+        - `rulesAndSoftwareCheckEnabled`  
+        - `rulesAndSoftNextCheck`  
+        - `rulesAndSoftLastCheck`  
         Other functions exist to return subsets of this data also.
         """
         status = self.nitro.request("get_sys_info")
-        return self.map_status_int_fields(status)
+        return self._map_status_int_fields(status)
 
-    def map_status_int_fields(self, status):
+    def _map_status_int_fields(self, status):
         new_status = {}
         new_status['cpu'] = status['HDW'].split('\n')[0][6:]
         new_status['hdd'] = status['HDW'].split('\n')[1][6:]
@@ -149,35 +135,23 @@ class ESM(Device):
 
 
     def disks(self):
-        """
-        Returns:
-            str. ESM disks and utilization.
-
-        Example:
-            'sda3     Size:  491GB, Used:   55GB(12%), Available:  413GB, Mount: /'
+        """Returns: `self.status()['hdd']`
         """
         return self.status()['hdd']
 
     def ram(self):
-        """
-        Returns:
-            str. ESM ram and utilization.
-
-        Example:
-            'Avail: 7977MB, Used: 7857MB, Free: 119MB'
-        """
+        """Returns: `self.status()['ram']`"""
         return self.status()['ram']
 
     def backup_status(self):
         """
-        Returns:
-            dict. Backup status and timestamps.
-
-            {'autoBackupEnabled': True,
-                'autoBackupDay': 7,
-                'autoBackupHour': 0,
-                'backupLastTime': '07/03/2017 08:59:36',
-                'backupNextTime': '07/10/2017 08:59'}
+        Returns: Backup status and timestamps.
+        Example :  
+            {'autoBackupEnabled': True,  
+            'autoBackupDay': 7,  
+            'autoBackupHour': 0,  
+            'backupLastTime': '07/03/2017 08:59:36',  
+            'backupNextTime': '07/10/2017 08:59'}  
         """
         fields = ['autoBackupEnabled',
                    'autoBackupDay',
@@ -190,21 +164,18 @@ class ESM(Device):
 
     def callhome(self):
         """
-        Returns:
-            bool. True/False if there is currently a callhome connection
+        Returns: `True/False` if there is currently a callhome connection
         """
         if self.status()['callHomeIp']:
             return True
 
     def rules_status(self):
         """
-        Returns:
-            dict. Rules autocheck status and timestamps.
-
-        Example:
-        { 'rulesAndSoftwareCheckEnabled': True
-          'rulesAndSoftLastCheck': '07/06/2017 10:28:43',
-          'rulesAndSoftNextCheck': '07/06/2017 22:28:43',}
+        Returns: Rules autocheck status and timestamps.
+        Example:  
+            { 'rulesAndSoftwareCheckEnabled': True
+            'rulesAndSoftLastCheck': '07/06/2017 10:28:43',
+            'rulesAndSoftNextCheck': '07/06/2017 22:28:43',}
 
         """
         self._fields = ['rulesAndSoftwareCheckEnabled',
@@ -217,11 +188,10 @@ class ESM(Device):
         """Tells the ESM to retrieve alerts from the provided device ID.
         
         Arguments:
-            ds_id (str): IPSID for the device, e.g. 144116287587483648
-            flows (bool): Also get flows from the device (default: False)
+        - `ds_id` (`str`): IPSID for the device, e.g. 144116287587483648
+        - `flows` (`bool`): Also get flows from the device (default: False)
         
-        Returns:
-            None
+        Returns: `None`
         """
         self.nitro.request('get_alerts_now', ds_id=ds_id)
         if flows:
@@ -230,19 +200,16 @@ class ESM(Device):
     @lru_cache(maxsize=None)    
     def recs(self):
         """
-        Returns: 
-            
+        Returns: ?
         """
         rec_list = self.nitro.request('get_recs')
         return [(rec['name'], rec['id']['id'])for rec in rec_list]
                 
     @lru_cache(maxsize=None)   
     def _get_timezones(self):
-        """
-        Gets list of timezones from the ESM.
+        """Gets list of timezones from the ESM.
         
-        Returns:
-            str. Raw return string from ESM including 
+        Returns: Raw return `string` from ESM including 
         """
         return self.nitro.request('time_zones')
         
@@ -267,8 +234,7 @@ class ESM(Device):
         """
         Builds table of ESM timezones and names only. No offsets.
         
-        Returns:
-            dict. {timezone_id, timezone_name}
+        Returns: `dict`:`{timezone_id, timezone_name}`
         """
         return {str(tz['id']['value']): tz['name']
                             for tz in self._get_timezones()}
@@ -276,8 +242,8 @@ class ESM(Device):
     def tz_name_to_id(self, tz_name):
         """
         Args:
-            tz_name (str): Case sensitive, exact match timezone name
-            
+        - `tz_name` (str): Case sensitive, exact match timezone name
+        
         Returns:
             str. Timezone id or None if there is no match
         """
@@ -291,10 +257,9 @@ class ESM(Device):
     def tz_id_to_name(self, tz_id):
         """
         Args:
-            td_id (str): Numerical string (Currently 1-74)
+        - `td_id` (str): Numerical string (Currently 1-74)
         
-        Returns:
-            str. Timezone name or None if there is no match
+        Returns: `str` Timezone name or None if there is no match
         """
         try:
             return self.timezones()[tz_id]

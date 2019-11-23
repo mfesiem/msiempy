@@ -1,3 +1,4 @@
+import pprint
 import msiempy
 from msiempy.alarm import AlarmManager, Alarm
 from msiempy.event import EventManager, Event, FieldFilter
@@ -94,7 +95,7 @@ def devtree_exaples():
 def esm_examples():
         print('ESM #1 : Simple ESM status printing')
         esm = ESM()
-        print(esm.status())
+        pprint.pprint(esm.status())
         # ...
         pass
 
