@@ -53,6 +53,7 @@ class ESM(NitroObject):
         """
         Returns: `dict`  
         ESM statuses including :  
+        
         - `cpu`, example: `Avail: 7977MB, Used: 7857MB, Free: 119MB`  
         - `hdd`, example: `sda3     Size:  491GB, Used:   55GB(12%), Available:  413GB, Mount: /`  
         - `ram`  
@@ -149,6 +150,7 @@ class ESM(NitroObject):
         """Tells the ESM to retrieve alerts from the provided device ID.  
         
         Arguments:  
+
         - `ds_id`: (`str`) `IPSID` for the device, e.g. `144116287587483648`  
         - `flows`: (`bool`) Also get flows from the device (default: False)  
         
@@ -201,6 +203,7 @@ class ESM(NitroObject):
     def tz_name_to_id(self, tz_name):
         """
         Arguments:  
+
         - `tz_name`: (`str`) Case sensitive, exact match timezone name  
         
         Returns: `str`, Timezone id or `None` if there is no match
@@ -215,6 +218,7 @@ class ESM(NitroObject):
     def tz_id_to_name(self, tz_id):
         """
         Arguments:  
+
         - `td_id`: (`str`) Numerical string (Currently `1` to `74`)  
         
         Returns: `str` Timezone name or `None` if there is no match
@@ -227,6 +231,7 @@ class ESM(NitroObject):
     def type_id_to_venmod(self, type_id):
         """
         Arguments:  
+
         - `type_id`: (`str`) Numerical string   
         
         Returns: `tuple(vendor, model)` or `None` if there is no match
@@ -240,6 +245,7 @@ class ESM(NitroObject):
     def venmod_to_type_id(self, vendor, model):
         """
         Arguments:  
+
         - `vendor`: (`str`) Exact vendor string including puncuation  
         - `model`: (`str`) Exact model string including puncuation  
         
@@ -270,21 +276,18 @@ class ESM(NitroObject):
         """
         Callback to create type_id/vendor/model table  
         
-        Args:  
-            venmods (obj): request object from _get_ds_types  
+        Arguments:  
+
+        - `venmods` (`obj`): request object from _get_ds_types  
         
-        Returns:
-            list. of tuples 
-                
-           [(542, 'McAfee', 'SaaS Email Protection')
+        Returns: `list of tuples`:  
+            [(542, 'McAfee', 'SaaS Email Protection')
             (326, 'McAfee', 'Web Gateway')
             (406, 'Microsoft', 'ACS - SQL Pull')
             (491, 'Microsoft', 'Endpoint Protection - SQL Pull')
             (348, 'Microsoft', 'Exchange')]
 
-        Note: 
-            This is a callback for _get_ds_types.
-
+        Note: This is a callback for _get_ds_types.
         """
         return [(mod['id']['id'], ven['name'], mod['name'],)
                     for ven in venmods['vendors']

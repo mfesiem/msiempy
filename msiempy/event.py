@@ -18,6 +18,7 @@ class EventManager(FilteredQueryList):
     Inherits from `msiempy.FilteredQueryList`.
 
     Paramters:  
+
     - `fields` : list of strings representing all fields you want to apprear in the Events records.
         Get the list of possible fields by calling `msiempy.event.EventManager.get_possible_fields()` method or see `msiempy.event.Event`.
         Some default fields will be present. 
@@ -27,8 +28,7 @@ class EventManager(FilteredQueryList):
     - `max_query_depth` : maximum number of supplement reccursions of division of the query times
         Meaning, if limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
         the list is (500*5)*(500*5)*(500*5) = 15625000000
-    
-    - `*args, **kwargs` : Parameters passed to `msiempy.FilteredQueryList`   
+    - `*args, **kwargs` : Arguments passed to `msiempy.FilteredQueryList`   
     """ 
 
     #Constants
@@ -36,12 +36,12 @@ class EventManager(FilteredQueryList):
     TYPE='EVENT'
     """EVENT: Flow query or other are not implemented"""
     GROUPTYPE='NO_GROUP'
-    """'NO_GROUP': Group query is not implemented"""
+    """NO_GROUP: Group query is not implemented"""
     POSSBILE_ROW_ORDER=[
             'ASCENDING',
             'DESCENDING'
     ]
-    """'ASCENDING' or 'DESCENDING'"""
+    """`ASCENDING` or `DESCENDING`"""
 
     # Declaring static value containing all the possibles
     # event fields, should be loaded once (when the session start ?)
@@ -200,14 +200,14 @@ class EventManager(FilteredQueryList):
         If you looking for `load_async`, you should pass this to the constructor method `msiempy.FilteredQueryList` or by setting the attribute manually like `manager.load_asynch=True`
         Only the first query is loaded asynchronously.
 
-        Parameters:  
+        Arguments:  
     
         - `workers` : numbre of parrallels tasks, should be equal or less than the number of slots.  
         - `slots` : number of time slots the query can be divided. The loading bar is 
             divided according to the number of slots  
         - `delta` : exemple : '6h30m', the query will be firstly divided in chuncks according to the time delta read
             with dateutil.  
-        - `**kwargs` : Same as `msiempy.event.EventManager.qry_load_data` parameters  
+        - `**kwargs` : Same as `msiempy.event.EventManager.qry_load_data` Arguments  
 
         Returns : `msiempy.event.EventManager`
         """
@@ -333,6 +333,7 @@ class Event(NitroDict):
 
     """        
     Default event field keys :  
+
     - `Rule.msg`  
     - `Alert.LastTime`  
     - `Alert.IPSIDAlertID`  
@@ -342,7 +343,7 @@ class Event(NitroDict):
     See msiempy/static JSON files to browse complete list : https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json  
     Prefixes `Alert.`, `Rule.`, etc are optionnal, prefix autocompletion is computed in any case ;)
 
-    Parameters :
+    `__init__` Arguments :
 
     - `id` : Retreive the complete data from a event `IPSIDAlertID`
 
@@ -803,7 +804,8 @@ class Event(NitroDict):
         """
         Load event's data.  
 
-        Parameters :   
+        Arguments :   
+
         - `id` : The event ID. (i.e. : `144128388087414784|747122896`)  
         - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2.x.  
         - `extra_fields` : Only when `use_query=True`. Additionnal event fields to load in the query.  
@@ -835,7 +837,7 @@ class GroupFilter(_QueryFilter):
         Based on EsmFilterGroup. See SIEM api doc.
         Used to dump groups of filters in the right format.
 
-        Parameters :  
+        Arguments :  
 
         - `filters` : a list of filters, it can be `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter`  
         - `logic` : 'AND' or 'OR'  
@@ -856,7 +858,8 @@ class FieldFilter(_QueryFilter):
     Based on EsmFieldFilter. See SIEM api doc.
     Used to dump a filter in the right format.
 
-    Parameters:
+    Arguments:
+
         - `name` : field name as string.  
         - `values` : list of values the field is going to be tested againts with the specified orperator.  
         - `orperator` : `IN`,
@@ -932,8 +935,8 @@ class FieldFilter(_QueryFilter):
     
     @property
     def operator(self):
-        """
-        Field operator property. Check the value against the list of possible operators and trow `AttributeError` if not present.
+        """Field operator.  
+        Setter check the value against the list of possible operators and trow `AttributeError` if not present.
         """
         return (self._operator)
     
@@ -949,10 +952,12 @@ class FieldFilter(_QueryFilter):
 
     @property
     def values(self):
-        """
-        Values property.
-        Set a list of values by calling `msiempy.FilteredQueryList.add_value()` if value is a 
-        `dict` or calls `msiempy.FilteredQueryList.add_basic_value()` if value type is `int`, `float` or `str`.
+        """List of values of the filter.  
+        Setter iterate trough the list and call : 
+
+        - `msiempy.FilteredQueryList.add_value()` if value is a `dict`
+        - `msiempy.FilteredQueryList.add_basic_value()` if value type is `int`, `float` or `str`.
+
         Values will always be added to the filter. To remove values, handle directly the `_values` property.
 
         Example :  
@@ -983,19 +988,20 @@ class FieldFilter(_QueryFilter):
         else :
             raise TypeError("Invalid filter type, must be a list, int, float or str")
         
-    def add_value(self, type=None, **args):
+    def add_value(self, type=None, **kwargs):
         """
         Add a new value to the field filter.  
         
-        Parameters (`**args`) could be (depending of the value type):  
-        - `type` : Type of the value  
-        - if `type=='EsmBasicValue'`, use with `value` : `a string value`  
-        - if `type=='EsmWatchlistValue'`, use with `watchlist` : `int`  
-        - if `type=='EsmVariableValue'`, use with `variable` : `int`  
-        - if `type=='EsmCompoundValue'`, use with `values` : a `list` of values  
+        Arguments (`**kwargs` depends on the value `type`):  
+
+        - `type` (`str`) : Type of the value    
+        - `value` (`str`) : If `type` is `EsmBasicValue`  
+        - `watchlist` (`int`) : if `type` is `EsmWatchlistValue`    
+        - `variable` (`int`) if `type` is `EsmVariableValue`    
+        - `values` (`list`) if `type` is `EsmCompoundValue`  
         
         Raises : `KeyError` or `AttributeError` if you don't respect the correct type/key/value combo.  
-        Note : Filtering query with other type of filter than 'EsmBasicValue' is not tested.
+        Note : Filtering query with other type of filter than `EsmBasicValue` is not tested.
         """
         try:
             type_template=None
@@ -1011,11 +1017,11 @@ class FieldFilter(_QueryFilter):
 
             #Error throwing
             if type_template is not None :
-                if type_template['key'] in args :
+                if type_template['key'] in kwargs :
                     
                     # Adds a new value to a fields filter
                     # Filtering query with other type of filter than 'EsmBasicValue' is not tested.
-                    value = args[type_template['key']]
+                    value = kwargs[type_template['key']]
                     if type == 'EsmBasicValue' :
                         value=str(value)
                         #log.debug('Adding a basic value to filter ('+self.text+') : '+value)
@@ -1023,13 +1029,13 @@ class FieldFilter(_QueryFilter):
                     #log.debug('The value was appended to the list: '+str(self))
                     
                 #Error throwing
-                else: raise KeyError ('The valid key value parameter is not present')
+                else: raise KeyError ('The valid key value argument is not present')
             else: raise KeyError ('Impossible filter')
         except KeyError as err:
-            raise AttributeError("You must provide a valid named parameters containing the type and values for this filter. The type/keys must be in "+str(self.POSSIBLE_VALUE_TYPES)+"Can't be type="+str(type)+' '+str(args)+". Additionnal indicator :"+str(err) )
+            raise AttributeError("You must provide a valid named Arguments containing the type and values for this filter. The type/keys must be in "+str(self.POSSIBLE_VALUE_TYPES)+"Can't be type="+str(type)+' '+str(args)+". Additionnal indicator :"+str(err) )
 
     def add_basic_value(self, value):
         """
-        Wrapper arround add_value to add a EsmBasicValue.
+        Wrapper arround `add_value` method to simply add a `EsmBasicValue`.
         """
         self.add_value(type='EsmBasicValue', value=value)

@@ -18,7 +18,8 @@ class AlarmManager(FilteredQueryList):
     AlarmManager class.
     Interface to query and manage Alarms.
 
-    Parameters:  
+    Arguments:  
+
     - `status_filter` : status of the alarms to query. `status_filter` is not a filter like other cause it's computed on the SIEM side.  
     Accepted values : `acknowledged`, `unacknowledged`, `all`, `` or `None` (default is ``).
     `filters` are computed locally - Unlike `msiempy.event.EventManager` filters.  
@@ -27,8 +28,9 @@ class AlarmManager(FilteredQueryList):
     - `filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.alarm.Alarm` objects. A single `tuple` is also accepted.  
     - `event_filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.event.Event` objects. A single `tuple` is also accepted.  
     
-    Parameters to `msiempy.FilteredQueryList.__init__()` :
-    - `time_range` : Query time range. String representation of a time range. 
+    Arguments to `msiempy.FilteredQueryList.__init__()` :  
+    
+    - `time_range` : Query time range. String representation of a time range.  
     - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
     - `end_time` : Query endding time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
     - `load_async` : Load asynchonously the sub-queries. Defaulted to `True`.  
@@ -94,7 +96,8 @@ class AlarmManager(FilteredQueryList):
         """
         Make sure the filters format is `tuple(field, list(values in string))`.  
         
-        Parameters :  
+        Arguments :  
+
         - `afilter` : Can be a `tuple` (field,[values]) or `str` 'field=value'
         """
 
@@ -146,7 +149,8 @@ class AlarmManager(FilteredQueryList):
         """
         Make sure the filters format is `tuple(field, list(values in string))`.  
 
-        Parameters :  
+        Arguments :  
+
         - `afilter` : Can be a `tuple` (field,[values]) or `str` 'field=value'
         """
 
@@ -168,16 +172,18 @@ class AlarmManager(FilteredQueryList):
         """
         Implements automatic paging over `msiempy.alarm.AlarmManager.qry_load_data`.  
         
-        Parameters :  
+        Arguments :  
+
         - `pages` : Automatic pagging count (not asynchronous).   
 
-        Parameters to `msiempy.alarm.AlarmManager.qry_load_data` :
-        - `workers` : Number of asynchronous workers  
-        - `alarms_details` : Load detailed alarms infos. If `False`, only a couple values are loaded, no `events` infos.
-        - `events_details` : Load detailed events infos. If `False`, no detailed `events` will be loaded only `str` representation.
+        Arguments to `msiempy.alarm.AlarmManager.qry_load_data` :  
+
+        - `workers` : Number of asynchronous workers   
+        - `alarms_details` : Load detailed alarms infos. If `False`, only a couple values are loaded, no `events` infos.  
+        - `events_details` : Load detailed events infos. If `False`, no detailed `events` will be loaded only `str` representation.  
         - `use_query` : Uses the query module to retreive event data. Only works with SIEM v11.2.1 or greater.  
         - `extra_fields` :  Only when `use_query=True`. Additionnal event fields to load in the query. See : `msiempy.event.EventManager`  
-        - `page_number` : Page number, default to 1. Do not touch if you're using `pages` parameter 
+        - `page_number` : Page number, default to 1. Do not touch if you're using `pages` parameter  
 
         Returns : `msiempy.alarm.AlarmManager`
         """
@@ -207,12 +213,13 @@ class AlarmManager(FilteredQueryList):
         use_query=False, extra_fields=[], page_number=1):
         """
         Method that loads the alarms data :  
-            -> Fetch the list of alarms and load alarms details  
-            -> Filter depending on alarms related filters  
-            -> Load the events details  
-            -> Filter depending on event related filters  
+        -> Fetch the list of alarms and load alarms details  
+        -> Filter depending on alarms related filters  
+        -> Load the events details  
+        -> Filter depending on event related filters  
 
-        Parameters :  
+        Arguments :  
+
         - `workers` : Number of asynchronous workers  
         - `alarms_details` : Load detailed alarms infos. If `False`, only a couple values are loaded, no `events` infos.
         - `events_details` : Load detailed events infos. If `False`, no detailed `events` will be loaded only `str` representation.
@@ -317,6 +324,7 @@ class AlarmManager(FilteredQueryList):
 class Alarm(NitroDict):
     """
     Dict keys :  
+
         - `id` : The ID of the triggered alarm  
         - `summary`  : The summary of the triggered alarm  
         - `assignee` : The assignee for this triggered alarm  
@@ -328,7 +336,8 @@ class Alarm(NitroDict):
         - `events` : The events for this user  
         - And others...  
     
-    Parameters :
+    Arguments :
+
         - `id` : `Alarm` object ID.  
     """
 
@@ -426,7 +435,9 @@ class Alarm(NitroDict):
         """
         Retreive the genuine Event object from an Alarm.
         Warning : This method will only load the details of the first triggering event.  
-        Parameters:  
+
+        Arguments:  
+
         - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2.x.  
         - `extra_fields` : Only when `use_query=True`. Additionnal event fields to load in the query. See : `msiempy.event.EventManager`  
         """

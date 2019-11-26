@@ -59,16 +59,15 @@ class NitroConfig(configparser.ConfigParser):
     If a `.msiem/` directory exists in your current directory, the program will assume the `conf.ini` file is there, if not, it will create it with default values. 
     Secondly, if no `.msiem/` directory exists in the current directory, it will be automatically placed in a appropriate place depending of your platform:  
 
-    For Windows: `%APPDATA%\.msiem\conf.ini`
-    For Mac : `$HOME/.msiem/conf.ini`
-    For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`
-    If `.msiem` folder exists in you local directory : `./.msiem/conf.ini`
+    For Windows: `%APPDATA%\.msiem\conf.ini`  
+    For Mac : `$HOME/.msiem/conf.ini`  
+    For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`  
+    If `.msiem` folder exists in you local directory : `./.msiem/conf.ini`  
 
-    Parameters:  
-
-        - `path`: Config file special path, if path is left None, will automatically look for it.  
-        - `config`: Manual config dict. ex: `{'general':{'verbose':True}}`.
-        - `*args, **kwargs` : Passed to `configparser.ConfigParser.__init__()` method.
+    Arguments:  
+    - `path`: Config file special path, if path is left None, will automatically look for it.  
+    - `config`: Manual config dict. ex: `{'general':{'verbose':True}}`.  
+    - `*args, **kwargs` : Passed to `configparser.ConfigParser.__init__()` method.
 
     """
     def __init__(self, path=None, config=None, *arg, **kwarg):
@@ -161,7 +160,7 @@ class NitroConfig(configparser.ConfigParser):
 
     def iset(self, section, option=None, secure=False):
         """Interactively set the specified section/option by asking the user the input.  
-        Parameters:  
+        Arguments:  
 
         - `section`: Configuration's section. Exemple : 'esm' or 'general'.  
         - `option`: Configuraion's option. Leave to `None` to set the whole section one after another. Exemple : 'user', 'timeout'.  
@@ -205,9 +204,9 @@ class NitroConfig(configparser.ConfigParser):
     def find_ini_location():
         '''
         Returns the location of a supposed conf.ini file the `conf.ini` file.  
-        If `.msiem` folder exists in you local directory, assume the `conf.ini` file is in there.
-        If the file doesn't exist, will still return the location.
-        Do not create a file nor directory, you must call `msiempy.NitroConfig.write`.
+        If `.msiem` folder exists in you local directory, assume the `conf.ini` file is in there.  
+        If the file doesn't exist, will still return the location.  
+        Do not create a file nor directory, you must call `msiempy.NitroConfig.write`.  
         '''
         conf_path_dir=None
 
@@ -238,14 +237,13 @@ class NitroSession():
     Internal `__dict__` refers to a unique instance of dict and thus, properties can be instanciated only once.  
     It uses `msiempy.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.
 
-    The init method is called every time you call NitroSession() constructor.
-        But the properties are actually initiated only once.
-        Use logout() to reinstanciate NitroSession.  
+    The init method is called every time you call NitroSession() constructor. But the properties are actually initiated only once.  
+    Use `logout()` to reinstanciate NitroSession.  
 
-        Parameters:  
+    Arguments:  
 
-        - `conf_path` : Configuration file path.  
-        - `conf_dict` : Manual config dict. ex: `{'general':{'verbose':True}}`. See `msiempy.NitroConfig` class to have full details.
+    - `conf_path` : Configuration file path.  
+    - `conf_dict` : Manual config dict. ex: `{'general':{'verbose':True}}`. See `msiempy.NitroConfig` class to have full details.
     """
     def __init__(self, conf_path=None, conf_dict=None):
         global log
@@ -271,10 +269,10 @@ class NitroSession():
             log.info('New ESM session instance is created with : '+str(self.config.host))
 
     BASE_URL = 'https://{}/rs/esm/'
-    __pdoc__['NitroSession.BASE_URL']="""API v2 base url: `%(url)s`""" % dict(url=BASE_URL)
+    """API v2 base url: 'https://{}/rs/esm/'"""
 
     BASE_URL_PRIV = 'https://{}/ess/'
-    __pdoc__['NitroSession.BASE_URL_PRIV']="""Private API base URL: `%(url)s`""" % dict(url=BASE_URL_PRIV)
+    """Private API base URL: 'https://{}/ess/'"""
 
     __initiated__ = False
     """
@@ -601,8 +599,8 @@ class NitroSession():
             "get_sys_info"  : ("SYS_GETSYSINFO","""{}"""),
             
             "build_stamp" : ("essmgtGetBuildStamp",None)
-    }
-    __pdoc__['NitroSession.PARAMS'] = """This structure provide a central place to aggregate API methods and parameters.  
+    } #__pdoc__['NitroSession.PARAMS'] = 
+    '''This structure provide a central place to aggregate API methods and parameters.  
     The parameters are stored as docstrings to support string replacement.  
 
     Args:  
@@ -613,21 +611,55 @@ class NitroSession():
         - `tuple `: (string, string) : The first string is the method name that is actually used as
         the URI or passed to the ESM. The second string is the params
         required for that method. Some params require variables be
-        interpolated as documented in the Attributes.
-
-    Example:
-        `method, params = PARAMS.get("login").format(username, password)`. See : `msiempy.NitroSession.request`  
+        interpolated as documented in the data structure.
+    
+    Exemple in `msiempy.NitroSession.request` source code.  
 
     Important note : 
-        Do not use sigle quotes (') to delimit data into the interpolated strings !
+        Do not use sigle quotes (`'`) to delimit data into the interpolated strings !
 
-    Content :
-        %(content)s
-        """ % dict(content=json.dumps(PARAMS, indent=4).replace('\n',"""  
-    """)[:500]+""" [...] and more...
+    Data structure example :  
+    ```
+    {
+        "login": ("login",
+                """{"username": "%(username)s",
+                    "password" : "%(password)s",
+                    "locale": "en_US",
+                    "os": "Win32"}
+                    """),
+        
+        "add_watchlist_values": ("""sysAddWatchlistValues""","""{
+                "watchlist": %(watchlist)s,
+                "values": %(values)s,
+                }"""),
 
-    See : https://github.com/mfesiem/msiempy/blob/master/msiempy/__init__.py#L266
-    """)
+        "get_watchlist_values": ("SYS_GETWATCHLISTDETAILS",
+                                        """{"WID": "%(id)s", "LIM": "T"}"""),
+
+        "remove_watchlists": ("""sysRemoveWatchlist""", """{"ids": {"watchlistIdList": ["%(wl_id_list)s"]}}"""),
+
+        "get_alert_data": ("""ipsGetAlertData""", """{"id": {"value":"%(id)s"}}"""),
+        
+        "get_sys_info"  : ("SYS_GETSYSINFO","""{}"""),
+        
+        "build_stamp" : ("essmgtGetBuildStamp",None),
+
+        "event_query" : ("""qryExecuteDetail?type=EVENT&reverse=false""", """{
+                    "config": {
+                        "timeRange":"%(time_range)s",
+                        "fields":%(fields)s,
+                        "filters":%(filters)s,
+                        "limit":%(limit)s,
+                        "offset":%(offset)s,
+                        "order": [{"field": {"name": "%(order_field)s"}, "direction": "%(order_direction)s"}]
+                        }}"""),
+
+       [...]
+    }
+    ```
+    '''
+
+    #% dict(content=pprint.pformat(PARAMS)[:3000]) + """ [...] and more, please consult source code."""
         
     def __str__(self):
         return repr(self.__unique_state__) 
@@ -641,19 +673,21 @@ class NitroSession():
         If method is all upper cases, it's going to be formatted as a private API call. See `msiempy.NitroSession.format_params` and `msiempy.NitroSession.format_priv_resp` 
         In any way, the ESM response is unpacked by `msiempy.NitroSession.unpack_resp`
 
-        Parameters :
-            - `method` : ESM API enpoint name and url parameters  
-            - `http`: HTTP method.  
-            - `data` : dict data to send  
-            - `callback` : function to apply afterwards  
-            - `raw` : If true will return the Response object from requests module.   
-            - `secure` : If true will not log the content of the request.   
+        Arguments :  
+
+        - `method` : ESM API enpoint name and url parameters  
+        - `http`: HTTP method.  
+        - `data` : dict data to send  
+        - `callback` : function to apply afterwards  
+        - `raw` : If true will return the Response object from requests module.   
+        - `secure` : If true will not log the content of the request.   
 
         Returns : 
-            - a `dict`, `list` or `str` object  
-            - the `resquest.Response` object if raw=True  
-            - `result.text` if `requests.HTTPError`,   
-            - `None` if Timeout or TooManyRedirects if raw=False  
+
+        - a `dict`, `list` or `str` object  
+        - the `resquest.Response` object if raw=True  
+        - `result.text` if `requests.HTTPError`,   
+        - `None` if Timeout or TooManyRedirects if raw=False  
 
          Note : Private API is under /ess/ and public api is under /rs/esm  
 
@@ -773,29 +807,24 @@ class NitroSession():
 
     def version(self):
         """
-        Returns:
-            str. ESM short version.
-
-        Example:
-            '10.0.2'
+        Returns: `str` ESM short version.  
+        Example: '10.0.2'
         """
         return self.buildstamp().split()[0]
 
     def buildstamp(self):
         """
-        Returns:
-            str. ESM buildstamp.
-
-        Example:
-            '10.0.2 20170516001031'
+        Returns: `str` ESM buildstamp.  
+        Example: '10.0.2 20170516001031'
         """
         return self.request('build_stamp')['buildStamp']
 
     def get_internal_file(self, file_token):
         """Uses the private API to retrieve, assemble and delete a temp file from the ESM.
         
-        Arguments:
-            file_token (str): File token ID
+        Arguments:  
+
+        - `file_token` (`str`): File token ID
         """
         pos = 0
         nbytes = 0
@@ -828,10 +857,12 @@ class NitroSession():
             It interpolates `**params` with `msiempy.NitroSession.PARAMS` docstrings and build a valid datastructure with `ast`.  
             Wrapper around the `msiempy.NitroSession.esm_request` method.  
 
-            Parameters:  
+            Arguments:  
+
             - `request`: Keyword corresponding to the request name in `msiempy.NitroSession.PARAMS` mapping.  
 
-            Parameters to `msiempy.NitroSession.esm_request` :
+            Arguments to `msiempy.NitroSession.esm_request` :  
+
             - `http`: HTTP method.  
             - `callback` : function to apply afterwards  
             - `raw` : If true will return the Response object from requests module.   
@@ -1040,7 +1071,7 @@ class NitroDict(collections.UserDict, NitroObject):
 
     Initiate the NitroObject and UserDict objects, load the data if id is specified, use adict agument and update dict values accordingly.
 
-    Parameters:  
+    Arguments:  
 
     - `adict`: dict object to wrap.  
     - `id`: ESM obejct unique identifier. Alert.IPSIDAlertID for exemple. 
@@ -1101,7 +1132,8 @@ class NitroList(collections.UserList, NitroObject):
     If a derived class does not wish to comply with this requirement, all of the special methods supported by this class will need to be overridden; please consult the sources for information about the methods which need to be provided in that case.
     See : https://docs.python.org/3.8/library/collections.html?highlight=userdict#userlist-objects  
 
-    Parameters:  
+    Arguments:  
+
     - `alist`: list object to wrap.
     """
 
@@ -1161,7 +1193,7 @@ class NitroList(collections.UserList, NitroObject):
         """
         Return a csv or table string representation of the list
 
-        Parameters:  
+        Arguments:  
 
         - `format`: 
               prettytable: Returns a table generated by prettytable
@@ -1241,8 +1273,8 @@ class NitroList(collections.UserList, NitroObject):
         This method will return a new NitroList with matching data. NitroDicts in the returned NitroList do not
         references the items in the original NitroList.  
 
-        Parameters:  
-        
+        Arguments:  
+
         - `*pattern`: List or string regex patterns to look for.
         - `invert`: Weither or not to invert the search and return elements that doesn't not match search.
         - `match_prop`: Propertie that is going to be called to search. Could be `text` or `json`.
@@ -1287,7 +1319,7 @@ class NitroList(collections.UserList, NitroObject):
         """
         Wrapper arround executable and the a list of elements, typically `msiempy.NitroList` object.  
 
-        Parameters:  
+        Arguments:  
         
         - `func`: callable function. `func` is going to be called like `func(item, **func_args)` on all items in data.  This function can be stateless (static) or statefull (first argument is `self`),
         it doesn't really matter as the element will always be passed as the first argument of the function. On thing really important, the function must not
@@ -1402,7 +1434,8 @@ class FilteredQueryList(NitroList):
     FilteredQueryList object can handle time_ranges and time splitting.  
     Abstract base class that provide time ranged filtered query wrapper.  
 
-    Parameters:  
+    Arguments:  
+
     - `time_range` : Query time range. String representation of a time range. 
         See `msiempy.FilteredQueryList.POSSIBLE_TIME_RANGE`.  
     - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
@@ -1548,7 +1581,7 @@ class FilteredQueryList(NitroList):
     def filters(self):
         """ 
         Filter property : Returns a list of filters.
-        Can be set with list of tuple(field, [values]) or `msiempy.event.QueryFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted.  
+        Can be set with list of tuple(field, [values]) or `msiempy.event._QueryFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted.  
         `None` value will call `msiempy.query.FilteredQueryList.clear_filters()`.  
         Raises : `AttributeError` if type not supported.
         Abstract declaration.
