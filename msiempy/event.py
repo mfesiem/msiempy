@@ -29,6 +29,13 @@ class EventManager(FilteredQueryList):
         Meaning, if limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
         the list is (500*5)*(500*5)*(500*5) = 15625000000
     - `*args, **kwargs` : Arguments passed to `msiempy.FilteredQueryList`   
+
+    Arguments to `msiempy.FilteredQueryList.__init__()` :  
+    
+    - `time_range` : Query time range. String representation of a time range.  
+    - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
+    - `end_time` : Query endding time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
+    - `load_async` : Load asynchonously the sub-queries. Defaulted to `True`.  
     """ 
 
     #Constants

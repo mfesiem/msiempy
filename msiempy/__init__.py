@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Welcome to the **msiempy** module documentation. The pythonic way to deal with McAfee SIEM API.  
-
+Classes listed here are mostly abstract basis of sub-modules that offers concrete objects and functions.  
+--  
+.. image:: https://avatars0.githubusercontent.com/u/50667087?s=200&v=4  
+--  
 GitHub : https://github.com/mfesiem/msiempy  
-
-Classes listed in this module are base to other classes in sub-modules that offers concrete objects and functions.  
-
+PyPI : https://pypi.org/project/msiempy/  
+--  
 Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png  
 Packages diagram : https://mfesiem.github.io/docs/msiempy/packages.png  
 """

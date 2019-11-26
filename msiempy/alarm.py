@@ -29,7 +29,7 @@ class AlarmManager(FilteredQueryList):
     - `event_filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.event.Event` objects. A single `tuple` is also accepted.  
     
     Arguments to `msiempy.FilteredQueryList.__init__()` :  
-    
+
     - `time_range` : Query time range. String representation of a time range.  
     - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
     - `end_time` : Query endding time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
@@ -325,20 +325,20 @@ class Alarm(NitroDict):
     """
     Dict keys :  
 
-        - `id` : The ID of the triggered alarm  
-        - `summary`  : The summary of the triggered alarm  
-        - `assignee` : The assignee for this triggered alarm  
-        - `severity` : The severity for this triggered alarm  
-        - `triggeredDate` : The date this alarm was triggered  
-        - `acknowledgedDate` : The date this triggered alarm was acknowledged  
-        - `acknowledgedUsername` : The user that acknowledged this triggered alarm  
-        - `alarmName` : The name of the alarm that was triggered  
-        - `events` : The events for this user  
-        - And others...  
+    - `id` : The ID of the triggered alarm  
+    - `summary`  : The summary of the triggered alarm  
+    - `assignee` : The assignee for this triggered alarm  
+    - `severity` : The severity for this triggered alarm  
+    - `triggeredDate` : The date this alarm was triggered  
+    - `acknowledgedDate` : The date this triggered alarm was acknowledged  
+    - `acknowledgedUsername` : The user that acknowledged this triggered alarm  
+    - `alarmName` : The name of the alarm that was triggered  
+    - `events` : The events for this user  
+    - And others...  
     
     Arguments :
 
-        - `id` : `Alarm` object ID.  
+    - `id` : `Alarm` object ID.  
     """
 
     def __init__(self, *arg, **kwargs):
