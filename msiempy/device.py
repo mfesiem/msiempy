@@ -319,21 +319,19 @@ class DevTree(NitroList):
     #     return json.dumps(self.data)
     # def __getitem__(self, key):
     #     return self.data[key]
-
+    def contains(self, term):
+        """ Returns: (`bool`) `True/None` the name or IP matches the provided search term.  """
+        return self.__contains__(term)
 
     def __contains__(self, term):
-        """
-        Returns: (`bool`) `True/False` the name or IP matches the provided search term.
-        """
-        if self.search(term):
-            return True
-        else:
-            return None
+        if self.search(term): return True
+        else: return None
 
    
     def search(self, term, zone_id='0'):
         """
         Arguments:  
+
         - `term` (`str`): Datasource name, IP, hostname or ds_id. Matching the `name`, `IPv4/IPv6 address`, `hostname` or `device ID`.   
         - `zone_id` (`int`): Provide zone_id to limit search to a specific zone   
 
@@ -351,11 +349,13 @@ class DevTree(NitroList):
 
     def search_ds_group(self, field, term, zone_id='0'):
         """
-        Arguments:  
+        Arguments:   
+
         - `field` (`str`): Valid DS config field to search  
         - `term` (`str`): Data to search for in specified field  
 
-        Valid field options include:    
+        Valid field options include:  
+
         - `parent_id` = '144119615532826624'  
         - `type_id` = '65'  
         - `vendor` = 'Intersect Alliance'  
@@ -366,7 +366,7 @@ class DevTree(NitroList):
         - `tz_name` = 'Darwin'  
         - `zone_id` = '7'  
 
-        Returns: `Generator` containing any matching DataSource objects or `None`  
+        Returns: `Generator` (`list()`) containing any matching `DataSource` objects or `None`  
         Result must be iterated through.
             
         Raises: `ValueError`: if field or term are None
@@ -567,7 +567,7 @@ class DevTree(NitroList):
         """
         Get list of raw client strings.  
 
-        Args:
+        Args:  
         - `ds_id` (str): Parent ds_id(s) are collected on init  
         - `ftoken` (str): Set and used after requesting clients for ds_id  
 
@@ -774,9 +774,11 @@ class DevTree(NitroList):
         """Check for duplicate dataname name or IP address.
         
         Arguments:  
+
         - `ds_params` (dict) : datasource params  
         
-        `ds_params` should contain :  
+        `ds_params` should contain followinf keys :  
+
         - `name` (str): datasource name  
         - `ds_ip` (str): datasource IP  
         - `zone_id` (str): optional zone_id  
@@ -796,10 +798,12 @@ class DevTree(NitroList):
         """
         Adds a datasource. 
 
-        Argumentss:
+        Arguments: 
+
         - `attr` (`dict`): datasource attributes
         
-        Attributes keys:  
+        `attr` should contain followinf keys :   
+
         - `client` (`bool`): designate a client datasource (not child)  
         - `name` (`str`): name of datasource (req)  
         - `parent_id` (`str`): id of parent device (req)  
@@ -857,9 +861,11 @@ class DevTree(NitroList):
         """Add a datasource client
         
         Arguments:  
+
         - `attr` (`dict`) : datasource attributes  
         
-        Attributes keys:  
+        `attr` should contain followinf keys :   
+
         - `parent_id` (`str`): datasource id of the client group datasource  
         - `name` (`str`): name of the client  
         - `enabled` (`bool`): enabled or not (default: `True`)  
@@ -902,6 +908,7 @@ class DevTree(NitroList):
         """Validate parameters for new datasource.
         
         Arguments:  
+
         - `p` (`dict`) : datasource parameters  
         
         Returns: datasource dict with normalized values or `False` if something is invalid.
@@ -986,6 +993,7 @@ class DevTree(NitroList):
         """Validates datasource time zone id.
         
         Arguments:  
+
         - `p` (`dict`): datasource param
         
         Returns: `dict` of datasource params or None if invalid
@@ -1009,6 +1017,7 @@ class DevTree(NitroList):
         """Recursively changes strings 'T', 'F' to `bool`  
         
         Arguments:  
+
         - `d` (`dict`) : nested dicts and lists okay  
         """
         for k, v in d.items():
@@ -1028,6 +1037,7 @@ class DataSource(NitroDict):
     """DataSource class  
     
     Arguments:  
+
     - `adict` (`dict`): datasource parameters
         
     Best instantiated from DevTree():
@@ -1038,6 +1048,7 @@ class DataSource(NitroDict):
         >>> ds = dt.search('10.10.1.1')```
 
     Dict keys:  
+
     - `name` (`str`): name of the datasource  
     - `ds_ip` (`str`): IP of the datasource  
     - `hostname` (`str`): hostname for the datasource  
@@ -1097,8 +1108,9 @@ class DataSource(NitroDict):
     def _map_parameters(self, p):
         """Map the internal ESM field names to msiempy style
         
-        Arguments:
-            p (dict): datasource parameters
+        Arguments:  
+
+        - `p` (`dict`): datasource parameters
         """
         p = DevTree._normalize_bool_vals(p)
         self.data['name'] = p.get('name')
