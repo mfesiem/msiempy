@@ -76,6 +76,8 @@ You can also directly paste the password's base64 in the config file by doing
 UEBhc3NXMHJk
 ```
 ### Examples
+See [examples.py](https://github.com/mfesiem/msiempy/tree/master/samples/examples.py) and all the [samples folder](https://github.com/mfesiem/msiempy/tree/master/samples) for more detailed uses !  
+For further informations, please visit the [module documentation](https://mfesiem.github.io/docs/msiempy/index.html) ! :)  
 
 #### Alarm
 Print all `unacknowledged` alarms of the year who's name match `'IPS alarm'` and triggering event message match `'Wordpress'`. Then load the genuine `Event` objects (from the query module) that triggered the alarms and print all of their JSON representations.

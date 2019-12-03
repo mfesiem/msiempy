@@ -125,7 +125,7 @@ class T(unittest.TestCase):
 
     def test_paged_request_simple(self):
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_DAY',
+            time_range='LAST_3_DAYS',
             page_size=10
             )
         alarms.load_data(alarms_details=False, pages=3)
@@ -137,7 +137,7 @@ class T(unittest.TestCase):
 
     def test_paged_request_filtered(self):
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_DAY',
+            time_range='LAST_3_DAYS',
             filters=[('alarmName',['Test','IPS'])],
             event_filters=[('srcIp', ['10','159.33','22'])],
             page_size=10

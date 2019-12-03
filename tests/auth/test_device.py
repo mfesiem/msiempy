@@ -13,6 +13,15 @@ class T(unittest.TestCase):
 
         print(str(esm.status()) + '\n' + str(esm.buildstamp()) + '\n' + str(esm.recs()))
 
+    def print_devtree(self):
+        print('DEVTREE #1 : Simple devtree printing')
+        devtree = DevTree()
+        print(devtree)
+        #print(list(devtree))
+        print(devtree.get_text(format='csv'))
+        print(devtree.get_text(format='prettytable', fields=['ds_ip', 'client','last_time','model','name','parent_name','vendor']))
+
+
     def setUp(self):
         print('Refreshing Devtree()')
         self.devtree = DevTree()
