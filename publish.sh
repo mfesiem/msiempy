@@ -9,16 +9,16 @@ usage(){
     echo "Help us publish msiempy on the internet."
     echo
     echo -e "\t-h\tPrint this help message."
-    echo -e "\t-p\t<test/master>\tPush the technical documentation, publish to PyPi and Git tag versions"
+    echo -e "\t-p\t<test/master>\tPush the technical documentation, publish to PyPi and Git tag versions. Also install the requirements."
     echo
     echo -e "\t\t'test' keyword :"
     echo -e "\t\t\t- Publish docs to https://mfesiem.github.io/docs/test/msiempy/"
     echo -e "\t\t\t- Publish module to https://test.pypi.org/project/msiempy/"
     echo
     echo -e "\t\t'master' keyword :"
+    echo -e "\t\t\t- Ask to tag version"
     echo -e "\t\t\t- Publish docs to https://mfesiem.github.io/docs/msiempy/"
     echo -e "\t\t\t- Publish module to https://pypi.org/project/msiempy/"
-    echo -e "\t\t\t- Ask to tag version"
     echo
     exit -1
 }
@@ -30,6 +30,9 @@ while getopts ":hp:" arg; do
             ;;
 
         p)
+            # Install requirements
+            pip3 install -r requirements.txt
+            
             # Figuring version
             version=`grep __version__ ./msiempy/__version__.py | cut -d "'" -f 2`
         
