@@ -9,16 +9,16 @@ usage(){
     echo "Help us publish msiempy on the internet."
     echo
     echo -e "\t-h\tPrint this help message."
-    echo -e "\t-p\t<test/master>\t(Git tag), push the technical documentation and publish to PyPi. In this order."
+    echo -e "\t-p\t<test/master>\tPush the technical documentation, publish to PyPi and Git tag versions"
     echo
     echo -e "\t\t'test' keyword :"
     echo -e "\t\t\t- Publish docs to https://mfesiem.github.io/docs/test/msiempy/"
     echo -e "\t\t\t- Publish module to https://test.pypi.org/project/msiempy/"
     echo
     echo -e "\t\t'master' keyword :"
-    echo -e "\t\t\t- Tag version"
     echo -e "\t\t\t- Publish docs to https://mfesiem.github.io/docs/msiempy/"
     echo -e "\t\t\t- Publish module to https://pypi.org/project/msiempy/"
+    echo -e "\t\t\t- Ask to tag version"
     echo
     exit -1
 }
@@ -45,30 +45,12 @@ while getopts ":hp:" arg; do
                 #     echo "[RUNNING] git tag -d ${version}-test && git push origin --delete ${version}-test"
                 #     git tag -d ${version}-test && git push origin --delete ${version}-test
                 # fi
-
-                # Tag
-                echo "[RUNNING] git tag -a ${version} -m "Version ${version}" && git push --tags"
-                git tag -a ${version} -m "Version ${version}" && git push --tags
-
+                
             else
                 if [ "$keyword" = "test" ]; then
                     docs_folder="mfesiem.github.io/docs/test"
                     repository_url="https://test.pypi.org"
 
-                    # read -p "[QUESTION] Do you want to tag this version with a '-test' flag? [y/n]" -n 1 -r
-                    # echo    # (optional) move to a new line
-                    # if [[ $REPLY =~ ^[Yy]$ ]]
-                    # then
-                    #     # Deleting '-test' tag if it exists
-                    #     if [ -n `git tag -l "${version}-test"` ]; then
-                    #         echo "[RUNNING] git tag -d ${version}-test && git push origin --delete ${version}-test"
-                    #         git tag -d ${version}-test && git push origin --delete ${version}-test
-                    #     fi
-                    #     # Test tag
-                    #     echo "[RUNNING] git tag -a ${version}-test -m "Version ${version}-test" && git push --tags"
-                    #     git tag -a ${version}-test -m "Version ${version}-test" && git push --tags
-                    # fi
-                    
                 else
                     echo "[ERROR] The keyword must be 'test' or 'master'"
                     exit -1
@@ -120,6 +102,28 @@ while getopts ":hp:" arg; do
             python3 setup.py --quiet clean
 
             echo "[SUCCESS] Module published at : https://${repository_url}/project/msiempy/"
+
+            if [ "$keyword" = "master" ]; then
+                last_tag=`git tag -l | tail -1`
+
+                if [[ -z last_tag ]]; then
+                    git config pager.branch false
+                    compare=`git log ${last_tag}.. --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit`
+                else
+                    compare='Nothing tag to compare with'
+                fi
+
+                read -p "[QUESTION] Do you want to tag this version '${version}'? [y/n]" -n 1 -r
+                echo    # (optional) move to a new line
+                if [[ $REPLY =~ ^[Yy]$ ]]
+                then
+                    # Tag
+                    echo "[RUNNING] git tag -a ${version} -m "Version ${version} \n Commits from last verison(${last_tag}): \n ${comapare}" && git push --tags"
+                    git tag -a ${version} -m "Version ${version}" && git push --tags
+                fi
+
+                
+            fi
             ;;
 
         *)
