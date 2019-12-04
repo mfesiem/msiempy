@@ -1,4 +1,4 @@
-name: Python application
+name: Full test
 
 on: [push]
 
@@ -18,7 +18,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade msiempy
         pip install -r requirements.txt
-    - name: Test
+    - name: Run test
       run: |
         cd samples
         python3 msiempy_setup.py --host 207.179.200.58:4443 --user NGCP --passwd ${{ secrets.esmpass }}
