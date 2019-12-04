@@ -251,7 +251,6 @@ class NitroSession():
             
             #Private attributes
             self._headers={'Content-Type': 'application/json'}
-            self._logged=False
             
             #Config parsing
             self.config = NitroConfig(path=conf_path, config=conf_dict)
@@ -262,7 +261,10 @@ class NitroSession():
                 quiet=self.config.quiet,
                 logfile=self.config.logfile)
 
-            log.info('New ESM session instance is created with : '+str(self.config.host))
+            self.api_v = 0
+            self.logged_in=False
+            self.login_info=dict()
+
 
     BASE_URL = 'https://{}/rs/esm/'
     """API v2 base url: 'https://{}/rs/esm/'"""
@@ -660,8 +662,49 @@ class NitroSession():
     def __str__(self):
         return repr(self.__unique_state__) 
 
+    def login(self):
+        """Authentication is done lazily upon the first call to `msiempy.NitroSession.request` method, but you can still do it manually by calling this method.  
+        Throws `msiempy.NitroError` if login fails
+        """
+        userb64 = tob64(self.config.user)
+        passb64 = self.config.passwd
+        
+        resp = self.request('login', username=userb64, password=passb64, raw=True, secure=True)
+        
+        if resp is not None :
+            if resp.status_code in [400, 401]:
+                raise NitroError('Invalid username or password for the ESM')
+            elif 402 <= resp.status_code <= 600:
+                raise NitroError('ESM Login Error:', resp.text)
+       
+            self._headers['Cookie'] = resp.headers.get('Set-Cookie')
+            self._headers['X-Xsrf-Token'] = resp.headers.get('Xsrf-Token')
+            
+            self.user_tz_id = dict(resp.json())['tzId']
+            self.logged_in = True
+            self.login_info=self.unpack_resp(resp)
 
+            if str(self.version).startswith(('9', '10', '11.0', '11.1')):
+                self.api_v = 1
+            else:
+                self.api_v = 2
 
+            log.info('Login into ESM {} with username {}. Last login {}'.format(
+                str(self.config.host),
+                self.login_info['userName'],
+                self.login_info['lastLoginDate']))
+
+            return
+        else:
+            raise NitroError('ESM Login Error: Response empty')
+
+    def logout(self):
+        """ 
+        This method will logout the session.
+        """
+        self.request('logout', http='delete')
+        self.logged_in=False
+        self.login_info=dict()
 
     def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False, retry=True):
         """
@@ -730,11 +773,10 @@ class NitroSession():
                 try:
                     result.raise_for_status()
                 except requests.HTTPError as e :
-
                     if retry == True :
-                        if 'ERROR_InvalidSession' in result.text :
-                            log.warning('Invalid session, retrying with authentication')
-                            self._logged=False
+                        if any([match in result.text for match in ['ERROR_InvalidSession', 'Not Authorized User']]):
+                            log.warning('Invalid session, logging in and retrying with authentication. Error {} {}'.format(e, result.text))
+                            self.logged_in=False
                             self.login()
                         else:
                             log.warning('An HTTP error occured ({}), retrying request'.format(result.text))
@@ -776,29 +818,7 @@ class NitroSession():
             log.error(e)
             return None
         
-    def login(self):
-        """Authentication is done lazily upon the first call to `msiempy.NitroSession.request` method, but you can still do it manually by calling this method.  
-        Throws `msiempy.NitroError` if login fails
-        """
-        userb64 = tob64(self.config.user)
-        passb64 = self.config.passwd
-        
-        resp = self.request('login', username=userb64, password=passb64, raw=True, secure=True)
-        
-        if resp is not None :
-            if resp.status_code in [400, 401]:
-                raise NitroError('Invalid username or password for the ESM')
-            elif 402 <= resp.status_code <= 600:
-                raise NitroError('ESM Login Error:', resp.text)
-       
-            self._headers['Cookie'] = resp.headers.get('Set-Cookie')
-            self._headers['X-Xsrf-Token'] = resp.headers.get('Xsrf-Token')
-            
-            self.user_tz_id = dict(resp.json())['tzId']
-            self._logged = True
-            return
-        else:
-            raise NitroError('ESM Login Error: Response empty')
+    
 
     def version(self):
         """
@@ -890,16 +910,13 @@ class NitroSession():
                 if ('must be real number, not dict' in str(err)):
                     log.warning("Interpolation failed probably because of the private API calls formatting... Unexpected behaviours can happend.")
 
-        if not self._logged and method != 'login':
+        if not self.logged_in and method != 'login':
             self.login()
-            self.version = self.version()
+            # self.version = self.version()
             # Shorthanding the version check 
             # 1 for pre 11.2.1, 2 for 11.2.1 and later
             # Not be confused with the ESM API v1 and v2 which are different.
-            if self.version.startswith(('9', '10', '11.0', '11.1')):
-                self.api_v = 1
-            else:
-                self.api_v = 2
+            
     
         try :
             #Dynamically checking the esm_request arguments so additionnal parameters can be passed afterwards.
@@ -916,14 +933,6 @@ class NitroSession():
         except Exception as e:
             log.error(e)
             raise 
-        
-    def logout(self):
-        """ 
-        This method will logout the session, clear headers and throw away the object,
-            a new session will be instanciated next time.
-        """
-        self.request('logout', http='delete')
-        self._logged=False
 
     @staticmethod
     def _init_log(verbose=False, quiet=False, logfile=None):
