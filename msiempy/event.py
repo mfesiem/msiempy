@@ -17,7 +17,7 @@ class EventManager(FilteredQueryList):
     """Interface to query and manage events.
     Inherits from `msiempy.FilteredQueryList`.
 
-    Paramters:  
+    Arguments:  
 
     - `fields` : list of strings representing all fields you want to apprear in the Events records.
         Get the list of possible fields by calling `msiempy.event.EventManager.get_possible_fields()` method or see `msiempy.event.Event`.
@@ -350,10 +350,9 @@ class Event(NitroDict):
     See msiempy/static JSON files to browse complete list : https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json  
     Prefixes `Alert.`, `Rule.`, etc are optionnal, prefix autocompletion is computed in any case ;)
 
-    `__init__` Arguments :
+    Arguments:
 
     - `id` : Retreive the complete data from a event `IPSIDAlertID`
-
     """
    
     FIELDS_TABLES=[
