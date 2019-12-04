@@ -45,7 +45,7 @@ while getopts ":hp:" arg; do
                 #     echo "[RUNNING] git tag -d ${version}-test && git push origin --delete ${version}-test"
                 #     git tag -d ${version}-test && git push origin --delete ${version}-test
                 # fi
-                
+
             else
                 if [ "$keyword" = "test" ]; then
                     docs_folder="mfesiem.github.io/docs/test"
@@ -55,6 +55,40 @@ while getopts ":hp:" arg; do
                     echo "[ERROR] The keyword must be 'test' or 'master'"
                     exit -1
                 fi
+            fi
+
+            # Tag
+            if [ "$keyword" = "master" ]; then
+                last_tag=`git tag -l | tail -1`
+                if [[ ! -z ${last_tag} ]]; then
+                    git config pager.branch false
+                    compare=`git log ${last_tag}.. --pretty=oneline`
+                else
+                    compare='No past tag to compare with'
+                fi
+
+                read -p "[QUESTION] Do you want to tag this version '${version} Commits from last verison ${last_tag}: ${compare}'? [y/n]" -n 1 -r
+                echo    # (optional) move to a new line
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+
+                    # Tag
+                    touch ./tmp_tag.txt
+                    echo "Version ${version}" > ./tmp_tag.txt
+                    echo >> ./tmp_tag.txt
+                    echo >> ./tmp_tag.txt
+                    echo "New features: " >> ./tmp_tag.txt
+                    echo >> ./tmp_tag.txt
+                    echo >> ./tmp_tag.txt
+                    echo "Commits from last verison ${last_tag}:" >> ./tmp_tag.txt
+                    echo "${compare}" >> ./tmp_tag.txt
+                    nano ./tmp_tag.txt
+                    tag_msg=`cat ./tmp_tag.txt`
+                    echo "[RUNNING] git tag -a ${version} -m ${tag_msg} && git push --tags"
+                    git tag -a ${version} -F ./tmp_tag.txt && git push --tags
+                    rm ./tmp_tag.txt
+                fi
+
+                
             fi
 
             # Generating diagrams
@@ -103,27 +137,6 @@ while getopts ":hp:" arg; do
 
             echo "[SUCCESS] Module published at : https://${repository_url}/project/msiempy/"
 
-            if [ "$keyword" = "master" ]; then
-                last_tag=`git tag -l | tail -1`
-
-                if [[ -z last_tag ]]; then
-                    git config pager.branch false
-                    compare=`git log ${last_tag}.. --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit`
-                else
-                    compare='Nothing tag to compare with'
-                fi
-
-                read -p "[QUESTION] Do you want to tag this version '${version}'? [y/n]" -n 1 -r
-                echo    # (optional) move to a new line
-                if [[ $REPLY =~ ^[Yy]$ ]]
-                then
-                    # Tag
-                    echo "[RUNNING] git tag -a ${version} -m "Version ${version} \n Commits from last verison(${last_tag}): \n ${comapare}" && git push --tags"
-                    git tag -a ${version} -m "Version ${version}" && git push --tags
-                fi
-
-                
-            fi
             ;;
 
         *)
