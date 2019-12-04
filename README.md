@@ -107,7 +107,7 @@ from  msiempy.event import EventManager, FieldFilter
 
 events = EventManager(
         time_range='LAST_3_DAYS',
-        fields=['Alert.SrcIP'], # Alert.SrcIP is not queried by default
+        fields=['Alert.SrcIP', 'DSID'], # Alert.SrcIP is not queried by default # DSID is the event's datasource ID
         filters=[
                 FieldFilter('DstIP', ['8.8.0.0/8',]),
                 FieldFilter('HostID', ['mydomain.local'], operator='CONTAINS') ],

@@ -294,7 +294,11 @@ class ESM(NitroObject):
                     for mod in ven['models']]
 
 class DevTree(NitroList):
-    """ESM device tree interface"""
+    """ESM device tree interface.  
+    
+    - `__contains__` method returns:  (`bool`) `True/None` the name or IP matches the provided search term.
+
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.data = self.build_devtree()
@@ -319,11 +323,9 @@ class DevTree(NitroList):
     #     return json.dumps(self.data)
     # def __getitem__(self, key):
     #     return self.data[key]
-    def contains(self, term):
-        """ Returns: (`bool`) `True/None` the name or IP matches the provided search term.  """
-        return self.__contains__(term)
 
     def __contains__(self, term):
+        """ Returns: (`bool`) `True/None` the name or IP matches the provided search term.  """
         if self.search(term): return True
         else: return None
 

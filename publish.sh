@@ -9,7 +9,7 @@ usage(){
     echo "Help us publish msiempy on the internet."
     echo
     echo -e "\t-h\tPrint this help message."
-    echo -e "\t-p\t<test/master>\tGit tag, push the technical documentation and publish to PyPi. In this order."
+    echo -e "\t-p\t<test/master>\t(Git tag), push the technical documentation and publish to PyPi. In this order."
     echo
     echo -e "\t\t'test' keyword :"
     echo -e "\t\t\t- Publish docs to https://mfesiem.github.io/docs/test/msiempy/"
