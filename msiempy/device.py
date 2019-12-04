@@ -21,14 +21,17 @@ from .__utils__ import dehexify
 class ESM(NitroObject):
     """Enterprise Security Manager interface"""
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     @property
     def text(self):
         return str('ESM object')
 
     @property
-    def json(self):
-        raise NotImplementedError()
-        #return (dict(self))
+    def json(self): raise NotImplementedError()
+
+    def refresh(self): raise NotImplementedError()
 
     def time(self):
         """Returns: string of ESM time (GMT)  
