@@ -20,4 +20,4 @@ jobs:
         pip install -r requirements.txt
     - name: Test
       run: |
-       ./setup test
+       ./setup.py test
