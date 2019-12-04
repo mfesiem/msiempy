@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Welcome to the **msiempy** module documentation. The pythonic way to deal with McAfee SIEM API.  
-Classes listed here are mostly abstract basis of sub-modules that offers concrete objects and functions.  
---  
+"""
 .. image:: https://avatars0.githubusercontent.com/u/50667087?s=200&v=4  
---  
+Welcome to the **msiempy** module documentation. The pythonic way to deal with McAfee SIEM API.  
+Classes listed here are mostly abstract basis of sub-modules that offers concrete objects and functions.  
 GitHub : https://github.com/mfesiem/msiempy  
 PyPI : https://pypi.org/project/msiempy/  
---  
 Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png  
 Packages diagram : https://mfesiem.github.io/docs/msiempy/packages.png  
 """
@@ -50,11 +48,6 @@ log = logging.getLogger('msiempy')
 
 __pdoc__={} #Init pdoc overwrite engine to document stuff dynamically
 
-class NitroError(Exception):
-    """
-    Base internal exception. It's used when the user/passwd is incorrect, or other specific ESM related errors.
-    """
-    pass
 
 class NitroConfig(configparser.ConfigParser):
     """Class that handles the configuration. Reads the config file where ever it is and make accessible it's values throught object properties. 
@@ -66,7 +59,8 @@ class NitroConfig(configparser.ConfigParser):
     For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`  
     If `.msiem` folder exists in you local directory : `./.msiem/conf.ini`  
 
-    Arguments:  
+    Arguments: 
+
     - `path`: Config file special path, if path is left None, will automatically look for it.  
     - `config`: Manual config dict. ex: `{'general':{'verbose':True}}`.  
     - `*args, **kwargs` : Passed to `configparser.ConfigParser.__init__()` method.
@@ -855,29 +849,31 @@ class NitroSession():
 
     def request(self, request, **kwargs):
         """
-            This method is the centralized interface of all requests going to the SIEM.  
-            It interpolates `**params` with `msiempy.NitroSession.PARAMS` docstrings and build a valid datastructure with `ast`.  
-            Wrapper around the `msiempy.NitroSession.esm_request` method.  
+        This method is the centralized interface of all requests going to the SIEM.  
+        It interpolates `**params` with `msiempy.NitroSession.PARAMS` docstrings and build a valid datastructure with `ast`.  
+        Wrapper around the `msiempy.NitroSession.esm_request` method.  
 
-            Arguments:  
+        Arguments:  
 
-            - `request`: Keyword corresponding to the request name in `msiempy.NitroSession.PARAMS` mapping.  
+        - `request`: Keyword corresponding to the request name in `msiempy.NitroSession.PARAMS` mapping.  
 
-            Arguments to `msiempy.NitroSession.esm_request` :  
+        Arguments to `msiempy.NitroSession.esm_request` :  
 
-            - `http`: HTTP method.  
-            - `callback` : function to apply afterwards  
-            - `raw` : If true will return the Response object from requests module.   
-            - `secure` : If true will not log the content of the request.   
-            
-            Interpolation parameters :  
-            - `**kwargs` : Interpolation parameters that will be match to `msiempy.NitroSession.PARAMS` templates. Dynamic keyword arguments.  
+        - `http`: HTTP method.  
+        - `callback` : function to apply afterwards  
+        - `raw` : If true will return the Response object from requests module.   
+        - `secure` : If true will not log the content of the request.   
+        
+        Interpolation parameters :  
+        
+        - `**kwargs` : Interpolation parameters that will be match to `msiempy.NitroSession.PARAMS` templates. Dynamic keyword arguments.  
 
-            Returns : 
-            - a `dict`, `list` or `str` object  
-            - the `resquest.Response` object if raw=True  
-            - `result.text` if `requests.HTTPError`,   
-            - `None` if Timeout or TooManyRedirects if raw=False  
+        Returns :  
+
+        - a `dict`, `list` or `str` object  
+        - the `resquest.Response` object if raw=True  
+        - `result.text` if `requests.HTTPError`,   
+        - `None` if Timeout or TooManyRedirects if raw=False  
         """
         log.debug("Calling nitro request : {} kwargs={}".format(
             str(request), '***' if 'secure' in kwargs and kwargs['secure']==True else str(kwargs)))
@@ -1583,7 +1579,7 @@ class FilteredQueryList(NitroList):
     def filters(self):
         """ 
         Filter property : Returns a list of filters.
-        Can be set with list of tuple(field, [values]) or `msiempy.event._QueryFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted.  
+        Can be set with list of tuple(field, [values]), a `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted.  
         `None` value will call `msiempy.query.FilteredQueryList.clear_filters()`.  
         Raises : `AttributeError` if type not supported.
         Abstract declaration.
@@ -1636,3 +1632,9 @@ class FilteredQueryList(NitroList):
         Abstract declaration."""
         pass
 
+class NitroError(Exception):
+    """
+    Base internal exception.  
+    It's used when the user/passwd is incorrect, or other specific ESM related errors.
+    """
+    pass

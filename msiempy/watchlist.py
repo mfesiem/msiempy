@@ -116,6 +116,10 @@ class Watchlist(NitroDict):
     - `values`: values
     - And others...
 
+    Arguments:
+
+    - `id`: The watchlist ID to instanciate
+
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

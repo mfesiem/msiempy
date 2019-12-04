@@ -9,16 +9,16 @@ usage(){
     echo "Help us publish msiempy on the internet."
     echo
     echo -e "\t-h\tPrint this help message."
-    echo -e "\t-p\t<test/master>\tGit tag, push the technical documentation and publish to PyPi. In this order."
+    echo -e "\t-p\t<test/master>\tPush the technical documentation, publish to PyPi and Git tag versions"
     echo
     echo -e "\t\t'test' keyword :"
     echo -e "\t\t\t- Publish docs to https://mfesiem.github.io/docs/test/msiempy/"
     echo -e "\t\t\t- Publish module to https://test.pypi.org/project/msiempy/"
     echo
     echo -e "\t\t'master' keyword :"
-    echo -e "\t\t\t- Tag version"
     echo -e "\t\t\t- Publish docs to https://mfesiem.github.io/docs/msiempy/"
     echo -e "\t\t\t- Publish module to https://pypi.org/project/msiempy/"
+    echo -e "\t\t\t- Ask to tag version"
     echo
     exit -1
 }
@@ -46,33 +46,49 @@ while getopts ":hp:" arg; do
                 #     git tag -d ${version}-test && git push origin --delete ${version}-test
                 # fi
 
-                # Tag
-                echo "[RUNNING] git tag -a ${version} -m "Version ${version}" && git push --tags"
-                git tag -a ${version} -m "Version ${version}" && git push --tags
-
             else
                 if [ "$keyword" = "test" ]; then
                     docs_folder="mfesiem.github.io/docs/test"
                     repository_url="https://test.pypi.org"
 
-                    # read -p "[QUESTION] Do you want to tag this version with a '-test' flag? [y/n]" -n 1 -r
-                    # echo    # (optional) move to a new line
-                    # if [[ $REPLY =~ ^[Yy]$ ]]
-                    # then
-                    #     # Deleting '-test' tag if it exists
-                    #     if [ -n `git tag -l "${version}-test"` ]; then
-                    #         echo "[RUNNING] git tag -d ${version}-test && git push origin --delete ${version}-test"
-                    #         git tag -d ${version}-test && git push origin --delete ${version}-test
-                    #     fi
-                    #     # Test tag
-                    #     echo "[RUNNING] git tag -a ${version}-test -m "Version ${version}-test" && git push --tags"
-                    #     git tag -a ${version}-test -m "Version ${version}-test" && git push --tags
-                    # fi
-                    
                 else
                     echo "[ERROR] The keyword must be 'test' or 'master'"
                     exit -1
                 fi
+            fi
+
+            # Tag
+            if [ "$keyword" = "master" ]; then
+                last_tag=`git tag -l | tail -1`
+                if [[ ! -z ${last_tag} ]]; then
+                    git config pager.branch false
+                    compare=`git log ${last_tag}.. --pretty=oneline`
+                else
+                    compare='No past tag to compare with'
+                fi
+
+                read -p "[QUESTION] Do you want to tag this version '${version} Commits from last verison ${last_tag}: ${compare}'? [y/n]" -n 1 -r
+                echo    # (optional) move to a new line
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+
+                    # Tag
+                    touch ./tmp_tag.txt
+                    echo "Version ${version}" > ./tmp_tag.txt
+                    echo >> ./tmp_tag.txt
+                    echo >> ./tmp_tag.txt
+                    echo "New features: " >> ./tmp_tag.txt
+                    echo >> ./tmp_tag.txt
+                    echo >> ./tmp_tag.txt
+                    echo "Commits from last verison ${last_tag}:" >> ./tmp_tag.txt
+                    echo "${compare}" >> ./tmp_tag.txt
+                    nano ./tmp_tag.txt
+                    tag_msg=`cat ./tmp_tag.txt`
+                    echo "[RUNNING] git tag -a ${version} -m ${tag_msg} && git push --tags"
+                    git tag -a ${version} -F ./tmp_tag.txt && git push --tags
+                    rm ./tmp_tag.txt
+                fi
+
+                
             fi
 
             # Generating diagrams
@@ -120,6 +136,7 @@ while getopts ":hp:" arg; do
             python3 setup.py --quiet clean
 
             echo "[SUCCESS] Module published at : https://${repository_url}/project/msiempy/"
+
             ;;
 
         *)

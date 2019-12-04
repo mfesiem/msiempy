@@ -23,7 +23,7 @@ class AlarmManager(FilteredQueryList):
     - `status_filter` : status of the alarms to query. `status_filter` is not a filter like other cause it's computed on the SIEM side.  
     Accepted values : `acknowledged`, `unacknowledged`, `all`, `` or `None` (default is ``).
     `filters` are computed locally - Unlike `msiempy.event.EventManager` filters.  
-    - `page_size` : max number of rows per query, by default takes the value in config `default_rows` option.
+    - `page_size` : max number of rows per query.  
     - `page_number` : defaulted to 1.
     - `filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.alarm.Alarm` objects. A single `tuple` is also accepted.  
     - `event_filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.event.Event` objects. A single `tuple` is also accepted.  

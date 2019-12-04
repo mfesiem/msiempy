@@ -89,6 +89,10 @@ def devtree_exaples():
         print(devtree)
         print(devtree.get_text(format='csv'))
         print(devtree.get_text(format='prettytable', fields=['ds_ip', 'client', 'last_time','model','name','parent_name','vendor']))
+        print('len : {}'.format(len(devtree)))
+        print('__iter__ print')
+        [ print (str(f)[:80]+'.[..]') for f in devtree ]
+        # print('repr : {}'.format(repr(devtree)))
 
         # ...
 
@@ -106,8 +110,10 @@ def watchlist_examples():
         # ...
         pass
 #Main
-alarm_examples()
-event_examples()
+# alarm_examples()
+# event_examples()
+
+# esm_examples()
+# watchlist_examples()
+
 devtree_exaples()
-esm_examples()
-watchlist_examples()
