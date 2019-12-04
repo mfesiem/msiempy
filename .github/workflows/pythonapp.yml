@@ -20,4 +20,7 @@ jobs:
         pip install -r requirements.txt
     - name: Test
       run: |
-       ./setup.py test
+        cd samples
+        python3 msiempy_setup.py --host 207.179.200.58:4443 --user NGCP --passwd $ESMPASS
+        cd ..
+        ./setup.py test
