@@ -743,9 +743,8 @@ class NitroSession():
                         return self.esm_request(method, data, http, callback, raw, secure, retry=False)
 
                     log.error('\n' + str(e)+ ' ' +str(result.text) + '\nSee debug log for more infos.')
-                    log.debug(str(e)+ ' ' +str(result.text)+ ' ' + str(result.__dict__))
-                    exit(423)
-                    
+                    raise
+
                     """
                     #TODO handle expired session error, result unavailable / other siem errors
                     # _InvalidFilter (228)
