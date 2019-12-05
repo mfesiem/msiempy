@@ -755,7 +755,7 @@ class NitroSession():
             result = requests.request(
                 http,
                 urllib.parse.urljoin(url.format(self.config.host), method),
-                data=json.dumps(data), 
+                data=json.dumps(data) if data else {}, 
                 headers=self._headers,
                 verify=self.config.ssl_verify,
                 timeout=self.config.timeout,
