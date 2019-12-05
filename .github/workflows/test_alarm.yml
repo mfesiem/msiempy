@@ -1,13 +1,13 @@
 name: test_alarm
 
-on: [push]
+on: [master]
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: 4
+      max-parallel: 1
       matrix:
         # python-version: [3.5, 3.6, 3.7, 3.8]
         python-version: [3.7]

@@ -1,11 +1,10 @@
-name: Full test
+name: full_test
 
-on: [push]
-
-jobs:
-  build:
-
-    runs-on: ubuntu-latest
+runs-on: ${{ matrix.os }}
+strategy:
+  max-parallel: 1
+  matrix:
+    os: [macos-latest, windows-latest, ubuntu-latest]
 
     steps:
     - uses: actions/checkout@v1
@@ -16,8 +15,9 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install pytest
         ./setup.py install --user
     - name: Run test
       run: |
-        python3 ./samples/msiempy_setup.py --host 207.179.200.58:4443 --user NGCP --passwd ${{ secrets.esmpass }}
-        ./setup.py test
+        python ./samples/msiempy_setup.py --host 207.179.200.58:4443 --user NGCP --passwd ${{ secrets.esmpass }}
+        pytest
