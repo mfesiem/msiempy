@@ -1,8 +1,12 @@
 name: full_test
-on: [push]
+on:
+  push:
+    branches:    
+      - master
+      - develop # Push events on master branch
 jobs: 
   test:
-    name: ${{ matrix.os }} python ${{ matrix.python-version }} test
+    name: ${{ matrix.os }} py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }} 
     strategy:
       max-parallel: 1
@@ -12,10 +16,12 @@ jobs:
         python-version: ['3.5', '3.6', '3.7']
     steps:
       - uses: actions/checkout@v1
-      - name: Set up Python 3.7
+
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -23,28 +29,22 @@ jobs:
           pip install ./
           python ./samples/msiempy_setup.py --set esm host 207.179.200.58:4443 --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general verbose true --set general logfile ./log.txt --set general timeout 60
       
-      - name: tests/local/
-        run: |
-          pytest tests/local/
+      - name: Run tests/local/
+        run: pytest tests/local/
 
-      - name: tests/auth/test_session.py
-        run: |
-          pytest tests/auth/test_session.py
+      - name: Run tests/auth/test_session.py
+        run: pytest tests/auth/test_session.py || pytest tests/auth/test_session.py
 
-      - name: tests/auth/test_alarm.py
-        run: |
-          pytest tests/auth/test_alarm.py
+      - name: Run tests/auth/test_alarm.py
+        run: pytest tests/auth/test_alarm.py || pytest tests/auth/test_alarm.py
 
-      - name: tests/auth/test_event.py
-        run: |
-          pytest tests/auth/test_event.py
+      - name: Run tests/auth/test_event.py
+        run: pytest Run tests/auth/test_event.py || pytest Run tests/auth/test_event.py
 
-      - name: tests/auth/test_device.py
-        run: |
-          pytest tests/auth/test_device.py
-          
-      - name: tests/auth/test_watchlist.py
-        run: |
-          pytest tests/auth/test_device.py
+      - name: Run tests/auth/test_device.py
+        run: pytest tests/auth/test_device.py || pytest tests/auth/test_device.py
+
+      - name: Run tests/auth/test_watchlist.py
+        run: pytest tests/auth/test_watchlist.py || pytest tests/auth/test_watchlist.py
 
         
