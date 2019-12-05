@@ -2,3 +2,4 @@ pylint
 pdoc3
 Graphviz
 twine
+pytest

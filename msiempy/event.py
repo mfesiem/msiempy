@@ -1022,7 +1022,7 @@ class FieldFilter(_QueryFilter):
                     break
 
             #Error throwing
-            if type_template is not None :
+            if type_template != None :
                 if type_template['key'] in kwargs :
                     
                     # Adds a new value to a fields filter

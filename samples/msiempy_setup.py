@@ -1,19 +1,31 @@
 from msiempy import NitroConfig
 from msiempy.__utils__ import tob64
 import argparse
+"""
+Usage example:  
 
-parser = argparse.ArgumentParser(description="""Setup authentication""")
-parser.add_argument('--host', metavar='ESM address')    
-parser.add_argument('--user', metavar='username')
-parser.add_argument('--passwd', metavar='passwd')
+    $ python ./samples/msiempy_setup.py --set esm host 207.179.200.58:4443 --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general verbose true --set general logfile ./log.txt --set general timeout 60
+
+
+    $ python ./samples/msiempy_setup.py  
+    Enter [esm]host. Press <Enter> to keep empty: <type here>  
+    Enter [esm]user. Press <Enter> to keep empty: <type here>  
+    Enter [esm]passwd. Press <Enter> to skip: <type here>  
+
+"""
+
+parser = argparse.ArgumentParser(description="""Setup msiempy configuration.""")
+parser.add_argument('--set', '-s', metavar="'<section>' '<option>' '<value>'", action='append', nargs='+', help="""List of <section> <option> <value> to set.""", default=[])
 args= parser.parse_args()
 
 config=NitroConfig()
+print(args)
 
-if args.host and args.user and args.passwd : 
-    config.set('esm','host', args.host)
-    config.set('esm', 'user', args.user)
-    config.set('esm', 'passwd', tob64(args.passwd))
+if len(args.set)>0:
+    for setting in args.set:
+        if setting[1] == 'passwd':
+            setting[2]=tob64(setting[2])
+        config.set(setting[0], setting[1], setting[2])
 else :
     config.iset('esm')
 

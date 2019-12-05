@@ -89,7 +89,7 @@ class NitroConfig(configparser.ConfigParser):
                 os.makedirs(os.path.dirname(self._path))
             self.write()
 
-        if config is not None :
+        if config != None :
             log.info("Reading config_dict : "+str(self))
             self.read_dict(config)
 
@@ -150,7 +150,7 @@ class NitroConfig(configparser.ConfigParser):
         if secure :
             newvalue = tob64(getpass.getpass(msg.format(section, option)+'. Press <Enter> to skip: '))
         else:
-            newvalue = input(msg.format(section, option)+ '. Press <Enter> to keep '+ (value if (str(value) is not '') else 'empty') + ': ')
+            newvalue = input(msg.format(section, option)+ '. Press <Enter> to keep '+ (value if (str(value) != '') else 'empty') + ': ')
         if newvalue != '' :
             super().set(section, option, newvalue)
 
@@ -671,7 +671,7 @@ class NitroSession():
         
         resp = self.request('login', username=userb64, password=passb64, raw=True, secure=True)
         
-        if resp is not None :
+        if resp != None :
             if resp.status_code in [400, 401]:
                 raise NitroError('Invalid username or password for the ESM')
             elif 402 <= resp.status_code <= 600:
@@ -740,24 +740,26 @@ class NitroSession():
         log.debug('Requesting HTTP '+str(http)+' '+ str(method) + 
             (' with data '+str(data) if not secure else ' ***') )
         
+        http_data=str()
+
         #Handling private API calls formatting
         if method == method.upper():
             privateApiCall=True
             url = self.BASE_URL_PRIV
-            data = self.format_params(method, **data)
-            log.debug('Private API call : '+str(method)+' Formatted params : '+str(data))
+            http_data = self.format_params(method, **data)
+            log.debug('Private API call : '+str(method)+' Formatted params : '+str(http_data))
         
         #Normal API calls
         else:
             url = self.BASE_URL
-            if data:
-                data = json.dumps(data)
+            if data :
+                http_data = json.dumps(data)
 
         try :
             result = requests.request(
                 http,
                 urllib.parse.urljoin(url.format(self.config.host), method),
-                data=data, 
+                data=http_data, 
                 headers=self._headers,
                 verify=self.config.ssl_verify,
                 timeout=self.config.timeout,
@@ -773,19 +775,34 @@ class NitroSession():
                 try:
                     result.raise_for_status()
                 except requests.HTTPError as e :
+
                     if retry == True :
-                        if any([match in result.text for match in ['ERROR_InvalidSession', 'Not Authorized User']]):
+                        # Username and password cannot be null ?
+                        # Invalif session handler : re-login
+                        if any([match in result.text for match in ['ERROR_InvalidSession', 'Not Authorized User', 'Invalid Session', 'Username and password cannot be null']]):
                             log.warning('Invalid session, logging in and retrying with authentication. Error {} {}'.format(e, result.text))
                             self.logged_in=False
                             self.login()
-                        else:
-                            log.warning('An HTTP error occured ({}), retrying request'.format(result.text))
 
+                        # Else just log
+                        else:
+                            log.warning('An HTTP error occured ({} {}), retrying request'.format(e, result.text))
+                        
+                        # Retry request
                         time.sleep(0.2)
                         return self.esm_request(method, data, http, callback, raw, secure, retry=False)
 
-                    log.error('\n' + str(e)+ ' ' +str(result.text) + '\nSee debug log for more infos.')
-                    raise
+                    # Json object error throwing
+                    if any([match in result.text for match in ['A JSONObject text must begin with']]):
+                            error = NitroError('JSONObject error with method ({}). From requests.HTTPError {} {}'.format(
+                                method, e, result.text))
+
+                    else : # Other HTTPS errors... TODO
+                        error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
+                            method, data, e, result.text))
+
+                    log.error(error)
+                    raise error
 
                     """
                     #TODO handle expired session error, result unavailable / other siem errors
@@ -795,6 +812,7 @@ class NitroSession():
                     # Input Validation Error
                     # By creating a new class
                     # ERROR_InvalidSession (1)
+                    # ERROR_UnknownList (38)
                     """
 
                 else: #
@@ -899,11 +917,11 @@ class NitroSession():
 
         method, data = self.PARAMS.get(request)
 
-        if data is not None :
+        if data != None :
             data =  data % kwargs
             data = ast.literal_eval((data.replace('\n','').replace('\t','')))
            
-        if method is not None:
+        if method != None:
             try :
                 method = method % kwargs
             except TypeError as err :
@@ -976,7 +994,7 @@ class NitroSession():
         Format private API call.  
         From mfe_saw project at https://github.com/andywalden/mfe_saw
         """
-        params = {k: v for k, v in params.items() if v is not None}
+        params = {k: v for k, v in params.items() if v != None}
         params = '%14'.join([k + '%13' + v + '%13' for (k, v) in params.items()])
         
         if params:
@@ -1304,7 +1322,7 @@ class NitroList(collections.UserList, NitroObject):
         
         if isinstance(apattern, str):
             for item in list(self) :
-                if regex_match(apattern, getattr(item, match_prop) if isinstance(item, NitroDict) else str(item)) is not invert :
+                if regex_match(apattern, getattr(item, match_prop) if isinstance(item, NitroDict) else str(item)) != invert :
                     matching_items.append(item)
             log.debug("You're search returned {} rows : {}".format(
                 len(matching_items),
@@ -1368,14 +1386,14 @@ class NitroList(collections.UserList, NitroObject):
         if confirm : self._confirm_func(func, str(self))
 
         #Setting the arguments on the function
-        func = functools.partial(func, **(func_args if func_args is not None else {}))
+        func = functools.partial(func, **(func_args if func_args != None else {}))
         
         #The data returned by function
         returned=list()
 
         #Usethe self contained data if not speficed otherwise
         elements=list(self)
-        if isinstance(data, list) and data is not None:
+        if isinstance(data, list) and data != None:
             elements=data
         else :
             AttributeError('data must be a list')
@@ -1386,9 +1404,9 @@ class NitroList(collections.UserList, NitroObject):
         #The message will appear on loading bar if progress is True
         if progress is True :
             tqdm_args=dict(desc='Loading...', total=len(elements))
-            if message is not None:
+            if message != None:
                 tqdm_args['desc']=message
-        elif message is not None:
+        elif message != None:
             log.info(message)
 
         #Runs the callable on list on executor or by iterating
@@ -1431,7 +1449,7 @@ class NitroList(collections.UserList, NitroObject):
         Ask user inut to confirm the calling of `func` on `elements`.
         """
         if not 'y' in input('Are you sure you want to do this '+str(func)+' on '+
-        ('\n'+str(elements) if elements is not None else 'all elements')+'? [y/n]: '):
+        ('\n'+str(elements) if elements != None else 'all elements')+'? [y/n]: '):
             raise InterruptedError("The action was cancelled by the user.")
 
 class FilteredQueryList(NitroList):
@@ -1479,7 +1497,7 @@ class FilteredQueryList(NitroList):
         #self.filters=filters filter property setter should be called in the concrete class
         #TODO find a better solution to integrate the filter propertie
 
-        if start_time is not None and end_time is not None :
+        if start_time != None and end_time != None :
             self.start_time=start_time
             self.end_time=end_time
             self.time_range='CUSTOM'

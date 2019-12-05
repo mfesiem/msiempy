@@ -70,7 +70,7 @@ while getopts ":hp:" arg; do
                     compare='No past tag to compare with'
                 fi
 
-                read -p "[QUESTION] Do you want to tag this version '${version} Commits from last verison ${last_tag}: ${compare}'? [y/n]" -n 1 -r
+                read -p "[QUESTION] Do you want to tag this version ${version}? You'll be asked to write the tag message. [y/n]" -n 1 -r
                 echo    # (optional) move to a new line
                 if [[ $REPLY =~ ^[Yy]$ ]]; then
 
@@ -78,17 +78,21 @@ while getopts ":hp:" arg; do
                     touch ./tmp_tag.txt
                     echo "Version ${version}" > ./tmp_tag.txt
                     echo >> ./tmp_tag.txt
-                    echo >> ./tmp_tag.txt
                     echo "New features: " >> ./tmp_tag.txt
                     echo >> ./tmp_tag.txt
-                    echo >> ./tmp_tag.txt
-                    echo "Commits from last verison ${last_tag}:" >> ./tmp_tag.txt
-                    echo "${compare}" >> ./tmp_tag.txt
-                    nano ./tmp_tag.txt
+                    echo "Fixes:" >> ./tmp_tag.txt
+                    vi ./tmp_tag.txt
                     tag_msg=`cat ./tmp_tag.txt`
-                    echo "[RUNNING] git tag -a ${version} -m ${tag_msg} && git push --tags"
-                    git tag -a ${version} -F ./tmp_tag.txt && git push --tags
+                    echo "${tag_msg}"
+                    read -p "[QUESTION] Are you sure, tag this version with the message? [y/n]" -n 1 -r
+                    echo    # (optional) move to a new line
+                    if [[ $REPLY =~ ^[Yy]$ ]]; then
+                        echo "[RUNNING] git tag -a ${version} -m ${tag_msg} && git push --tags"
+                        git tag -a ${version} -F ./tmp_tag.txt && git push --tags
+                    fi
+
                     rm ./tmp_tag.txt
+
                 fi
 
                 
