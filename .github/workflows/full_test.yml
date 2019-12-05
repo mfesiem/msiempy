@@ -3,7 +3,6 @@ on:
   push:
     branches:    
       - master
-      - develop # Push events on master branch
 jobs: 
   test:
     name: ${{ matrix.os }} py${{ matrix.python-version }}
