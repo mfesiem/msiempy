@@ -54,22 +54,8 @@ ssl_verify = no
 output = text
 ```
 
-To set the password, you can edit the configuration dynamically with python. 
-```python
->>> from msiempy import NitroConfig
->>> config=NitroConfig()
->>> config.iset('esm')
-Enter [esm]host. Press <Enter> to keep empty: <type here>
-Enter [esm]user. Press <Enter> to keep empty: <type here>
-Enter [esm]passwd. Press <Enter> to skip: <type here>
->>> config.iset('general') [...]
->>> print(config)
-Configuration file : /Users/username/.msiem/conf.ini
-{'esm': {'host': '***', 'user': '***', 'passwd': '***=='}, 'general': {'verbose': 'no', 'quiet': 'no', 'logfile': '', 'timeout': '60', 'ssl_verify': 'no', 'output': 'text'}}
->>>config.write()
-```
-
-You can also directly paste the password's base64 in the config file by doing
+To set the password, you can use the [`msiempy_setup.py`](https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py) script.  
+You can also directly paste the password's base64 in the config file by doing:  
 ```python
 >>> import base64
 >>> passwd = 'P@assW0rd'
