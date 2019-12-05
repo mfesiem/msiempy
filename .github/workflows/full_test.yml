@@ -34,18 +34,18 @@ jobs:
         run: pytest tests/local/
 
       - name: Run tests/auth/test_session.py
-        run: pytest tests/auth/test_session.py --reruns 3 --reruns-delay 1
+        run: pytest tests/auth/test_session.py --reruns 5 --reruns-delay 1
 
       - name: Run tests/auth/test_alarm.py
-        run: pytest tests/auth/test_alarm.py --reruns 3 --reruns-delay 1
+        run: pytest tests/auth/test_alarm.py --reruns 5 --reruns-delay 1
 
       - name: Run tests/auth/test_event.py
-        run: pytest tests/auth/test_event.py --reruns 3 --reruns-delay 1
+        run: pytest tests/auth/test_event.py --reruns 5 --reruns-delay 1
 
       - name: Run tests/auth/test_device.py
-        run: pytest tests/auth/test_device.py --reruns 3 --reruns-delay 1
+        run: pytest tests/auth/test_device.py --reruns 5 --reruns-delay 1
 
       - name: Run tests/auth/test_watchlist.py
-        run: pytest tests/auth/test_watchlist.py --reruns 3 --reruns-delay 1
+        run: pytest tests/auth/test_watchlist.py --reruns 5 --reruns-delay 1
 
         
