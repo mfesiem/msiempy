@@ -774,46 +774,43 @@ class NitroSession():
             else:
                 try:
                     result.raise_for_status()
+
                 except requests.HTTPError as e :
 
                     if retry == True :
                         # Username and password cannot be null ?
-                        # Invalif session handler : re-login
+                        # Invalif session handler -> re-login
                         if any([match in result.text for match in ['ERROR_InvalidSession', 'Not Authorized User', 'Invalid Session', 'Username and password cannot be null']]):
-                            log.warning('Invalid session, logging in and retrying with authentication. Error {} {}'.format(e, result.text))
+                            log.warning('Authentication error, logging in and retrying. From requests.HTTPError {} {}'.format(e, result.text))
                             self.logged_in=False
                             self.login()
 
                         # Else just log
-                        else:
-                            log.warning('An HTTP error occured ({} {}), retrying request'.format(e, result.text))
+                        else: log.warning('An HTTP error occured ({} {}), retrying request'.format(e, result.text))
                         
                         # Retry request
                         time.sleep(0.2)
                         return self.esm_request(method, data, http, callback, raw, secure, retry=False)
 
-                    # Json object error throwing
-                    if any([match in result.text for match in ['A JSONObject text must begin with']]):
-                            error = NitroError('JSONObject error with method ({}). From requests.HTTPError {} {}'.format(
-                                method, e, result.text))
+                    
+                    # Other handlers
 
-                    else : # Other HTTPS errors... TODO
+                    # Data unavailable error handler -> return []
+                    if any([match in result.text for match in ['ERROR_IndexNotTurnedOn','ERROR_NoData','ERROR_UnknownList']]):
+                            error = NitroError('Data unavailable error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
+                                method, data, e, result.text))
+                            log.error(error)
+                            return []
+
+                    if True : # Other HTTP errors... TODO
+                        # _InvalidFilter (228)
+                        # Status Code 500: Error processing request, see server logs for more details 
+                        # Input Validation Error
                         error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
                             method, data, e, result.text))
 
                     log.error(error)
                     raise error
-
-                    """
-                    #TODO handle expired session error, result unavailable / other siem errors
-                    # _InvalidFilter (228)
-                    # _IndexNotTurnedOn (49)
-                    # Status Code 500: Error processing request, see server logs for more details 
-                    # Input Validation Error
-                    # By creating a new class
-                    # ERROR_InvalidSession (1)
-                    # ERROR_UnknownList (38)
-                    """
 
                 else: #
                     result = self.unpack_resp(result)
