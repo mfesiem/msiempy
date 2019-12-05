@@ -779,7 +779,7 @@ class NitroSession():
                         # Invalif session handler : re-login
                         if any([match in result.text for match in ['ERROR_InvalidSession', 'Not Authorized User', 'Invalid Session']]):
                             log.warning('Invalid session, logging in and retrying with authentication. Error {} {}'.format(e, result.text))
-                            self.logged_in=False
+                            self.logout()
                             self.login()
 
                         # Else just log
@@ -792,8 +792,8 @@ class NitroSession():
 
                     # Json object error throwing
                     if any([match in result.text for match in ['A JSONObject text must begin with']]):
-                            error = NitroError('JSONObject error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
-                                method, data, e, result.text))
+                            error = NitroError('JSONObject error with method ({}). From requests.HTTPError {} {}'.format(
+                                method, e, result.text))
 
                     else : # Other HTTPS errors... TODO
                         error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
