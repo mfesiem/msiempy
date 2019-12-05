@@ -779,7 +779,7 @@ class NitroSession():
                         # Invalif session handler : re-login
                         if any([match in result.text for match in ['ERROR_InvalidSession', 'Not Authorized User', 'Invalid Session']]):
                             log.warning('Invalid session, logging in and retrying with authentication. Error {} {}'.format(e, result.text))
-                            self.logout()
+                            self.logged_in=False
                             self.login()
 
                         # Else just log
