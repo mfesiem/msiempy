@@ -20,10 +20,10 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        python3 -m pip install --upgrade pip
+        python -m pip install --upgrade pip
         pip install --upgrade unittest
         pip install --upgrade msiempy
     - name: Test
       run: |
-        python3 ./samples/msiempy_setup.py --host 207.179.200.58:4443 --user NGCP --passwd ${{ secrets.esmpass }}
-        python3 -m unittest tests.auth.test_watchlist
+        python ./samples/msiempy_setup.py --host 207.179.200.58:4443 --user NGCP --passwd ${{ secrets.esmpass }}
+        python -m unittest tests.auth.test_watchlist

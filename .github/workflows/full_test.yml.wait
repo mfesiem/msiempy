@@ -19,6 +19,5 @@ jobs:
         pip install --upgrade msiempy
     - name: Run test
       run: |
-        exit
       #  python3 ./samples/msiempy_setup.py --host 207.179.200.58:4443 --user NGCP --passwd ${{ secrets.esmpass }}
       #  ./setup.py test
