@@ -780,8 +780,12 @@ class NitroSession():
                     if retry == True :
                         # Username and password cannot be null ?
                         # Invalif session handler -> re-login
-                        if any([match in result.text for match in ['ERROR_InvalidSession', 'Not Authorized User', 'Invalid Session', 'Username and password cannot be null']]):
-                            log.warning('Authentication error, logging in and retrying. From requests.HTTPError {} {}'.format(e, result.text))
+                        if any([match in result.text for match in ['ERROR_InvalidSession', 
+                            'Not Authorized User', 'Invalid Session', 'Username and password cannot be null']]):
+                            error = NitroError('Authentication error with method ({}) and data : {} logging in and retrying. From requests.HTTPError {} {}'.format(
+                                method, data, e, result.text))
+                            log.warning(error)
+
                             self.logged_in=False
                             self.login()
 
@@ -792,23 +796,24 @@ class NitroSession():
                         time.sleep(0.2)
                         return self.esm_request(method, data, http, callback, raw, secure, retry=False)
 
-                    
                     # Other handlers
-
                     # Data unavailable error handler -> return []
-                    if any([match in result.text for match in ['ERROR_IndexNotTurnedOn','ERROR_NoData','ERROR_UnknownList']]):
+                    if any([match in result.text for match in ['ERROR_IndexNotTurnedOn',
+                        'ERROR_NoData','ERROR_UnknownList','ERROR_JobEngine_GetQueryStatus_StatusNotFound']]):
                             error = NitroError('Data unavailable error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
                                 method, data, e, result.text))
-                            log.error(error)
+                            log.warning(error)
+
                             return []
 
-                    if True : # Other HTTP errors... TODO
+                    # if True : # Other HTTP errors... TODO
                         # _InvalidFilter (228)
                         # Status Code 500: Error processing request, see server logs for more details 
                         # Input Validation Error
-                        error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
-                            method, data, e, result.text))
 
+                    # Raise error in the worst case
+                    error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
+                        method, data, e, result.text))
                     log.error(error)
                     raise error
 
@@ -833,7 +838,8 @@ class NitroSession():
             log.error(e)
             return None
         
-    
+    def _request_http_error_handler(self, error, method, data, http, callback, raw, secure, retry):
+        pass
 
     def version(self):
         """
