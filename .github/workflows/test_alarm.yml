@@ -1,4 +1,4 @@
-name: Python package
+name: test_alarm
 
 on: [push]
 
@@ -26,4 +26,4 @@ jobs:
     - name: Test
       run: |
         python3 ./samples/msiempy_setup.py --host 207.179.200.58:4443 --user NGCP --passwd ${{ secrets.esmpass }}
-        python3 -m unittest tests.auth.alarm
+        python3 -m unittest tests.auth.test_alarm
