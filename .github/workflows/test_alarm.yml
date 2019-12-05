@@ -1,6 +1,6 @@
 name: test_alarm
 
-on: [master]
+on: [push.master]
 
 jobs:
   build:

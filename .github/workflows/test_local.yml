@@ -1,6 +1,6 @@
 name: tests_local
 
-on: [master]
+on: [push.master]
 
 jobs:
   build:

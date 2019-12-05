@@ -1,6 +1,6 @@
 name: full_test
-
-runs-on: ${{ matrix.os }}
+on: [push]
+runs-on: ${{ matrix.os }} 
 strategy:
   max-parallel: 1
   matrix:

@@ -1,6 +1,6 @@
 name: test_watchlist
 
-on: [master]
+on: [push.master]
 
 jobs:
   build:
