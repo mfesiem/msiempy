@@ -9,11 +9,11 @@ accessible and pythonic.
  This python module is currently experimental 
 
 ### Main features
-- ESM monitoring
-- Datasource operations : add, edit, delete - including client datasources (work in progress)
-- Alarm operations and querying : filter, [un]acknowledge, delete, get triggering event(s)
-- Event querying and builtin workaround SIEM query `limit`
-- Watchlist operations : list watchlists, add values (work in progress)
+- ESM operations: monitor, show statuses  
+- Datasource operations: add, edit, delete - including client datasources  
+- Alarm operations and querying: filter, load pages, acknowledge, unacknowledge, delete, get triggering event, retreive from id  
+- Event operations and querying: split queries, filter, add fields, set event's note, retreive from IPSIDAlertID  
+- Watchlist operations : list, add, remove watchlists, add values, get values, retreive from id   
 - Single stable session handler and built-in asynchronous jobs
 
 ### Known module implementations
