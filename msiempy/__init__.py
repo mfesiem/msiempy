@@ -774,17 +774,17 @@ class NitroSession():
                     result.raise_for_status()
                 except requests.HTTPError as e :
                     if retry == True :
-                        if any([match in result.text for match in ['ERROR_InvalidSession', 'Not Authorized User']]):
+                        if any([match in result.text for match in ['ERROR_InvalidSession', 'Not Authorized User', 'Invalid Session']]):
                             log.warning('Invalid session, logging in and retrying with authentication. Error {} {}'.format(e, result.text))
                             self.logged_in=False
                             self.login()
                         else:
-                            log.warning('An HTTP error occured ({}), retrying request'.format(result.text))
+                            log.warning('An HTTP error occured ({} {}), retrying request'.format(e, result.text))
 
                         time.sleep(0.2)
                         return self.esm_request(method, data, http, callback, raw, secure, retry=False)
 
-                    log.error('\n' + str(e)+ ' ' +str(result.text) + '\nSee debug log for more infos.')
+                    log.error('{} \n {} \n {}'.format(str(e), str(result), result.text))
                     raise
 
                     """
