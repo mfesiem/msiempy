@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import msiempy
 import csv
 import time
@@ -25,12 +26,11 @@ def download_testing_data():
 
 class T(unittest.TestCase):
 
+    @pytest.mark.skip(reason="it's a helper function")
     def test_add_money_money(self, item, how_much=1):
         item['pct_hex']=str(float(item['pct_hex'])+how_much)
         time.sleep(0.02)
         return (float(item['\ufeffOBJECTID'])-float(item['pct_hex']))
-
-    
 
     manager = msiempy.NitroList(alist=download_testing_data())
 
