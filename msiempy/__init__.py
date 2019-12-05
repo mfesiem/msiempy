@@ -773,19 +773,34 @@ class NitroSession():
                 try:
                     result.raise_for_status()
                 except requests.HTTPError as e :
+
                     if retry == True :
+
+                        # Invalif session handler : re-login
                         if any([match in result.text for match in ['ERROR_InvalidSession', 'Not Authorized User', 'Invalid Session']]):
                             log.warning('Invalid session, logging in and retrying with authentication. Error {} {}'.format(e, result.text))
                             self.logged_in=False
                             self.login()
+
+                        # Else just log
                         else:
                             log.warning('An HTTP error occured ({} {}), retrying request'.format(e, result.text))
-
+                        
+                        # Retry request
                         time.sleep(0.2)
                         return self.esm_request(method, data, http, callback, raw, secure, retry=False)
 
-                    log.error('{} \n {} \n {}'.format(str(e), str(result), result.text))
-                    raise
+                    # Json object error throwing
+                    if any([match in result.text for match in ['A JSONObject text must begin with']]):
+                            error = NitroError('JSONObject error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
+                                method, data, e, result.text))
+
+                    else : # Other HTTPS errors... TODO
+                        error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
+                            method, data, e, result.text))
+
+                    log.error(error)
+                    raise error
 
                     """
                     #TODO handle expired session error, result unavailable / other siem errors
