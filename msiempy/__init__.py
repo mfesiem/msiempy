@@ -740,22 +740,26 @@ class NitroSession():
         log.debug('Requesting HTTP '+str(http)+' '+ str(method) + 
             (' with data '+str(data) if not secure else ' ***') )
         
+        http_data=str()
+
         #Handling private API calls formatting
         if method == method.upper():
             privateApiCall=True
             url = self.BASE_URL_PRIV
-            data = self.format_params(method, **data)
-            log.debug('Private API call : '+str(method)+' Formatted params : '+str(data))
+            http_data = self.format_params(method, **data)
+            log.debug('Private API call : '+str(method)+' Formatted params : '+str(http_data))
         
         #Normal API calls
         else:
             url = self.BASE_URL
+            if data :
+                http_data = json.dumps(data)
 
         try :
             result = requests.request(
                 http,
                 urllib.parse.urljoin(url.format(self.config.host), method),
-                data=json.dumps(data) if data else {}, 
+                data=http_data, 
                 headers=self._headers,
                 verify=self.config.ssl_verify,
                 timeout=self.config.timeout,
@@ -773,9 +777,9 @@ class NitroSession():
                 except requests.HTTPError as e :
 
                     if retry == True :
-
+                        # Username and password cannot be null ?
                         # Invalif session handler : re-login
-                        if any([match in result.text for match in ['ERROR_InvalidSession', 'Not Authorized User', 'Invalid Session']]):
+                        if any([match in result.text for match in ['ERROR_InvalidSession', 'Not Authorized User', 'Invalid Session', 'Username and password cannot be null']]):
                             log.warning('Invalid session, logging in and retrying with authentication. Error {} {}'.format(e, result.text))
                             self.logged_in=False
                             self.login()
@@ -808,6 +812,7 @@ class NitroSession():
                     # Input Validation Error
                     # By creating a new class
                     # ERROR_InvalidSession (1)
+                    # ERROR_UnknownList (38)
                     """
 
                 else: #
