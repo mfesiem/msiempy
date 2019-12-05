@@ -25,4 +25,5 @@ jobs:
     - name: Test
       run: |
         python ./samples/msiempy_setup.py --host 207.179.200.58:4443 --user NGCP --passwd ${{ secrets.esmpass }}
+        pip install pytest
         pytest tests/auth/test_alarm.py
