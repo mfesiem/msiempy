@@ -2,14 +2,14 @@ name: full_test
 on: [push]
 jobs: 
   test:
-    name: Test on ${{ matrix.os }} with Python ${{ matrix.python-version }}
+    name: ${{ matrix.os }} python ${{ matrix.python-version }} test
     runs-on: ${{ matrix.os }} 
     strategy:
       max-parallel: 1
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-        python-version: ['3.5', '3.6', '3.7', '3.8', 'pypy3' ]
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        python-version: ['3.5', '3.6', '3.7']
     steps:
       - uses: actions/checkout@v1
       - name: Set up Python 3.7
@@ -21,7 +21,30 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest
           pip install ./
-      - name: Run test
-        run: |
           python ./samples/msiempy_setup.py --set esm host 207.179.200.58:4443 --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general verbose true --set general logfile ./log.txt --set general timeout 60
-          pytest
+      
+      - name: tests/local/
+        run: |
+          pytest tests/local/
+
+      - name: tests/auth/test_session.py
+        run: |
+          pytest tests/auth/test_session.py
+
+      - name: tests/auth/test_alarm.py
+        run: |
+          pytest tests/auth/test_alarm.py
+
+      - name: tests/auth/test_event.py
+        run: |
+          pytest tests/auth/test_event.py
+
+      - name: tests/auth/test_device.py
+        run: |
+          pytest tests/auth/test_device.py
+          
+      - name: tests/auth/test_watchlist.py
+        run: |
+          pytest tests/auth/test_device.py
+
+        
