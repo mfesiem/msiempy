@@ -21,9 +21,10 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install --upgrade unittest
         pip install --upgrade msiempy
     - name: Test
       run: |
         python ./samples/msiempy_setup.py --host 207.179.200.58:4443 --user NGCP --passwd ${{ secrets.esmpass }}
-        python -m unittest tests.auth.test_event
+        pip install pytest
+        pytest
+        pytest tests.auth.test_event
