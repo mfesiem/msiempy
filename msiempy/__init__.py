@@ -750,14 +750,12 @@ class NitroSession():
         #Normal API calls
         else:
             url = self.BASE_URL
-            if data:
-                data = json.dumps(data)
 
         try :
             result = requests.request(
                 http,
                 urllib.parse.urljoin(url.format(self.config.host), method),
-                data=data, 
+                data=json.dumps(data), 
                 headers=self._headers,
                 verify=self.config.ssl_verify,
                 timeout=self.config.timeout,
