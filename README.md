@@ -4,7 +4,7 @@
 
 [![Tests](https://github.com/mfesiem/msiempy/workflows/test/badge.svg)](https://github.com/mfesiem/msiempy/actions)
 [![Coverage](https://codecov.io/gh/mfesiem/msiempy/branch/master/graph/badge.svg)](https://codecov.io/gh/mfesiem/msiempy)
-[![PyPI version](https://badge.fury.io/py/msiempy.svg)](https://badge.fury.io/py/msiempy)
+[![PyPI version](https://badge.fury.io/py/msiempy.svg)](https://pypi.org/project/msiempy/)
 
 This module aims to provide a basic API wrapper around the McAfee SIEM API to help make it more 
 accessible and pythonic.
