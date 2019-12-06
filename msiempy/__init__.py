@@ -37,7 +37,6 @@ import time
 from io import StringIO
 from .__utils__ import regex_match, tob64, format_esm_time, convert_to_time_obj, timerange_gettimes, parse_timedelta, divide_times
 
-
 try :
     requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -59,17 +58,17 @@ class NitroConfig(configparser.ConfigParser):
     """
     def __init__(self, path=None, config=None, *arg, **kwarg):
         super().__init__(*arg, **kwarg)
-        self.read_dict(self.DEFAULT_CONF_DICT)
         if not path : self._path = self.find_ini_location()
         else : self._path = path
-        try :
-            files=self.read(self._path)
-            if len(files) == 0: raise FileNotFoundError
-        except :
+        files=self.read(self._path)
+        if len(files) == 0:
             log.info("Config file inexistant or currupted, applying defaults")
+            self.read_dict(self.DEFAULT_CONF_DICT)
             if not os.path.exists(os.path.dirname(self._path)):
                 os.makedirs(os.path.dirname(self._path))
             self.write()
+        else:
+            log.info("Successfuly read config file {}".format(files[0]))
         if config != None :
             log.info("Reading config_dict : "+str(self))
             self.read_dict(config)
@@ -92,19 +91,6 @@ class NitroConfig(configparser.ConfigParser):
             'output':'text'}
     }
     """
-    ```
-    {
-        'esm':{'host':'', 
-            'user':'',
-            'passwd':''},
-        'general':{'verbose':False,
-            'quiet':False,
-            'logfile':'',
-            'timeout':60,
-            'ssl_verify':False,
-            'output':'text'}
-    }
-    ```
     """
 
     def __str__(self):
@@ -116,9 +102,9 @@ class NitroConfig(configparser.ConfigParser):
     def write(self):
         """Write the config file to the predetermined path.
         """
-        log.info("Write config file at "+self._path)
         with open(self._path, 'w') as conf:
             super().write(conf)
+            log.info("Config file has been written at "+self._path)
 
     def _iset(self, section, option, secure=False):
         """Internal method to interactively set  a option in a section.
@@ -1657,8 +1643,6 @@ class FilteredQueryList(NitroList):
         """Load the data from the SIEM into the manager list.  
         Abstract declaration."""
         pass
-
-
 
 class NitroError(Exception):
     """
