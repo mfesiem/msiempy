@@ -28,8 +28,10 @@ jobs:
           pip install pytest
           pip install pytest-rerunfailures
           pip install ./
-          python ./samples/msiempy_setup.py --set esm host 207.179.200.58:4443 --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general verbose true --set general logfile ./log.txt --set general timeout 60
       
+      - name: Setup msiempy config
+      - run: python ./samples/msiempy_setup.py --set esm host 207.179.200.58:4443 --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general verbose true --set general logfile ./log.txt --set general timeout 60
+
       - name: Run tests/local/
         run: pytest tests/local/
 
