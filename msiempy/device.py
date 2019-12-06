@@ -1086,7 +1086,11 @@ class DataSource(NitroDict):
 
     def load_details(self):
         """DataSource object is lazy. This gets the rest of the parameters."""
-        self.data = self.data_from_id(self.data['ds_id'])
+        self.data.update(self.data_from_id(self.data['ds_id']))
+
+    def refresh(self) : 
+        """Gets the detailed parameters."""
+        self.load_details()
 
     def delete(self):
         """This deletes the datasource and all the data. Be careful.
@@ -1134,7 +1138,7 @@ class DataSource(NitroDict):
             new_dev['ds_id'] = p.get('pdsId').get('value')
             new_dev['parent_id'] = p.get('parentId').get('value')
 
-        if new_dev['desc_id'] == '256':
+        if self.data['desc_id'] == '256':
            new_dev['tz_id'] = p.get('tz_id')
         else:
             new_dev['child_enabled'] = p.get('childEnabled')

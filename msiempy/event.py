@@ -10,7 +10,7 @@ import copy
 from datetime import datetime, timedelta
 log = logging.getLogger('msiempy')
 
-from . import NitroObject, NitroDict, NitroError, FilteredQueryList
+from . import NitroDict, NitroError, FilteredQueryList
 from .__utils__ import timerange_gettimes, parse_query_result, format_fields_for_query, divide_times, parse_timedelta
 
 class EventManager(FilteredQueryList):
@@ -825,6 +825,15 @@ class Event(NitroDict):
 
         elif use_query == False :
             return self.nitro.request('get_alert_data', id=id)
+
+    def refresh(self): 
+        """Re-load event's data"""
+        if 'Alert.IPSIDAlertID' in self.data.keys() :
+            self.data.update(self.data_from_id(self.data['Alert.IPSIDAlertID'], 
+                use_query=True, extra_fields=self.data.keys()))
+        else :
+            id = '|'.join([str(self.data['ipsId']['id']), str(self.data['alertId'])])
+            self.data.update(self.data_from_id(id))
    
 class _QueryFilter(collections.UserDict):
     """Base class for all SIEM query objects in order to dump the filter as dict.

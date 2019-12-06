@@ -167,6 +167,10 @@ class Watchlist(NitroDict):
         """
         self.data.update(self.data_from_id(self.data['id']))
 
+    def refresh(self):
+        """Load Watchlist details."""
+        self.load_details()
+
     def load_values(self):
         """
         Load Watchlist values.  

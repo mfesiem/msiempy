@@ -425,7 +425,7 @@ class Alarm(NitroDict):
         return self
 
     def refresh(self):
-        """Update the alarm with detailled data loaded from the SIEM. Concrete NitroObject method.
+        """Update the alarm with detailled data loaded from the SIEM.  
         """        
         self.load_details()
 
