@@ -10,11 +10,11 @@ import copy
 from datetime import datetime, timedelta
 log = logging.getLogger('msiempy')
 
-from . import NitroObject, NitroDict, NitroError, FilteredQueryList
+from . import NitroDict, NitroError, FilteredQueryList
 from .__utils__ import timerange_gettimes, parse_query_result, format_fields_for_query, divide_times, parse_timedelta
 
 class EventManager(FilteredQueryList):
-    """Interface to query and manage events.
+    """Interface to query and manage events.  
     Inherits from `msiempy.FilteredQueryList`.
 
     Arguments:  
@@ -28,10 +28,6 @@ class EventManager(FilteredQueryList):
     - `max_query_depth` : maximum number of supplement reccursions of division of the query times
         Meaning, if limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
         the list is (500*5)*(500*5)*(500*5) = 15625000000
-    - `*args, **kwargs` : Arguments passed to `msiempy.FilteredQueryList`   
-
-    Arguments to `msiempy.FilteredQueryList.__init__()` :  
-    
     - `time_range` : Query time range. String representation of a time range.  
     - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
     - `end_time` : Query endding time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
@@ -214,7 +210,6 @@ class EventManager(FilteredQueryList):
             divided according to the number of slots  
         - `delta` : exemple : '6h30m', the query will be firstly divided in chuncks according to the time delta read
             with dateutil.  
-        - `**kwargs` : Same as `msiempy.event.EventManager.qry_load_data` Arguments  
 
         Returns : `msiempy.event.EventManager`
         """
@@ -337,22 +332,24 @@ class EventManager(FilteredQueryList):
         return(self.nitro.request('get_possible_filters'))
           
 class Event(NitroDict):
-
     """        
-    Default event field keys :  
+    Dictionary keys :  
 
     - `Rule.msg`  
     - `Alert.LastTime`  
     - `Alert.IPSIDAlertID`  
-    
+    - and others...  
+
     You can request more fields by passing a list of fields to the `msiempy.event.EventManager` object. 
     `msiempy.event.Event.REGULAR_EVENT_FIELDS` offer a base list of regular fields that may be useful.
     See msiempy/static JSON files to browse complete list : https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json  
-    Prefixes `Alert.`, `Rule.`, etc are optionnal, prefix autocompletion is computed in any case ;)
+    You can also use this script to dinamically print the available fields and filters : https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py  
+    Prefixes `Alert.`, `Rule.`, etc are optionnal, prefix autocompletion is computed in any case within the `__getitem__` method ;)  
 
     Arguments:
 
-    - `id` : Retreive the complete data from a event `IPSIDAlertID`
+    - `adict`: Event parameters  
+    - `id`: The event `IPSIDAlertID` to instanciate. Will load informations
     """
    
     FIELDS_TABLES=[
@@ -800,17 +797,12 @@ class Event(NitroDict):
                 note=note)
         else :
             log.error("Couldn't set event's note, the event ID hasn't been found.")
-
-    def add_note(self, note):
-        """Deprecated, please use set_note() method instead. Desctructive action."""
-        log.warning(str(DeprecationWarning())+" Please use set_note() method instead.")
-        self.set_note(note)
         
     def data_from_id(self, id, use_query=False, extra_fields=[]):
         """
         Load event's data.  
 
-        Arguments :   
+        Arguments:   
 
         - `id` : The event ID. (i.e. : `144128388087414784|747122896`)  
         - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2.x.  
@@ -833,6 +825,15 @@ class Event(NitroDict):
 
         elif use_query == False :
             return self.nitro.request('get_alert_data', id=id)
+
+    def refresh(self): 
+        """Re-load event's data"""
+        if 'Alert.IPSIDAlertID' in self.data.keys() :
+            self.data.update(self.data_from_id(self.data['Alert.IPSIDAlertID'], 
+                use_query=True, extra_fields=self.data.keys()))
+        else :
+            id = '|'.join([str(self.data['ipsId']['id']), str(self.data['alertId'])])
+            self.data.update(self.data_from_id(id))
    
 class _QueryFilter(collections.UserDict):
     """Base class for all SIEM query objects in order to dump the filter as dict.

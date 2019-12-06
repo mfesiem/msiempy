@@ -1,19 +1,22 @@
 ![Logo](https://avatars0.githubusercontent.com/u/50667087?s=200&v=4 "Logo") 
-## McAfee SIEM API Python wrapper  
-[Build status](https://github.com/mfesiem/msiempy/actions)
 
+## McAfee SIEM API Python wrapper  
+
+[![Tests](https://github.com/mfesiem/msiempy/workflows/test/badge.svg)](https://github.com/mfesiem/msiempy/actions)
+[![Coverage](https://codecov.io/gh/mfesiem/msiempy/branch/master/graph/badge.svg)](https://codecov.io/gh/mfesiem/msiempy)
+[![PyPI version](https://badge.fury.io/py/msiempy.svg)](https://badge.fury.io/py/msiempy)
 
 This module aims to provide a basic API wrapper around the McAfee SIEM API to help make it more 
 accessible and pythonic.
 
- This python module is currently experimental 
+This python module is tested on windows, ubuntu and macos.   
 
 ### Main features
-- ESM monitoring
-- Datasource operations : add, edit, delete - including client datasources (work in progress)
-- Alarm operations and querying : filter, [un]acknowledge, delete, get triggering event(s)
-- Event querying and builtin workaround SIEM query `limit`
-- Watchlist operations : list watchlists, add values (work in progress)
+- ESM operations: monitor, show statuses  
+- Datasource operations: add, edit, delete - including client datasources  
+- Alarm operations and querying: filter, load pages, acknowledge, unacknowledge, delete, get triggering event, retreive from id  
+- Event operations and querying: split queries, filter, add fields, set event's note, retreive from IPSIDAlertID  
+- Watchlist operations : list, add, remove watchlists, add values, get values, retreive from id   
 - Single stable session handler and built-in asynchronous jobs
 
 ### Known module implementations
@@ -51,7 +54,6 @@ quiet = no
 logfile = /var/log/msiempy/log.txt
 timeout = 30
 ssl_verify = no
-output = text
 ```
 
 To set the password, you can use the [`msiempy_setup.py`](https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py) script.  

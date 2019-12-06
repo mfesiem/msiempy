@@ -15,8 +15,8 @@ __pdoc__={}
 
 class AlarmManager(FilteredQueryList):
     """
-    AlarmManager class.
-    Interface to query and manage Alarms.
+    Interface to query and manage Alarms.  
+    Inherits from `msiempy.FilteredQueryList`.
 
     Arguments:  
 
@@ -27,9 +27,6 @@ class AlarmManager(FilteredQueryList):
     - `page_number` : defaulted to 1.
     - `filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.alarm.Alarm` objects. A single `tuple` is also accepted.  
     - `event_filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.event.Event` objects. A single `tuple` is also accepted.  
-    
-    Arguments to `msiempy.FilteredQueryList.__init__()` :  
-
     - `time_range` : Query time range. String representation of a time range.  
     - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
     - `end_time` : Query endding time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
@@ -336,9 +333,10 @@ class Alarm(NitroDict):
     - `events` : The events for this user  
     - And others...  
     
-    Arguments :
+    Arguments:
 
-    - `id` : `Alarm` object ID.  
+    - `adict`: Alarm parameters  
+    - `id`: The alarm ID to instanciate. Will load informations
     """
 
     def __init__(self, *arg, **kwargs):
@@ -427,7 +425,7 @@ class Alarm(NitroDict):
         return self
 
     def refresh(self):
-        """Update the alarm with detailled data loaded from the SIEM. Concrete NitroObject method.
+        """Update the alarm with detailled data loaded from the SIEM.  
         """        
         self.load_details()
 
@@ -499,21 +497,9 @@ class Alarm(NitroDict):
                                                                                        
     def data_from_id(self, id):
         """
-
+        Gets the alarm parameters based on an ID
         """
         alarms = self.nitro.request('get_alarm_details_int', id=str(id))
         alarms = {key: dehexify(val).replace('\n', '|') for key, val in alarms.items()} #this line is skechy
         alarms = self.map_alarm_int_fields(alarms)        
         return alarms
-
-    """
-    def _hasID(self):
-        try :
-            if self.data['id']['value'] == 0 :
-                return False
-            else :
-                return True
-        
-        except KeyError :
-            return False"""
-
