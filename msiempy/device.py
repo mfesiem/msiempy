@@ -1040,17 +1040,14 @@ class DevTree(NitroList):
 
 class DataSource(NitroDict):
     """DataSource class  
-    
-    Arguments:  
-
-    - `adict` (`dict`): datasource parameters
         
     Best instantiated from DevTree():
     ```
-        >>> dt = DevTree()
-        >>> ds = dt[25]
-        or
-        >>> ds = dt.search('10.10.1.1')```
+    >>> dt = DevTree()
+    >>> ds = dt[25]
+    or
+    >>> ds = dt.search('10.10.1.1')
+    ```
 
     Dict keys:  
 
@@ -1072,19 +1069,24 @@ class DataSource(NitroDict):
     - `require_tls` (`str`): Use syslog over TLS  
     - `url` (`str`): URL of the datasource  
 
+    Arguments:  
+
+    - `adict`: Datasource parameters  
+    - `id`: The datasource ID to instanciate. Will load informations
+
     """
 
     def data_from_id(self, id):
-        """NotImplementedError"""
-        raise NotImplementedError()
+        """Gets full of the DataSource parameters"""
+        if self.nitro.api_v == 1:
+            details = self.nitro.request('ds_details1', ds_id=id)
+        else:
+            details = self.nitro.request('ds_details2', ds_id=id)
+        return self._map_parameters(details)
 
     def load_details(self):
         """DataSource object is lazy. This gets the rest of the parameters."""
-        if self.nitro.api_v == 1:
-            details = self.nitro.request('ds_details1', ds_id=self.data['ds_id'])
-        else:
-            details = self.nitro.request('ds_details2', ds_id=self.data['ds_id'])
-        self._map_parameters(details)
+        self.data = self.data_from_id(self.data['ds_id'])
 
     def delete(self):
         """This deletes the datasource and all the data. Be careful.
@@ -1110,7 +1112,7 @@ class DataSource(NitroDict):
         while status == 0:
             status = self.nitro.request('get_job_status', job_id=job_id)['JS']
 
-    def _map_parameters(self, p):
+    def _map_parameters(self,p):
         """Map the internal ESM field names to msiempy style
         
         Arguments:  
@@ -1118,30 +1120,32 @@ class DataSource(NitroDict):
         - `p` (`dict`): datasource parameters
         """
         p = DevTree._normalize_bool_vals(p)
-        self.data['name'] = p.get('name')
-        self.data['ds_ip'] = p.get('ipAddress')
-        self.data['zone_id'] = p.get('zoneId')
-        self.data['enabled'] = p.get('enabled')
+        new_dev=dict()
+        new_dev['name'] = p.get('name')
+        new_dev['ds_ip'] = p.get('ipAddress')
+        new_dev['zone_id'] = p.get('zoneId')
+        new_dev['enabled'] = p.get('enabled')
 
         if self.nitro.api_v == 1:
-            self.data['ds_id'] = p.get('pdsId')
-            self.data['parent_id'] = p.get('parentId').get('id')
+            new_dev['ds_id'] = p.get('pdsId')
+            new_dev['parent_id'] = p.get('parentId').get('id')
 
         elif self.nitro.api_v == 2:
-            self.data['ds_id'] = p.get('pdsId').get('value')
-            self.data['parent_id'] = p.get('parentId').get('value')
+            new_dev['ds_id'] = p.get('pdsId').get('value')
+            new_dev['parent_id'] = p.get('parentId').get('value')
 
-        if self.data['desc_id'] == '256':
-           self.data['tz_id'] = p.get('tz_id')
+        if new_dev['desc_id'] == '256':
+           new_dev['tz_id'] = p.get('tz_id')
         else:
-            self.data['child_enabled'] = p.get('childEnabled')
-            self.data['idm_id'] = p.get('idmId')
-            self.data['child_count'] = p.get('childCount')
-            self.data['child_type'] = p.get('childType')
-            self.data['type_id'] = p.get('typeId').get('id')
+            new_dev['child_enabled'] = p.get('childEnabled')
+            new_dev['idm_id'] = p.get('idmId')
+            new_dev['child_count'] = p.get('childCount')
+            new_dev['child_type'] = p.get('childType')
+            new_dev['type_id'] = p.get('typeId').get('id')
 
             if p.get('parameters'):
                 for d in p['parameters']:
                     # The key is called "key" and the value is the key. 
                     # The value is called value and the value is the value.
-                    self.data[d.get('key')] = d.get('value')
+                    new_dev[d.get('key')] = d.get('value')
+        return new_dev

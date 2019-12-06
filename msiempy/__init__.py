@@ -50,7 +50,7 @@ __pdoc__={} #Init pdoc overwrite engine to document stuff dynamically
 
 
 class NitroConfig(configparser.ConfigParser):
-    """Class that handles the configuration. Reads the config file where ever it is and make accessible it's values throught object properties. 
+    """Handles the configuration. Reads the config file where ever it is and make accessible it's values throught object properties. 
     If a `.msiem/` directory exists in your current directory, the program will assume the `conf.ini` file is there, if not, it will create it with default values. 
     Secondly, if no `.msiem/` directory exists in the current directory, it will be automatically placed in a appropriate place depending of your platform:  
 
@@ -58,6 +58,8 @@ class NitroConfig(configparser.ConfigParser):
     For Mac : `$HOME/.msiem/conf.ini`  
     For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`  
     If `.msiem` folder exists in you local directory : `./.msiem/conf.ini`  
+
+    You can setup the configuration by command line with `msiempy_setup.py` script at https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py.  
 
     Arguments: 
 
@@ -611,7 +613,7 @@ class NitroSession():
         required for that method. Some params require variables be
         interpolated as documented in the data structure.
     
-    Exemple in `msiempy.NitroSession.request` source code.  
+    Usage exemple in `msiempy.NitroSession.request` source code.  
 
     Important note : 
         Do not use sigle quotes (`'`) to delimit data into the interpolated strings !
@@ -654,7 +656,8 @@ class NitroSession():
 
        [...]
     }
-    ```
+    ```  
+    Please see `dump_api_params.py` script at https://github.com/mfesiem/msiempy/blob/master/samples/dump_api_params.py to dump the complete structure.
     '''
 
     #% dict(content=pprint.pformat(PARAMS)[:3000]) + """ [...] and more, please consult source code."""
