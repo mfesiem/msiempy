@@ -49,6 +49,34 @@ __pdoc__={} #Init pdoc overwrite engine to document stuff dynamically
 
 class NitroConfig(configparser.ConfigParser):
     """
+
+    Handles the configuration. Reads the config file `.msiem/conf.ini` where ever it is and make accessible it's values throught object properties. 
+    If a `.msiem/` directory exists in your current directory, the program will assume the `conf.ini` file is there, if not, it will create it with default values. 
+    Secondly, if no `.msiem/` directory exists in the current directory, it will be automatically placed in a appropriate place depending of your platform:  
+
+    Default configuration file should look like this. Authentication is left empty.
+    ```
+    [esm]
+    host = 
+    user = 
+    passwd = 
+
+    [general]
+    verbose = False
+    quiet = False
+    logfile = 
+    timeout = 60
+    ssl_verify = False
+    ```
+
+    For Windows: `%APPDATA%\.msiem\conf.ini`  
+    For Mac : `$HOME/.msiem/conf.ini`  
+    For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`  
+    If `.msiem` folder exists in you local directory : `./.msiem/conf.ini`  
+
+    You can setup the configuration by command line with `msiempy_setup.py` script at https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py.  
+    
+
     Arguments: 
 
     - `path`: Config file special path, if path is left None, will automatically look for it.  
@@ -87,10 +115,10 @@ class NitroConfig(configparser.ConfigParser):
             'quiet':False,
             'logfile':'',
             'timeout':60,
-            'ssl_verify':False,
-            'output':'text'}
+            'ssl_verify':False}
     }
     """
+    Default configuration values.
     """
 
     def __str__(self):
@@ -115,8 +143,7 @@ class NitroConfig(configparser.ConfigParser):
         if option=='passwd': secure=True
         if secure : newvalue = tob64(getpass.getpass(msg.format(section, option)+'. Press <Enter> to skip: '))
         else: newvalue = input(msg.format(section, option)+ '. Press <Enter> to keep '+ (value if (str(value) != '') else 'empty') + ': ')
-        if newvalue != '' :
-            super().set(section, option, newvalue)
+        if newvalue != '' : super().set(section, option, newvalue)
 
     def iset(self, section, option=None, secure=False):
         """Interactively set the specified section/option by asking the user the input.  
@@ -129,36 +156,24 @@ class NitroConfig(configparser.ConfigParser):
         if option is None :
             for key in self.options(section):
                 self._iset(section, key, secure)
-        else :
-            self._iset(section, option, secure)
+        else : self._iset(section, option, secure)
 
     @property
     def user(self): return self.get('esm', 'user')
-
     @property
     def host(self): return self.get('esm', 'host')
-
     @property
     def passwd(self): return self.get('esm', 'passwd')
-
     @property
     def verbose(self): return self.getboolean('general', 'verbose')
-
     @property
     def quiet(self): return self.getboolean('general', 'quiet')
-
     @property
     def logfile(self): return self.get('general', 'logfile')
-
     @property
     def timeout(self): return self.getint('general', 'timeout')
-
     @property
     def ssl_verify(self): return self.getboolean('general', 'ssl_verify')
-
-    @property
-    def output(self): return self.get('general', 'output')
-
 
     @staticmethod
     def find_ini_location():
@@ -242,33 +257,6 @@ class NitroSession():
     config = None
     """
     `msiempy.NitroConfig` object.  
-
-    Handles the configuration. Reads the config file `.msiem/conf.ini` where ever it is and make accessible it's values throught object properties. 
-    If a `.msiem/` directory exists in your current directory, the program will assume the `conf.ini` file is there, if not, it will create it with default values. 
-    Secondly, if no `.msiem/` directory exists in the current directory, it will be automatically placed in a appropriate place depending of your platform:  
-
-    Default configuration file should look like this. Authentication is left empty.
-    ```
-    [esm]
-    host = 
-    user = 
-    passwd = 
-
-    [general]
-    verbose = False
-    quiet = False
-    logfile = 
-    timeout = 60
-    ssl_verify = False
-    output = text #Not used yet
-    ```
-
-    For Windows: `%APPDATA%\.msiem\conf.ini`  
-    For Mac : `$HOME/.msiem/conf.ini`  
-    For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`  
-    If `.msiem` folder exists in you local directory : `./.msiem/conf.ini`  
-
-    You can setup the configuration by command line with `msiempy_setup.py` script at https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py.  
     """
     
     PARAMS = {
@@ -1059,18 +1047,24 @@ class NitroObject(abc.ABC):
 
     @abc.abstractproperty
     def text(self):
-        """Returns printable string.
+        """
+        Returns printable string.  
+        Abstract declaration.
         """
         pass
 
     @abc.abstractproperty
     def json(self):
-        """Returns json string representation.
+        """
+        Returns json string representation.  
+        Abstract declaration.
         """
     
     @abc.abstractmethod
     def refresh(self):
-        """Re-load the object.
+        """
+        Re-load the object.  
+        Abstract declaration.
         """
         pass
 

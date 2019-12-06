@@ -1,12 +1,13 @@
 ![Logo](https://avatars0.githubusercontent.com/u/50667087?s=200&v=4 "Logo") 
-## McAfee SIEM API Python wrapper  
-[Build status](https://github.com/mfesiem/msiempy/actions)
 
+## McAfee SIEM API Python wrapper  
+
+[![Actions Status](https://github.com/mfesiem/msiempy/workflows/test/badge.svg)](https://github.com/mfesiem/msiempy/actions)
 
 This module aims to provide a basic API wrapper around the McAfee SIEM API to help make it more 
 accessible and pythonic.
 
- This python module is currently experimental 
+This python module is tested on windows, ubuntu and macos.   
 
 ### Main features
 - ESM operations: monitor, show statuses  
@@ -51,7 +52,6 @@ quiet = no
 logfile = /var/log/msiempy/log.txt
 timeout = 30
 ssl_verify = no
-output = text
 ```
 
 To set the password, you can use the [`msiempy_setup.py`](https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py) script.  
