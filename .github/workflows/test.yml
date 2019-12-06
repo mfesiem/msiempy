@@ -31,26 +31,8 @@ jobs:
       - name: Setup msiempy config
         run: python ./samples/msiempy_setup.py --set esm host 207.179.200.58:4443 --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general verbose true --set general logfile ./log.txt --set general timeout 60
 
-      - name: Run tests/local/
-        run: pytest tests/local/
-
-      - name: Run tests/auth/test_session.py
-        run: pytest tests/auth/test_session.py --reruns 5 --reruns-delay 1
-
-      - name: Run tests/auth/test_alarm.py
-        run: pytest tests/auth/test_alarm.py --reruns 5 --reruns-delay 1
-
-      - name: Run tests/auth/test_event.py
-        run: pytest tests/auth/test_event.py --reruns 5 --reruns-delay 1
-
-      - name: Run tests/auth/test_device.py
-        run: pytest tests/auth/test_device.py --reruns 5 --reruns-delay 1
-
-      - name: Run tests/auth/test_watchlist.py
-        run: pytest tests/auth/test_watchlist.py --reruns 5 --reruns-delay 1
-
-      - name: Generate coverage report
-        run: pytest --cov=./ --cov-report=xml
+      - name: Run tests and generate coverage report
+        run: pytest --cov=./ --cov-report=xml --reruns 5 --reruns-delay 1
 
       - name: Upload coverage to Codecov  
         uses: codecov/codecov-action@v1
