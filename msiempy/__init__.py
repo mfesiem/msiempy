@@ -749,7 +749,7 @@ class NitroSession():
             )
 
             if raw :
-                log.debug('Returning raw requests Response object : '+str(result)+ ' ' + str(result.text))
+                log.debug('Returning raw requests Response object : '+str(result))
                 return result
 
             else:
@@ -758,41 +758,45 @@ class NitroSession():
 
                 except requests.HTTPError as e :
                     error=None
-                    # Invalif session handler -> re-login
-                    if any([match in result.text for match in ['ERROR_InvalidSession', 
+
+                    if retry>0 :
+                        # Invalif session handler -> re-login
+                        if any([match in result.text for match in ['ERROR_InvalidSession', 
                             'Not Authorized User', 'Invalid Session', 'Username and password cannot be null']]):
                             error = NitroError('Authentication error with method ({}) and data : {} logging in and retrying. From requests.HTTPError {} {}'.format(
                                 method, data, e, result.text))
                             log.warning(error)
                             self.logged_in=False
                             self.login()
-                    # Data unavailable error handler -> return []
-                    elif any([match in result.text for match in ['ERROR_IndexNotTurnedOn',
-                        'ERROR_NoData','ERROR_UnknownList','ERROR_JobEngine_GetQueryStatus_StatusNotFound']]):
+                        
+                        else: log.warning('An HTTP error occured ({} {}), retrying request'.format(e, result.text))
+                        
+                        # Retry request
+                        time.sleep(0.2)
+                        return self.esm_request(method, data, http, callback, raw, secure, retry=retry-1)
+                    
+                    else :
+                        # Data unavailable error handler -> return []
+                        if any([match in result.text for match in ['ERROR_IndexNotTurnedOn',
+                            'ERROR_NoData','ERROR_UnknownList','ERROR_JobEngine_GetQueryStatus_StatusNotFound']]):
                             error = NitroError('Data unavailable error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
                                 method, data, e, result.text))
                             log.error(error)
                             return []
+                        else :
+                            # Other handlers
+                            # if True : # Other HTTP errors... TODO
+                                # _InvalidFilter (228)
+                                # Status Code 500: Error processing request, see server logs for more details 
+                                # Input Validation Error
 
-                    if retry>0 :
-                        # Retry request
-                        log.warning('An HTTP error occured ({} {}), retrying request'.format(e, result.text))
-                        time.sleep(0.2)
-                        return self.esm_request(method, data, http, callback, raw, secure, retry=retry-1)
+                            # Raise error in the worst case
+                            error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
+                                method, data, e, result.text))
+                            log.error(error)
+                            raise error
 
-                    # Other handlers
-                    # if True : # Other HTTP errors... TODO
-                        # _InvalidFilter (228)
-                        # Status Code 500: Error processing request, see server logs for more details 
-                        # Input Validation Error
-
-                    # Raise error in the worst case
-                    error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
-                        method, data, e, result.text))
-                    log.error(error)
-                    raise error
-
-                else: #
+                else: # The result is not an HTTP Error
                     result = self.unpack_resp(result)
 
                     if privateApiCall :
