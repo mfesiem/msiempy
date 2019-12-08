@@ -30,7 +30,6 @@ class AlarmManager(FilteredQueryList):
     - `time_range` : Query time range. String representation of a time range.  
     - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
     - `end_time` : Query endding time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
-    - `load_async` : Load asynchonously the sub-queries. Defaulted to `True`.  
     
     """
     def __init__(self, *args, status_filter='all', page_size=200, filters=None, event_filters=None, **kwargs):

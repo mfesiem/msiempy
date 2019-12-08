@@ -59,9 +59,9 @@ class T(unittest.TestCase):
             time_range='CURRENT_DAY',
             order=(('ASCENDING', 'AlertID')),
             limit=5,
-            max_query_depth=1
+            max_query_depth=1 # Generate warning and ignore
         )
-        events.load_data(slots=2)
+        events.load_data(slots=2,  max_query_depth=1) # Works
         print('events_splitted'.upper())
         print(events.text)
 
