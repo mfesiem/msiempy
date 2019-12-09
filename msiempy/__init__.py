@@ -676,9 +676,12 @@ class NitroSession():
         """ 
         This method will logout the session.
         """
+        self.api_v = 0
         self.request('logout', http='delete')
         self.logged_in=False
         self.login_info=dict()
+        self._headers={'Content-Type': 'application/json'}
+        self.user_tz_id = None
 
     def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False, retry=5):
         """
@@ -797,6 +800,7 @@ class NitroSession():
                         raise error
 
                 else: # The result is not an HTTP Error
+                    response = result
                     result = self.unpack_resp(result)
 
                     if privateApiCall :
@@ -805,7 +809,11 @@ class NitroSession():
                     if callback:
                         result = callback(result)
 
-                    log.debug('Result '+str(result)[:100]+'[...]')
+                    log.debug('{} -> Result ({}): {}'.format(
+                        str(response),
+                        type(result),
+                        str(result)[:100] + '[...]' if len(str(result))>100 else ''
+                    ))
 
                     return result
 

@@ -452,6 +452,39 @@ class Alarm(NitroDict):
 
         return self
 
+    ALARM_FIELDS_MAP={'EC': None,
+                'SMRY': 'summary',
+                'NAME': 'alarmName',
+                'FILTERS': 'filters',
+                'CTYPE': None,
+                'QID': 'queryId',
+                'ARM': 'alretRateMin',
+                'ARC': 'alertRateCount',
+                'PCTA': 'percentAbove',
+                'PCTB': 'percentBelow',
+                'OFFSETMIN': 'offsetMinutes',
+                'TIMEF': 'maximumConditionTriggerFrequency',
+                'XMIN': None,
+                'USEW': 'useWatchlist',
+                'MFLD': 'matchField',
+                'MVAL': 'matchValue',
+                'SVRTY': 'severity',
+                'ASNID': 'assigneeId',
+                'ASNNAME': 'assignee',
+                'TRGDATE': 'triggeredDate',
+                'ACKDATE': 'acknowledgedDate',
+                'ESCDATE': 'escalatedDate',
+                'CASEID': 'caseId',
+                'CASENAME': 'caseName',
+                'IOCNAME': 'iocName',
+                'IOCID': 'iocId',
+                'DESC': 'description',
+                'NID': None,
+                'ACTIONS': 'actions',
+                'NE': None,
+                'EVENTS': 'events',
+                'DCHNG': None}
+
     def map_alarm_int_fields(self, alarm_details):
         """Map the internal ESM field names to msiempy style"""
 
@@ -466,27 +499,34 @@ class Alarm(NitroDict):
                 alarm_details[key] = val
 
         new_alarm = {}
-        new_alarm['filters'] = alarm_details.get('FILTERS') or None
-        new_alarm['queryId'] = alarm_details.get('QID') or None
-        new_alarm['alretRateMin'] = alarm_details.get('ARM') or None
-        new_alarm['alertRateCount'] = alarm_details.get('ARC') or None
-        new_alarm['percentAbove'] = alarm_details.get('PCTA') or None
-        new_alarm['percentBelow'] = alarm_details.get('PCTB') or None
-        new_alarm['offsetMinutes'] = alarm_details.get('OFFSETMIN') or None
-        new_alarm['maximumConditionTriggerFrequency'] = alarm_details.get('TIMEF') or None
-        new_alarm['useWatchlist'] = alarm_details.get('USEW') or None
-        new_alarm['matchField'] = alarm_details.get('MFLD') or None
-        new_alarm['matchValue'] = alarm_details.get('MWAL') or None
-        #new_alarm['healthMonalarm_details'] = alarm_details.get('HMS') or None
-        new_alarm['assigneeId'] = alarm_details.get('ASNID') or None
-        new_alarm['escalatedDate'] = alarm_details.get('ESCDATE') or None
-        new_alarm['caseId'] = alarm_details.get('CASEID') or None
-        new_alarm['caseName'] = alarm_details.get('CASENAME') or None
-        new_alarm['iocName'] = alarm_details.get('IOCNAME') or None
-        new_alarm['iocId'] = alarm_details.get('IOCID') or None
-        new_alarm['description'] = alarm_details.get('DESC') or None
-        new_alarm['actions'] = alarm_details.get('ACTIONS') or None
-        new_alarm['events'] = alarm_details.get('EVENTS') or None
+
+        for priv_key in self.ALARM_FIELDS_MAP: new_alarm.__setitem__(
+            self.ALARM_FIELDS_MAP[priv_key] or priv_key, alarm_details.get(priv_key) or None )
+
+        # # new_alarm['filters'] = alarm_details.get('FILTERS') or None
+        # # new_alarm['queryId'] = alarm_details.get('QID') or None
+        # # new_alarm['alretRateMin'] = alarm_details.get('ARM') or None
+        # new_alarm['alertRateCount'] = alarm_details.get('ARC') or None
+        # new_alarm['percentAbove'] = alarm_details.get('PCTA') or None
+        # new_alarm['percentBelow'] = alarm_details.get('PCTB') or None
+        # new_alarm['offsetMinutes'] = alarm_details.get('OFFSETMIN') or None
+        # new_alarm['maximumConditionTriggerFrequency'] = alarm_details.get('TIMEF') or None
+        # new_alarm['useWatchlist'] = alarm_details.get('USEW') or None
+        # new_alarm['matchField'] = alarm_details.get('MFLD') or None
+        # new_alarm['matchValue'] = alarm_details.get('MWAL') or None
+        # #new_alarm['healthMonalarm_details'] = alarm_details.get('HMS') or None
+        # new_alarm['assigneeId'] = alarm_details.get('ASNID') or None
+        # new_alarm['escalatedDate'] = alarm_details.get('ESCDATE') or None
+        # new_alarm['caseId'] = alarm_details.get('CASEID') or None
+        # new_alarm['caseName'] = alarm_details.get('CASENAME') or None
+        # new_alarm['iocName'] = alarm_details.get('IOCNAME') or None
+        # new_alarm['iocId'] = alarm_details.get('IOCID') or None
+        # new_alarm['description'] = alarm_details.get('DESC') or None
+        # new_alarm['actions'] = alarm_details.get('ACTIONS') or None
+        # new_alarm['events'] = alarm_details.get('EVENTS') or None
+
+        log.debug('NEW FULL alarm_details: '+str(new_alarm))
+
         return new_alarm
                                                                                        
     def data_from_id(self, id):

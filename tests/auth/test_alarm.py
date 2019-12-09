@@ -184,20 +184,46 @@ class T(unittest.TestCase):
     def test_ack_unack(self):
         alarms = msiempy.alarm.AlarmManager(
             time_range='CURRENT_DAY',
-            page_size=5
+            page_size=2
             )
+
         alarms.load_data()
         print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
+
+        alarms.nitro._init_log(verbose=True)
+
         alarms.perform(msiempy.alarm.Alarm.acknowledge)
-        time.sleep(60)
-        alarms.perform(msiempy.alarm.Alarm.refresh, progress=True)
+        time.sleep(3)
+        alarms.perform(msiempy.alarm.Alarm.refresh)
+
+        # while len(alarms[0]['acknowledgedDate']) == 0 :
+        #     print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
+        #     alarms.perform(msiempy.alarm.Alarm.acknowledge)
+        #     time.sleep(15)
+        #     alarms.nitro.logout()
+        #     alarms.nitro.login()
+        #     alarms.perform(msiempy.alarm.Alarm.refresh)
+        #     alarms.perform(msiempy.alarm.Alarm.refresh)
+
+        alarms.perform(msiempy.alarm.Alarm.refresh)
         print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
-        [ self.assertTrue(len(alarm['acknowledgedDate']) > 0 and len(alarm['acknowledgedUsername']) > 0) for alarm in alarms ]
+        [ self.assertTrue(len(alarm['acknowledgedDate']) > 0) for alarm in alarms ]
+    
         alarms.perform(msiempy.alarm.Alarm.unacknowledge)
-        time.sleep(60)
-        alarms.perform(msiempy.alarm.Alarm.refresh, progress=True)
+        time.sleep(3)
+        alarms.perform(msiempy.alarm.Alarm.refresh)
+        
+        # while len(alarms[0]['acknowledgedDate']) > 0 :
+        #     print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
+        #     alarms.perform(msiempy.alarm.Alarm.unacknowledge)
+        #     time.sleep(15)
+        #     alarms.nitro.logout()
+        #     alarms.nitro.login()
+        #     alarms.perform(msiempy.alarm.Alarm.refresh)
+
+        alarms.perform(msiempy.alarm.Alarm.refresh)
         print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
-        [ self.assertTrue(len(alarm['acknowledgedDate']) == 0 and len(alarm['acknowledgedUsername']) == 0) for alarm in alarms ]
+        [ self.assertTrue(alarm['acknowledgedDate'] == None) for alarm in alarms ]
 
 
 
