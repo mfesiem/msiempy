@@ -2,6 +2,7 @@ import msiempy
 import msiempy.alarm
 import unittest
 import pprint
+import time
 
 
 class T(unittest.TestCase):
@@ -179,6 +180,26 @@ class T(unittest.TestCase):
             self.assertTrue(type(events[0]) == msiempy.event.Event)
 
         print(alarms.json)
+    
+    def test_ack_unack(self):
+        alarms = msiempy.alarm.AlarmManager(
+            time_range='CURRENT_DAY',
+            page_size=5
+            )
+        alarms.load_data()
+        print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
+        alarms.perform(msiempy.alarm.Alarm.acknowledge)
+        time.sleep(60)
+        alarms.perform(msiempy.alarm.Alarm.refresh, progress=True)
+        print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
+        [ self.assertTrue(len(alarm['acknowledgedDate']) > 0 and len(alarm['acknowledgedUsername']) > 0) for alarm in alarms ]
+        alarms.perform(msiempy.alarm.Alarm.unacknowledge)
+        time.sleep(60)
+        alarms.perform(msiempy.alarm.Alarm.refresh, progress=True)
+        print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
+        [ self.assertTrue(len(alarm['acknowledgedDate']) == 0 and len(alarm['acknowledgedUsername']) == 0) for alarm in alarms ]
+
+
 
 
 

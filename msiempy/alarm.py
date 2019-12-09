@@ -80,11 +80,6 @@ class AlarmManager(FilteredQueryList):
                     self._status_filter=synonims[0]
                     status_found=True
 
-        #Patch weird bug regarding paging : 
-        if isinstance(status_filter, list) : #this is the patch
-            self._status_filter='all'
-            status_found=True 
-
         if not status_found:
             raise AttributeError("Illegal value of status filter. The status must be in "+str(Alarm.POSSIBLE_ALARM_STATUS)+' not :'+str(status_filter))
 
