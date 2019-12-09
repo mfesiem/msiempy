@@ -25,8 +25,8 @@ class T(unittest.TestCase):
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
             #self.assertEqual(type(alarm['events']), str, 'Type error')
             
-            self.assertEqual(alarm['acknowledgedDate'], '', "status_filter is unacknowledged but alarm's acknowledgedDate has a value")
-            self.assertEqual(alarm['acknowledgedUsername'], '', "status_filter is unacknowledged but alarm's acknowledgedUsername has a value")
+            self.assertIn(alarm['acknowledgedDate'], ['', None], "status_filter is unacknowledged but alarm's acknowledgedDate has a value")
+            self.assertIn(alarm['acknowledgedUsername'], ['', None], "status_filter is unacknowledged but alarm's acknowledgedUsername has a value")
             self.assertEqual(alarm.keys(), alarms.keys, "Alarms's key property is wrong")
 
         print(alarms)
