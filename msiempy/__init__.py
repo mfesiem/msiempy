@@ -776,25 +776,25 @@ class NitroSession():
                         return self.esm_request(method, data, http, callback, raw, secure, retry=retry-1)
                     
                     else :
-                        # Data unavailable error handler -> return []
-                        if any([match in result.text for match in ['ERROR_IndexNotTurnedOn',
-                            'ERROR_NoData','ERROR_UnknownList','ERROR_JobEngine_GetQueryStatus_StatusNotFound']]):
-                            error = NitroError('Data unavailable error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
-                                method, data, e, result.text))
-                            log.error(error)
-                            return []
-                        else :
-                            # Other handlers
-                            # if True : # Other HTTP errors... TODO
-                                # _InvalidFilter (228)
-                                # Status Code 500: Error processing request, see server logs for more details 
-                                # Input Validation Error
+                        # # Data unavailable error -> raise
+                        # if any([match in result.text for match in ['ERROR_IndexNotTurnedOn',
+                        #     'ERROR_NoData','ERROR_UnknownList','ERROR_JobEngine_GetQueryStatus_StatusNotFound']]):
+                        #     error = NitroError('Data unavailable error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
+                        #         method, data, e, result.text))
+                        #     log.error(error)
+                        #     raise
+                        # else :
+                        #     # Other handlers
+                        #     # if True : # Other HTTP errors... TODO
+                        #         # _InvalidFilter (228)
+                        #         # Status Code 500: Error processing request, see server logs for more details 
+                        #         # Input Validation Error
 
-                            # Raise error in the worst case
-                            error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
-                                method, data, e, result.text))
-                            log.error(error)
-                            raise error
+                        # Raise error in the worst case
+                        error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
+                            method, data, e, result.text))
+                        log.error(error)
+                        raise error
 
                 else: # The result is not an HTTP Error
                     result = self.unpack_resp(result)

@@ -136,7 +136,7 @@ class EventManager(FilteredQueryList):
         """
         return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
 
-    def qry_load_data(self):
+    def qry_load_data(self, retry=1):
         """
         Concrete helper method to execute the query and load the data :  
             -> Submit the query  
@@ -178,11 +178,14 @@ class EventManager(FilteredQueryList):
                 )
         
         log.debug("Waiting for EsmRunningQuery object : "+str(query_infos))
-        self._wait_for(query_infos['resultID'])
-        events_raw=self._get_events(query_infos['resultID'])
+        try:
+            self._wait_for(query_infos['resultID'])
+        except NitroError as error :
+            if retry >0 and any(match in str(error) for match in ['ResultUnavailable','UnknownList']):
+                return self.qry_load_data(retry=retry-1)
 
+        events_raw=self._get_events(query_infos['resultID'])
         events=EventManager(alist=events_raw)
-        
         self.data=events
         return((events,len(events)<self.limit))
 
