@@ -107,9 +107,10 @@ print(events.get_text(fields=['Alert.LastTime','Alert.SrcIP', 'Rule.msg']))
 ```
 See: [FilteredQueryList](https://mfesiem.github.io/docs/msiempy/index.html#msiempy.FilteredQueryList), [EventManager](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.EventManager), [FieldFilter](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.FieldFilter), [Event](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.Event)
 
-`EventManager` `__init__()` can take other parameter like `order` or `max_query_depth`. `max_query_depth` parameter specify the number of sub-divisions the query can take at most (zero by default). The query is divided only if it hasn't completed with the current query settings.  
+`EventManager` `__init__()` can take other parameter like `order` or `start_tinme` and `end_time` if `time_rage` is `CUSTOM`.  
 
-`load_data()` method accept also several parameters. It controls the query's division time range into slots of `delta` duration, then the query would be divided into the specified number of `slots`. Control also the number of asyncronous jobs using `workers` parameter. See  module documentation for more infos.  
+`EventManager` `load_data()` method accept also several parameters. It controls the query's division time range into slots of `delta` duration, then the query would be divided into the specified number of `slots`. Control also the number of asyncronous jobs using `workers` parameter. `max_query_depth` parameter specify the number of sub-divisions the query can take at most (zero by default). The query is divided only if it hasn't completed with the current query settings.   
+See  module documentation for more infos.  
 
 See [filters](https://github.com/mfesiem/msiempy/blob/master/static/all_filters.json) list you can use to filter events.  
 See [fields](https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json) list you can request.
