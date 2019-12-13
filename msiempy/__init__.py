@@ -817,13 +817,13 @@ class NitroSession():
 
                     return result
 
-        #Soft errors
+        #Hard errors, could retry
         except requests.exceptions.Timeout as e:
             log.error(e)
-            return None
+            raise
         except requests.exceptions.TooManyRedirects as e :
             log.error(e)
-            return None
+            raise
         
     def _request_http_error_handler(self, error, method, data, http, callback, raw, secure, retry):
         pass
