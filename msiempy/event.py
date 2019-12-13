@@ -25,13 +25,9 @@ class EventManager(FilteredQueryList):
     - `order` : `tuple ((direction, field))`. Direction can be 'ASCENDING' or 'DESCENDING'.
     - `limit` : max number of rows per query.
     - `filters` : list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event._QueryFilter` if you wish to use advanced filtering.
-    - `max_query_depth` : maximum number of supplement reccursions of division of the query times
-        Meaning, if limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
-        the list is (500*5)*(500*5)*(500*5) = 15625000000
     - `time_range` : Query time range. String representation of a time range.  
     - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
     - `end_time` : Query endding time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
-    - `load_async` : Load asynchonously the sub-queries. Defaulted to `True`.  
     """ 
 
     #Constants
@@ -52,16 +48,12 @@ class EventManager(FilteredQueryList):
 
     def __init__(self, *args, fields=None, 
         order=None, limit=500, filters=None, 
-        max_query_depth=0,
         __parent__=None, **kwargs):
         #Calling super constructor : time_range set etc...
         super().__init__(*args, **kwargs)
 
         #Store the query parent 
         self.__parent__=__parent__
-
-        #Store the query ttl
-        self.max_query_depth=max_query_depth
 
         #Declaring attributes
         self._filters=list()
@@ -144,15 +136,24 @@ class EventManager(FilteredQueryList):
         """
         return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
 
-    def qry_load_data(self):
+    def qry_load_data(self, retry=2, wait_timeout_sec=120):
         """
         Concrete helper method to execute the query and load the data :  
             -> Submit the query  
             -> Wait the query to be executed  
             -> Get and parse the events  
 
+        Arguments:
+
+        - `retry` (`int`): number of time the query can be failed and retied
+        - `wait_timeout_sec` (`int`): wait timeout in seconds
+
         Returns : `tuple` : (( `msiempy.event.EventManager`, Status of the query (completed?) `True/False` ))
 
+        Can raise `msiempy.NitroError`: 
+
+            - (MaxWaitRetriesExceeded) -> You might want to change the value of `wait_for_sleep_time` and `wait_for_retry` `load_data()` method !
+            
         """
         query_infos=dict()
 
@@ -186,22 +187,25 @@ class EventManager(FilteredQueryList):
                 )
         
         log.debug("Waiting for EsmRunningQuery object : "+str(query_infos))
-        self._wait_for(query_infos['resultID'])
-        events_raw=self._get_events(query_infos['resultID'])
+        try:
+            self._wait_for(query_infos['resultID'], wait_timeout_sec)
+            events_raw=self._get_events(query_infos['resultID'])
+        except NitroError as error :
+            if retry >0 and any(match in str(error) for match in ['ResultUnavailable','UnknownList', 'MaxWaitRetriesExceeded']):
+                log.warning('Retring after: '+str(error))
+                return self.qry_load_data(retry=retry-1)
+            else: raise
 
         events=EventManager(alist=events_raw)
-        
         self.data=events
         return((events,len(events)<self.limit))
 
-    def load_data(self, workers=10, slots=10, delta=None, **kwargs):
+    def load_data(self, workers=10, slots=10, delta=None, max_query_depth=0, **kwargs):
         """Load the data from the SIEM into the manager list.  
-        Split the query in defferents time slots if the query apprears not to be completed. It wraps around `msiempy.FilteredQueryList.qry_load_data`.    
-        If you're looking for `max_query_depth`, it's define at the creation of the `msiempy.FilteredQueryList`.
+        Split the query in defferents time slots if the query apprears not to be completed.  
+        Wraps around `msiempy.FilteredQueryList.qry_load_data`.    
 
-        Note :  
-        If you looking for `load_async`, you should pass this to the constructor method `msiempy.FilteredQueryList` or by setting the attribute manually like `manager.load_asynch=True`
-        Only the first query is loaded asynchronously.
+        Note: Only the first query is loaded asynchronously.
 
         Arguments:  
     
@@ -210,6 +214,9 @@ class EventManager(FilteredQueryList):
             divided according to the number of slots  
         - `delta` : exemple : '6h30m', the query will be firstly divided in chuncks according to the time delta read
             with dateutil.  
+        - `max_query_depth` : maximum number of supplement reccursions of division of the query times
+        Meaning, if limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
+        the list is (500*5)*(500*5)*(500*5) = 15625000000
 
         Returns : `msiempy.event.EventManager`
         """
@@ -219,7 +226,7 @@ class EventManager(FilteredQueryList):
         if not completed :
             #If not completed the query is split and items aren't actually used
 
-            if self.max_query_depth > 0 :
+            if max_query_depth > 0 :
                 #log.info("The query data couldn't be loaded in one request, separating it in sub-queries...")
 
                 if self.time_range != 'CUSTOM': #can raise a NotImplementedError if unsupported time_range
@@ -245,12 +252,11 @@ class EventManager(FilteredQueryList):
                         order=self.order, 
                         limit=self.limit,
                         filters=self._filters,
-                        max_query_depth=self.max_query_depth-1,
-                        __parent__=self,
                         time_range='CUSTOM',
                         start_time=time[0].isoformat(),
                         end_time=time[1].isoformat(),
-                        load_async=False
+
+                         __parent__=self
                         )
                     
                     sub_queries.append(sub_query)
@@ -260,7 +266,7 @@ class EventManager(FilteredQueryList):
                     asynch=self.__parent__==None,
                     progress=self.__parent__==None, 
                     message='Loading data from '+start+' to '+end+'. In {} slots'.format(len(times)),
-                    func_args=dict(slots=slots),
+                    func_args=dict(slots=slots, max_query_depth=max_query_depth-1),
                     workers=workers)
 
                 #Flatten the list of lists in a list
@@ -274,21 +280,34 @@ class EventManager(FilteredQueryList):
         self.data=items
         return(self)
 
-    def _wait_for(self, resultID, sleep_time=0.35):
+    def _wait_for(self, resultID, wait_timeout_sec, sleep_time=0.2):
         """
         Internal method called by qry_load_data
         Wait and sleep - for `sleep_time` duration in seconds -
-            until the query is completed
+            until the query is completed or retry countdown arrives at zero.    
         
-        TODO handle SIEM ResultUnavailable error
+        Return: `True`  
+
+        SIEM ResultUnavailable error can be thown  
+        `msiempy.NitroError`: MaxWaitRetriesExceeded
         """
+        # time_out=parse_timedelta(wait_timeout).total_seconds()
+        # retry = wait_timeout_sec / sleep_time
+
+        begin=datetime.now()
+        timeout_delta=timedelta(seconds=wait_timeout_sec)
+
         log.debug("Waiting for the query to be executed on the SIEM...")
-        while True:
+        
+        while datetime.now()-timeout_delta < begin :
             status = self.nitro.request('query_status', resultID=resultID)
             if status['complete'] is True :
                 return True
             else :
                 time.sleep(sleep_time)
+            # retry=retry-1
+        raise NitroError("MaxWaitRetriesExceeded. resultID={}, sleep_time={}, wait_timeout_sec={}".format(
+            resultID, sleep_time, wait_timeout_sec))
 
     def _get_events(self, resultID, startPos=0, numRows=None):
         """
@@ -867,7 +886,7 @@ class FieldFilter(_QueryFilter):
 
     Arguments:
 
-        - `name` : field name as string.  
+        - `name` : field name as string. Field name property. Example : `SrcIP`. See full list here: https://github.com/mfesiem/msiempy/blob/master/static/all_filters.json
         - `values` : list of values the field is going to be tested againts with the specified orperator.  
         - `orperator` : `IN`,
         `NOT_IN`,
@@ -887,7 +906,6 @@ class FieldFilter(_QueryFilter):
     def __init__(self, name, values, operator='IN') :
         super().__init__()
         #Declaring attributes
-        self._name=str()
         self._operator=str()
         self._values=list()
         self.name = name
@@ -925,21 +943,7 @@ class FieldFilter(_QueryFilter):
     """
     List of possible value type. See `msiempy.event.FieldFilter.add_value`.
     """
-
-    @property
-    def name(self):
-        """
-        Field name property. Example : `SrcIP`. See full list here: https://github.com/mfesiem/msiempy/blob/master/static/all_filters.json
-        """
-        return (self._name)
-
-    @name.setter
-    def name(self, name):
-        if True : # Not checking dynamically the validity of the fields cause makes too much of unecessary requests any(f.get('name', None) == name for f in self._possible_filters):
-            self._name = name
-        else:
-            raise AttributeError("Illegal value for the "+name+" field. The filter must be in :"+str([f['name'] for f in self._possible_filters]))
-    
+   
     @property
     def operator(self):
         """Field operator.  
@@ -1039,7 +1043,7 @@ class FieldFilter(_QueryFilter):
                 else: raise KeyError ('The valid key value argument is not present')
             else: raise KeyError ('Impossible filter')
         except KeyError as err:
-            raise AttributeError("You must provide a valid named Arguments containing the type and values for this filter. The type/keys must be in "+str(self.POSSIBLE_VALUE_TYPES)+"Can't be type="+str(type)+' '+str(args)+". Additionnal indicator :"+str(err) )
+            raise AttributeError("You must provide a valid named Arguments containing the type and values for this filter. The type/keys must be in "+str(self.POSSIBLE_VALUE_TYPES)+"Can't be type="+str(type)+' '+str(kwargs)+". Additionnal indicator :"+str(err) )
 
     def add_basic_value(self, value):
         """

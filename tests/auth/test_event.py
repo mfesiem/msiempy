@@ -59,9 +59,9 @@ class T(unittest.TestCase):
             time_range='CURRENT_DAY',
             order=(('ASCENDING', 'AlertID')),
             limit=5,
-            max_query_depth=1
+            max_query_depth=1 # Generate warning and ignore
         )
-        events.load_data(slots=2)
+        events.load_data(slots=2,  max_query_depth=1) # Works
         print('events_splitted'.upper())
         print(events.text)
 
@@ -69,6 +69,34 @@ class T(unittest.TestCase):
         l2=events[:5]
 
         self.assertEqual(l1, l2, 'Firts part of the splitted query doesn\'t correspond to the genuine query. This can happen when some event are generated at the exact same moment the query is submitted, retry the test ?')
+
+    def test_query_splitted_with_timedelta(self):
+        events_no_split = msiempy.event.EventManager(
+            time_range='CUSTOM',
+            start_time=timerange_gettimes('CURRENT_DAY')[0],
+            end_time=timerange_gettimes('CURRENT_DAY')[1],
+            order=(('ASCENDING', 'AlertID')),
+            limit=10
+        )
+        events_no_split.load_data()
+        print('events_no_split'.upper())
+        print(events_no_split.text)
+
+        events = msiempy.event.EventManager(
+            time_range='CURRENT_DAY',
+            order=(('ASCENDING', 'AlertID')),
+            limit=5,
+            max_query_depth=1 # Generate warning and ignore
+        )
+        events.load_data(delta='12h',  max_query_depth=1) # Works
+        print('events_splitted'.upper())
+        print(events.text)
+
+        l1=events_no_split[:5]
+        l2=events[:5]
+
+        self.assertEqual(l1, l2, 'Firts part of the splitted query doesn\'t correspond to the genuine query. This can happen when some event are generated at the exact same moment the query is submitted, retry the test ?')
+
 
     def test_filtered_query(self):
         qry_filters = [msiempy.event.GroupFilter(

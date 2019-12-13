@@ -69,9 +69,8 @@ See [examples.py](https://github.com/mfesiem/msiempy/tree/master/samples/example
 For further informations, please visit the [module documentation](https://mfesiem.github.io/docs/msiempy/index.html) ! :)  
 
 #### Alarm
-Print all `unacknowledged` alarms of the year who's name match `'IPS alarm'` and triggering event message match `'Wordpress'`. Then load the genuine `Event` objects (from the query module) that triggered the alarms and print all of their JSON representations.
+Print all `unacknowledged` alarms of the year who's name match `'IPS alarm'` and triggering event message match `'Wordpress'`. Then print all of their JSON representations.
 
-The number of alarms retreived is defined by the `page_size` property.
 ```python
 from msiempy.alarm import AlarmManager
 
@@ -85,37 +84,144 @@ alarms=AlarmManager(
         page_size=400)
 
 alarms.load_data()
+print(alarms)
 print(alarms.json)
 ```
+
+
+Print, acknowledge and unackowledge some alarms based on filters.  
+```python
+from msiempy.alarm import AlarmManager, Alarm
+
+alarms=AlarmManager(
+        time_range='CURRENT_YEAR',
+        status_filter='unacknowledged',
+        filters=[('alarmName', 'Test alarm')],
+        event_filters=[('ruleName','Postfix')], 
+        page_size=5)
+
+print("Alarm list before load_data: ")
+print(alarms)
+print(alarms.json)
+
+alarms.load_data()
+
+print("Alarm list: ")
+print(alarms)
+print(alarms.get_text(
+        fields=['id','triggeredDate','acknowledgedDate', 'alarmName', 'acknowledgedUsername']))
+
+print("Acknowledge alarms...")
+
+[ alarm.acknowledge() for alarm in alarms ]
+while any( [ alarm['acknowledgedDate'] in ['', None] for alarm in alarms ] ): 
+        time.sleep(1)
+        [ alarm.refresh() for alarm in alarms ]
+print(alarms.get_text(
+        fields=['id','triggeredDate','acknowledgedDate', 'alarmName', 'acknowledgedUsername']))
+
+print("Unacknowledge alarms...")
+[ alarm.unacknowledge() for alarm in alarms ]
+while any( [ alarm['acknowledgedDate'] not in ['', None] for alarm in alarms ] ): 
+        time.sleep(1)
+        [ alarm.refresh() for alarm in alarms ]
+print(alarms.get_text(
+        fields=['id','triggeredDate','acknowledgedDate', 'alarmName', 'acknowledgedUsername']))
+```  
+
+<details><summary>Output</summary>
+<p>
+        
+        Alarm list before load_data: 
+        <super: <class 'NitroList'>, <AlarmManager object>> containing 0 elements ; keys=set()
+        []
+        INFO - Login into ESM 207.179.200.58:4443 with username NGCP. Last login 12/12/2019 18:04:48
+        INFO - Getting alarms infos...
+        INFO - Getting events infos...
+        INFO - The alarm Test Alarm (12/12/2019 18:05:26) has no events associated
+        INFO - 4 alarms are matching your filter(s)
+        Alarm list: 
+        <super: <class 'NitroList'>, <AlarmManager object>> containing 4 elements ; keys={'alretRateMin', 'filters', 'NE', 'severity', 'XMIN', 'matchField', 'description', 'queryId', 'escalatedDate', 'alertRateCount', 'percentAbove', 'NID', 'offsetMinutes', 'acknowledgedDate', 'triggeredDate', 'percentBelow', 'EC', 'CTYPE', 'assignee', 'assigneeId', 'caseName', 'summary', 'DCHNG', 'caseId', 'id', 'alarmName', 'matchValue', 'actions', 'iocName', 'conditionType', 'iocId', 'acknowledgedUsername', 'useWatchlist', 'maximumConditionTriggerFrequency', 'events'}
+        |        id       |    triggeredDate    | acknowledgedDate | alarmName  | acknowledgedUsername |
+        | {'value': 3840} | 12/12/2019 17:54:46 |       None       | Test Alarm |                      |
+        | {'value': 3839} | 12/12/2019 17:42:56 |       None       | Test Alarm |                      |
+        | {'value': 3838} | 12/12/2019 17:29:16 |       None       | Test Alarm |                      |
+        | {'value': 3837} | 12/12/2019 17:11:56 |       None       | Test Alarm |                      |
+        Acknowledge alarms...
+        |        id       |    triggeredDate    |   acknowledgedDate  | alarmName  | acknowledgedUsername |
+        | {'value': 3840} | 12/12/2019 17:54:46 | 12/12/2019 18:07:53 | Test Alarm |                      |
+        | {'value': 3839} | 12/12/2019 17:42:56 | 12/12/2019 18:07:53 | Test Alarm |                      |
+        | {'value': 3838} | 12/12/2019 17:29:16 | 12/12/2019 18:07:53 | Test Alarm |                      |
+        | {'value': 3837} | 12/12/2019 17:11:56 | 12/12/2019 18:07:53 | Test Alarm |                      |
+        Unacknowledge alarms...
+        |        id       |    triggeredDate    | acknowledgedDate | alarmName  | acknowledgedUsername |
+        | {'value': 3840} | 12/12/2019 17:54:46 |       None       | Test Alarm |                      |
+        | {'value': 3839} | 12/12/2019 17:42:56 |       None       | Test Alarm |                      |
+        | {'value': 3838} | 12/12/2019 17:29:16 |       None       | Test Alarm |                      |
+        | {'value': 3837} | 12/12/2019 17:11:56 |       None       | Test Alarm |                      |
+        
+</p>
+</details>
+
+
+The number of alarms retreived is defined by the `page_size` property.
+
 See: [FilteredQueryList](https://mfesiem.github.io/docs/msiempy/index.html#msiempy.FilteredQueryList), [AlarmManager](https://mfesiem.github.io/docs/msiempy/alarm.html#msiempy.alarm.AlarmManager), [Alarm](https://mfesiem.github.io/docs/msiempy/alarm.html#msiempy.alarm.Alarm)
 
 #### Event
-Query events according to destination IP and hostname filters, load the data with comprensive parralel tasks working around the SIEM query `limit` and printing selected data fields. 
+Query events according to destination IP and hostname filters, sorted by AlertID. 
 ```python
 from  msiempy.event import EventManager, FieldFilter
 
+print('Simple event query sorted by AlertID')
 events = EventManager(
         time_range='LAST_3_DAYS',
-        fields=['Alert.SrcIP', 'DSID'], # Alert.SrcIP is not queried by default # DSID is the event's datasource ID
+        fields=['SrcIP', 'AlertID'], # SrcIP and AlertID are not queried by default
         filters=[
-                FieldFilter('DstIP', ['8.8.0.0/8',]),
-                FieldFilter('HostID', ['mydomain.local'], operator='CONTAINS') ],
-        limit=400)
+                FieldFilter('DstIP', ['0.0.0.0/0',]),
+                FieldFilter('HostID', ['mail'], operator='CONTAINS')], # Please replace "mail" by a test hostname
+        order=(('ASCENDING', 'AlertID')),
+        limit=10)
 
 events.load_data()
-print(events.get_text(fields=['Alert.LastTime','Alert.SrcIP', 'Rule.msg']))
+print(events)
+print(events.get_text(fields=['AlertID','LastTime','SrcIP', 'Rule.msg']))
 ```
+
+<details><summary>Output</summary>
+<p>
+
+        Simple event query sorted by AlertID
+        INFO - Login into ESM 207.179.200.58:4443 with username NGCP. Last login 12/12/2019 18:18:12
+        WARNING - The query is not complete... Try to divide in more slots or increase the limit
+        <super: <class 'NitroList'>, <EventManager object>> containing 10 elements ; keys={'Alert.AlertID', 'Alert.SrcIP', 'Rule.msg', 'Alert.LastTime', 'Alert.IPSIDAlertID'}
+        | AlertID |       LastTime      |     SrcIP      |                      Rule.msg                      |
+        |  139345 | 12/09/2019 18:22:21 |   22.22.24.4   |      Postfix Message moved to incoming queue       |
+        |  139346 | 12/09/2019 18:22:21 |   22.22.24.4   | Postfix Message moved to active queue for delivery |
+        |  139351 | 12/09/2019 18:22:21 |   22.22.24.4   |                Postfix Message sent                |
+        |  139352 | 12/09/2019 18:22:21 |   22.22.24.4   |          Linux Postfix qmgr mail removed           |
+        |  139367 | 12/09/2019 18:19:09 |   22.22.24.4   |       Postfix Max connection rate statistics       |
+        |  139368 | 12/09/2019 18:19:09 |   22.22.24.4   |      Postfix Max connection count statistics       |
+        |  139369 | 12/09/2019 18:19:09 |   22.22.24.4   |         Postfix Max cache size statistics          |
+        |  139370 | 12/09/2019 18:20:16 | 209.85.160.178 |             Postfix Connect from host              |
+        |  139371 | 12/09/2019 18:20:17 | 209.85.160.178 |          Postfix Client message transfer           |
+        |  139372 | 12/09/2019 18:20:17 | 209.85.160.178 |            Postfix Disconnect from host            |
+
+
+</p>
+</details>
+
 See: [FilteredQueryList](https://mfesiem.github.io/docs/msiempy/index.html#msiempy.FilteredQueryList), [EventManager](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.EventManager), [FieldFilter](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.FieldFilter), [Event](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.Event)
 
-`EventManager` `__init__()` can take other parameter like `order` or `max_query_depth`. `max_query_depth` parameter specify the number of sub-divisions the query can take at most (zero by default). The query is divided only if it hasn't completed with the current query settings.  
+`EventManager` `__init__()` can take other parameter like `order` or `start_tinme` and `end_time` if `time_rage` is `CUSTOM`.  
 
-`load_data()` method accept also several parameters. It controls the query's division time range into slots of `delta` duration, then the query would be divided into the specified number of `slots`. Control also the number of asyncronous jobs using `workers` parameter. See  module documentation for more infos.  
-
-See [filters](https://github.com/mfesiem/msiempy/blob/master/static/all_filters.json) list you can use to filter events.  
-See [fields](https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json) list you can request.
+`EventManager` `load_data()` method accept also several parameters. It controls the query's division time range into slots of `delta` duration, then the query would be divided into the specified number of `slots`. Control also the number of asyncronous jobs using `workers` parameter. `max_query_depth` parameter specify the number of sub-divisions the query can take at most (zero by default). The query is divided only if it hasn't completed with the current query settings.   
+See  module documentation for more infos.  
+ 
+See [dump_all_fields.py](https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py) script to have full list of `fields` you can request and fields you can use with `FieldFilter` .
 
 #### ESM
-Print a few esm infos. This is still work in progress.
+Print a few esm infos. ESM object has not state for it self, it's a simple interface to data structures / values returned by the SIEM.  
 ```python
 >>> import msiempy.device
 
@@ -130,7 +236,7 @@ Print a few esm infos. This is still work in progress.
 See: [ESM](https://mfesiem.github.io/docs/msiempy/device.html#msiempy.device.ESM)
 
 #### Datasource
-Load all datasources.  This is still work in progress.
+Load all datasources. 
 ```python
 import msiempy.device
 
@@ -139,7 +245,7 @@ devtree = msiempy.device.DevTree()
 See: [DevTree](https://mfesiem.github.io/docs/msiempy/device.html#msiempy.device.DevTree), [DataSource](https://mfesiem.github.io/docs/msiempy/device.html#msiempy.device.DataSource)
 
 #### Watchlist
-Print whatchlist list.  This is still work in progress.
+Print whatchlist list.
 ```python
 import msiempy.watchlist
 watchlists=msiempy.watchlist.WatchlistManager()
