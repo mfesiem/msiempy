@@ -136,15 +136,24 @@ class EventManager(FilteredQueryList):
         """
         return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
 
-    def qry_load_data(self, retry=1):
+    def qry_load_data(self, retry=2, wait_timeout_sec=120):
         """
         Concrete helper method to execute the query and load the data :  
             -> Submit the query  
             -> Wait the query to be executed  
             -> Get and parse the events  
 
+        Arguments:
+
+        - `retry` (`int`): number of time the query can be failed and retied
+        - `wait_timeout_sec` (`int`): wait timeout in seconds
+
         Returns : `tuple` : (( `msiempy.event.EventManager`, Status of the query (completed?) `True/False` ))
 
+        Can raise `msiempy.NitroError`: 
+
+            - (MaxWaitRetriesExceeded) -> You might want to change the value of `wait_for_sleep_time` and `wait_for_retry` `load_data()` method !
+            
         """
         query_infos=dict()
 
@@ -179,12 +188,14 @@ class EventManager(FilteredQueryList):
         
         log.debug("Waiting for EsmRunningQuery object : "+str(query_infos))
         try:
-            self._wait_for(query_infos['resultID'])
+            self._wait_for(query_infos['resultID'], wait_timeout_sec)
+            events_raw=self._get_events(query_infos['resultID'])
         except NitroError as error :
-            if retry >0 and any(match in str(error) for match in ['ResultUnavailable','UnknownList']):
+            if retry >0 and any(match in str(error) for match in ['ResultUnavailable','UnknownList', 'MaxWaitRetriesExceeded']):
+                log.warning('Retring after: '+str(error))
                 return self.qry_load_data(retry=retry-1)
+            else: raise
 
-        events_raw=self._get_events(query_infos['resultID'])
         events=EventManager(alist=events_raw)
         self.data=events
         return((events,len(events)<self.limit))
@@ -269,21 +280,34 @@ class EventManager(FilteredQueryList):
         self.data=items
         return(self)
 
-    def _wait_for(self, resultID, sleep_time=0.35):
+    def _wait_for(self, resultID, wait_timeout_sec, sleep_time=0.2):
         """
         Internal method called by qry_load_data
         Wait and sleep - for `sleep_time` duration in seconds -
-            until the query is completed
+            until the query is completed or retry countdown arrives at zero.    
         
-        TODO handle SIEM ResultUnavailable error
+        Return: `True`  
+
+        SIEM ResultUnavailable error can be thown  
+        `msiempy.NitroError`: MaxWaitRetriesExceeded
         """
+        # time_out=parse_timedelta(wait_timeout).total_seconds()
+        # retry = wait_timeout_sec / sleep_time
+
+        begin=datetime.now()
+        timeout_delta=timedelta(seconds=wait_timeout_sec)
+
         log.debug("Waiting for the query to be executed on the SIEM...")
-        while True:
+        
+        while datetime.now()-timeout_delta < begin :
             status = self.nitro.request('query_status', resultID=resultID)
             if status['complete'] is True :
                 return True
             else :
                 time.sleep(sleep_time)
+            # retry=retry-1
+        raise NitroError("MaxWaitRetriesExceeded. resultID={}, sleep_time={}, wait_timeout_sec={}".format(
+            resultID, sleep_time, wait_timeout_sec))
 
     def _get_events(self, resultID, startPos=0, numRows=None):
         """

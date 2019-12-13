@@ -190,7 +190,7 @@ class T(unittest.TestCase):
         alarms.load_data()
         print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
 
-        alarms.nitro._init_log(verbose=True)
+        # alarms.nitro._init_log(verbose=True)
 
         alarms.perform(msiempy.alarm.Alarm.acknowledge)
         time.sleep(3)
