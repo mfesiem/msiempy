@@ -29,16 +29,15 @@ jobs:
           pip install ./
       
       - name: Setup msiempy config
-        run: python ./samples/msiempy_setup.py --set esm host 207.179.200.58:4443 --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general verbose true --set general logfile ./log.txt --set general timeout 60
+        run: python ./samples/msiempy_setup.py --set esm host 207.179.200.58:4443 --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general logfile ./log.txt --set general timeout 60
 
-      - name: Run tests
-        run: pytest --cov=./ --cov-report=xml --reruns 5 --reruns-delay 1
-
-      - name: Tests verbose output
-        run: cat ./log.txt
-
-      - name: Tests output
-        run: cat ./log.txt | grep -v DEBUG
+      - name: Run tests and print output
+        run: | 
+          pytest --cov=./ --cov-report=xml --reruns 5 --reruns-delay 1
+          echo "OUTPUT ================================== OUTPUT ================================== OUTPUT"
+          cat ./log.txt | grep -v DEBUG
+          echo "DEBUG ================================== DEBUG ================================== DEBUG"
+          cat ./log.txt
 
       - name: Upload coverage to Codecov  
         uses: codecov/codecov-action@v1

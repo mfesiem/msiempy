@@ -830,12 +830,15 @@ class Event(NitroDict):
         
         if use_query == True :
 
-            e = EventManager(time_range='CUSTOM',
+            e = EventManager(
+                time_range='CUSTOM',
                 start_time=datetime.now()-timedelta(days=365),
                 end_time=datetime.now()+timedelta(days=1),
                 filters=[('IPSIDAlertID',id)],
                 fields=extra_fields,
-                limit=2).load_data()
+                limit=2)
+                
+            e.load_data()
 
             if len(e) == 1 :
                 return e[0]

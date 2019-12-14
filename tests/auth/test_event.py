@@ -1,13 +1,18 @@
 import msiempy.event
 from msiempy.__utils__ import format_esm_time, parse_timedelta, timerange_gettimes
 import unittest
+from datetime import datetime, timedelta
+
+QUERY_TIMERANGE=300
 
 
 class T(unittest.TestCase):
 
     def test_event(self):
         events = msiempy.event.EventManager(
-                    time_range='CURRENT_DAY',
+                    time_range='CUSTOM',
+                    start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+                    end_time=datetime.now()+timedelta(days=1),
                     limit=1
                 )
         events.load_data()
@@ -28,7 +33,9 @@ class T(unittest.TestCase):
     def test_query(self):
 
         events = msiempy.event.EventManager(
-                    time_range='CURRENT_DAY',
+                    time_range='CUSTOM',
+                    start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+                    end_time=datetime.now()+timedelta(days=1),
                     fields=msiempy.event.Event.REGULAR_EVENT_FIELDS,
                     limit=10
                 )
@@ -46,8 +53,8 @@ class T(unittest.TestCase):
     def test_query_splitted(self):
         events_no_split = msiempy.event.EventManager(
             time_range='CUSTOM',
-            start_time=timerange_gettimes('CURRENT_DAY')[0],
-            end_time=timerange_gettimes('CURRENT_DAY')[1],
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             order=(('ASCENDING', 'AlertID')),
             limit=10
         )
@@ -56,7 +63,9 @@ class T(unittest.TestCase):
         print(events_no_split.text)
 
         events = msiempy.event.EventManager(
-            time_range='CURRENT_DAY',
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             order=(('ASCENDING', 'AlertID')),
             limit=5,
             max_query_depth=1 # Generate warning and ignore
@@ -73,8 +82,8 @@ class T(unittest.TestCase):
     def test_query_splitted_with_timedelta(self):
         events_no_split = msiempy.event.EventManager(
             time_range='CUSTOM',
-            start_time=timerange_gettimes('CURRENT_DAY')[0],
-            end_time=timerange_gettimes('CURRENT_DAY')[1],
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             order=(('ASCENDING', 'AlertID')),
             limit=10
         )
@@ -83,7 +92,9 @@ class T(unittest.TestCase):
         print(events_no_split.text)
 
         events = msiempy.event.EventManager(
-            time_range='CURRENT_DAY',
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             order=(('ASCENDING', 'AlertID')),
             limit=5,
             max_query_depth=1 # Generate warning and ignore
@@ -109,8 +120,10 @@ class T(unittest.TestCase):
 
     def test_ordered_query(self):
         events_no_split = msiempy.event.EventManager(
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             fields=['Alert.AlertID'],
-            time_range='CURRENT_DAY',
             order=(('ASCENDING', 'AlertID')),
             limit=10,
         )
@@ -127,7 +140,9 @@ class T(unittest.TestCase):
     def test_add_note(self):
 
         events = msiempy.event.EventManager(
-            time_range='CURRENT_DAY',
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             limit=2
         )
         events.load_data()
@@ -139,7 +154,9 @@ class T(unittest.TestCase):
 
     def test_getitem(self):
         events = msiempy.event.EventManager(
-            time_range='CURRENT_DAY',
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             fields=msiempy.event.Event.REGULAR_EVENT_FIELDS,
             limit=5
         )

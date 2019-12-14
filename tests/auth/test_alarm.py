@@ -3,14 +3,18 @@ import msiempy.alarm
 import unittest
 import pprint
 import time
+from datetime import datetime, timedelta
 
+QUERY_TIMERANGE=300
 
 class T(unittest.TestCase):
 
     def test_no_detailed_filter(self):
 
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_DAY',
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             page_size=5,
             status_filter='unacknowledged')
 
@@ -34,7 +38,9 @@ class T(unittest.TestCase):
     def test_alarm_filter(self):
 
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_DAY',
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             filters=[('severity', [80,90])],
             page_size=10
             )
@@ -55,7 +61,9 @@ class T(unittest.TestCase):
     def test_events_filter(self):
 
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_DAY',
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             filters=[('alarmName',['Test','IPS'])],
             event_filters=[('srcIp', ['10','159.33','22'])],
             page_size=10
@@ -71,7 +79,9 @@ class T(unittest.TestCase):
     def test_events_filter_using_query(self):
 
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_DAY',
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             filters=[('alarmName',['Test','IPS'])],
             event_filters=[('Alert.SrcIP', ['10','159.33','22'])],
             page_size=10
@@ -90,7 +100,9 @@ class T(unittest.TestCase):
     def test_print_and_compare(self):
 
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_DAY',
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             max_query_depth=0,
             page_size=2
         )
@@ -126,7 +138,9 @@ class T(unittest.TestCase):
 
     def test_paged_request_simple(self):
         alarms = msiempy.alarm.AlarmManager(
-            time_range='LAST_3_DAYS',
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             page_size=10
             )
         alarms.load_data(alarms_details=False, pages=3)
@@ -138,7 +152,9 @@ class T(unittest.TestCase):
 
     def test_paged_request_filtered(self):
         alarms = msiempy.alarm.AlarmManager(
-            time_range='LAST_3_DAYS',
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             # filters=[('alarmName',['Test','IPS'])],
             # event_filters=[('srcIp', ['10','159.33','22'])],
             page_size=10
@@ -154,7 +170,9 @@ class T(unittest.TestCase):
 
     def test_loading_part_of_the_alarm_details_and_events(self):
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_DAY',
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             page_size=5
             )
         alarms.load_data(alarms_details=False)
@@ -183,7 +201,9 @@ class T(unittest.TestCase):
     
     def test_ack_unack(self):
         alarms = msiempy.alarm.AlarmManager(
-            time_range='CURRENT_DAY',
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
             page_size=2
             )
 
