@@ -152,8 +152,8 @@ class EventManager(FilteredQueryList):
 
         Can raise `msiempy.NitroError`: 
 
-            - (MaxWaitRetriesExceeded) -> You might want to change the value of `wait_for_sleep_time` and `wait_for_retry` `load_data()` method !
-            
+            - Query wait timeout -> You might want to change the value of `wait_timeout_sec` argument !
+            - Other errors
         """
         query_infos=dict()
 
@@ -217,6 +217,9 @@ class EventManager(FilteredQueryList):
         - `max_query_depth` : maximum number of supplement reccursions of division of the query times
         Meaning, if limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
         the list is (500*5)*(500*5)*(500*5) = 15625000000
+        - `retry` (`int`): number of time the query can be failed and retied
+        - `wait_timeout_sec` (`int`): wait timeout in seconds
+
 
         Returns : `msiempy.event.EventManager`
         """
@@ -288,8 +291,10 @@ class EventManager(FilteredQueryList):
         
         Return: `True`  
 
-        SIEM ResultUnavailable error can be thown  
-        `msiempy.NitroError`: MaxWaitRetriesExceeded
+        Raises: 
+
+        - `msiempy.NitroError`: 'ResultUnavailable' error some times...
+        - `msiempy.NitroError`: 'Query wait timeout'
         """
         # time_out=parse_timedelta(wait_timeout).total_seconds()
         # retry = wait_timeout_sec / sleep_time
@@ -306,7 +311,7 @@ class EventManager(FilteredQueryList):
             else :
                 time.sleep(sleep_time)
             # retry=retry-1
-        raise NitroError("MaxWaitRetriesExceeded. resultID={}, sleep_time={}, wait_timeout_sec={}".format(
+        raise NitroError("Query wait timeout. resultID={}, sleep_time={}, wait_timeout_sec={}".format(
             resultID, sleep_time, wait_timeout_sec))
 
     def _get_events(self, resultID, startPos=0, numRows=None):
