@@ -30,10 +30,17 @@ This python module is tested on windows, ubuntu and macos.
 - McAfee SIEM API documentation : https://HOST/rs/esm/help
 
 ### Installation 
+##### Stable
 ```
 pip install msiempy
 ```
 See [project on pypi.org](https://pypi.org/project/msiempy/)
+
+##### Development
+```
+git clone https://github.com/mfesiem/msiempy.git
+cd msiempy && python3 ./setup.py install
+```
 
 ### Authentication and configuration setup
 The module offers a single point of authentication against your SIEM, so you don't have to worry about authentication when writting your scripts. This means that you need to preconfigure the authentication using the configuration file.
@@ -49,10 +56,10 @@ user = USER
 passwd = PASSWORD's BASE64
 
 [general]
-verbose = yes
+verbose = no
 quiet = no
 logfile = /var/log/msiempy/log.txt
-timeout = 30
+timeout = 60
 ssl_verify = no
 ```
 
@@ -273,6 +280,7 @@ If you have any questions, please create a new issue.
 
 ### Contribute
 If you like the project and think you could help with making it better, there are many ways you can do it:
+
 - Create new issue for new feature proposal or a bug
 - Implement existing issues
 - Help with improving the documentation
@@ -281,13 +289,23 @@ If you like the project and think you could help with making it better, there ar
 - Any contribution would be of great help and I will highly appreciate it! 
 
 ### Run tests
+Run all tests
 ```
-./setup.py test
+pytest --reruns 3
 ```
+You might also want to run per-file tests
+```
+pytest tests/auth/test_device.py
+```
+Or per-method test
+````
+python3 -m unittest tests.auth.test_event.T.test_add_note
+````
+
 
 ### Error report
 Configure log file reporting in the configuration file and execute :  
- ```cat /path/to/your/log/file | cut -c 25-500 | grep -i error | sort | uniq```
+ ```cat /path/to/your/log/file | grep -i error | sort | uniq```
 
 ### Disclaimer
 This is an **UNOFFICIAL** project and is **NOT** sponsored or supported by **McAfee, Inc**. If you accidentally delete all of your datasources, don't call support (or me). Product access will always be in respect to McAfee's intellectual property.
