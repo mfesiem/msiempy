@@ -1,8 +1,9 @@
 ### Samples
 
-#### examples.py
+#### A few quick examples
+
 `python3 ./examples.py`
-#### ack_irrelevants.py
+#### Acknowledge irrelevants 404 or errored alarms
 ```bash
 $ python3 ./ack_irrelevants.py -h
 usage: ack_irrelevants.py [-h] --time_range time_range [--start_time time]
@@ -39,7 +40,7 @@ optional arguments:
   --force               Will not prompt for confirmation before acknowledging
                         alarms
 ```
-#### add_wpsan_note.py
+#### Add wpsan result as note to event that trigerred Wordpress alarms
 ```bash
 $ python3 ./add_wpsan_note.py -h 
 usage: add_wpsan_note.py [-h] --time_range time_range
@@ -57,7 +58,7 @@ optional arguments:
                         CURRENT_MONTH, PREVIOUS_MONTH, CURRENT_QUARTER,
                         PREVIOUS_QUARTER, CURRENT_YEAR, PREVIOUS_YEAR
 ```
-#### find_dhcp_device.py
+#### Find a devices based DHCP logs (or others), macaddress vendor and hostname
 ```bash
 % python3 ./find_dhcp_device.py -h            
 usage: find_dhcp_device.py [-h] --time_range time_range

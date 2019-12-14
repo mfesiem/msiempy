@@ -65,7 +65,7 @@ You can also directly paste the password's base64 in the config file by doing:
 UEBhc3NXMHJk
 ```
 ### Examples
-See [examples.py](https://github.com/mfesiem/msiempy/tree/master/samples/examples.py) and all the [samples folder](https://github.com/mfesiem/msiempy/tree/master/samples) for more detailed uses !  
+See [`examples.py`](https://github.com/mfesiem/msiempy/tree/master/samples/examples.py) and all the [samples folder](https://github.com/mfesiem/msiempy/tree/master/samples) for more detailed uses !  
 For further informations, please visit the [module documentation](https://mfesiem.github.io/docs/msiempy/index.html) ! :)  
 
 #### Alarm
@@ -175,7 +175,7 @@ from  msiempy.event import EventManager, FieldFilter
 
 print('Simple event query sorted by AlertID')
 events = EventManager(
-        time_range='LAST_3_DAYS',
+        time_range='CURRENT_YEAR',
         fields=['SrcIP', 'AlertID'], # SrcIP and AlertID are not queried by default
         filters=[
                 FieldFilter('DstIP', ['0.0.0.0/0',]),
@@ -211,6 +211,21 @@ print(events.get_text(fields=['AlertID','LastTime','SrcIP', 'Rule.msg']))
 </p>
 </details>
 
+Setting the note of an event, retreiving the genuine event from IPSIDAlertID and checking the note is well set. See [`add_wpsan_note.py`](https://github.com/mfesiem/msiempy/blob/master/samples/add_wpsan_note.py) script to see more how to add note to event that triggered alarms !  
+```python
+events = msiempy.event.EventManager(
+        time_range='CURRENT_YEAR',
+        limit=2
+)
+events.load_data()
+
+for event in events :
+        event.set_note("Test note")
+        genuine_event = msiempy.event.Event(id=event['IPSIDAlertID'])
+        assert "Test note" in genuine_event['note'], "The note doesn't seem to have been added to the event \n {}".format(event)
+```
+
+
 See: [FilteredQueryList](https://mfesiem.github.io/docs/msiempy/index.html#msiempy.FilteredQueryList), [EventManager](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.EventManager), [FieldFilter](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.FieldFilter), [Event](https://mfesiem.github.io/docs/msiempy/event.html#msiempy.event.Event)
 
 `EventManager` `__init__()` can take other parameter like `order` or `start_tinme` and `end_time` if `time_rage` is `CUSTOM`.  
@@ -218,7 +233,7 @@ See: [FilteredQueryList](https://mfesiem.github.io/docs/msiempy/index.html#msiem
 `EventManager` `load_data()` method accept also several parameters. It controls the query's division time range into slots of `delta` duration, then the query would be divided into the specified number of `slots`. Control also the number of asyncronous jobs using `workers` parameter. `max_query_depth` parameter specify the number of sub-divisions the query can take at most (zero by default). The query is divided only if it hasn't completed with the current query settings.   
 See  module documentation for more infos.  
  
-See [dump_all_fields.py](https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py) script to have full list of `fields` you can request and fields you can use with `FieldFilter` .
+See [`dump_all_fields.py`](https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py) script to have full list of `fields` you can request and fields you can use with `FieldFilter` .
 
 #### ESM
 Print a few esm infos. ESM object has not state for it self, it's a simple interface to data structures / values returned by the SIEM.  
