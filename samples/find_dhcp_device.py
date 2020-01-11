@@ -22,7 +22,8 @@ DHCP_RENEW='272-11' #to change depending of your value
 # RADIUS login log signature ID
 RADIUS_START='268-2239707159' #to change depending of your value
 
-#Key mapping for hostname and username, SIEM returns weird values...
+#Key mapping for hostname and username, SIEM returns weird values... 
+# Not necessary in newer version of the module
 HostID='Alert.BIN(4)'
 UserIDSrc='Alert.BIN(7)'
 
@@ -45,12 +46,11 @@ def find(time_range, hostname_must_contains=[], vendors=[]):
         fields=[ 'HostID', 'UserIDSrc', 'SrcIP' , 'SrcMac', 'DSIDSigID' ],
         time_range=time_range,
         filters=[ msiempy.event.FieldFilter('Alert.DSIDSigID', [DHCP_RENEW, RADIUS_START]) ],
-        limit=500,
-        max_query_depth=2
+        limit=500
     )
 
     print('Loading data...')
-    events.load_data(slots=10, workers=5)
+    events.load_data(slots=10, workers=5, max_query_depth=2)
     print('{} events have been loaded from the SIEM'.format(len(events)))
 
     if len(vendors) > 0 :

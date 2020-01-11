@@ -676,11 +676,14 @@ class NitroSession():
         """ 
         This method will logout the session.
         """
+        self.api_v = 0
         self.request('logout', http='delete')
         self.logged_in=False
         self.login_info=dict()
+        self._headers={'Content-Type': 'application/json'}
+        self.user_tz_id = None
 
-    def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False, retry=True):
+    def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False, retry=5):
         """
         Helper method that format the request, handle the basic parsing of the SIEM result as well as other errors.          
         If method is all upper cases, it's going to be formatted as a private API call. See `msiempy.NitroSession.format_params` and `msiempy.NitroSession.format_priv_resp` 
@@ -695,6 +698,7 @@ class NitroSession():
         - `callback` : function to apply afterwards  
         - `raw` : If true will return the Response object from requests module.   
         - `secure` : If true will not log the content of the request.   
+        - `retry` : Numbre of time the request can be retried
 
         Returns : 
 
@@ -748,7 +752,7 @@ class NitroSession():
             )
 
             if raw :
-                log.debug('Returning raw requests Response object : '+str(result)+ ' ' + str(result.text))
+                log.debug('Returning raw requests Response object : '+str(result))
                 return result
 
             else:
@@ -757,41 +761,46 @@ class NitroSession():
 
                 except requests.HTTPError as e :
                     error=None
-                    # Invalif session handler -> re-login
-                    if any([match in result.text for match in ['ERROR_InvalidSession', 
+
+                    if retry>0 :
+                        # Invalif session handler -> re-login
+                        if any([match in result.text for match in ['ERROR_InvalidSession', 
                             'Not Authorized User', 'Invalid Session', 'Username and password cannot be null']]):
                             error = NitroError('Authentication error with method ({}) and data : {} logging in and retrying. From requests.HTTPError {} {}'.format(
                                 method, data, e, result.text))
                             log.warning(error)
                             self.logged_in=False
                             self.login()
-                    # Data unavailable error handler -> return []
-                    elif any([match in result.text for match in ['ERROR_IndexNotTurnedOn',
-                        'ERROR_NoData','ERROR_UnknownList','ERROR_JobEngine_GetQueryStatus_StatusNotFound']]):
-                            error = NitroError('Data unavailable error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
-                                method, data, e, result.text))
-                            log.warning(error)
-                            return []
-
-                    if retry == True :
+                        
+                        else: log.warning('An HTTP error occured ({} {}), retrying request'.format(e, result.text))
+                        
                         # Retry request
-                        log.warning('An HTTP error occured ({} {}), retrying request'.format(e, result.text))
                         time.sleep(0.2)
-                        return self.esm_request(method, data, http, callback, raw, secure, retry=False)
+                        return self.esm_request(method, data, http, callback, raw, secure, retry=retry-1)
+                    
+                    else :
+                        # # Data unavailable error -> raise
+                        # if any([match in result.text for match in ['ERROR_IndexNotTurnedOn',
+                        #     'ERROR_NoData','ERROR_UnknownList','ERROR_JobEngine_GetQueryStatus_StatusNotFound']]):
+                        #     error = NitroError('Data unavailable error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
+                        #         method, data, e, result.text))
+                        #     log.error(error)
+                        #     raise
+                        # else :
+                        #     # Other handlers
+                        #     # if True : # Other HTTP errors... TODO
+                        #         # _InvalidFilter (228)
+                        #         # Status Code 500: Error processing request, see server logs for more details 
+                        #         # Input Validation Error
 
-                    # Other handlers
-                    # if True : # Other HTTP errors... TODO
-                        # _InvalidFilter (228)
-                        # Status Code 500: Error processing request, see server logs for more details 
-                        # Input Validation Error
+                        # Raise error in the worst case
+                        error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
+                            method, data, e, result.text))
+                        log.error(error)
+                        raise error
 
-                    # Raise error in the worst case
-                    error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
-                        method, data, e, result.text))
-                    log.error(error)
-                    raise error
-
-                else: #
+                else: # The result is not an HTTP Error
+                    response = result
                     result = self.unpack_resp(result)
 
                     if privateApiCall :
@@ -800,17 +809,21 @@ class NitroSession():
                     if callback:
                         result = callback(result)
 
-                    log.debug('Result '+str(result)[:100]+'[...]')
+                    log.debug('{} -> Result ({}): {}'.format(
+                        str(response),
+                        type(result),
+                        str(result)[:100] + '[...]' if len(str(result))>100 else ''
+                    ))
 
                     return result
 
-        #Soft errors
+        #Hard errors, could retry
         except requests.exceptions.Timeout as e:
             log.error(e)
-            return None
+            raise
         except requests.exceptions.TooManyRedirects as e :
             log.error(e)
-            return None
+            raise
         
     def _request_http_error_handler(self, error, method, data, http, callback, raw, secure, retry):
         pass
@@ -860,7 +873,6 @@ class NitroSession():
         resp = self.request('del_rfile', ftoken=file_token)
         return ''.join(data)
 
-
     def request(self, request, **kwargs):
         """
         This method is the centralized interface of all requests going to the SIEM.  
@@ -874,6 +886,7 @@ class NitroSession():
         - `callback` : function to apply afterwards  
         - `raw` : If true will return the Response object from requests module.   
         - `secure` : If true will not log the content of the request.   
+        - `retry` : Numbre of time the request can be retried
         
         Interpolation parameters :  
         
@@ -1193,7 +1206,7 @@ class NitroList(collections.UserList, NitroObject):
 
 
     def get_text(self, format='prettytable', fields=None, 
-                        max_column_width=80, get_text_nest_attr={}, retry=True):
+                        max_column_width=80, get_text_nest_attr={} ):
         """
         Return a csv or table string representation of the list
 
@@ -1445,20 +1458,18 @@ class FilteredQueryList(NitroList):
     - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
     - `end_time` : Query endding time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
     - `filters` : List of filters applied to the query.  
-    - `load_async` : Load asynchonously the sub-queries. Defaulted to `True`.  
     """
-    def __init__(self, *arg, time_range=None, start_time=None, end_time=None, filters=None, 
-        load_async=True, **kwargs):
+    def __init__(self, *arg, time_range=None, start_time=None, end_time=None, filters=None, **kwargs):
 
-        #handled eventual deprecated arguments
+        # Handled eventual deprecated arguments
         if 'max_query_depth' in kwargs :
-            log.warning('Deprecated : `max_query_depth` argument has been removed from FilteredQueryList, it\'s now a specilized EventManager argument only. You can remove this argument.')
+            log.warning('Deprecated : `max_query_depth` argument has been removed from the object declaration for more clarty, it\'s now a specilized EventManager.load_data() argument only. This argument will be ignored.')
             del kwargs['max_query_depth']
         if 'requests_size' in kwargs :
-            log.warning('Deprecated : `requests_size` argument has been removed from FilteredQueryList, use `page_size` (Alarms) or `limit` (Events) arguments.')
+            log.warning('Deprecated : `requests_size` argument has been removed from FilteredQueryList, use `page_size` for AlarmManager or `limit` for EventManager arguments.')
             del kwargs['requests_size']
         if 'load_async' in kwargs :
-            log.warning('Deprecated : `load_async` argument has been removed from FilteredQueryList. Queries are now always loaded asynchronously...')
+            log.warning('Deprecated : `load_async` argument has been removed from FilteredQueryList. Queries are now always loaded asynchronously.')
             del kwargs['load_async']
 
         super().__init__(*arg, **kwargs)
@@ -1483,8 +1494,6 @@ class FilteredQueryList(NitroList):
             self.time_range='CUSTOM'
         else :
             self.time_range=time_range
-
-        self.load_async=load_async
     
     DEFAULT_TIME_RANGE="CURRENT_DAY"
     __pdoc__['FilteredQueryList.DEFAULT_TIME_RANGE']="""Default time range : %(default)s""" % dict(default=DEFAULT_TIME_RANGE)

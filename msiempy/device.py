@@ -503,33 +503,36 @@ class DevTree(NitroList):
         esm_mfe_dev_id = ['19', '21', '22', '24']
         nitro_dev_id = ['2', '4', '10', '12', '13', '15']
         datasource_dev_id = ['3', '5', '7', '17', '20', '23', '256']
-        
                    
         for device in devtree:
             if device['desc_id'] in esm_dev_id:
                 esm_name = device['name']
                 esm_id = device['ds_id']
+
                 device['parent_name'] = 'n/a'
                 device['parent_id'] = '0'
                 continue
 
-            if device['desc_id'] in esm_mfe_dev_id:
+            elif device['desc_id'] in esm_mfe_dev_id:
                 parent_name = device['name']
                 parent_id = device['ds_id']
-                device['parent_name'] = 'n/a'
-                device['parent_id'] = '0'
-                continue
-            
-            if device['desc_id'] in nitro_dev_id:
+    
                 device['parent_name'] = esm_name
                 device['parent_id'] = esm_id
+                continue
+            
+            elif device['desc_id'] in nitro_dev_id:
                 parent_name = device['name']
-                pid = device['ds_id']
+                parent_id = device['ds_id']
+
+                device['parent_name'] = esm_name
+                device['parent_id'] = esm_id
                 continue
 
-            if device['desc_id'] in datasource_dev_id:
+            elif device['desc_id'] in datasource_dev_id:
                 device['parent_name'] = parent_name
-                device['parent_id'] = pid
+                device['parent_id'] = parent_id
+            
             else:
                 device['parent_name'] = 'n/a'
                 device['parent_id'] = 'n/a'
