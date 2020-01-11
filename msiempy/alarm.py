@@ -283,9 +283,8 @@ class AlarmManager(FilteredQueryList):
         match=True
         for alarm_filter in self._alarm_filters :
             match=False
-            if alarm_filter[0] not in alarm:
-                break
-            value = str(alarm[alarm_filter[0]]) #Can only match strings
+            try: value = str(alarm[alarm_filter[0]]) #Can only match strings
+            except KeyError: break
             for filter_value in alarm_filter[1]:
                 if regex_match(filter_value.lower(), value.lower()):
                     match=True
@@ -301,9 +300,8 @@ class AlarmManager(FilteredQueryList):
         match=True
         for event_filter in self._event_filters :
             match=False
-            if event_filter[0] not in alarm['events'][0]:
-                break
-            value = str(alarm['events'][0][event_filter[0]])
+            try: value = str(alarm['events'][0][event_filter[0]])
+            except KeyError: break
             for filter_value in event_filter[1]:
                 if regex_match(filter_value.lower(), value.lower()) :
                     match=True
