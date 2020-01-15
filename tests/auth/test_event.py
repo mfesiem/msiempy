@@ -30,6 +30,8 @@ class T(unittest.TestCase):
                     adict=msiempy.event.Event().data_from_id(id=id, use_query=True))
             self.assertEqual(event, event_from_direct_id_query)
 
+        self.assertTrue('SrcIP' in event)
+
     def test_query(self):
 
         events = msiempy.event.EventManager(
