@@ -60,8 +60,10 @@ class EventManager(FilteredQueryList):
         
         #Setting the default fields Adds the specified fields and make sure there is no duplicates
         #print('{}\n DEBUG FIELDS : {}'.format(locals(), fields))
-        if isinstance(fields, list):self.fields=set(Event.DEFAULTS_EVENT_FIELDS+fields)
-        else:self.fields=Event.DEFAULTS_EVENT_FIELDS
+        if fields!=None: 
+            self.fields=set(Event.DEFAULTS_EVENT_FIELDS+[f.split('.')[1] if '.' in f else f for f in list(fields)])
+        else:
+            self.fields=Event.DEFAULTS_EVENT_FIELDS
 
         #Setting limit according to config or limit argument
         #TODO Try to load queries with a limit of 10k and get result as chucks of 500 with starPost nbRows
@@ -416,10 +418,7 @@ class Event(NitroDict):
     """
 
     # Minimal default query fields
-    DEFAULTS_EVENT_FIELDS=[
-        "Rule.msg",
-        "Alert.LastTime",
-        "Alert.IPSIDAlertID"]
+    DEFAULTS_EVENT_FIELDS=["msg", "LastTime","IPSIDAlertID"]
     """Always present when using `msiempy.event.EventManager` querying :  
         `Rule.msg`  
         `Alert.LastTime`  
