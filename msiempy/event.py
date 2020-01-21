@@ -58,12 +58,12 @@ class EventManager(FilteredQueryList):
         #Declaring attributes
         self._filters=list()
         
-        #Setting the default fields Adds the specified fields and make sure there is no duplicates
-        #print('{}\n DEBUG FIELDS : {}'.format(locals(), fields))
-        if fields!=None: 
+        #Setting the default fields Adds the specified fields, make sure there is no duplicates and delete TABLE identifiers
+        if fields and len(fields)>0: 
             self.fields=set(Event.DEFAULTS_EVENT_FIELDS+[f.split('.')[1] if '.' in f else f for f in list(fields)])
         else:
             self.fields=Event.DEFAULTS_EVENT_FIELDS
+        log.debug('{}\nFIELDS : {}'.format(locals(), fields))
 
         #Setting limit according to config or limit argument
         #TODO Try to load queries with a limit of 10k and get result as chucks of 500 with starPost nbRows
@@ -217,9 +217,9 @@ class EventManager(FilteredQueryList):
         - `delta` : exemple : '6h30m', the query will be firstly divided in chuncks according to the time delta read
             with dateutil.  
         - `max_query_depth` : maximum number of supplement reccursions of division of the query times
-        Meaning, if limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
+        Meaning, if EventManager query limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
         the list is (500*5)*(500*5)*(500*5) = 15625000000
-        - `retry` (`int`): number of time the query can be failed and retied
+        - `retry` (`int`): number of time the query can be failed and retried
         - `wait_timeout_sec` (`int`): wait timeout in seconds
 
 
