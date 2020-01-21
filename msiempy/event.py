@@ -63,7 +63,7 @@ class EventManager(FilteredQueryList):
             self.fields=set(Event.DEFAULTS_EVENT_FIELDS+[f.split('.')[1] if '.' in f else f for f in list(fields)])
         else:
             self.fields=Event.DEFAULTS_EVENT_FIELDS
-        log.debug('{}\nFIELDS : {}'.format(locals(), fields))
+        #log.debug('{}\nFIELDS : {}'.format(locals(), self.fields))
 
         #Setting limit according to config or limit argument
         #TODO Try to load queries with a limit of 10k and get result as chucks of 500 with starPost nbRows
