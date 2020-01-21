@@ -26,9 +26,15 @@ class T(unittest.TestCase):
             str(event_from_ips_get_alert_data['alertId'])]))
         
         if msiempy.NitroSession().api_v == 2 :
-            event_from_direct_id_query = msiempy.event.Event(
-                    adict=msiempy.event.Event().data_from_id(id=id, use_query=True))
-            self.assertEqual(event, event_from_direct_id_query)
+            print('CREATING EVENT MANUALLY FROM ID')
+            #event_from_direct_id_query = msiempy.event.Event()
+            data=msiempy.event.Event().data_from_id(id=id, use_query=True)
+            event_from_direct_id_query=msiempy.event.Event(data)
+            print('EVENT RETREIVED : {}'.format(event_from_direct_id_query))
+            print('ORIGINAL EVENT : {}' .format(event))
+            self.assertEqual(event_from_direct_id_query, data)
+
+        self.assertTrue('msg' in event)
 
     def test_query(self):
 
@@ -99,7 +105,7 @@ class T(unittest.TestCase):
             limit=5,
             max_query_depth=1 # Generate warning and ignore
         )
-        events.load_data(delta='12h',  max_query_depth=1) # Works
+        events.load_data(slots=2,  max_query_depth=1) # Works
         print('events_splitted'.upper())
         print(events.text)
 

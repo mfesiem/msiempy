@@ -1098,12 +1098,9 @@ class NitroDict(collections.UserDict, NitroObject):
     def __init__(self, adict=None, id=None):
         NitroObject.__init__(self)
         collections.UserDict.__init__(self, adict)
-        
-        if id != None :
-            self.data=self.data_from_id(id)
 
-        if isinstance(adict, dict):
-            self.data=adict
+        if adict : self.data=adict
+        if id : self.data=self.data_from_id(id)
 
         for key in list(self) :
             if isinstance(self[key], list):
@@ -1156,18 +1153,14 @@ class NitroList(collections.UserList, NitroObject):
 
     def __init__(self, alist=None):
         NitroObject.__init__(self)
-        if alist is None:
-            collections.UserList.__init__(self, [])
-        
-        elif isinstance(alist , (list, NitroList)):
+        if alist :
             collections.UserList.__init__(
                 self, alist 
                 #[NitroDict(adict=item) for item in alist if isinstance(item, (dict, NitroDict))] 
                 #Can't instanciate NitroDict, so Concrete classes have to cast the items afterwards!
                 #TODO better polymorphism to cast every sub-NitroList class's item dynamcally !
                 )
-        else :
-            raise ValueError('NitroList can only be initiated based on a list')
+        else : collections.UserList.__init__(self, [])
 
     def __str__(self):
         """str(obj) -> return text string.
