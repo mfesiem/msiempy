@@ -105,7 +105,7 @@ class T(unittest.TestCase):
             limit=5,
             max_query_depth=1 # Generate warning and ignore
         )
-        events.load_data(delta='12h',  max_query_depth=1) # Works
+        events.load_data(slots=2,  max_query_depth=1) # Works
         print('events_splitted'.upper())
         print(events.text)
 
