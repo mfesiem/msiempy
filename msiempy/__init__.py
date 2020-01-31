@@ -683,7 +683,7 @@ class NitroSession():
         self._headers={'Content-Type': 'application/json'}
         self.user_tz_id = None
 
-    def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False, retry=5):
+    def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False, retry=1):
         """
         Helper method that format the request, handle the basic parsing of the SIEM result as well as other errors.          
         If method is all upper cases, it's going to be formatted as a private API call. See `msiempy.NitroSession.format_params` and `msiempy.NitroSession.format_priv_resp` 
@@ -698,7 +698,7 @@ class NitroSession():
         - `callback` : function to apply afterwards  
         - `raw` : If true will return the Response object from requests module.   
         - `secure` : If true will not log the content of the request.   
-        - `retry` : Numbre of time the request can be retried
+        - `retry` : Number of time the request can be retried
 
         Returns : 
 
@@ -886,7 +886,7 @@ class NitroSession():
         - `callback` : function to apply afterwards  
         - `raw` : If true will return the Response object from requests module.   
         - `secure` : If true will not log the content of the request.   
-        - `retry` : Numbre of time the request can be retried
+        - `retry` : Number of time the request can be retried
         
         Interpolation parameters :  
         

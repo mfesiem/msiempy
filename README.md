@@ -38,8 +38,12 @@ See [project on pypi.org](https://pypi.org/project/msiempy/)
 
 ##### Development
 ```
+# Fork the repo
 git clone https://github.com/mfesiem/msiempy.git
-cd msiempy && python3 ./setup.py install
+cd msiempy
+pip3 install -r requirements.txt
+python3 ./setup.py install
+# Hack and pull request
 ```
 
 ### Authentication and configuration setup
@@ -121,7 +125,7 @@ print(alarms.get_text(
 print("Acknowledge alarms...")
 
 [ alarm.acknowledge() for alarm in alarms ]
-while any( [ alarm['acknowledgedDate'] in ['', None] for alarm in alarms ] ): 
+while any( [ alarm['acknowledgedDate']==None for alarm in alarms ] ): 
         time.sleep(1)
         [ alarm.refresh() for alarm in alarms ]
 print(alarms.get_text(
@@ -129,7 +133,7 @@ print(alarms.get_text(
 
 print("Unacknowledge alarms...")
 [ alarm.unacknowledge() for alarm in alarms ]
-while any( [ alarm['acknowledgedDate'] not in ['', None] for alarm in alarms ] ): 
+while any( [ alarm['acknowledgedDate']!=None for alarm in alarms ] ): 
         time.sleep(1)
         [ alarm.refresh() for alarm in alarms ]
 print(alarms.get_text(

@@ -200,5 +200,13 @@ class T(unittest.TestCase):
             "DSIDSigID",
             "IPSIDAlertID"], format='prettytable', max_column_width=50))
 
+        an_event=events[1]
+
+        print(an_event)
+
+        for key in ["msg","SrcIP","DstIP", "SrcMac","DstMac","NormID","HostID"]:del an_event[key]
+        [ self.assertFalse(key in an_event) for key in ["Rule.msg","Alert.SrcIP","Alert.DstIP", "Alert.SrcMac","Alert.DstMac","Alert.NormID","Alert.BIN(4)"] ]
+        [ self.assertFalse(key in an_event) for key in ["msg","SrcIP","DstIP", "SrcMac","DstMac","NormID","HostID"] ]
+
 
 

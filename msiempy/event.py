@@ -138,7 +138,7 @@ class EventManager(FilteredQueryList):
         """
         return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
 
-    def qry_load_data(self, retry=2, wait_timeout_sec=120):
+    def qry_load_data(self, retry=1, wait_timeout_sec=120):
         """
         Concrete helper method to execute the query and load the data :  
             -> Submit the query  
@@ -147,53 +147,57 @@ class EventManager(FilteredQueryList):
 
         Arguments:
 
-        - `retry` (`int`): number of time the query can be failed and retied
+        - `retry` (`int`): number of time the query can be failed and retried.
+            Retries only when 'ResultUnavailable','UnknownList' or 'JobEngine_GetQueryResults_QueryNotFound_Unrecoverable' errors.  
         - `wait_timeout_sec` (`int`): wait timeout in seconds
 
         Returns : `tuple` : (( `msiempy.event.EventManager`, Status of the query (completed?) `True/False` ))
 
-        Can raise `msiempy.NitroError`: 
-
-            - Query wait timeout -> You might want to change the value of `wait_timeout_sec` argument !
-            - Other errors
+        Raises `msiempy.NitroError` if any unhandled errors  
+        Raises `TimeoutError` if wait_timeout_sec counter gets to 0
         """
-        query_infos=dict()
-
-        #Queries api calls are very different if the time range is custom.
-        if self.time_range == 'CUSTOM' :
-            query_infos=self.nitro.request(
-                'event_query_custom_time',
-                time_range=self.time_range,
-                start_time=self.start_time,
-                end_time=self.end_time,
-                order_direction=self._order_direction,
-                order_field=self._order_field,
-                fields=format_fields_for_query(self.fields),
-                filters=self.filters,
-                limit=self.limit,
-                offset=0,
-                includeTotal=False
-                )
-
-        else :
-            query_infos=self.nitro.request(
-                'event_query',
-                time_range=self.time_range,
-                order_direction=self._order_direction,
-                order_field=self._order_field,
-                fields=format_fields_for_query(self.fields),
-                filters=self.filters,
-                limit=self.limit,
-                offset=0,
-                includeTotal=False
-                )
-        
-        log.debug("Waiting for EsmRunningQuery object : "+str(query_infos))
         try:
+            query_infos=dict()
+
+            #Queries api calls are very different if the time range is custom.
+            if self.time_range == 'CUSTOM' :
+                query_infos=self.nitro.request(
+                    'event_query_custom_time',
+                    time_range=self.time_range,
+                    start_time=self.start_time,
+                    end_time=self.end_time,
+                    order_direction=self._order_direction,
+                    order_field=self._order_field,
+                    fields=format_fields_for_query(self.fields),
+                    filters=self.filters,
+                    limit=self.limit,
+                    offset=0,
+                    includeTotal=False
+                    )
+
+            else :
+                query_infos=self.nitro.request(
+                    'event_query',
+                    time_range=self.time_range,
+                    order_direction=self._order_direction,
+                    order_field=self._order_field,
+                    fields=format_fields_for_query(self.fields),
+                    filters=self.filters,
+                    limit=self.limit,
+                    offset=0,
+                    includeTotal=False
+                    )
+            
+            log.debug("Waiting for EsmRunningQuery object : "+str(query_infos))
+        
             self._wait_for(query_infos['resultID'], wait_timeout_sec)
             events_raw=self._get_events(query_infos['resultID'])
-        except NitroError as error :
-            if retry >0 and any(match in str(error) for match in ['ResultUnavailable','UnknownList', 'Query wait timeout']):
+
+        except (NitroError, TimeoutError) as error :
+            if (retry >0 and ( any(match in str(error) for match in ['ResultUnavailable',
+                    'UnknownList',
+                    'JobEngine_GetQueryResults_QueryNotFound_Unrecoverable']) 
+                or isinstance(error, TimeoutError)) ):
                 log.warning('Retring after: '+str(error))
                 return self.qry_load_data(retry=retry-1)
             else: raise
@@ -313,7 +317,7 @@ class EventManager(FilteredQueryList):
             else :
                 time.sleep(sleep_time)
             # retry=retry-1
-        raise NitroError("Query wait timeout. resultID={}, sleep_time={}, wait_timeout_sec={}".format(
+        raise TimeoutError("Query wait timeout. resultID={}, sleep_time={}, wait_timeout_sec={}".format(
             resultID, sleep_time, wait_timeout_sec))
 
     def _get_events(self, resultID, startPos=0, numRows=None):

@@ -204,11 +204,13 @@ class T(unittest.TestCase):
             time_range='CUSTOM',
             start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
             end_time=datetime.now()+timedelta(days=1),
-            page_size=2
+            page_size=2,
+            status_filter='unacknowledged'
             )
 
         alarms.load_data()
         print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
+        [ self.assertTrue(alarm['acknowledgedDate'] == None) for alarm in alarms ]
 
         # alarms.nitro._init_log(verbose=True)
 
@@ -240,8 +242,8 @@ class T(unittest.TestCase):
         #     alarms.nitro.logout()
         #     alarms.nitro.login()
         #     alarms.perform(msiempy.alarm.Alarm.refresh)
+        # alarms.perform(msiempy.alarm.Alarm.refresh)
 
-        alarms.perform(msiempy.alarm.Alarm.refresh)
         print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
         [ self.assertTrue(alarm['acknowledgedDate'] == None) for alarm in alarms ]
 
