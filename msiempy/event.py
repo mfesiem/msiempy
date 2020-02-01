@@ -1072,7 +1072,7 @@ class Event(NitroDict):
         for table in self.FIELDS_TABLES:
             if collections.UserDict.__contains__(self, table+'.'+key): 
                 return collections.UserDict.__setitem__(self, table+'.'+key, value)
-        raise KeyError('Dictionnary key not found : {}'.format(key))
+        return collections.UserDict.__setitem__(self, key, value)
     def __delitem__(self, key):
         if collections.UserDict.__contains__(self, key): 
             return collections.UserDict.__delitem__(self, key)
