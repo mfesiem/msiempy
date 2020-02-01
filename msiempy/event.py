@@ -422,7 +422,7 @@ class Event(NitroDict):
     """
 
     # Minimal default query fields
-    DEFAULTS_EVENT_FIELDS=["msg", "LastTime","IPSIDAlertID"]
+    DEFAULTS_EVENT_FIELDS=["Rule.msg", "LastTime","IPSIDAlertID"]
     """Always present when using `msiempy.event.EventManager` querying :  
         `Rule.msg`  
         `Alert.LastTime`  
@@ -1046,47 +1046,43 @@ class Event(NitroDict):
         """
         if collections.UserDict.__contains__(self, key): 
             return collections.UserDict.__getitem__(self, key)
-        elif key in self.SIEM_FIELDS_MAP.keys():
+        if key in self.SIEM_FIELDS_MAP.keys():
             if collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP[key]): 
                 return collections.UserDict.__getitem__(self, self.SIEM_FIELDS_MAP[key])
-        else :
-            for table in self.FIELDS_TABLES :
-                if collections.UserDict.__contains__(self, table+'.'+key): 
-                    return collections.UserDict.__getitem__(self, table+'.'+key)
-            raise KeyError('Dictionnary key not found : {}'.format(key))
+        for table in self.FIELDS_TABLES :
+            if collections.UserDict.__contains__(self, table+'.'+key): 
+                return collections.UserDict.__getitem__(self, table+'.'+key)
+        raise KeyError('Dictionnary key not found : {}'.format(key))
     def __contains__(self, key):
         if collections.UserDict.__contains__(self, key): 
             return True
-        elif key in self.SIEM_FIELDS_MAP.keys():
+        if key in self.SIEM_FIELDS_MAP.keys():
             if collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP[key]): 
                 return True
-        else:
-            for table in self.FIELDS_TABLES:
-                if collections.UserDict.__contains__(self, table+'.'+key): 
-                    return True
-            return False
+        for table in self.FIELDS_TABLES:
+            if collections.UserDict.__contains__(self, table+'.'+key): 
+                return True
+        return False
     def __setitem__(self, key, value):
         if collections.UserDict.__contains__(self, key): 
-            collections.UserDict.__setitem__(self, key, value)
-        elif key in self.SIEM_FIELDS_MAP.keys():
+            return collections.UserDict.__setitem__(self, key, value)
+        if key in self.SIEM_FIELDS_MAP.keys():
             if collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP[key]): 
-                collections.UserDict.__setitem__(self, self.SIEM_FIELDS_MAP[key], value)
-        else:
-            for table in self.FIELDS_TABLES:
-                if collections.UserDict.__contains__(self, table+'.'+key): 
-                    collections.UserDict.__setitem__(self, table+'.'+key, value)
-            raise KeyError('Dictionnary key not found : {}'.format(key))
+                return collections.UserDict.__setitem__(self, self.SIEM_FIELDS_MAP[key], value)
+        for table in self.FIELDS_TABLES:
+            if collections.UserDict.__contains__(self, table+'.'+key): 
+                return collections.UserDict.__setitem__(self, table+'.'+key, value)
+        raise KeyError('Dictionnary key not found : {}'.format(key))
     def __delitem__(self, key):
         if collections.UserDict.__contains__(self, key): 
-            collections.UserDict.__delitem__(self, key)
-        elif key in self.SIEM_FIELDS_MAP.keys():
+            return collections.UserDict.__delitem__(self, key)
+        if key in self.SIEM_FIELDS_MAP.keys():
             if collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP[key]): 
-                collections.UserDict.__delitem__(self, self.SIEM_FIELDS_MAP[key])
-        else:
-            for table in self.FIELDS_TABLES:
-                if collections.UserDict.__contains__(self, table+'.'+key): 
-                    collections.UserDict.__delitem__(self, table+'.'+key)
-            raise KeyError('Dictionnary key not found : {}'.format(key))
+                return collections.UserDict.__delitem__(self, self.SIEM_FIELDS_MAP[key])
+        for table in self.FIELDS_TABLES:
+            if collections.UserDict.__contains__(self, table+'.'+key): 
+                return collections.UserDict.__delitem__(self, table+'.'+key)
+        raise KeyError('Dictionnary key not found : {}'.format(key))
 
     def clear_notes(self):
         """
