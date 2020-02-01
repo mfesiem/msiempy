@@ -31,7 +31,7 @@ class T(unittest.TestCase):
             
             self.assertIn(alarm['acknowledgedDate'], ['', None], "status_filter is unacknowledged but alarm's acknowledgedDate has a value")
             self.assertIn(alarm['acknowledgedUsername'], ['', None], "status_filter is unacknowledged but alarm's acknowledgedUsername has a value")
-            self.assertEqual(alarm.keys(), alarms.keys, "Alarms's key property is wrong")
+            self.assertEqual(alarm.keys(), alarms.keys(), "Alarms's key property is wrong")
 
         print(alarms)
    

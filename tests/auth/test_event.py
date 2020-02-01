@@ -34,8 +34,6 @@ class T(unittest.TestCase):
             print('ORIGINAL EVENT : {}' .format(event))
             self.assertEqual(event_from_direct_id_query, data)
 
-        self.assertTrue('msg' in event)
-
     def test_query(self):
 
         events = msiempy.event.EventManager(
@@ -171,7 +169,7 @@ class T(unittest.TestCase):
         print(events)
 
         print(events.get_text(fields=[
-            "msg",
+            "Rule.msg",
             "SrcIP",
             "DstIP", 
             "SrcMac",
@@ -186,7 +184,7 @@ class T(unittest.TestCase):
             "IPSIDAlertID"], format='csv'))
 
         print(events.get_text(fields=[
-            "msg",
+            "Rule.msg",
             "SrcIP",
             "DstIP", 
             "SrcMac",
@@ -204,9 +202,20 @@ class T(unittest.TestCase):
 
         print(an_event)
 
-        for key in ["msg","SrcIP","DstIP", "SrcMac","DstMac","NormID","HostID"]:del an_event[key]
+        self.assertTrue('Rule.msg' in an_event)
+        self.assertTrue('DstIP' in an_event)
+        self.assertTrue('HostID' in an_event)
+
+        for key in ["Rule.msg","SrcIP","DstIP", "SrcMac","DstMac","NormID","HostID"]: del an_event[key]
+
         [ self.assertFalse(key in an_event) for key in ["Rule.msg","Alert.SrcIP","Alert.DstIP", "Alert.SrcMac","Alert.DstMac","Alert.NormID","Alert.BIN(4)"] ]
-        [ self.assertFalse(key in an_event) for key in ["msg","SrcIP","DstIP", "SrcMac","DstMac","NormID","HostID"] ]
+        [ self.assertFalse(key in an_event) for key in ["Rule.msg","SrcIP","DstIP", "SrcMac","DstMac","NormID","HostID"] ]
+
+        ukeys=msiempy.event.Event._get_unique_keys(["Rule.msg","Alert.SrcIP","Alert.DstIP", 
+            "Alert.SrcMac","Alert.DstMac","Alert.NormID","Alert.BIN(4)","HostID","Alert.BIN(7)","DSID","Alert.EventCount"])
+
+        self.assertEqual(sorted(ukeys), sorted(["Rule.msg","SrcIP","DstIP", 
+            "SrcMac","DstMac","NormID","HostID","UserIDSrc","DSID","EventCount"]))
 
 
 

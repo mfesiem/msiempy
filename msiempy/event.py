@@ -59,10 +59,8 @@ class EventManager(FilteredQueryList):
         self._filters=list()
         
         #Setting the default fields Adds the specified fields, make sure there is no duplicates and delete TABLE identifiers
-        if fields and len(fields)>0: 
-            self.fields=set(Event.DEFAULTS_EVENT_FIELDS+[f.split('.')[1] if '.' in f else f for f in list(fields)])
-        else:
-            self.fields=Event.DEFAULTS_EVENT_FIELDS
+        if fields and len(fields)>0: self.fields=Event._get_unique_keys(Event.DEFAULTS_EVENT_FIELDS+list(fields))
+        else: self.fields=Event.DEFAULTS_EVENT_FIELDS
         #log.debug('{}\nFIELDS : {}'.format(locals(), self.fields))
 
         #Setting limit according to config or limit argument
@@ -1040,49 +1038,41 @@ class Event(NitroDict):
     __getitem__, __contains__, __setitem__ and __delitem__ method have been rewrote in order to offer more comprehensive dict usage.
     For exemple, the SIEM will return dicts with keys like  `Alert.65613`, `Alert.BIN(7)` or `Alert.SrcIP`, you'll be able to use `Event` dictionnary object with your initial queried fields like `Web_Doamin`, `UserIDSrc` or `SrcIP`. 
     """
+    def _find_key(self, key):
+        if collections.UserDict.__contains__(self, key): 
+            return key
+        if key in self.SIEM_FIELDS_MAP.keys():
+            if collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP[key]): 
+                return self.SIEM_FIELDS_MAP[key]
+        # for table in self.FIELDS_TABLES :
+        #     if collections.UserDict.__contains__(self, table+'.'+key): 
+        #         return table+'.'+key
+        raise KeyError('Dictionnary key not found : {}'.format(key))
+
     def __getitem__(self, key):
-        """
-        Best effort to match or autocomplete the field name.
-        """
-        if collections.UserDict.__contains__(self, key): 
-            return collections.UserDict.__getitem__(self, key)
-        if key in self.SIEM_FIELDS_MAP.keys():
-            if collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP[key]): 
-                return collections.UserDict.__getitem__(self, self.SIEM_FIELDS_MAP[key])
-        for table in self.FIELDS_TABLES :
-            if collections.UserDict.__contains__(self, table+'.'+key): 
-                return collections.UserDict.__getitem__(self, table+'.'+key)
-        raise KeyError('Dictionnary key not found : {}'.format(key))
-    def __contains__(self, key):
-        if collections.UserDict.__contains__(self, key): 
-            return True
-        if key in self.SIEM_FIELDS_MAP.keys():
-            if collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP[key]): 
-                return True
-        for table in self.FIELDS_TABLES:
-            if collections.UserDict.__contains__(self, table+'.'+key): 
-                return True
-        return False
-    def __setitem__(self, key, value):
-        if collections.UserDict.__contains__(self, key): 
-            return collections.UserDict.__setitem__(self, key, value)
-        if key in self.SIEM_FIELDS_MAP.keys():
-            if collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP[key]): 
-                return collections.UserDict.__setitem__(self, self.SIEM_FIELDS_MAP[key], value)
-        for table in self.FIELDS_TABLES:
-            if collections.UserDict.__contains__(self, table+'.'+key): 
-                return collections.UserDict.__setitem__(self, table+'.'+key, value)
-        return collections.UserDict.__setitem__(self, key, value)
+        return collections.UserDict.__getitem__(self, self._find_key(key))
     def __delitem__(self, key):
-        if collections.UserDict.__contains__(self, key): 
-            return collections.UserDict.__delitem__(self, key)
-        if key in self.SIEM_FIELDS_MAP.keys():
-            if collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP[key]): 
-                return collections.UserDict.__delitem__(self, self.SIEM_FIELDS_MAP[key])
-        for table in self.FIELDS_TABLES:
-            if collections.UserDict.__contains__(self, table+'.'+key): 
-                return collections.UserDict.__delitem__(self, table+'.'+key)
-        raise KeyError('Dictionnary key not found : {}'.format(key))
+        return collections.UserDict.__delitem__(self, self._find_key(key))
+    def __contains__(self, key):
+        try: return self._find_key(key)!=None
+        except KeyError: return False
+    def __setitem__(self, key, value):
+        try: return collections.UserDict.__setitem__(self, self._find_key(key), value)
+        except KeyError: return collections.UserDict.__setitem__(self, key, value)
+    
+    @staticmethod
+    def _get_unique_keys(list_of_keys):
+        test_event=Event(dict(**[{key:None} for key in list_of_keys]))
+        unique_keys=set()
+        for key in list_of_keys:
+            if test_event._find_key(key) in list_of_keys :
+                if '.' not in key and test_event._find_key(key) not in unique_keys:
+                    unique_keys.update(key)
+                elif test_event._find_key(test_event._find_key(key)) not in unique_keys: 
+                    unique_keys.update(test_event._find_key(key))
+            else: unique_keys.update(key)
+        return unique_keys
+
 
     def clear_notes(self):
         """
