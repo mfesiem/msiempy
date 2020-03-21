@@ -193,7 +193,11 @@ class EventManager(FilteredQueryList):
             self._wait_for(query_infos['resultID'], wait_timeout_sec)
             events_raw=self._get_events(query_infos['resultID'])
         except NitroError as error :
-            if retry >0 and any(match in str(error) for match in ['ResultUnavailable','UnknownList', 'Query wait timeout']):
+            # EventManager handles by retrying the folowing errors
+            if retry >0 and any(match in str(error) for match in [  'ERROR_JEC_ResponseNotAvailable',
+                                                                    'ResultUnavailable',
+                                                                    'UnknownList',
+                                                                    'Query wait timeout']):
                 log.warning('Retring after: '+str(error))
                 return self.qry_load_data(retry=retry-1)
             else: raise
