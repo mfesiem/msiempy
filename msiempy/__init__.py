@@ -397,7 +397,7 @@ class NitroSession():
         "get_job_status": ("MISC_JOBSTATUS",
                             """{"JID": "%(job_id)s"}"""),
 
-        "ds_last_times": ("QRY%5FGETDEVICELASTALERTTIME","""{}"""),
+        "ds_last_times": ("QRY_GETDEVICELASTALERTTIME","""{}"""),
                         
         "zonetree": ("zoneGetZoneTree",None),
                         

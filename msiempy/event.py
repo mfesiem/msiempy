@@ -192,10 +192,13 @@ class EventManager(FilteredQueryList):
             events_raw=self._get_events(query_infos['resultID'])
 
         except (NitroError, TimeoutError) as error :
-            if (retry >0 and ( any(match in str(error) for match in ['ResultUnavailable',
+            if (retry >0 and ( any(match in str(error) for match in [
+                    'ResultUnavailable',
+                    'ERROR_JEC_ResponseNotAvailable',
                     'UnknownList',
                     'JobEngine_GetQueryResults_QueryNotFound_Unrecoverable']) 
                 or isinstance(error, TimeoutError)) ):
+                
                 log.warning('Retring after: '+str(error))
                 return self.qry_load_data(retry=retry-1)
             else: raise
