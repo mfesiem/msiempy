@@ -12,6 +12,7 @@ Packages diagram : https://mfesiem.github.io/docs/msiempy/packages.png
 import logging
 import requests
 import json
+import simplejson
 import ast
 import re
 import urllib.parse
@@ -1027,7 +1028,7 @@ class NitroSession():
                     except KeyError:
                         pass
             
-        except json.decoder.JSONDecodeError:
+        except (json.decoder.JSONDecodeError, simplejson.scanner.JSONDecodeError) :
             data = response.text
 
         return data
