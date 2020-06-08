@@ -210,16 +210,6 @@ class T(unittest.TestCase):
 
         [ self.assertFalse(key in an_event) for key in ["Rule.msg","Alert.SrcIP","Alert.DstIP", "Alert.SrcMac","Alert.DstMac","Alert.NormID","Alert.BIN(4)"] ]
         [ self.assertFalse(key in an_event) for key in ["Rule.msg","SrcIP","DstIP", "SrcMac","DstMac","NormID","HostID"] ]
-    
-    def test_unique_keys(self):
-
-        ukeys=msiempy.event.EventManager(fields=["Rule.msg","Alert.SrcIP","Alert.DstIP","Alert.IPSIDAlertID","Alert.LastTime","SrcMac","Alert.SrcMac","Alert.DstMac","Alert.NormID","Alert.BIN(4)","HostID","Alert.BIN(7)","DSID","Alert.EventCount"]).fields
-        print("Got")
-        print(sorted(ukeys))
-        print("EXPECTED")
-        print(sorted(['Alert.NormID', 'DSID', 'DstIP', 'DstMac', 'EventCount', 'HostID', 'IPSIDAlertID', 'LastTime', 'Rule.msg', 'SrcIP', 'SrcMac', 'UserIDSrc']))
-
-        self.assertEqual(sorted(ukeys), sorted(['Alert.NormID', 'DSID', 'DstIP', 'DstMac', 'EventCount', 'HostID', 'IPSIDAlertID', 'LastTime', 'Rule.msg', 'SrcIP', 'SrcMac', 'UserIDSrc']))
 
 
 

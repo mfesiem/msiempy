@@ -1,7 +1,6 @@
 import unittest
 import pprint
 from msiempy.event import Event, EventManager
-from .test_base import download_testing_data
 
 class T(unittest.TestCase):
 
@@ -38,3 +37,14 @@ class T(unittest.TestCase):
         events = EventManager(alist=T.TEST_EVENTS)
         print("get_text(fields=['SrcIP', 'DstIP', 'LastTime'])")
         print(events.get_text(fields=['SrcIP', 'DstIP', 'LastTime']))
+
+        
+    def test_unique_keys(self):
+
+        ukeys=EventManager(fields=["Rule.msg","Alert.SrcIP","Alert.DstIP","Alert.IPSIDAlertID","Alert.LastTime","SrcMac","Alert.SrcMac","Alert.DstMac","Alert.NormID","Alert.BIN(4)","HostID","Alert.BIN(7)","DSID","Alert.EventCount"]).fields
+        print("Got")
+        print(sorted(ukeys))
+        print("EXPECTED")
+        print(sorted(['Alert.NormID', 'DSID', 'DstIP', 'DstMac', 'EventCount', 'HostID', 'IPSIDAlertID', 'LastTime', 'Rule.msg', 'SrcIP', 'SrcMac', 'UserIDSrc']))
+
+        self.assertEqual(sorted(ukeys), sorted(['Alert.NormID', 'DSID', 'DstIP', 'DstMac', 'EventCount', 'HostID', 'IPSIDAlertID', 'LastTime', 'Rule.msg', 'SrcIP', 'SrcMac', 'UserIDSrc']))
