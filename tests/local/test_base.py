@@ -6,27 +6,12 @@ import time
 import json
 import requests
 
-def download_testing_data():
-        """
-        Terrestrial Climate Change Resilience - ACE [ds2738]
-
-        California Department of Natural Resources — For more information, 
-        see the Terrestrial Climate Change Resilience Factsheet 
-        at http://nrm.dfg.ca.gov/FileHandler.ashx?DocumentID=150836.
-        
-        The California Department...
-        """
-        url='http://data-cdfw.opendata.arcgis.com/datasets/7c55dd27cb6b4f739091edfb1c681e70_0.csv'
-
-        with requests.Session() as s:
-            download = s.get(url)
-            content = download.content.decode('utf-8')
-            data = list(csv.DictReader(content.splitlines(), delimiter=','))
-            return data
+def get_testing_data():
+    return json.load(open('./tests/local/test-events.json','r'))
 
 class T(unittest.TestCase):
 
-    manager = msiempy.NitroList(alist=download_testing_data())
+    manager = msiempy.NitroList(alist=get_testing_data())
 
     def test_json(self):
 
@@ -43,7 +28,7 @@ class T(unittest.TestCase):
         pass
 
     def test_manager(self):
-        sublist = msiempy.NitroList(alist=[item for item in T.manager if item['CLIM_RANK']=='1']) #.search('CLIM_RANK.*0','Eco_Name.*north')#.search('County.*GLENN') #len = 52
+        sublist = msiempy.NitroList(alist=[item for item in T.manager if item['Alert.EventCount']=='1']) #.search('CLIM_RANK.*0','Eco_Name.*north')#.search('County.*GLENN') #len = 52
         
         # sublist.perform(self.test_add_money_money, progress=True, asynch=True, workers=500)
         # for item in sublist :
@@ -61,10 +46,11 @@ class T(unittest.TestCase):
         #     self.assertRegex(item['pct_hex'], '502|503|504', "Perform method issue ")
 
     def test_print(self):
-        data=download_testing_data()
+        data=get_testing_data()
         manager = msiempy.NitroList(alist=data[:30])
-        manager[10]['County']=msiempy.NitroList(alist=data[:5])
-        manager[20]['County']=data[:5]
+        # Messing arround with the list
+        manager[10]['Rule.msg']=msiempy.NitroList(alist=data[:5])
+        manager[20]['Rule.msg']=data[:5]
 
         print('CSV')
         print(manager.get_text(format='csv'))
@@ -73,7 +59,7 @@ class T(unittest.TestCase):
         print(manager.text)
 
         print('SPECIFIC FIELDS')
-        print(manager.get_text(fields=['County', 'Eco_Name']))
+        print(manager.get_text(fields=['Rule.msg', 'Alert.LastTime']))
     
 
 

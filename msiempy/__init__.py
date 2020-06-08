@@ -683,7 +683,7 @@ class NitroSession():
         self._headers={'Content-Type': 'application/json'}
         self.user_tz_id = None
 
-    def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False, retry=5):
+    def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False, retry=1):
         """
         Helper method that format the request, handle the basic parsing of the SIEM result as well as other errors.          
         If method is all upper cases, it's going to be formatted as a private API call. See `msiempy.NitroSession.format_params` and `msiempy.NitroSession.format_priv_resp` 
@@ -698,7 +698,7 @@ class NitroSession():
         - `callback` : function to apply afterwards  
         - `raw` : If true will return the Response object from requests module.   
         - `secure` : If true will not log the content of the request.   
-        - `retry` : Numbre of time the request can be retried
+        - `retry` : Number of time the request can be retried
 
         Returns : 
 
@@ -886,7 +886,7 @@ class NitroSession():
         - `callback` : function to apply afterwards  
         - `raw` : If true will return the Response object from requests module.   
         - `secure` : If true will not log the content of the request.   
-        - `retry` : Numbre of time the request can be retried
+        - `retry` : Number of time the request can be retried
         
         Interpolation parameters :  
         
@@ -1146,6 +1146,9 @@ class NitroList(collections.UserList, NitroObject):
     If a derived class does not wish to comply with this requirement, all of the special methods supported by this class will need to be overridden; please consult the sources for information about the methods which need to be provided in that case.
     See: https://docs.python.org/3.8/library/collections.html?highlight=userdict#userlist-objects  
 
+    Concrete classes have to cast the items afterwards!
+    #TODO better polymorphism to cast every sub-NitroList class's item dynamcally !
+
     Arguments:  
 
     - `alist`: list object to wrap.
@@ -1153,24 +1156,13 @@ class NitroList(collections.UserList, NitroObject):
 
     def __init__(self, alist=None):
         NitroObject.__init__(self)
-        if alist :
-            collections.UserList.__init__(
-                self, alist 
-                #[NitroDict(adict=item) for item in alist if isinstance(item, (dict, NitroDict))] 
-                #Can't instanciate NitroDict, so Concrete classes have to cast the items afterwards!
-                #TODO better polymorphism to cast every sub-NitroList class's item dynamcally !
-                )
+        if alist : collections.UserList.__init__(self, alist)
         else : collections.UserList.__init__(self, [])
 
     def __str__(self):
         """str(obj) -> return text string.
         """
-        return "{} containing {} elements ; keys={}".format(str(super()), len(list(self)), self.keys)
-
-    def __repr__(self):
-        """repr(obj) -> return json string.
-        """
-        return self.json
+        return "{} containing {} elements ; keys={}".format(str(super()), len(list(self)), self.keys())
 
     # def _norm_dicts(self):
     #     """
@@ -1184,19 +1176,12 @@ class NitroList(collections.UserList, NitroObject):
     #                 if key not in item :
     #                     item[key]=None
 
-    @property
     def keys(self):
-        """Set of keys for all dict
-        """
+        """Set of keys for all dict"""
         #If new fields are added it won't show on text repr. Only json.
-        
         manager_keys=set()
-        for item in list(self):
-            if isinstance(item, (dict,NitroDict)):
-                manager_keys.update(item.keys())
-
+        for item in list(self): manager_keys.update(getattr(item, 'keys', set)())
         return manager_keys
-
 
     def get_text(self, format='prettytable', fields=None, 
                         max_column_width=80, get_text_nest_attr={} ):
@@ -1216,10 +1201,9 @@ class NitroList(collections.UserList, NitroObject):
         text=str()
         
         if not fields :
-            fields=sorted(self.keys)
+            fields=sorted(self.keys())
 
         try:
-            
             if format == 'csv':
                 file = StringIO()
                 dw = csv.DictWriter(file, fields, extrasaction='ignore')
