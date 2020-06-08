@@ -703,8 +703,6 @@ class NitroSession():
         Returns : 
 
         - a `dict`, `list` or `str` object. 
-        - Empty `list` if ran into one of 'ERROR_IndexNotTurnedOn', 
-        'ERROR_NoData','ERROR_UnknownList','ERROR_JobEngine_GetQueryStatus_StatusNotFound' SIEM errors.  
         - the `resquest.Response` object if raw=True  
         - `None` if Timeout or TooManyRedirects if raw=False  
 
@@ -763,8 +761,8 @@ class NitroSession():
                     error=None
 
                     if retry>0 :
-                        # Invalif session handler -> re-login
-                        if any([match in result.text for match in ['ERROR_InvalidSession', 
+                        # Invalid session handler -> re-login
+                        if any([match in result.text for match in ['ERROR_InvalidSession', 'ERROR_INVALID_SESSION',
                             'Not Authorized User', 'Invalid Session', 'Username and password cannot be null']]):
                             error = NitroError('Authentication error with method ({}) and data : {} logging in and retrying. From requests.HTTPError {} {}'.format(
                                 method, data, e, result.text))
