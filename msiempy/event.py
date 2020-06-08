@@ -59,7 +59,14 @@ class EventManager(FilteredQueryList):
         self._filters=list()
         
         #Setting the default fields Adds the specified fields, make sure there is no duplicates and delete TABLE identifiers
-        if fields and len(fields)>0: self.fields=Event._get_unique_keys(Event.DEFAULTS_EVENT_FIELDS+list(fields))
+        if fields and len(fields)>0: 
+            all_keys=Event.DEFAULTS_EVENT_FIELDS+list(fields)
+            uniquekeys=set()
+            for k in all_keys:
+                if k in Event.SIEM_FIELDS_MAP_INTERNAL_NAME_TO_NICKNAME:
+                    uniquekeys.add(Event.SIEM_FIELDS_MAP_INTERNAL_NAME_TO_NICKNAME[k])
+                else: uniquekeys.add(k)
+            self.fields=list(uniquekeys)
         else: self.fields=Event.DEFAULTS_EVENT_FIELDS
         #log.debug('{}\nFIELDS : {}'.format(locals(), self.fields))
 
@@ -460,14 +467,7 @@ class Event(NitroDict):
         `Alert.IPSIDAlertID` 
     """
     
-    SIEM_FIELDS_MAP = {'ASNGeoDst': 'Alert.ASNGeoDst',
-    'ASNGeoSrc': 'Alert.ASNGeoSrc',
-    'Access_Mask': 'Alert.65622',
-    'Access_Privileges': 'Alert.4259883',
-    'Access_Resource': 'Alert.65555',
-    'Action': 'Alert.Action',
-    'Action.Name': 'Action.Name',
-    'Agent_GUID': 'Alert.262162',
+    SIEM_FIELDS_MAP_INTERNAL_NAME_TO_NICKNAME = {
     'Alert.105250817': 'DNS - Response_Code_Name',
     'Alert.122028033': 'DNS - Query',
     'Alert.196609': 'Queue_ID',
@@ -744,7 +744,17 @@ class Event(NitroDict):
     'Alert.VLan': 'VLan',
     'Alert.WriteTime': 'WriteTime',
     'Alert.ZoneDst': 'ZoneDst',
-    'Alert.ZoneSrc': 'ZoneSrc',
+    'Alert.ZoneSrc': 'ZoneSrc'}
+
+    # NICKNAME TO INTERNAL NAMES
+    SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME={'ASNGeoDst': 'Alert.ASNGeoDst',
+    'ASNGeoSrc': 'Alert.ASNGeoSrc',
+    'Access_Mask': 'Alert.65622',
+    'Access_Privileges': 'Alert.4259883',
+    'Access_Resource': 'Alert.65555',
+    'Action': 'Alert.Action',
+    'Action.Name': 'Action.Name',
+    'Agent_GUID': 'Alert.262162',
     'AlertID': 'Alert.AlertID',
     'Analyzer_DAT_Version': 'Alert.262170',
     'AppID': 'Alert.BIN(1)',
@@ -844,16 +854,16 @@ class Event(NitroDict):
     'From_Address': 'Alert.4259875',
     'GUIDDst': 'Alert.GUIDDst',
     'GUIDSrc': 'Alert.GUIDSrc',
-    'GeoLoc_ASNGeoDst.Latitude': 'GeoLoc_ASNGeoDst.Latitude',
-    'GeoLoc_ASNGeoDst.Longitude': 'GeoLoc_ASNGeoDst.Longitude',
-    'GeoLoc_ASNGeoDst.Msg': 'GeoLoc_ASNGeoDst.Msg',
-    'GeoLoc_ASNGeoDst.XCoord': 'GeoLoc_ASNGeoDst.XCoord',
-    'GeoLoc_ASNGeoDst.YCoord': 'GeoLoc_ASNGeoDst.YCoord',
-    'GeoLoc_ASNGeoSrc.Latitude': 'GeoLoc_ASNGeoSrc.Latitude',
-    'GeoLoc_ASNGeoSrc.Longitude': 'GeoLoc_ASNGeoSrc.Longitude',
-    'GeoLoc_ASNGeoSrc.Msg': 'GeoLoc_ASNGeoSrc.Msg',
-    'GeoLoc_ASNGeoSrc.XCoord': 'GeoLoc_ASNGeoSrc.XCoord',
-    'GeoLoc_ASNGeoSrc.YCoord': 'GeoLoc_ASNGeoSrc.YCoord',
+    'GeoLoc_ASNGeoDst.Latitude': 'GeoLoc_ASNGeoDst.Latitude', # This is useless
+    'GeoLoc_ASNGeoDst.Longitude': 'GeoLoc_ASNGeoDst.Longitude', # This is useless
+    'GeoLoc_ASNGeoDst.Msg': 'GeoLoc_ASNGeoDst.Msg', # This is useless
+    'GeoLoc_ASNGeoDst.XCoord': 'GeoLoc_ASNGeoDst.XCoord', # This is useless
+    'GeoLoc_ASNGeoDst.YCoord': 'GeoLoc_ASNGeoDst.YCoord', # This is useless
+    'GeoLoc_ASNGeoSrc.Latitude': 'GeoLoc_ASNGeoSrc.Latitude',  # This is useless
+    'GeoLoc_ASNGeoSrc.Longitude': 'GeoLoc_ASNGeoSrc.Longitude',  # This is useless
+    'GeoLoc_ASNGeoSrc.Msg': 'GeoLoc_ASNGeoSrc.Msg',  # This is useless
+    'GeoLoc_ASNGeoSrc.XCoord': 'GeoLoc_ASNGeoSrc.XCoord',  # This is useless
+    'GeoLoc_ASNGeoSrc.YCoord': 'GeoLoc_ASNGeoSrc.YCoord',  # This is useless
     'Grid_Master_IP': 'Alert.262153',
     'Group_Name': 'Alert.65614',
     'Handheld_ID': 'Alert.262168',
@@ -995,7 +1005,7 @@ class Event(NitroDict):
     'Target_Class': 'Alert.65543',
     'Target_Context': 'Alert.4259872',
     'Target_Process_Name': 'Alert.4259878',
-    'ThirdPartyType.Name': 'ThirdPartyType.Name',
+    'ThirdPartyType.Name': 'ThirdPartyType.Name', # This is useless
     'Threat_Category': 'Alert.65595',
     'Threat_Handled': 'Alert.65596',
     'Threat_Name': 'Alert.65538',
@@ -1021,7 +1031,7 @@ class Event(NitroDict):
     'UserIDSrcCat': 'Alert.UserIDSrcCat',
     'User_Agent': 'Alert.4259849',
     'User_Nickname': 'Alert.BIN(14)',
-    'Users.Name': 'Users.Name',
+    'Users.Name': 'Users.Name',  # This is useless
     'VLan': 'Alert.VLan',
     'VPN_Feature_Name': 'Alert.65623',
     'Version': 'Alert.4259859',
@@ -1034,8 +1044,8 @@ class Event(NitroDict):
     'WriteTime': 'Alert.WriteTime',
     'ZoneDst': 'Alert.ZoneDst',
     'ZoneSrc': 'Alert.ZoneSrc',
-    'Zone_ZoneDst.Name': 'Zone_ZoneDst.Name',
-    'Zone_ZoneSrc.Name': 'Zone_ZoneSrc.Name'}
+    'Zone_ZoneDst.Name': 'Zone_ZoneDst.Name',  # This is useless
+    'Zone_ZoneSrc.Name': 'Zone_ZoneSrc.Name'}  # This is useless
     """
     Best effort to match SIEM returned fields with initial.
     __getitem__, __contains__, __setitem__ and __delitem__ method have been rewrote in order to offer more comprehensive dict usage.
@@ -1044,12 +1054,15 @@ class Event(NitroDict):
     def _find_key(self, key):
         if collections.UserDict.__contains__(self, key): 
             return key
-        if key in self.SIEM_FIELDS_MAP.keys():
-            if collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP[key]): 
-                return self.SIEM_FIELDS_MAP[key]
+        if key in self.SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME.keys() and collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME[key]): 
+            return self.SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME[key]
+
+        # Loop thought FIELDS_TABLES and try with table prefix
+        # Old behaviour
         for table in self.FIELDS_TABLES :
             if collections.UserDict.__contains__(self, table+'.'+key): 
                 return table+'.'+key
+
         raise KeyError('Dictionnary key not found : {}'.format(key))
 
     def __getitem__(self, key):
@@ -1063,18 +1076,6 @@ class Event(NitroDict):
         try: return collections.UserDict.__setitem__(self, self._find_key(key), value)
         except KeyError: return collections.UserDict.__setitem__(self, key, value)
     
-    @staticmethod
-    def _get_unique_keys(list_of_keys):
-        test_event=Event(dict(**[{key:None} for key in list_of_keys]))
-        unique_keys=set()
-        for key in list_of_keys:
-            if test_event._find_key(key) in list_of_keys :
-                if '.' not in key and test_event._find_key(key) not in unique_keys:
-                    unique_keys.update(key)
-                elif test_event._find_key(test_event._find_key(key)) not in unique_keys: 
-                    unique_keys.update(test_event._find_key(key))
-            else: unique_keys.update(key)
-        return unique_keys
 
 
     def clear_notes(self):
