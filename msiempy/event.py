@@ -1047,9 +1047,9 @@ class Event(NitroDict):
         if key in self.SIEM_FIELDS_MAP.keys():
             if collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP[key]): 
                 return self.SIEM_FIELDS_MAP[key]
-        # for table in self.FIELDS_TABLES :
-        #     if collections.UserDict.__contains__(self, table+'.'+key): 
-        #         return table+'.'+key
+        for table in self.FIELDS_TABLES :
+            if collections.UserDict.__contains__(self, table+'.'+key): 
+                return table+'.'+key
         raise KeyError('Dictionnary key not found : {}'.format(key))
 
     def __getitem__(self, key):
