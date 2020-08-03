@@ -207,6 +207,7 @@ class EventManager(FilteredQueryList):
             #     or isinstance(error, TimeoutError)) ):
             if retry > 0:
                 log.warning('Retring qry_load_data() after error: '+str(error))
+                time.sleep(0.2)
                 return self.qry_load_data(retry=retry-1)
             else: raise
 

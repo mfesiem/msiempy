@@ -764,13 +764,13 @@ class NitroSession():
                         # Invalid session handler -> re-login
                         if any([match in result.text for match in ['ERROR_InvalidSession', 'ERROR_INVALID_SESSION',
                             'Not Authorized User', 'Invalid Session', 'Username and password cannot be null']]):
-                            error = NitroError('Authentication error with method ({}) and data : {} logging in and retrying. From requests.HTTPError {} {}'.format(
+                            error = NitroError('Authentication error with method ({}) and data : {} logging in and retrying esm_request(). From requests.HTTPError {} {}'.format(
                                 method, data, e, result.text))
                             log.warning(error)
                             self.logged_in=False
                             self.login()
                         
-                        else: log.warning('An HTTP error occured ({} {}), retrying request'.format(e, result.text))
+                        else: log.warning('An HTTP error occured ({} {}), retrying esm_request()'.format(e, result.text))
                         
                         # Retry request
                         time.sleep(0.2)
