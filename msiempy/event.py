@@ -158,9 +158,8 @@ class EventManager(FilteredQueryList):
 
         Returns : `tuple` : (( `msiempy.event.EventManager`, Status of the query (completed?) `True/False` ))
 
-        Raises `msiempy.NitroError` if any errors  
-        Raises `TimeoutError` if wait_timeout_sec counter gets to 0  
-        First retry `esm_request()` before raising the error
+        Raises `msiempy.NitroError` if any unhandled errors  
+        Raises `TimeoutError` if wait_timeout_sec counter gets to 0
         """
         try:
             query_infos=dict()
@@ -200,19 +199,16 @@ class EventManager(FilteredQueryList):
             events_raw=self._get_events(query_infos['resultID'])
 
         except (NitroError, TimeoutError) as error :
-            # Retrying once automatically on any HTTP errors or Tiemout
-            # if (retry >0 and ( any(match in str(error) for match in [
-            #         'ResultUnavailable',
-            #         'ERROR_JEC_ResponseNotAvailable',
-            #         'UnknownList',
-            #         'JobEngine_GetQueryResults_QueryNotFound_Unrecoverable']) 
-            #     or isinstance(error, TimeoutError)) ):
-            if retry > 0:
-                log.warning('Retring qry_load_data() after: '+str(error))
-                time.sleep(0.2)
+            if (retry >0 and ( any(match in str(error) for match in [
+                    'ResultUnavailable',
+                    'ERROR_JEC_ResponseNotAvailable',
+                    'UnknownList',
+                    'JobEngine_GetQueryResults_QueryNotFound_Unrecoverable']) 
+                or isinstance(error, TimeoutError)) ):
+                
+                log.warning('Retring after: '+str(error))
                 return self.qry_load_data(retry=retry-1)
-            else: 
-                raise
+            else: raise
 
         events=EventManager(alist=events_raw)
         self.data=events
