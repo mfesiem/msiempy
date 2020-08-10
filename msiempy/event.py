@@ -1130,8 +1130,12 @@ class Event(NitroDict):
                 filters=[('IPSIDAlertID',id)],
                 fields=extra_fields,
                 limit=2)
-                
-            e.load_data()
+            try:
+                e.load_data()
+            except NitroError:
+                log.error("Query failed, can't load event's data from id with 1 year timerange, looking at the last 15 days only...")
+                e.start_time=datetime.now()-timedelta(days=15)
+                e.load_data()
 
             if len(e) == 1 :
                 return e[0]
