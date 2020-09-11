@@ -1143,7 +1143,8 @@ class NitroDict(collections.UserDict, NitroObject):
 class NitroList(collections.UserList, NitroObject):
     """
     Base class for NitroList objects. It offers callable execution management, search and other data list actions.  
-    TODO better polymorphism to cast every sub-NitroList class's item dynamcally in `__init__` method.  
+    
+    Concrete classes have to cast the items after !   
 
     This classe and subclasses fully implements `list` interface and is suitable for list operations, see: https://docs.python.org/3/library/stdtypes.html#sequence-types-list-tuple-range
     
@@ -1151,14 +1152,12 @@ class NitroList(collections.UserList, NitroObject):
     If a derived class does not wish to comply with this requirement, all of the special methods supported by this class will need to be overridden; please consult the sources for information about the methods which need to be provided in that case.
     See: https://docs.python.org/3.8/library/collections.html?highlight=userdict#userlist-objects  
 
-    Concrete classes have to cast the items afterwards!
-    #TODO better polymorphism to cast every sub-NitroList class's item dynamcally !
-
     Arguments:  
 
     - `alist`: list object to wrap.
     """
 
+    # TODO better polymorphism to cast every sub-NitroList class's item dynamcally in `__init__` method.  
     def __init__(self, alist=None):
         NitroObject.__init__(self)
         if alist : collections.UserList.__init__(self, alist)
@@ -1168,18 +1167,6 @@ class NitroList(collections.UserList, NitroObject):
         """str(obj) -> return text string.
         """
         return "{} containing {} elements ; keys={}".format(str(super()), len(list(self)), self.keys())
-
-    # def _norm_dicts(self):
-    #     """
-    #     Internal method.
-    #     All dict should have the same set of keys.
-    #     Creating keys in dicts.
-    #     """
-    #     for item in list(self) :
-    #         if isinstance(item, (dict, NitroDict)):
-    #             for key in self.keys :
-    #                 if key not in item :
-    #                     item[key]=None
 
     def keys(self):
         """Set of keys for all dict"""
@@ -1208,46 +1195,40 @@ class NitroList(collections.UserList, NitroObject):
         if not fields :
             fields=sorted(self.keys())
 
-        try:
-            if format == 'csv':
-                file = StringIO()
-                dw = csv.DictWriter(file, fields, extrasaction='ignore')
-                dw.writeheader()
-                dw.writerows(list(self))
-                text = file.getvalue()
+        if format == 'csv':
+            file = StringIO()
+            dw = csv.DictWriter(file, fields, extrasaction='ignore')
+            dw.writeheader()
+            dw.writerows(list(self))
+            text = file.getvalue()
 
-            elif format == 'prettytable':
-                table = prettytable.PrettyTable()
-                table.set_style(MSWORD_FRIENDLY)
+        elif format == 'prettytable':
+            table = prettytable.PrettyTable()
+            table.set_style(MSWORD_FRIENDLY)
 
-                #table_csv = [item for item in csv.DictReader(StringIO(initial_value=text), delimiter=',')]
+            table.field_names=fields
 
-                table.field_names=fields
+            for item in list(self):
+                if isinstance(item, (dict, NitroDict)):
+                    values=list()
+                    for field in fields:
+                        obj=None
+                        try:obj=item[field]
+                        except KeyError : pass
 
-                for item in list(self):
-                    if isinstance(item, (dict, NitroDict)):
-                        values=list()
-                        for field in fields:
-                            obj=None
-                            try:obj=item[field]
-                            except KeyError : pass
+                        if isinstance(obj, NitroList):
+                            values.append(obj.get_text(**get_text_nest_attr))
+                        else:
+                            values.append('\n'.join(textwrap.wrap(str(obj), width=max_column_width)))
 
-                            if isinstance(obj, NitroList):
-                                values.append(obj.get_text(**get_text_nest_attr))
-                            else:
-                                values.append('\n'.join(textwrap.wrap(str(obj), width=max_column_width)))
+                    table.add_row(values)
+                    
+                else : log.warning("Unnapropriate list element type, won't show on the prettytable : {}".format(str(item)))
 
-                        table.add_row(values)
-                        
-                    else : log.warning("Unnapropriate list element type, won't show on the prettytable : {}".format(str(item)))
-
-                text=table.get_string()
-            
-            else :
-                raise AttributeError("Unknown `NitroList.get_text` format : {}. Accepted values are 'prettytable' or 'csv'.".format(format))
+            text=table.get_string()
         
-        except KeyError :
-            raise
+        else :
+            raise AttributeError("Unknown `NitroList.get_text` format : {}. Accepted values are 'prettytable' or 'csv'.".format(format))
 
         return text
 
