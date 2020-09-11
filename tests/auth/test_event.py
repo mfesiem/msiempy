@@ -26,8 +26,7 @@ class T(unittest.TestCase):
         
         if msiempy.NitroSession().api_v == 2 :
             print('CREATING EVENT MANUALLY FROM ID')
-            #event_from_direct_id_query = Event()
-            data=Event().data_from_id(id=id, use_query=True)
+            data=Event().data_from_id(id=event['IPSIDAlertID'], use_query=True)
             event_from_direct_id_query=Event(data)
             print('EVENT RETREIVED : {}'.format(event_from_direct_id_query))
             print('ORIGINAL EVENT : {}' .format(event))
@@ -127,8 +126,6 @@ class T(unittest.TestCase):
         for event in e :
             self.assertIn( '22.', event['SrcIP'] )
             self.assertEqual(event['AppID'], 'CRON')
-
-        # f = FieldFilter(name='Rule.msg', values=["unknown event"], operator='EQUALS')
 
     def test_ordered_query(self):
         events_no_split = EventManager(
