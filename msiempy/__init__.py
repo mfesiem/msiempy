@@ -2,7 +2,10 @@
 """
 .. image:: https://avatars0.githubusercontent.com/u/50667087?s=200&v=4  
 Welcome to the **msiempy** module documentation. The pythonic way to deal with McAfee SIEM API.  
-Classes listed here are mostly abstract basis of sub-modules that offers concrete objects and functions.  
+Classes listed here are mostly handling low level interactions with the SIEM API. It provides a simple interface to other sub-modules that offers concrete objects and functions.  
+
+***
+
 GitHub : https://github.com/mfesiem/msiempy  
 PyPI : https://pypi.org/project/msiempy/  
 Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png  
@@ -636,7 +639,7 @@ class NitroSession():
     def __str__(self):
         return repr(self.__unique_state__) 
 
-    def login(self):
+    def login(self, retry=1):
         """Authentication is done lazily upon the first call to `msiempy.NitroSession.request` method, but you can still do it manually by calling this method.  
         Throws `msiempy.NitroError` if login fails
         """
@@ -646,10 +649,14 @@ class NitroSession():
         resp = self.request('login', username=userb64, password=passb64, raw=True, secure=True)
         
         if resp != None :
-            if resp.status_code in [400, 401]:
-                raise NitroError('Invalid username or password for the ESM')
-            elif 402 <= resp.status_code <= 600:
-                raise NitroError('ESM Login Error:', resp.text)
+            try:
+                resp.raise_for_status()
+            except requests.HTTPError as e :
+                if retry>0:
+                    time.sleep(0.2)
+                    return self.login(retry=retry-1)
+                else:
+                    raise NitroError('ESM Login Error: ', resp.text) from e
        
             self._headers['Cookie'] = resp.headers.get('Set-Cookie')
             self._headers['X-Xsrf-Token'] = resp.headers.get('Xsrf-Token')
@@ -658,17 +665,20 @@ class NitroSession():
             self.logged_in = True
             self.login_info=self.unpack_resp(resp)
 
+            # Shorthanding the API version check 
+            # 1 for pre 11.2.1, 2 for 11.2.1 and later
+            # Not be confused with the ESM API v1 and v2 which are different.
             if str(self.version).startswith(('9', '10', '11.0', '11.1')):
                 self.api_v = 1
             else:
                 self.api_v = 2
 
-            log.info('Login into ESM {} with username {}. Last login {}'.format(
+            log.info('Logged into ESM {} with username {}. Last login {}'.format(
                 str(self.config.host),
                 self.login_info['userName'],
                 self.login_info['lastLoginDate']))
 
-            return
+            return True
         else:
             raise NitroError('ESM Login Error: Response empty')
 
@@ -696,7 +706,7 @@ class NitroSession():
         - `http`: HTTP method.  
         - `data` : dict data to send  
         - `callback` : function to apply afterwards  
-        - `raw` : If true will return the Response object from requests module.   
+        - `raw` : If true will return the Response object from requests module. No retry when raw=True.     
         - `secure` : If true will not log the content of the request.   
         - `retry` : Number of time the request can be retried
 
@@ -764,13 +774,13 @@ class NitroSession():
                         # Invalid session handler -> re-login
                         if any([match in result.text for match in ['ERROR_InvalidSession', 'ERROR_INVALID_SESSION',
                             'Not Authorized User', 'Invalid Session', 'Username and password cannot be null']]):
-                            error = NitroError('Authentication error with method ({}) and data : {} logging in and retrying. From requests.HTTPError {} {}'.format(
+                            error = NitroError('Authentication error with method ({}) and data : {} logging in and retrying esm_request(). From requests.HTTPError {} {}'.format(
                                 method, data, e, result.text))
                             log.warning(error)
                             self.logged_in=False
                             self.login()
                         
-                        else: log.warning('An HTTP error occured ({} {}), retrying request'.format(e, result.text))
+                        else: log.warning('An HTTP error occured ({} {}), retrying esm_request()'.format(e, result.text))
                         
                         # Retry request
                         time.sleep(0.2)
@@ -795,7 +805,7 @@ class NitroSession():
                         error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
                             method, data, e, result.text))
                         log.error(error)
-                        raise error
+                        raise error from e
 
                 else: # The result is not an HTTP Error
                     response = result
@@ -823,8 +833,8 @@ class NitroSession():
             log.error(e)
             raise
         
-    def _request_http_error_handler(self, error, method, data, http, callback, raw, secure, retry):
-        pass
+    # def _request_http_error_handler(self, error, method, data, http, callback, raw, secure, retry):
+    #     pass
 
     def version(self):
         """
@@ -914,11 +924,8 @@ class NitroSession():
                     log.warning("Interpolation failed probably because of the private API calls formatting... Unexpected behaviours can happend.")
 
         if not self.logged_in and method != 'login':
+            # Autologin
             self.login()
-            # self.version = self.version()
-            # Shorthanding the version check 
-            # 1 for pre 11.2.1, 2 for 11.2.1 and later
-            # Not be confused with the ESM API v1 and v2 which are different.
             
     
         try :
@@ -1136,7 +1143,8 @@ class NitroDict(collections.UserDict, NitroObject):
 class NitroList(collections.UserList, NitroObject):
     """
     Base class for NitroList objects. It offers callable execution management, search and other data list actions.  
-    TODO better polymorphism to cast every sub-NitroList class's item dynamcally in `__init__` method.  
+    
+    Concrete classes have to cast the items after !   
 
     This classe and subclasses fully implements `list` interface and is suitable for list operations, see: https://docs.python.org/3/library/stdtypes.html#sequence-types-list-tuple-range
     
@@ -1144,14 +1152,12 @@ class NitroList(collections.UserList, NitroObject):
     If a derived class does not wish to comply with this requirement, all of the special methods supported by this class will need to be overridden; please consult the sources for information about the methods which need to be provided in that case.
     See: https://docs.python.org/3.8/library/collections.html?highlight=userdict#userlist-objects  
 
-    Concrete classes have to cast the items afterwards!
-    #TODO better polymorphism to cast every sub-NitroList class's item dynamcally !
-
     Arguments:  
 
     - `alist`: list object to wrap.
     """
 
+    # TODO better polymorphism to cast every sub-NitroList class's item dynamcally in `__init__` method.  
     def __init__(self, alist=None):
         NitroObject.__init__(self)
         if alist : collections.UserList.__init__(self, alist)
@@ -1161,18 +1167,6 @@ class NitroList(collections.UserList, NitroObject):
         """str(obj) -> return text string.
         """
         return "{} containing {} elements ; keys={}".format(str(super()), len(list(self)), self.keys())
-
-    # def _norm_dicts(self):
-    #     """
-    #     Internal method.
-    #     All dict should have the same set of keys.
-    #     Creating keys in dicts.
-    #     """
-    #     for item in list(self) :
-    #         if isinstance(item, (dict, NitroDict)):
-    #             for key in self.keys :
-    #                 if key not in item :
-    #                     item[key]=None
 
     def keys(self):
         """Set of keys for all dict"""
@@ -1201,46 +1195,40 @@ class NitroList(collections.UserList, NitroObject):
         if not fields :
             fields=sorted(self.keys())
 
-        try:
-            if format == 'csv':
-                file = StringIO()
-                dw = csv.DictWriter(file, fields, extrasaction='ignore')
-                dw.writeheader()
-                dw.writerows(list(self))
-                text = file.getvalue()
+        if format == 'csv':
+            file = StringIO()
+            dw = csv.DictWriter(file, fields, extrasaction='ignore')
+            dw.writeheader()
+            dw.writerows(list(self))
+            text = file.getvalue()
 
-            elif format == 'prettytable':
-                table = prettytable.PrettyTable()
-                table.set_style(MSWORD_FRIENDLY)
+        elif format == 'prettytable':
+            table = prettytable.PrettyTable()
+            table.set_style(MSWORD_FRIENDLY)
 
-                #table_csv = [item for item in csv.DictReader(StringIO(initial_value=text), delimiter=',')]
+            table.field_names=fields
 
-                table.field_names=fields
+            for item in list(self):
+                if isinstance(item, (dict, NitroDict)):
+                    values=list()
+                    for field in fields:
+                        obj=None
+                        try:obj=item[field]
+                        except KeyError : pass
 
-                for item in list(self):
-                    if isinstance(item, (dict, NitroDict)):
-                        values=list()
-                        for field in fields:
-                            obj=None
-                            try:obj=item[field]
-                            except KeyError : pass
+                        if isinstance(obj, NitroList):
+                            values.append(obj.get_text(**get_text_nest_attr))
+                        else:
+                            values.append('\n'.join(textwrap.wrap(str(obj), width=max_column_width)))
 
-                            if isinstance(obj, NitroList):
-                                values.append(obj.get_text(**get_text_nest_attr))
-                            else:
-                                values.append('\n'.join(textwrap.wrap(str(obj), width=max_column_width)))
+                    table.add_row(values)
+                    
+                else : log.warning("Unnapropriate list element type, won't show on the prettytable : {}".format(str(item)))
 
-                        table.add_row(values)
-                        
-                    else : log.warning("Unnapropriate list element type, won't show on the prettytable : {}".format(str(item)))
-
-                text=table.get_string()
-            
-            else :
-                raise AttributeError("Unknown `NitroList.get_text` format : {}. Accepted values are 'prettytable' or 'csv'.".format(format))
+            text=table.get_string()
         
-        except KeyError :
-            raise
+        else :
+            raise AttributeError("Unknown `NitroList.get_text` format : {}. Accepted values are 'prettytable' or 'csv'.".format(format))
 
         return text
 
@@ -1540,7 +1528,7 @@ class FilteredQueryList(NitroList):
         elif isinstance(start_time, datetime.datetime):
             self._start_time = start_time
         elif start_time==None:
-             self._start_time=None#raise ValueError("Time must be string or datetime object, not None")#self.start_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+             self._start_time=None #raise ValueError("Time must be string or datetime object, not None")#self.start_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             raise ValueError("Time must be string or datetime object.")
 
@@ -1561,7 +1549,7 @@ class FilteredQueryList(NitroList):
         elif isinstance(end_time, datetime.datetime):
             self._end_time = end_time
         elif end_time==None:
-             self._end_time=None#raise ValueError("Time must be string or datetime object, not None")
+             self._end_time=None #raise ValueError("Time must be string or datetime object, not None")
         else:
             raise ValueError("Time must be string or datetime object.")
 
@@ -1570,10 +1558,10 @@ class FilteredQueryList(NitroList):
         """ 
         Filter property : Returns a list of filters.
         Can be set with list of tuple(field, [values]), a `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted.  
-        `None` value will call `msiempy.query.FilteredQueryList.clear_filters()`.  
+        `None` value will trigger `msiempy.FilteredQueryList.clear_filters()`.  
         Raises : `AttributeError` if type not supported.
         Abstract declaration.
-        TODO find a better solution to integrate the filter propertie
+        TODO find a better solution to integrate the filter property
         """
         pass
 

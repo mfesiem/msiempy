@@ -34,7 +34,8 @@ while getopts ":hp:" arg; do
 
         p)
             # Install requirements
-            pip3 install -r requirements.txt
+            python3 -m pip install -r requirements.txt
+            python3 setup.py install
             
             # Figuring version
             version=`grep __version__ ./msiempy/__version__.py | cut -d "'" -f 2`

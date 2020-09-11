@@ -1,5 +1,5 @@
-import msiempy.event
-from msiempy.__utils__ import format_esm_time, parse_timedelta, timerange_gettimes
+from msiempy.event import EventManager, Event, FieldFilter, GroupFilter
+import msiempy
 import unittest
 from datetime import datetime, timedelta
 
@@ -9,7 +9,7 @@ QUERY_TIMERANGE=300
 class T(unittest.TestCase):
 
     def test_event(self):
-        events = msiempy.event.EventManager(
+        events = EventManager(
                     time_range='CUSTOM',
                     start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
                     end_time=datetime.now()+timedelta(days=1),
@@ -18,29 +18,27 @@ class T(unittest.TestCase):
         events.load_data()
         event=events[0]
 
-        id = event['IPSIDAlertID']
-
-        event_from_ips_get_alert_data=msiempy.event.Event(id=id)
+        event_from_ips_get_alert_data=Event(id=event['IPSIDAlertID'])
+        
         self.assertEqual(event['IPSIDAlertID'], '|'.join(
             [str(event_from_ips_get_alert_data['ipsId']['id']),
             str(event_from_ips_get_alert_data['alertId'])]))
         
         if msiempy.NitroSession().api_v == 2 :
             print('CREATING EVENT MANUALLY FROM ID')
-            #event_from_direct_id_query = msiempy.event.Event()
-            data=msiempy.event.Event().data_from_id(id=id, use_query=True)
-            event_from_direct_id_query=msiempy.event.Event(data)
+            data=Event().data_from_id(id=event['IPSIDAlertID'], use_query=True)
+            event_from_direct_id_query=Event(data)
             print('EVENT RETREIVED : {}'.format(event_from_direct_id_query))
             print('ORIGINAL EVENT : {}' .format(event))
             self.assertEqual(event_from_direct_id_query, data)
 
     def test_query(self):
 
-        events = msiempy.event.EventManager(
+        events = EventManager(
                     time_range='CUSTOM',
                     start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
                     end_time=datetime.now()+timedelta(days=1),
-                    fields=msiempy.event.Event.REGULAR_EVENT_FIELDS,
+                    fields=Event.REGULAR_EVENT_FIELDS,
                     limit=10
                 )
         events.load_data()
@@ -55,7 +53,7 @@ class T(unittest.TestCase):
         print('EVENT JSON\n'+events.json)        
 
     def test_query_splitted(self):
-        events_no_split = msiempy.event.EventManager(
+        events_no_split = EventManager(
             time_range='CUSTOM',
             start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
             end_time=datetime.now()+timedelta(days=1),
@@ -66,7 +64,7 @@ class T(unittest.TestCase):
         print('events_no_split'.upper())
         print(events_no_split.text)
 
-        events = msiempy.event.EventManager(
+        events = EventManager(
             time_range='CUSTOM',
             start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
             end_time=datetime.now()+timedelta(days=1),
@@ -84,7 +82,7 @@ class T(unittest.TestCase):
         self.assertEqual(l1, l2, 'Firts part of the splitted query doesn\'t correspond to the genuine query. This can happen when some event are generated at the exact same moment the query is submitted, retry the test ?')
 
     def test_query_splitted_with_timedelta(self):
-        events_no_split = msiempy.event.EventManager(
+        events_no_split = EventManager(
             time_range='CUSTOM',
             start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
             end_time=datetime.now()+timedelta(days=1),
@@ -95,7 +93,7 @@ class T(unittest.TestCase):
         print('events_no_split'.upper())
         print(events_no_split.text)
 
-        events = msiempy.event.EventManager(
+        events = EventManager(
             time_range='CUSTOM',
             start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
             end_time=datetime.now()+timedelta(days=1),
@@ -112,18 +110,25 @@ class T(unittest.TestCase):
 
         self.assertEqual(l1, l2, 'Firts part of the splitted query doesn\'t correspond to the genuine query. This can happen when some event are generated at the exact same moment the query is submitted, retry the test ?')
 
-
     def test_filtered_query(self):
-        qry_filters = [msiempy.event.GroupFilter(
-            [msiempy.event.FieldFilter(name='DstIP', values=['0.0.0.0/0']),
-            msiempy.event.FieldFilter(name='SrcIP', values=['0.0.0.0/0'])],
-            logic='AND'
-            )]
-        
-        #todo
+
+        qry_filters = [FieldFilter(name='SrcIP', values=['22.0.0.0/8'])] 
+        e = EventManager(fields=['SrcIP'], filters=qry_filters).load_data()
+        for event in e :
+            self.assertIn( '22.', event['SrcIP'] )
+
+        qry_filters = [ GroupFilter( 
+            [   FieldFilter(name='SrcIP', values=['22.0.0.0/8']),
+                FieldFilter('AppID', 'CRON', operator='EQUALS')] , 
+            logic='AND') ]
+
+        e = EventManager(fields=['SrcIP', 'AppID'], filters=qry_filters).load_data()
+        for event in e :
+            self.assertIn( '22.', event['SrcIP'] )
+            self.assertEqual(event['AppID'], 'CRON')
 
     def test_ordered_query(self):
-        events_no_split = msiempy.event.EventManager(
+        events_no_split = EventManager(
             time_range='CUSTOM',
             start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
             end_time=datetime.now()+timedelta(days=1),
@@ -143,7 +148,7 @@ class T(unittest.TestCase):
 
     def test_add_note(self):
 
-        events = msiempy.event.EventManager(
+        events = EventManager(
             time_range='CUSTOM',
             start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
             end_time=datetime.now()+timedelta(days=1),
@@ -153,15 +158,15 @@ class T(unittest.TestCase):
 
         for event in events :
             event.set_note("Test note")
-            genuine_event = msiempy.event.Event(id=event['IPSIDAlertID'])
+            genuine_event = Event(id=event['IPSIDAlertID'])
             self.assertRegexpMatches(genuine_event['note'], "Test note", "The doesn't seem to have been added to the event \n"+str(event))
 
     def test_getitem(self):
-        events = msiempy.event.EventManager(
+        events = EventManager(
             time_range='CUSTOM',
             start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
             end_time=datetime.now()+timedelta(days=1),
-            fields=msiempy.event.Event.REGULAR_EVENT_FIELDS,
+            fields=Event.REGULAR_EVENT_FIELDS,
             limit=5
         )
         events.load_data()
