@@ -2,7 +2,10 @@
 """
 .. image:: https://avatars0.githubusercontent.com/u/50667087?s=200&v=4  
 Welcome to the **msiempy** module documentation. The pythonic way to deal with McAfee SIEM API.  
-Classes listed here are mostly abstract basis of sub-modules that offers concrete objects and functions.  
+Classes listed here are mostly handling low level interactions with the SIEM API. It provides a simple interface to other sub-modules that offers concrete objects and functions.  
+
+***
+
 GitHub : https://github.com/mfesiem/msiempy  
 PyPI : https://pypi.org/project/msiempy/  
 Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png  
@@ -1544,7 +1547,7 @@ class FilteredQueryList(NitroList):
         elif isinstance(start_time, datetime.datetime):
             self._start_time = start_time
         elif start_time==None:
-             self._start_time=None#raise ValueError("Time must be string or datetime object, not None")#self.start_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+             self._start_time=None #raise ValueError("Time must be string or datetime object, not None")#self.start_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             raise ValueError("Time must be string or datetime object.")
 
@@ -1565,7 +1568,7 @@ class FilteredQueryList(NitroList):
         elif isinstance(end_time, datetime.datetime):
             self._end_time = end_time
         elif end_time==None:
-             self._end_time=None#raise ValueError("Time must be string or datetime object, not None")
+             self._end_time=None #raise ValueError("Time must be string or datetime object, not None")
         else:
             raise ValueError("Time must be string or datetime object.")
 
@@ -1574,10 +1577,10 @@ class FilteredQueryList(NitroList):
         """ 
         Filter property : Returns a list of filters.
         Can be set with list of tuple(field, [values]), a `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted.  
-        `None` value will call `msiempy.query.FilteredQueryList.clear_filters()`.  
+        `None` value will trigger `msiempy.FilteredQueryList.clear_filters()`.  
         Raises : `AttributeError` if type not supported.
         Abstract declaration.
-        TODO find a better solution to integrate the filter propertie
+        TODO find a better solution to integrate the filter property
         """
         pass
 
