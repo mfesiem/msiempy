@@ -286,11 +286,12 @@ If you have any questions, please create a new issue.
 If you like the project and think you could help with making it better, there are many ways you can do it:
 
 - Create new issue for new feature proposal or a bug
-- Implement existing issues
+- Implement new features!  
+- Fix issues
 - Help with improving the documentation
-- Spread a word about the project to your collegues, friends, blogs or any other channels
+- Spread a word about the project to your collegues, friends, **blogs** or any other channels
 - Any other things you could imagine
-- Any contribution would be of great help and I will highly appreciate it! 
+- Any contribution would be of great help and we'll will highly appreciate it! 
 
 ### Run tests
 Run all tests
@@ -306,10 +307,13 @@ Or per-method test
 python3 -m unittest tests.auth.test_event.T.test_add_note
 ````
 
+### Code analysis
+
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/114821fcf6e14b8eb0f927e0112488c8)](https://www.codacy.com/gh/mfesiem/msiempy?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mfesiem/msiempy&amp;utm_campaign=Badge_Grade) [![Maintainability](https://api.codeclimate.com/v1/badges/0cc21ba8f82394cb05f3/maintainability)](https://codeclimate.com/github/mfesiem/msiempy/maintainability)
 
 ### Error report
 Configure log file reporting in the configuration file and execute :  
  ```cat /path/to/your/log/file | grep -i error | sort | uniq```
 
 ### Disclaimer
-This is an **UNOFFICIAL** project and is **NOT** sponsored or supported by **McAfee, Inc**. If you accidentally delete all of your datasources, don't call support (or me). Product access will always be in respect to McAfee's intellectual property.
+This is an **UNOFFICIAL** project and is **NOT** sponsored or supported by **McAfee, Inc**. If you accidentally delete all of your datasources, don't call support (or us). Product access will always be in respect to McAfee's intellectual property.
