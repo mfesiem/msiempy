@@ -32,7 +32,7 @@ This python module is tested on windows, ubuntu and macos.
 ### Installation 
 ##### Stable
 ```
-pip install msiempy
+python3 -m pip install msiempy
 ```
 See [project on pypi.org](https://pypi.org/project/msiempy/)
 
@@ -41,7 +41,9 @@ See [project on pypi.org](https://pypi.org/project/msiempy/)
 # Fork the repo
 git clone https://github.com/mfesiem/msiempy.git
 cd msiempy
-pip3 install -r requirements.txt
+# Install dev requirements
+python3 -m pip install -r requirements.txt
+# Install module
 python3 ./setup.py install
 # Hack and pull request
 ```
@@ -100,7 +102,7 @@ print(alarms.json)
 ```
 
 
-Print, acknowledge and unackowledge some alarms based on filters.  
+Print and acknowledge some alarms based on filters.  
 ```python
 from msiempy.alarm import AlarmManager, Alarm
 
@@ -126,14 +128,6 @@ print("Acknowledge alarms...")
 
 [ alarm.acknowledge() for alarm in alarms ]
 while any( [ alarm['acknowledgedDate']==None for alarm in alarms ] ): 
-        time.sleep(1)
-        [ alarm.refresh() for alarm in alarms ]
-print(alarms.get_text(
-        fields=['id','triggeredDate','acknowledgedDate', 'alarmName', 'acknowledgedUsername']))
-
-print("Unacknowledge alarms...")
-[ alarm.unacknowledge() for alarm in alarms ]
-while any( [ alarm['acknowledgedDate']!=None for alarm in alarms ] ): 
         time.sleep(1)
         [ alarm.refresh() for alarm in alarms ]
 print(alarms.get_text(
@@ -164,12 +158,6 @@ print(alarms.get_text(
         | {'value': 3839} | 12/12/2019 17:42:56 | 12/12/2019 18:07:53 | Test Alarm |                      |
         | {'value': 3838} | 12/12/2019 17:29:16 | 12/12/2019 18:07:53 | Test Alarm |                      |
         | {'value': 3837} | 12/12/2019 17:11:56 | 12/12/2019 18:07:53 | Test Alarm |                      |
-        Unacknowledge alarms...
-        |        id       |    triggeredDate    | acknowledgedDate | alarmName  | acknowledgedUsername |
-        | {'value': 3840} | 12/12/2019 17:54:46 |       None       | Test Alarm |                      |
-        | {'value': 3839} | 12/12/2019 17:42:56 |       None       | Test Alarm |                      |
-        | {'value': 3838} | 12/12/2019 17:29:16 |       None       | Test Alarm |                      |
-        | {'value': 3837} | 12/12/2019 17:11:56 |       None       | Test Alarm |                      |
         
 </p>
 </details>
@@ -224,7 +212,8 @@ print(events.get_text(fields=['AlertID','LastTime','SrcIP', 'Rule.msg']))
 
 Setting the note of an event, retreiving the genuine event from IPSIDAlertID and checking the note is well set. See [`add_wpsan_note.py`](https://github.com/mfesiem/msiempy/blob/master/samples/add_wpsan_note.py) script to see more how to add note to event that triggered alarms !  
 ```python
-events = msiempy.event.EventManager(
+from  msiempy.event import EventManager
+events = EventManager(
         time_range='CURRENT_YEAR',
         limit=2
 )
@@ -249,9 +238,9 @@ See [`dump_all_fields.py`](https://github.com/mfesiem/msiempy/blob/master/sample
 #### ESM
 Print a few esm infos. ESM object has not state for it self, it's a simple interface to data structures / values returned by the SIEM.  
 ```python
->>> import msiempy.device
+>>> from msiempy.device import ESM
 
->>> esm=msiempy.device.ESM()
+>>> esm=ESM()
 >>> esm.version()
 '11.2.1'
 >>> esm.recs()
@@ -262,19 +251,22 @@ Print a few esm infos. ESM object has not state for it self, it's a simple inter
 See: [ESM](https://mfesiem.github.io/docs/msiempy/device.html#msiempy.device.ESM)
 
 #### Datasource
-Load all datasources. 
+Load all datasources and write all infos in a CSV file.  
 ```python
-import msiempy.device
+from msiempy.device import DevTree
 
-devtree = msiempy.device.DevTree()
+devtree = DevTree()
+
+with open('all-datasources.csv', 'w') as f:
+        f.write(devtree.get_text(format='csv'))
 ```
 See: [DevTree](https://mfesiem.github.io/docs/msiempy/device.html#msiempy.device.DevTree), [DataSource](https://mfesiem.github.io/docs/msiempy/device.html#msiempy.device.DataSource)
 
 #### Watchlist
 Print whatchlist list.
 ```python
-import msiempy.watchlist
-watchlists=msiempy.watchlist.WatchlistManager()
+from msiempy.watchlist import WatchlistManager
+watchlists=WatchlistManager()
 print(watchlists)
 ```
 See: [WatchlistManager](https://mfesiem.github.io/docs/msiempy/watchlist.html#msiempy.watchlist.WatchlistManager), [Watchlist](https://mfesiem.github.io/docs/msiempy/watchlist.html#msiempy.watchlist.Watchlist)
@@ -294,7 +286,7 @@ If you like the project and think you could help with making it better, there ar
 - Any contribution would be of great help and we'll will highly appreciate it! 
 
 ### Run tests
-Run all tests
+Run all tests, sometimes the tests have to be reruns.  
 ```
 pytest --reruns 3
 ```
@@ -312,8 +304,11 @@ python3 -m unittest tests.auth.test_event.T.test_add_note
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/114821fcf6e14b8eb0f927e0112488c8)](https://www.codacy.com/gh/mfesiem/msiempy?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mfesiem/msiempy&amp;utm_campaign=Badge_Grade) [![Maintainability](https://api.codeclimate.com/v1/badges/0cc21ba8f82394cb05f3/maintainability)](https://codeclimate.com/github/mfesiem/msiempy/maintainability)
 
 ### Error report
-Configure log file reporting in the configuration file and execute :  
- ```cat /path/to/your/log/file | grep -i error | sort | uniq```
+Configure log file reporting in the configuration file and and look for `"ERROR"`.  
+Useful shell command to get simple list of errors:  
+```
+cat /path/to/your/log/file | grep -i error | sort | uniq
+```
 
 ### Disclaimer
 This is an **UNOFFICIAL** project and is **NOT** sponsored or supported by **McAfee, Inc**. If you accidentally delete all of your datasources, don't call support (or us). Product access will always be in respect to McAfee's intellectual property.
