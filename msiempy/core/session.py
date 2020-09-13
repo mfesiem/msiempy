@@ -332,23 +332,23 @@ PARAMS = {
         "get_sys_info"  : ("SYS_GETSYSINFO","""{}"""),
         
         "build_stamp" : ("essmgtGetBuildStamp",None)
-} #__pdoc__['NitroSession.PARAMS'] = 
-'''
+} 
+__pdoc__['msiempy.core.session.PARAMS'] = '''
 SIEM API Methos/Parameters mapping.  
 This structure provide a central place to aggregate API methods and parameters.  
 The parameters are stored as docstrings to support string replacement.  
 
 Args:  
     - `method` (str): Dict key associated with desired function
-    Use normal dict access, PARAMS["method"], or PARAMS.get("method")
+    Use normal dict access, `PARAMS["method"]`, or `PARAMS.get("method")`
 
 Returns:  
-    - `tuple `: (string, string) : The first string is the method name that is actually used as
-    the URI or passed to the ESM. The second string is the params
-    required for that method. Some params require variables be
-    interpolated as documented in the data structure.
+    - `tuple `: `(string, string)` :  
+    The first string is the SIEM API endpoint name.  
+    The second string is the JSON formatted parameters required for the enpoint call. 
+    The formatted string contains interpolation flags like `%(id)` and will be matched to `msiempy.core.session.NitroSession.request` arguments.  
 
-Usage exemple in `msiempy.core.session.NitroSession.request` source code.  
+Used in `msiempy.core.session.NitroSession.request` code.  
 
 Important note : 
     Do not use sigle quotes (`'`) to delimit data into the interpolated strings !
@@ -393,12 +393,15 @@ Important note :
 }
 ```  
 Please see `dump_api_params.py` script at https://github.com/mfesiem/msiempy/blob/master/samples/dump_api_params.py to dump the complete structure.
+
+Possible `msiempy.core.session.NitroSession.request` requests and arguments: 
+
 '''
 
 class NitroSession():
     """
     `msiempy.core.session.NitroSession` is the point of convergence of every requests that goes to the ESM.  
-    It provides easier dialogue with the ESM by doing agument interpolation with `msiempy.core.params.PARAMS`.  
+    It provides easier dialogue with the ESM by doing agument interpolation with `msiempy.core.session.PARAMS`.  
 
     It uses `msiempy.core.config.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.
 
@@ -713,7 +716,7 @@ class NitroSession():
 
     def request(self, request, **kwargs):
         """
-        Interface to make ESM API calls more simple by interpolating `**kwargs` arguments with `msiempy.core.params.PARAMS` docstrings and build a valid datastructure for the HTTP data.  
+        Interface to make ESM API calls more simple by interpolating `**kwargs` arguments with `msiempy.core.session.PARAMS` docstrings and build a valid datastructure for the HTTP data.  
 
         Then call the `msiempy.core.session.NitroSession.esm_request` method with the built data.  
 
@@ -721,7 +724,7 @@ class NitroSession():
 
         Arguments:  
 
-        - `request`: Keyword corresponding to the request name in `msiempy.core.params.PARAMS` mapping.  
+        - `request`: Keyword corresponding to the request name in `msiempy.core.session.PARAMS` mapping.  
         - `http`: HTTP method.  
         - `callback` : function to apply afterwards  
         - `raw` : If true will return the Response object from requests module.   
@@ -730,7 +733,7 @@ class NitroSession():
         
         Interpolation parameters :  
         
-        - `**kwargs` : Interpolation parameters that will be match to `msiempy.core.params.PARAMS` templates. Dynamic keyword arguments.  
+        - `**kwargs` : Interpolation parameters that will be match to `msiempy.core.session.PARAMS` templates. Dynamic keyword arguments.  
 
         Returns :  
 
