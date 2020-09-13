@@ -1,22 +1,19 @@
-"""Provide alarm management.
+"""Provide alarm management.  
 """
-import sys
 import collections
-import datetime
 import logging
 log = logging.getLogger('msiempy')
 
-from . import NitroDict, NitroList, FilteredQueryList
+from .core import NitroDict, NitroList, FilteredQueryList
 from .event import EventManager, Event
-from .__utils__ import regex_match, convert_to_time_obj, dehexify
-
+from .core.utils import regex_match, dehexify
 
 __pdoc__={}
 
 class AlarmManager(FilteredQueryList):
     """
     Interface to query and manage Alarms.  
-    Inherits from `msiempy.FilteredQueryList`.
+    Inherits from `msiempy.core.query.FilteredQueryList`.
 
     Arguments:  
 
@@ -25,11 +22,13 @@ class AlarmManager(FilteredQueryList):
     `filters` are computed locally - Unlike `msiempy.event.EventManager` filters.  
     - `page_size` : max number of rows per query.  
     - `page_number` : defaulted to 1.
-    - `filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.alarm.Alarm` objects. A single `tuple` is also accepted.  
+    - `filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.alarm.Alarm` objects. A single `tuple` is also accepted. 
     - `event_filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.event.Event` objects. A single `tuple` is also accepted.  
     - `time_range` : Query time range. String representation of a time range.  
     - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
     - `end_time` : Query endding time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
+
+    Filters are computed after the data loaded with regex matching.  
     
     """
     def __init__(self, *args, status_filter='all', page_size=200, filters=None, event_filters=None, **kwargs):
@@ -54,8 +53,6 @@ class AlarmManager(FilteredQueryList):
 
         #Casting all data to Alarms objects, better way to do it ?
         collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, NitroDict))])
-
-    
 
     @property
     def filters(self):
@@ -373,7 +370,7 @@ class Alarm(NitroDict):
 
     ALARM_DEFAULT_FIELDS=['id','alarmName', 'summary','triggeredDate', 'acknowledgedUsername']
     __pdoc__['Alarm.ALARM_DEFAULT_FIELDS']="""Defaulfs fields : `%(fields)s` 
-    (not used , may be for printing with `msiempy.NitroList.get_text(fields=msiempy.alarm.ALARM_DEFAULT_FIELDS)`)""" % dict(fields=', '.join(ALARM_DEFAULT_FIELDS))
+    (not used in library, can bu useful for printing with `get_text(fields=msiempy.alarm.ALARM_DEFAULT_FIELDS)`)""" % dict(fields=', '.join(ALARM_DEFAULT_FIELDS))
 
 
     def acknowledge(self):

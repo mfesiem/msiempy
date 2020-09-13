@@ -1,4 +1,4 @@
-"""Provide event management.
+"""Provide event management.   
 """
 
 import time
@@ -10,12 +10,12 @@ import copy
 from datetime import datetime, timedelta
 log = logging.getLogger('msiempy')
 
-from . import NitroDict, NitroError, FilteredQueryList
-from .__utils__ import timerange_gettimes, parse_query_result, format_fields_for_query, divide_times, parse_timedelta
+from .core import NitroDict, NitroError, FilteredQueryList
+from .core.utils import timerange_gettimes, parse_query_result, format_fields_for_query, divide_times, parse_timedelta
 
 class EventManager(FilteredQueryList):
     """Interface to query and manage events.  
-    Inherits from `msiempy.FilteredQueryList`.
+    Inherits from `msiempy.core.query.FilteredQueryList`.
 
     Arguments:  
 
@@ -109,13 +109,13 @@ class EventManager(FilteredQueryList):
     def filters(self):
         """
         Returns SIEM formatted filters for the query structured from `msiempy.event.GroupFilter` and/or `msiempy.event.FieldFilter`
-        See `msiempy.FilteredQueryList.filters`.
+        See `msiempy.core.query.FilteredQueryList.filters`.
         """
         return([dict(f) for f in self._filters])
 
     def add_filter(self, afilter):
         """
-        Concrete description of the `msiempy.FilteredQueryList` method.
+        Concrete description of the `msiempy.core.query.FilteredQueryList` method.
         It can take a `tuple(fiels, [values])`,  `msiempy.event.GroupFilter` or `msiempy.event.FieldFilter` or a `dict`.  
         """
         if isinstance(afilter, tuple) :
@@ -161,8 +161,8 @@ class EventManager(FilteredQueryList):
 
         Returns : `tuple` : (( `msiempy.event.EventManager`, Status of the query (completed?) `True/False` ))
 
-        Raises `msiempy.NitroError` if any unhandled errors  
-        Raises `TimeoutError` if wait_timeout_sec counter gets to 0
+        Raises `msiempy.NitroError` if any unhandled errors.  
+        Raises `TimeoutError` if wait_timeout_sec counter gets to 0.  
         """
         try:
             query_infos=dict()
@@ -221,7 +221,7 @@ class EventManager(FilteredQueryList):
     def load_data(self, workers=10, slots=10, delta=None, max_query_depth=0, **kwargs):
         """Load the data from the SIEM into the manager list.  
         Split the query in defferents time slots if the query apprears not to be completed.  
-        Wraps around `msiempy.FilteredQueryList.qry_load_data`.    
+        Wraps around `msiempy.event.EventManager.qry_load_data`.    
 
         Note: Only the first query is loaded asynchronously.
 
@@ -1125,12 +1125,12 @@ class Event(NitroDict):
         """
         
         if use_query == True :
-
+            f = FieldFilter('IPSIDAlertID', id, operator='EQUALS')
             e = EventManager(
                 time_range='CUSTOM',
                 start_time=datetime.now()-timedelta(days=365),
                 end_time=datetime.now()+timedelta(days=1),
-                filters=[('IPSIDAlertID',id)],
+                filters=[f],
                 fields=extra_fields,
                 limit=2)
             try:

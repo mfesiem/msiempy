@@ -5,7 +5,7 @@ import logging
 import collections
 log = logging.getLogger('msiempy')
 
-from . import NitroDict, NitroList
+from .core import NitroDict, NitroList
 
 class WatchlistManager(NitroList):
     """
