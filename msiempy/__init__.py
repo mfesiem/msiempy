@@ -469,7 +469,7 @@ class NitroSession():
 
             "get_alerts_now" : ("""IPS_GETALERTSNOW""", """{"IPSID": "%(ds_id)s"}"""),
 
-            "get_flows_now" : ("""IPS_GETALERTSNOW""", """{"IPSID": "%(ds_id)s"}"""),
+            "get_flows_now" : ("""IPS_GETFLOWSNOW""", """{"IPSID": "%(ds_id)s"}"""),
 
             "logout" : ( """userLogout""", None ),
 
