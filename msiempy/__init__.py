@@ -6,11 +6,19 @@ The pythonic way to deal with McAfee SIEM API.
 
 ***
 
-GitHub : https://github.com/mfesiem/msiempy  
-PyPI : https://pypi.org/project/msiempy/  
-Class diagram : https://mfesiem.github.io/docs/msiempy/classes.png  
-Packages diagram : https://mfesiem.github.io/docs/msiempy/packages.png  
+[GitHub](https://github.com/mfesiem/msiempy)   
+[PyPI](https://pypi.org/project/msiempy/)  
+
+*** 
+[Class diagram](https://mfesiem.github.io/docs/msiempy/classes.png)  
+[Packages diagram](https://mfesiem.github.io/docs/msiempy/packages.png)  
 """
 
-# Maintain this imports for compatibility
-from .core import *
+# "Public" API imports 
+from .core import (
+    NitroList,
+    NitroDict,
+    NitroConfig,
+    NitroError,
+    NitroSession
+)

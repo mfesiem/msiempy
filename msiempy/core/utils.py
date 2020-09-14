@@ -86,6 +86,21 @@ def fromb64(s):
     if type(s) is str:
         return base64.b64decode(s.encode('utf-8')).encode()
 
+# Usefull to compte CURRENT_WEEK timerange
+# one_day = timedelta(days=1)
+# def get_week(date):
+#     """
+#     Return the full week (Sunday first) of the week containing the given date.  
+
+#         - 'date' may be a datetime or date instance (the same type is returned).  
+#     """
+#     day_idx = (date.weekday() + 1) % 7  # turn sunday into 0, monday into 1, etc.
+#     sunday = date - timedelta(days=day_idx)
+#     date = sunday
+#     for n in range(7):
+#         yield date
+#         date += one_day
+
 def timerange_gettimes(time_range):
     """
     Convert a string time range to a tuple of datetime objects. Only works for certain time ranges.
@@ -121,31 +136,28 @@ def timerange_gettimes(time_range):
 
     elif t == 'LAST_3_DAYS':
         times=(now-timedelta(days=3), now)
-
+    #TODO Support other time ranges
+    # elif t == 'CURRENT_WEEK':
+    #     pass
+    # elif t == 'PREVIOUS_WEEK':
+    #     pass
+    # elif t == 'CURRENT_MONTH':
+    #     pass
+    # elif t == 'PREVIOUS_MONTH':
+    #     pass
+    # elif t == 'CURRENT_QUARTER':
+    #     pass
+    # elif t == 'PREVIOUS_QUARTER':
+    #     pass
+    # elif t == 'CURRENT_YEAR':
+    #     pass
+    # elif t == 'PREVIOUS_YEAR':
+    #     pass
     else :
         raise NotImplementedError("Timerange "+t+" is not supported yet")
     
     return(times[0].isoformat(), times[1].isoformat())
     
-    """ 
-    #TODO Support other time ranges
-    elif t is 'CURRENT_WEEK':
-        pass
-    elif t is 'PREVIOUS_WEEK':
-        pass
-    elif t is 'CURRENT_MONTH':
-        pass
-    elif t is 'PREVIOUS_MONTH':
-        pass
-    elif t is 'CURRENT_QUARTER':
-        pass
-    elif t is 'PREVIOUS_QUARTER':
-        pass
-    elif t is 'CURRENT_YEAR':
-        pass
-    elif t is 'PREVIOUS_YEAR':
-        pass
-    """
 
 def divide_times(first, last, time=0, slots=0, delta=0):
     """"
@@ -251,14 +263,20 @@ def parse_query_result(columns, rows):
 
 def format_fields_for_query(fields):
     """
-    ['field1','name','user']
+    Format fields names to cann query module.  
 
-    Returns :
-    [
-        {'name':'field1'},
-        {...},
-        {},
-    ]
+    Arguments:  
+
+    - `fields`: list of fields, i.e. `['field1','name','user']`
+
+    Returns:  
+    
+        [
+            {'name':'field1'},
+            {'name':'name'},
+            {'name':'user'},
+        ]
+    
     """
     return([{'name':value} for value in list(fields)])
 

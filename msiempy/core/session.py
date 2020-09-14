@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 HTTP level interface to the ESM API.  
 """
@@ -11,7 +10,8 @@ import urllib.parse
 import inspect
 import time
 import urllib3
-
+from urllib.parse import urlparse
+from string import Template
 from .utils import tob64
 from .config import NitroConfig
 
@@ -19,13 +19,13 @@ log = logging.getLogger('msiempy')
 
 __pdoc__ = {} # Init pdoc to document dynamically
 
-PARAMS = {
+_PARAMS = {
     "login": ("login",
-            """{"username": "%(username)s",
-                "password" : "%(password)s",
+            Template("""{"username": "$username",
+                "password" : "$password",
                 "locale": "en_US",
                 "os": "Win32"}
-                """),
+                """)),
 
     "get_devtree": ("GRP_GETVIRTUALGROUPIPSLISTDATA",
                     """{"ITEMS": "#{DC1 + DC2}",
@@ -42,120 +42,120 @@ PARAMS = {
                     """),
 
     "req_client_str": ("DS_GETDSCLIENTLIST",
-                        """{"DSID": "%(ds_id)s",
+                        Template("""{"DSID": "$ds_id",
                             "SEARCH": ""}
-                        """),
+                        """)),
 
     "get_rfile": ("MISC_READFILE",
-                """{"FNAME": "%(ftoken)s",
+                Template("""{"FNAME": "$ftoken",
                 "SPOS": "0",
                 "NBYTES": "0"}
-                """),
+                """)),
 
     "del_rfile": ("ESSMGT_DELETEFILE",
-                """{"FN": "%(ftoken)s"}"""),
+                Template("""{"FN": "$ftoken"}""")),
 
     "get_rfile2": ("MISC_READFILE",
-                """{"FNAME": "%(ftoken)s",
-                "SPOS": "%(pos)s",
-                "NBYTES": "%(nbytes)s"}
-                """),
+                Template("""{"FNAME": "$ftoken",
+                "SPOS": "$pos",
+                "NBYTES": "$nbytes"}
+                """)),
 
     "get_wfile": ("MISC_WRITEFILE",
-                """{"DATA1": "%(ds_id)s",
+                Template("""{"DATA1": "$ds_id",
                         "PATH": "21",
-                        "ND": "1"} """),
+                        "ND": "1"} """)),
     
     "get_rule_history": ("PLCY_GETRULECHANGEINFO", 
                         """{"SHOW": "F"}"""),
-
-    "map_dtree": ("map_dtree",
-                """{"dev_type": "%(dev_type)s",
-                "name": "%(ds_name)s",
-                "ds_id": "%(ds_id)s",
-                "enabled": "%(enabled)s",
-                "ds_ip": "%(ds_ip)s",
-                "hostname" : "%(hostname)s",
-                "typeID": "%(type_id)s",
-                "vendor": "",
-                "model": "",
-                "tz_id": "",
-                "date_order": "",
-                "port": "",
-                "syslog_tls": "",
-                "client_groups": "%(client_groups)s"
-                }
-                """),
+    # DO NOT DELETE
+    # "map_dtree": ("map_dtree",
+    #             Template("""{"dev_type": "$dev_type",
+    #             "name": "$ds_name",
+    #             "ds_id": "$ds_id",
+    #             "enabled": "$enabled",
+    #             "ds_ip": "$ds_ip",
+    #             "hostname" : "$hostname",
+    #             "typeID": "$type_id",
+    #             "vendor": "",
+    #             "model": "",
+    #             "tz_id": "",
+    #             "date_order": "",
+    #             "port": "",
+    #             "syslog_tls": "",
+    #             "client_groups": "$client_groups"
+    #             }
+    #             """)),
 
     "add_ds_11_1_3": ("dsAddDataSource", 
-                """{"datasource": {
-                        "parentId": {"id": "%(parent_id)s"},
-                        "name": "%(name)s",
-                        "ipAddress": "%(ds_ip)s",
-                        "typeId": {"id": "%(type_id)s"},
-                        "zoneId": "%(zone_id)s",
-                        "enabled": "%(enabled)s",
-                        "url": "%(url)s",
-                        "id": {"id": "%(ds_id)s"},
-                        "childEnabled": "%(child_enabled)s",
-                        "childCount": "%(child_count)s",
-                        "childType": "%(child_type)s",
-                        "idmId": "%(idm_id)s",
-                        "parameters": %(parameters)s
-                    }}"""),
+                Template("""{"datasource": {
+                        "parentId": {"id": "$parent_id"},
+                        "name": "$name",
+                        "ipAddress": "$ds_ip",
+                        "typeId": {"id": "$type_id"},
+                        "zoneId": "$zone_id",
+                        "enabled": "$enabled",
+                        "url": "$url",
+                        "id": {"id": "$ds_id"},
+                        "childEnabled": "$child_enabled",
+                        "childCount": "$child_count",
+                        "childType": "$child_type",
+                        "idmId": "$idm_id",
+                        "parameters": $parameters
+                    }}""")),
 
     "add_ds_11_2_1": ("dsAddDataSources", 
-                    """{"receiverId": "%(parent_id)s",
+                    Template("""{"receiverId": "$parent_id",
                         "datasources": [{
-                            "name": "%(name)s",
-                            "ipAddress": "%(ds_ip)s",
-                            "typeId": {"id": "%(type_id)s"},
-                            "zoneId": "%(zone_id)s",
-                            "enabled": "%(enabled)s",
-                            "url": "%(url)s",
-                            "parameters": %(parameters)s
-                            }]}"""),
+                            "name": "$name",
+                            "ipAddress": "$ds_ip",
+                            "typeId": {"id": "$type_id"},
+                            "zoneId": "$zone_id",
+                            "enabled": "$enabled",
+                            "url": "$url",
+                            "parameters": $parameters
+                            }]}""")),
 
     "add_client1": ("DS_ADDDSCLIENT", 
-                    """{"PID": "%(parent_id)s",
-                    "NAME": "%(name)s",
-                    "ENABLED": "%(enabled)s",
-                    "IP": "%(ds_ip)s",
-                    "HOST": "%(hostname)s",
-                    "TYPE": "%(type_id)s",
-                    "TZID": "%(tz_id)s",
-                    "DORDER": "%(dorder)s",
-                    "MASKFLAG": "%(maskflag)s",
-                    "PORT": "%(port)s",
-                    "USETLS": "%(require_tls)s"
-                    }"""),
+                    Template("""{"PID": "$parent_id",
+                    "NAME": "$name",
+                    "ENABLED": "$enabled",
+                    "IP": "$ds_ip",
+                    "HOST": "$hostname",
+                    "TYPE": "$type_id",
+                    "TZID": "$tz_id",
+                    "DORDER": "$dorder",
+                    "MASKFLAG": "$maskflag",
+                    "PORT": "$port",
+                    "USETLS": "$require_tls"
+                    }""")),
                     
     "get_recs": ("devGetDeviceList?filterByRights=false",
                     """{"types": ["RECEIVER"]}
                     """),
 
     "get_dstypes": ("dsGetDataSourceTypes",
-                    """{"receiverId": {"id": "%(rec_id)s"}
+                    Template("""{"receiverId": {"id": "$rec_id"}
                         }
-                    """),
+                    """)),
                     
     "del_ds1": ("dsDeleteDataSource",
-                """{"receiverId": {"id": "%(parent_id)s"},
-                    "datasourceId": {"id": "%(ds_id)s"}}
-                """),
+                Template("""{"receiverId": {"id": "$parent_id"},
+                    "datasourceId": {"id": "$ds_id"}}
+                """)),
 
     "del_ds2": ("dsDeleteDataSources",
-                """{"receiverId": {"value": "%(parent_id)s"},
-                    "datasourceIds": [{"value": "%(ds_id)s"}]}
-                """),
+                Template("""{"receiverId": {"value": "$parent_id"},
+                    "datasourceIds": [{"value": "$ds_id"}]}
+                """)),
 
     "del_client": ("DS_DELETEDSCLIENTS", 
-                    """{"DID": "%(parent_id)s",
-                            "FTOKEN": "%(ftoken)s"}"""
-                    ),
+                    Template("""{"DID": "$parent_id",
+                            "FTOKEN": "$ftoken"}
+                    """)),
 
     "get_job_status": ("MISC_JOBSTATUS",
-                        """{"JID": "%(job_id)s"}"""),
+                        Template("""{"JID": "$job_id"}""")),
 
     "ds_last_times": ("QRY_GETDEVICELASTALERTTIME","""{}"""),
                     
@@ -163,129 +163,130 @@ PARAMS = {
                     
     "ds_by_type": ("QRY_GETDEVICECOUNTBYTYPE",None),
 
-    "_dev_types":  ("dev_type_map",
-                        """{"1": "zone",
-                            "2": "ERC",
-                            "3": "datasource",
-                            "4": "Database Event Monitor (DBM)",
-                            "5": "DBM Database",
-                            "7": "Policy Auditor",
-                            "10": "Application Data Monitor (ADM)",
-                            "12": "ELM",
-                            "14": "Local ESM",
-                            "15": "Advanced Correlation Engine (ACE)",
-                            "16": "Asset datasource",
-                            "17": "Score-based Correlation",
-                            "19": "McAfee ePolicy Orchestrator (ePO)",
-                            "20": "EPO",
-                            "21": "McAfee Network Security Manager (NSM)",
-                            "22": "McAfee Network Security Platform (NSP)",
-                            "23": "NSP Port",
-                            "24": "McAfee Vulnerability Manager (MVM)",
-                            "25": "Enterprise Log Search (ELS)",
-                            "254": "client_group",
-                            "256": "client"}
-                        """),
+    # DO NOT DELETE
+    # "_dev_types":  ("dev_type_map",
+    #                     """{"1": "zone",
+    #                         "2": "ERC",
+    #                         "3": "datasource",
+    #                         "4": "Database Event Monitor (DBM)",
+    #                         "5": "DBM Database",
+    #                         "7": "Policy Auditor",
+    #                         "10": "Application Data Monitor (ADM)",
+    #                         "12": "ELM",
+    #                         "14": "Local ESM",
+    #                         "15": "Advanced Correlation Engine (ACE)",
+    #                         "16": "Asset datasource",
+    #                         "17": "Score-based Correlation",
+    #                         "19": "McAfee ePolicy Orchestrator (ePO)",
+    #                         "20": "EPO",
+    #                         "21": "McAfee Network Security Manager (NSM)",
+    #                         "22": "McAfee Network Security Platform (NSP)",
+    #                         "23": "NSP Port",
+    #                         "24": "McAfee Vulnerability Manager (MVM)",
+    #                         "25": "Enterprise Log Search (ELS)",
+    #                         "254": "client_group",
+    #                         "256": "client"}
+    #                     """),
                         
         "ds_details1": ("dsGetDataSourceDetail",
-                        """{"datasourceId": 
-                            {"id": "%(ds_id)s"}}
-                        """),
+                        Template("""{"datasourceId": 
+                            {"id": "$ds_id"}}
+                        """)),
 
         "ds_details2": ("dsGetDataSourceDetail",
-                        """{"datasourceId": {"value": "%(ds_id)s"}}"""),
+                        Template("""{"datasourceId": {"value": "$ds_id"}}""")),
 
 
-        "get_alarms_custom_time": ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&customStart=%(start_time)s&customEnd=%(end_time)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""",
+        "get_alarms_custom_time": (Template("""alarmGetTriggeredAlarms?triggeredTimeRange=$time_range&customStart=$start_time&customEnd=$end_time&status=$status&pageSize=$page_size&pageNumber=$page_number"""),
                     None),
 
-        "get_alarms": ("""alarmGetTriggeredAlarms?triggeredTimeRange=%(time_range)s&status=%(status)s&pageSize=%(page_size)s&pageNumber=%(page_number)s""", None),
+        "get_alarms": (Template("""alarmGetTriggeredAlarms?triggeredTimeRange=$time_range&status=$status&pageSize=$page_size&pageNumber=$page_number"""), None),
 
-        "get_alarm_details_new": ("""notifyGetTriggeredNotificationDetail""", """{"id":%(id)s}"""),
+        "get_alarm_details_new": ("""notifyGetTriggeredNotificationDetail""", Template("""{"id":$id}""")),
 
-        "get_alarm_details": ("""notifyGetTriggeredNotification""", """{"id":%(id)s}"""),
+        "get_alarm_details": ("""notifyGetTriggeredNotification""", Template("""{"id":$id}""")),
 
         "get_alarm_details_int": ("NOTIFY_GETTRIGGEREDNOTIFICATIONDETAIL", 
-                                    """{"TID": "%(id)s"}"""),
+                                    Template("""{"TID": "$id"}""")),
 
-        "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":[{"value":%(ids)s}]}"""),
+        "ack_alarms": ("""alarmAcknowledgeTriggeredAlarm""", Template("""{"triggeredIds":[{"value":$ids}]}""")),
 
-        "ack_alarms_11_2_1": ("""alarmAcknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":[%(ids)s]}}"""),
+        "ack_alarms_11_2_1": ("""alarmAcknowledgeTriggeredAlarm""", Template("""{"triggeredIds":{"alarmIdList":[$ids]}}""")),
 
-        "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":[{"value":%(ids)s}]}"""),
+        "unack_alarms": ("""alarmUnacknowledgeTriggeredAlarm""", Template("""{"triggeredIds":[{"value":$ids}]}""")),
 
-        "unack_alarms_11_2_1": ("""alarmUnacknowledgeTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":[%(ids)s]}}"""),
+        "unack_alarms_11_2_1": ("""alarmUnacknowledgeTriggeredAlarm""", Template("""{"triggeredIds":{"alarmIdList":[$ids]}}""")),
 
-        "delete_alarms": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":[{"value":%(ids)s}]}"""),
+        "delete_alarms": ("""alarmDeleteTriggeredAlarm""", Template("""{"triggeredIds":[{"value":$ids}]}""")),
         
-        "delete_alarms_11_2_1": ("""alarmDeleteTriggeredAlarm""", """{"triggeredIds":{"alarmIdList":[%(ids)s]}}"""),
+        "delete_alarms_11_2_1": ("""alarmDeleteTriggeredAlarm""", Template("""{"triggeredIds":{"alarmIdList":[$ids]}}""")),
 
         "get_possible_filters" : ( """qryGetFilterFields""", None ),
 
-        "get_possible_fields" : ( """qryGetSelectFields?type=%(type)s&groupType=%(groupType)s""", None ),
+        "get_possible_fields" : ( Template("""qryGetSelectFields?type=$type&groupType=$groupType"""), None ),
 
         "get_esm_time" : ( """essmgtGetESSTime""",None),
 
-        "get_alerts_now" : ("""IPS_GETALERTSNOW""", """{"IPSID": "%(ds_id)s"}"""),
+        "get_alerts_now" : ("""IPS_GETALERTSNOW""", Template("""{"IPSID": "$ds_id"}""")),
 
-        "get_flows_now" : ("""IPS_GETALERTSNOW""", """{"IPSID": "%(ds_id)s"}"""),
+        "get_flows_now" : ("""IPS_GETALERTSNOW""", Template("""{"IPSID": "$ds_id"}""")),
 
         "logout" : ( """userLogout""", None ),
 
         "get_user_locale" : ( """getUserLocale""", None ),
 
-        "event_query_custom_time" : ("""qryExecuteDetail?type=EVENT&reverse=false""", """{
+        "event_query_custom_time" : ("""qryExecuteDetail?type=EVENT&reverse=false""", Template("""{
                 "config": {
-                    "timeRange": "%(time_range)s",
-                    "customStart": "%(start_time)s",
-                    "customEnd": "%(end_time)s",
-                    "fields": %(fields)s,
-                    "filters": %(filters)s,
-                    "limit": %(limit)s,
-                    "offset": %(offset)s,
-                    "order": [{"field": {"name": "%(order_field)s"},
-                                            "direction": "%(order_direction)s"}]
+                    "timeRange": "$time_range",
+                    "customStart": "$start_time",
+                    "customEnd": "$end_time",
+                    "fields": $fields,
+                    "filters": $filters,
+                    "limit": $limit,
+                    "offset": $offset,
+                    "order": [{"field": {"name": "$order_field"},
+                                            "direction": "$order_direction"}]
                     }
-                    }"""),
+                    }""")),
 
-        "event_query" : ("""qryExecuteDetail?type=EVENT&reverse=false""", """{
+        "event_query" : ("""qryExecuteDetail?type=EVENT&reverse=false""", Template("""{
                 "config": {
-                    "timeRange":"%(time_range)s",
-                    "fields":%(fields)s,
-                    "filters":%(filters)s,
-                    "limit":%(limit)s,
-                    "offset":%(offset)s,
-                    "order": [{"field": {"name": "%(order_field)s"},
-                                            "direction": "%(order_direction)s"}]
+                    "timeRange":"$time_range",
+                    "fields":$fields,
+                    "filters":$filters,
+                    "limit":$limit,
+                    "offset":$offset,
+                    "order": [{"field": {"name": "$order_field"},
+                                            "direction": "$order_direction"}]
                     }
-                    }"""),
+                    }""")),
 
-        "query_status" : ("""qryGetStatus""", """{"resultID": %(resultID)s}"""),
+        "query_status" : ("""qryGetStatus""", Template("""{"resultID": $resultID}""")),
 
-        "query_result" : ("""qryGetResults?startPos=%(startPos)s&numRows=%(numRows)s&reverse=false""", """{"resultID": %(resultID)s}"""),
+        "query_result" : (Template("""qryGetResults?startPos=$startPos&numRows=$numRows&reverse=false"""), Template("""{"resultID": $resultID}""")),
         
         "time_zones" : ("""userGetTimeZones""", None),
 
         "logout" : ("""logout""", None),
         
-        "add_note_to_event" : ("""ipsAddAlertNote""", """{
-            "id": {"value": "%(id)s"},
-            "note": {"note": "%(note)s"}
-        }"""),
+        "add_note_to_event" : ("""ipsAddAlertNote""", Template("""{
+            "id": {"value": "$id"},
+            "note": {"note": "$note"}
+        }""")),
 
-        "add_note_to_event_int": ("""IPS_ADDALERTNOTE""", """{"AID": "%(id)s",
-                                                            "NOTE": "%(note)s"}"""),
+        "add_note_to_event_int": ("""IPS_ADDALERTNOTE""", Template("""{"AID": "$id",
+                                                            "NOTE": "$note"}""")),
 
         "get_wl_types": ("""sysGetWatchlistFields""", None),
-        "get_watchlists_no_filters" : ("""sysGetWatchlists?hidden=%(hidden)s&dynamic=%(dynamic)s&writeOnly=%(writeOnly)s&indexedOnly=%(indexedOnly)s""", 
+        "get_watchlists_no_filters" : (Template("""sysGetWatchlists?hidden=$hidden&dynamic=$dynamic&writeOnly=$writeOnly&indexedOnly=$indexedOnly"""), 
             None),
 
-        "get_watchlist_details": ("""sysGetWatchlistDetails""","""{"id": %(id)s}"""),
+        "get_watchlist_details": ("""sysGetWatchlistDetails""", Template("""{"id": $id}""")),
 
-        "add_watchlist": ("""sysAddWatchlist""", """{
+        "add_watchlist": ("""sysAddWatchlist""", Template("""{
             "watchlist": {
-                "name": "%(name)s",
-                "type": {"name": "%(wl_type)s",
+                "name": "$name",
+                "type": {"name": "$wl_type",
                             "id": 0},
                 "customType": {"name": "",
                                 "id": 0},
@@ -315,93 +316,43 @@ PARAMS = {
                 "lineSkip": 0,
                 "delimitRegex": "",
                 "groups": 1
-                            }}"""),
+                            }}""")),
                                                         
-        "add_watchlist_values": ("""sysAddWatchlistValues""","""{
-            "watchlist": %(watchlist)s,
-            "values": %(values)s,
-            }"""),
+        "add_watchlist_values": ("""sysAddWatchlistValues""", Template("""{
+            "watchlist": $watchlist,
+            "values": $values,
+            }""")),
 
         "get_watchlist_values": ("SYS_GETWATCHLISTDETAILS",
-                                        """{"WID": "%(id)s", "LIM": "T"}"""),
+                                        Template("""{"WID": "$id", "LIM": "T"}""")),
 
-        "remove_watchlists": ("""sysRemoveWatchlist""", """{"ids": {"watchlistIdList": ["%(wl_id_list)s"]}}"""),
+        "remove_watchlists": ("""sysRemoveWatchlist""", Template("""{"ids": {"watchlistIdList": ["$wl_id_list"]}}""")),
 
-        "get_alert_data": ("""ipsGetAlertData""", """{"id": {"value":"%(id)s"}}"""),
+        "get_alert_data": ("""ipsGetAlertData""", Template("""{"id": {"value":"$id"}}""")),
         
         "get_sys_info"  : ("SYS_GETSYSINFO","""{}"""),
         
         "build_stamp" : ("essmgtGetBuildStamp",None)
 } 
-__pdoc__['msiempy.core.session.PARAMS'] = '''
-SIEM API Methos/Parameters mapping.  
-This structure provide a central place to aggregate API methods and parameters.  
-The parameters are stored as docstrings to support string replacement.  
-
+"""
 Args:  
     - `method` (str): Dict key associated with desired function
     Use normal dict access, `PARAMS["method"]`, or `PARAMS.get("method")`
 
 Returns:  
-    - `tuple `: `(string, string)` :  
+    - `tuple `: (`string` or `Template`, `string` or `Template`) :  
     The first string is the SIEM API endpoint name.  
-    The second string is the JSON formatted parameters required for the enpoint call. 
-    The formatted string contains interpolation flags like `%(id)` and will be matched to `msiempy.core.session.NitroSession.request` arguments.  
-
-Used in `msiempy.core.session.NitroSession.request` code.  
+    The second string is the JSON string data parameters required for the enpoint call. 
 
 Important note : 
     Do not use sigle quotes (`'`) to delimit data into the interpolated strings !
 
-*Partial* data structure :  
-```
-{
-    "login": ("login",
-            """{"username": "%(username)s",
-                "password" : "%(password)s",
-                "locale": "en_US",
-                "os": "Win32"}
-                """),
-    
-    "add_watchlist_values": ("""sysAddWatchlistValues""","""{
-            "watchlist": %(watchlist)s,
-            "values": %(values)s,
-            }"""),
-
-    "get_watchlist_values": ("SYS_GETWATCHLISTDETAILS",
-                                    """{"WID": "%(id)s", "LIM": "T"}"""),
-
-    "remove_watchlists": ("""sysRemoveWatchlist""", """{"ids": {"watchlistIdList": ["%(wl_id_list)s"]}}"""),
-
-    "get_alert_data": ("""ipsGetAlertData""", """{"id": {"value":"%(id)s"}}"""),
-    
-    "get_sys_info"  : ("SYS_GETSYSINFO","""{}"""),
-    
-    "build_stamp" : ("essmgtGetBuildStamp",None),
-
-    "event_query" : ("""qryExecuteDetail?type=EVENT&reverse=false""", """{
-                "config": {
-                    "timeRange":"%(time_range)s",
-                    "fields":%(fields)s,
-                    "filters":%(filters)s,
-                    "limit":%(limit)s,
-                    "offset":%(offset)s,
-                    "order": [{"field": {"name": "%(order_field)s"}, "direction": "%(order_direction)s"}]
-                    }}"""),
-
-    [...]
-}
-```  
-Please see `dump_api_params.py` script at https://github.com/mfesiem/msiempy/blob/master/samples/dump_api_params.py to dump the complete structure.
-
-Possible `msiempy.core.session.NitroSession.request` requests and arguments: 
-
-'''
+"""
 
 class NitroSession():
     """
     `msiempy.core.session.NitroSession` is the point of convergence of every requests that goes to the ESM.  
-    It provides easier dialogue with the ESM by doing agument interpolation with `msiempy.core.session.PARAMS`.  
+    It provides easier dialogue with the ESM by doing argument interpolation with `msiempy.core.session.NitroSession.PARAMS`.  
 
     It uses `msiempy.core.config.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.
 
@@ -409,14 +360,13 @@ class NitroSession():
 
     Arguments:  
 
-    - `conf_path` : Configuration file path.  
-    - `conf_dict` : Manual config dict. ex: `{'general':{'verbose':True}}`. See `msiempy.core.config.NitroConfig` class to have full details.
+    - `config` : `msiempy.core.confg.NitroConfig` object, find default config if `None`.  
 
     See `msiempy.core.session.NitroSession.esm_request` and `msiempy.core.session.NitroSession.request` for usage.  
 
     """
-    def __init__(self, conf_path=None, conf_dict=None):
-        # global log
+    def __init__(self, config=None):
+
         self.__dict__ = NitroSession.__unique_state__
         
         #Init properties only once
@@ -427,8 +377,13 @@ class NitroSession():
             self._headers={'Content-Type': 'application/json'}
             
             #Config parsing
-            self.config = NitroConfig(path=conf_path, config=conf_dict)
-            NitroSession.config=self.config
+            if config==None:
+                self.config = NitroConfig()
+            else:
+                if isinstance(config, NitroConfig):
+                    self.config = config
+                else:
+                    raise TypeError('config must be a NitroConfig or None. Not {}'.format(config))
 
             #Set the logging configuration
             self._init_log(verbose=self.config.verbose,
@@ -444,13 +399,12 @@ class NitroSession():
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             except : 
                 pass
-            # logging.getLogger("urllib3").setLevel(logging.ERROR)
 
     BASE_URL = 'https://{}/rs/esm/'
-    """API v2 base url: 'https://{}/rs/esm/'"""
+    """API base url: `'https://{}/rs/esm/'`"""
 
     BASE_URL_PRIV = 'https://{}/ess/'
-    """Private API base URL: 'https://{}/ess/'"""
+    """Private API base URL: `'https://{}/ess/'`"""
 
     __initiated__ = False
     """
@@ -461,19 +415,20 @@ class NitroSession():
     The singleton unique state.
     """
     
-    config = None
+    PARAMS = _PARAMS
     """
-    `msiempy.core.config.NitroConfig` object.  
+    SIEM API methos/parameters mapping.  
+    This structure provide a central place to aggregate API methods and parameters.  
+
+    See `msiempy.core.session.NitroSession.request` for a list of all possible calls.  
     """
-    
-    PARAMS = PARAMS
         
     def __str__(self):
         return repr(self.__unique_state__) 
 
     def login(self, retry=1):
         """Authentication is done lazily upon the first call to `msiempy.core.session.NitroSession.request` method, but you can still do it manually by calling this method.  
-        Throws `msiempy.NitroError` if login fails.  
+        Throws `msiempy.core.session.NitroError` if login fails.  
         """
         userb64 = tob64(self.config.user)
         passb64 = self.config.passwd
@@ -495,7 +450,7 @@ class NitroSession():
             
             self.user_tz_id = dict(resp.json())['tzId']
             self.logged_in = True
-            self.login_info=self.unpack_resp(resp)
+            self.login_info=self._unpack_resp(resp)
 
             # Shorthanding the API version check 
             # 1 for pre 11.2.1, 2 for 11.2.1 and later
@@ -525,18 +480,15 @@ class NitroSession():
         self._headers={'Content-Type': 'application/json'}
         self.user_tz_id = None
 
-    def esm_request(self, method, data, http='post', callback=None, raw=False, secure=False, retry=1):
+    def esm_request(self, method, data=None, http='post', callback=None, raw=False, secure=False, retry=1):
         """
         Handle a lower level HTTP request to ESM API endpoints.  
 
         Format the request, handle the basic parsing of the SIEM result as well as other errors.  
 
         All upper cases method names signals to use the private API methods. 
-        See `msiempy.core.session.NitroSession.format_priv_resp` and `msiempy.core.session.NitroSession.format_params`
 
-        ESM responses are unpacked with `msiempy.core.session.NitroSession.unpack_resp`.  
-
-        Arguments :  
+        Arguments:   
 
         - `method` : ESM API enpoint name and url formatted parameters  
         - `http`: HTTP method.  
@@ -546,7 +498,7 @@ class NitroSession():
         - `secure` : If true will not log the content of the request.   
         - `retry` : Number of time the request can be retried  
 
-        Returns : 
+        Returns:   
 
         - a `dict`, `list` or `str` object. 
         - the `resquest.Response` object if raw=True  
@@ -558,7 +510,7 @@ class NitroSession():
 
         Note : Private API is under /ess/ and public api is under /rs/esm  
 
-        Exemple call:
+        Exemple:  
 
             from msiempy import NitroSession
             s = NitroSession()
@@ -572,7 +524,7 @@ class NitroSession():
 
         """
 
-        url=str()
+        url=''
         privateApiCall=False
         result=None
 
@@ -580,7 +532,7 @@ class NitroSession():
         log.debug('Requesting HTTP '+str(http)+' '+ str(method) + 
             (' with data '+str(data) if not secure else ' ***') )
         
-        http_data=str()
+        http_data=''
 
         #Handling private API calls formatting
         if method == method.upper():
@@ -642,10 +594,10 @@ class NitroSession():
 
                 else: # The result is not an HTTP Error
                     response = result
-                    result = self.unpack_resp(result)
+                    result = self._unpack_resp(result)
 
                     if privateApiCall :
-                        result = self.format_priv_resp(result)
+                        result = self._format_priv_resp(result)
 
                     if callback:
                         result = callback(result)
@@ -716,7 +668,7 @@ class NitroSession():
 
     def request(self, request, **kwargs):
         """
-        Interface to make ESM API calls more simple by interpolating `**kwargs` arguments with `msiempy.core.session.PARAMS` docstrings and build a valid datastructure for the HTTP data.  
+        Interface to make ESM API calls more simple by interpolating `**kwargs` arguments with `msiempy.core.session.NitroSession.PARAMS` docstrings and build a valid datastructure for the HTTP data.  
 
         Then call the `msiempy.core.session.NitroSession.esm_request` method with the built data.  
 
@@ -724,7 +676,7 @@ class NitroSession():
 
         Arguments:  
 
-        - `request`: Keyword corresponding to the request name in `msiempy.core.session.PARAMS` mapping.  
+        - `request`: Name keyword corresponding to the request name in `msiempy.core.session.NitroSession.PARAMS` mapping.  
         - `http`: HTTP method.  
         - `callback` : function to apply afterwards  
         - `raw` : If true will return the Response object from requests module.   
@@ -733,16 +685,16 @@ class NitroSession():
         
         Interpolation parameters :  
         
-        - `**kwargs` : Interpolation parameters that will be match to `msiempy.core.session.PARAMS` templates. Dynamic keyword arguments.  
+        - `**kwargs` : Interpolation parameters that will be match to `msiempy.core.session.NitroSession.PARAMS` templates. Dynamic keyword arguments.  
 
-        Returns :  
+        Returns:   
 
         - a `dict`, `list` or `str` object  
         - the `resquest.Response` object if raw=True  
         - `result.text` if `requests.HTTPError`,   
         - `None` if Timeout or TooManyRedirects if raw=False  
 
-        Exemple call:
+        Exemple:  
 
             from msiempy import NitroSession
             s = NitroSession()
@@ -752,7 +704,8 @@ class NitroSession():
             for a in alarms:
                 a.update(s.request('get_alarm_details_new', id=a['id']))
 
-
+        See all requests on the documentation webpage:  
+        https://mfesiem.github.io/docs/test/msiempy/core/session.html#msiempy.core.session.NitroSession.request  
         """
         log.debug("Calling nitro request : {} kwargs={}".format(
             str(request), '***' if 'secure' in kwargs and kwargs['secure']==True else str(kwargs)))
@@ -760,12 +713,13 @@ class NitroSession():
         method, data = self.PARAMS.get(request)
 
         if data != None :
-            data =  data % kwargs
-            data = ast.literal_eval((data.replace('\n','').replace('\t','')))
+            if isinstance(data, Template) :
+                data =  data.substitute(**kwargs)
+            data = ast.literal_eval(data.replace('\n','').replace('\t',''))
            
-        if method != None:
+        if method != None and isinstance(method, Template) :
             try :
-                method = method % kwargs
+                method = method.substitute(**kwargs)
             except TypeError as err :
                 if ('must be real number, not dict' in str(err)):
                     log.warning("Interpolation failed probably because of the private API calls formatting... Unexpected behaviours can happend.")
@@ -788,6 +742,8 @@ class NitroSession():
         Private method. Inits the session's logger settings based on params
         All objects should be able to log stuff, so the logger is globaly accessible
         """
+
+        log = logging.getLogger('msiempy')
 
         log.setLevel(logging.DEBUG)
 
@@ -832,7 +788,7 @@ class NitroSession():
         return params
 
     @staticmethod
-    def format_priv_resp(resp):
+    def _format_priv_resp(resp):
         """
         Format response from private API.  
         """
@@ -852,7 +808,7 @@ class NitroSession():
         return formatted
 
     @staticmethod
-    def unpack_resp(response) :
+    def _unpack_resp(response) :
         """Unpack data from response.  
         Should not be necessary with API v2.  
         Args: 
@@ -874,6 +830,26 @@ class NitroSession():
             data = response.text
 
         return data
+
+# Dynamically document all PARAMS requests
+_PARAMS_DOCS=""
+for k,v in _PARAMS.items():
+    name='{}'.format(k)
+    keywords=[]
+    params=''
+    endpoint='{}'.format(urlparse(v[0] if not isinstance(v[0], Template) else v[0].template).path)
+    if isinstance(v[0], Template):
+        keywords += [s[1] or s[2] for s in Template.pattern.findall(v[0].template) if s[1] or s[2]]
+    if isinstance(v[1], Template):
+        keywords += [s[1] or s[2] for s in Template.pattern.findall(v[1].template) if s[1] or s[2]]
+    params=', '.join(['{}'.format(k) for k in keywords])
+    _PARAMS_DOCS+="            request('{}', {}) # Call {}  \n".format(name, params, endpoint)
+
+__pdoc__['NitroSession.request'] = NitroSession.request.__doc__+'''
+        All requests:    
+        ( *All upper cases method names signals to use the private API methods.* )  
+
+'''+_PARAMS_DOCS
 
 class NitroError(Exception):
     """

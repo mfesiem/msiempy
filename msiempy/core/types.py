@@ -36,7 +36,6 @@ class NitroObject(abc.ABC):
     class NitroJSONEncoder(json.JSONEncoder):
         """
         Custom JSON encoder that will use the approprtiate propertie depending of the type of NitroObject.  
-        TODO return meta info about the NitroList. Maybe create a section `manager` and `data`.  
         TODO support json json dumping of QueryFilers, may be by making them inherits from NitroDict.  
         """
         def default(self, obj): # pylint: disable=E0202
@@ -45,10 +44,11 @@ class NitroObject(abc.ABC):
             else:
                 return json.JSONEncoder.default(self, obj) 
 
-    nitro=NitroSession()
-    """
-    `msiempy.core.session.NitroSession` object. Interface to the SIEM.
-    """
+    def __init__(self):
+        self.nitro=NitroSession()
+        """
+        `msiempy.core.session.NitroSession` object. Interface to the SIEM.
+        """
 
     @abc.abstractproperty
     def text(self):
@@ -75,17 +75,17 @@ class NitroObject(abc.ABC):
 
 class NitroDict(collections.UserDict, NitroObject):
     """
-    Base class that represent any SIEM data that can be represented as a item of a list.
-    Exemple : Event, Alarm, etc...
-    Inherits from dict.
-    Initiate the NitroObject and UserDict objects, load the data if id is specified, use adict agument and update dict values accordingly.
+    Dict-Like object (Base class) to represent SIEM data.  
+    Exemple : `Event`, `Alarm`, etc...  
+
+    Load the data from the SIEM if `id` is specified.  
 
     This classe and subclasses fully implements `dict` interface and is suitable for dictionnary operations, see: https://docs.python.org/3/library/stdtypes.html#mapping-types-dict
 
     Arguments:  
 
-    - `adict`: dict object to wrap.  
-    - `id`: ESM obejct unique identifier. Alert.IPSIDAlertID for exemple. 
+    - `adict`: dict object to wrap., typically received from the SIEM.    
+    - `id`: ESM obejct unique identifier. `Alert.IPSIDAlertID` for exemple.  
     """
     def __init__(self, adict=None, id=None):
         NitroObject.__init__(self)
@@ -121,7 +121,7 @@ class NitroDict(collections.UserDict, NitroObject):
         return(', '.join([str(val) for val in self.values()]))
 
     @abc.abstractmethod
-    def data_from_id(self, id):
+    def data_from_id(id):
         """This method retreive the item infos from an object ID.  
         Abstract declaration.
         """
@@ -155,7 +155,7 @@ class NitroList(collections.UserList, NitroObject):
     def __str__(self):
         """str(obj) -> return text string.
         """
-        return "{} containing {} elements ; keys={}".format(str(super()), len(list(self)), self.keys())
+        return "<{} containing {} elements, keys={}>".format(str(super()), len(list(self)), self.keys())
 
     def keys(self):
         """Set of keys for all dict"""
@@ -237,14 +237,14 @@ class NitroList(collections.UserList, NitroObject):
     def search(self, invert=False, match_prop='json', *pattern):
         """
         Return a list of elements that matches one or more regex patterns.
-        Patterns are applied one after another. It's a logic AND.
+        Patterns are applied one after another
         Use `|` inside patterns to search with logic OR.
         This method will return a new NitroList with matching data. NitroDicts in the returned NitroList do not
         references the items in the original NitroList.  
 
         Arguments:  
 
-        - `*pattern`: List or string regex patterns to look for.
+        - `*pattern`: List or string regex patterns to look for.  Each
         - `invert`: Weither or not to invert the search and return elements that doesn't not match search.
         - `match_prop`: Propertie that is going to be called to search. Could be `text` or `json`.
 
@@ -271,11 +271,11 @@ class NitroList(collections.UserList, NitroObject):
                     matching_items.append(item)
             log.debug("You're search returned {} rows : {}".format(
                 len(matching_items),
-                str(matching_items)[:100]+'...'))
-            #Apply AND reccursively
-            return NitroList(alist=matching_items).search(*pattern, invert=invert, match_prop=match_prop)
+                str(matching_items)[:200]+'...'))
+            # Apply AND reccursively
+            return type(self)(alist=matching_items).search(*pattern, invert=invert, match_prop=match_prop)
         else:
-            raise ValueError('pattern must be str')
+            raise ValueError('pattern must be str. Not {}'.format(pattern))
 
     def refresh(self):
         """
@@ -366,7 +366,6 @@ class NitroList(collections.UserList, NitroObject):
                         max_workers=workers ).map(
                             func, elements), **tqdm_args))
                     else:
-                        log.warning("You requested to show perfrom progress but config's quiet value is True, not showing tqdm load bar.")
                         returned=list(concurrent.futures.ThreadPoolExecutor(
                         max_workers=workers ).map(
                             func, elements))
@@ -381,8 +380,6 @@ class NitroList(collections.UserList, NitroObject):
             if progress==True:
                 if not self.nitro.config.quiet:
                     elements=tqdm.tqdm(elements, **tqdm_args)
-                else:
-                    log.warning("You requested to show perform progress but config's quiet value is True, not showing tqdm load bar.")
 
             for index_or_item in elements:
                 returned.append(func(index_or_item))

@@ -41,7 +41,7 @@ class NitroConfig(configparser.ConfigParser):
     For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`  
     If `.msiem` folder exists in you local directory : `./.msiem/conf.ini`  
 
-    You can setup the configuration by command line with `msiempy_setup.py` script at https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py.  
+    You can setup the configuration by command line with `msiempy_setup.py` script at https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py .  
     
 
     Arguments: 
