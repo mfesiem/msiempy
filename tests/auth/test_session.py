@@ -20,15 +20,15 @@ class T(unittest.TestCase):
     def test_invalid_session(self):
         session=msiempy.NitroSession()
         session.login()
-        session._headers['X-Xsrf-Token']=session._headers['X-Xsrf-Token']+str('abc') # corrupt the token
+        session.session.headers['X-Xsrf-Token']=session.session.headers['X-Xsrf-Token']+str('abc') # corrupt the token
         print('ESM build : '+str(session.request('build_stamp')))
-        session._headers['Cookie']=session._headers['Cookie']+str('abc') # corrupt the cokie
+        session.session.headers['Cookie']=session.session.headers['Cookie']+str('abc') # corrupt the cokie
         print('ESM build : '+str(session.request('build_stamp')))
         session.logout()
         session.login()
-        session._headers['X-Xsrf-Token']=session._headers['X-Xsrf-Token']+str('abc') # corrupt the token
+        session.session.headers['X-Xsrf-Token']=session.session.headers['X-Xsrf-Token']+str('abc') # corrupt the token
         print('ESM build : '+str(session.request('build_stamp')))
-        session._headers['Cookie']=session._headers['Cookie']+str('abc') # corrupt the cokie
+        session.session.headers['Cookie']=session.session.headers['Cookie']+str('abc') # corrupt the cokie
         print('ESM build : '+str(session.request('build_stamp')))
 
 

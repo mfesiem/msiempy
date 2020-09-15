@@ -362,7 +362,7 @@ class NitroSession():
 
     - `config` : `msiempy.core.confg.NitroConfig` object, find default config if `None`.  
 
-    See `msiempy.core.session.NitroSession.esm_request` and `msiempy.core.session.NitroSession.request` for usage.  
+    See `msiempy.core.session.NitroSession.api_request` and `msiempy.core.session.NitroSession.request` for usage.  
 
     """
     def __init__(self, config=None):
@@ -374,9 +374,14 @@ class NitroSession():
             NitroSession.__initiated__ = True
             
             #Private attributes
-            self._headers={'Content-Type': 'application/json'}
+            # self._headers={'Content-Type': 'application/json'}
             
             #Config parsing
+            self.config=None
+            """
+            `msiempy.core.config.NitroConfig` object.  
+            """
+
             if config==None:
                 self.config = NitroConfig()
             else:
@@ -392,13 +397,22 @@ class NitroSession():
 
             self.api_v = 0
             self.logged_in=False
+
             self.login_info=dict()
+            """
+            Login user infos as returned by `login` API method.
+            """
+            self.session = None
+            """ 
+            Underlying `requests.Session` object. 
+            """
 
             try :
                 requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             except : 
                 pass
+
 
     BASE_URL = 'https://{}/rs/esm/'
     """API base url: `'https://{}/rs/esm/'`"""
@@ -433,6 +447,9 @@ class NitroSession():
         userb64 = tob64(self.config.user)
         passb64 = self.config.passwd
         
+        self.session = requests.Session()
+        self.session.headers = {'Content-Type': 'application/json'}
+
         resp = self.request('login', username=userb64, password=passb64, raw=True, secure=True)
         
         if resp != None :
@@ -445,8 +462,8 @@ class NitroSession():
                 else:
                     raise NitroError('ESM Login Error: ', resp.text) from e
        
-            self._headers['Cookie'] = resp.headers.get('Set-Cookie')
-            self._headers['X-Xsrf-Token'] = resp.headers.get('Xsrf-Token')
+            self.session.headers['Cookie'] = resp.headers.get('Set-Cookie')
+            self.session.headers['X-Xsrf-Token'] = resp.headers.get('Xsrf-Token')
             
             self.user_tz_id = dict(resp.json())['tzId']
             self.logged_in = True
@@ -477,10 +494,10 @@ class NitroSession():
         self.request('logout', http='delete')
         self.logged_in=False
         self.login_info=dict()
-        self._headers={'Content-Type': 'application/json'}
+        self.session=requests.Session()
         self.user_tz_id = None
-
-    def esm_request(self, method, data=None, http='post', callback=None, raw=False, secure=False, retry=1):
+    
+    def api_request(self, method, data=None, http='post', callback=None, raw=False, secure=False, retry=1):
         """
         Handle a lower level HTTP request to ESM API endpoints.  
 
@@ -516,11 +533,11 @@ class NitroSession():
             s = NitroSession()
             s.login()
             # qryGetFilterFields 
-            s.esm_request('qryGetFilterFields')
+            s.api_request('qryGetFilterFields')
             # Get all last 24h alarms details with ESM API v2.  
-            alarms = s.esm_request('v2/alarmGetTriggeredAlarms?triggeredTimeRange=LAST_24_HOURS&status=&pageSize=500&pageNumber=1', None)
+            alarms = s.api_request('v2/alarmGetTriggeredAlarms?triggeredTimeRange=LAST_24_HOURS&status=&pageSize=500&pageNumber=1', None)
             for a in alarms:
-                a.update(s.esm_request('v2/notifyGetTriggeredNotificationDetail', {'id':a['id']}))
+                a.update(s.api_request('v2/notifyGetTriggeredNotificationDetail', {'id':a['id']}))
 
         """
 
@@ -548,11 +565,10 @@ class NitroSession():
                 http_data = json.dumps(data)
 
         try :
-            result = requests.request(
+            result = self.session.request(
                 http,
                 urllib.parse.urljoin(url.format(self.config.host), method),
                 data=http_data, 
-                headers=self._headers,
                 verify=self.config.ssl_verify,
                 timeout=self.config.timeout,
                 # Uncomment for debugging.
@@ -574,17 +590,17 @@ class NitroSession():
                         # Invalid session handler -> re-login
                         if any([match in result.text for match in ['ERROR_InvalidSession', 'ERROR_INVALID_SESSION',
                             'Not Authorized User', 'Invalid Session', 'Username and password cannot be null']]):
-                            error = NitroError('Authentication error with method ({}) and data : {} logging in and retrying esm_request(). From requests.HTTPError {} {}'.format(
+                            error = NitroError('Authentication error with method ({}) and data : {} logging in and retrying api_request(). From requests.HTTPError {} {}'.format(
                                 method, data, e, result.text))
                             log.warning(error)
                             self.logged_in=False
                             self.login()
                         
-                        else: log.warning('An HTTP error occured ({} {}), retrying esm_request()'.format(e, result.text))
+                        else: log.warning('An HTTP error occured ({} {}), retrying api_request()'.format(e, result.text))
                         
                         # Retry request
                         time.sleep(1)
-                        return self.esm_request(method, data, http, callback, raw, secure, retry=retry-1)
+                        return self.api_request(method, data, http, callback, raw, secure, retry=retry-1)
                     
                     else :
                         error = NitroError('Error with method ({}) and data : {}. From requests.HTTPError {} {}'.format(
@@ -617,9 +633,10 @@ class NitroSession():
         except requests.exceptions.TooManyRedirects as e :
             log.error(e)
             raise
-        
-    # def _request_http_error_handler(self, error, method, data, http, callback, raw, secure, retry):
-    #     pass
+    
+    def esm_request(self, *args, **kwargs):
+        """Same as `msiempy.core.session.NitroSession.api_request`"""
+        return self.api_request(*args, **kwargs)
 
     def version(self):
         """
@@ -670,7 +687,7 @@ class NitroSession():
         """
         Interface to make ESM API calls more simple by interpolating `**kwargs` arguments with `msiempy.core.session.NitroSession.PARAMS` docstrings and build a valid datastructure for the HTTP data.  
 
-        Then call the `msiempy.core.session.NitroSession.esm_request` method with the built data.  
+        Then call the `msiempy.core.session.NitroSession.api_request` method with the built data.  
 
         Also handles auto-login.  
 
@@ -704,9 +721,10 @@ class NitroSession():
             for a in alarms:
                 a.update(s.request('get_alarm_details_new', id=a['id']))
 
-        See all requests on the documentation webpage:  
-        https://mfesiem.github.io/docs/test/msiempy/core/session.html#msiempy.core.session.NitroSession.request  
+        See all possible requests on the documentation webpage:   
+        https://mfesiem.github.io/docs/msiempy/core/session.html#msiempy.core.session.NitroSession.request  
         """
+        
         log.debug("Calling nitro request : {} kwargs={}".format(
             str(request), '***' if 'secure' in kwargs and kwargs['secure']==True else str(kwargs)))
 
@@ -729,12 +747,12 @@ class NitroSession():
             self.login()
     
         # Dynamically checking the esm_request arguments so additionnal parameters can be passed.  
-        esm_request_args = inspect.getfullargspec(self.esm_request)[0]
+        esm_request_args = inspect.getfullargspec(self.api_request)[0]
         params={}
         for arg in kwargs :
             if arg in esm_request_args:
                 params[arg]=kwargs[arg]
-        return self.esm_request(method=method, data=data, **params)
+        return self.api_request(method=method, data=data, **params)
 
     @staticmethod
     def _init_log(verbose=False, quiet=False, logfile=None):

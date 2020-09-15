@@ -1,4 +1,5 @@
 import msiempy
+from msiempy.core import NitroList
 import msiempy.alarm
 import unittest
 import pprint
@@ -52,7 +53,7 @@ class T(unittest.TestCase):
         for alarm in alarms :
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
             self.assertEqual(type(alarm['events'][0]), msiempy.event.Event, 'Type error')
-            self.assertEqual(type(alarm['events']), msiempy.NitroList, 'Type error')
+            self.assertEqual(type(alarm['events']), NitroList, 'Type error')
 
             self.assertRegex(str(alarm['severity']), '50|80|85|90|95|100', 'Filtering alarms is not working')
 

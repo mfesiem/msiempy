@@ -20,8 +20,9 @@ This python module is tested on windows, ubuntu and macos.
 - Single stable session handler and built-in asynchronous jobs
 
 ### Known module implementations
-- esm_healthmon : [Monitors ESM operations (CLI)](https://github.com/andywalden/esm_healthmon)
-- msiem : [Query and manage ESM alarms (CLI)](https://github.com/tristanlatr/msiem)
+- esm_healthmon : [Monitors ESM operations)](https://github.com/andywalden/esm_healthmon)
+- msiem : [Query and manage ESM alarms](https://github.com/tristanlatr/msiem)
+- track-host: [Rapidly request event logs and track a workstation](https://github.com/mfesiem/track-host) 
 - See [samples folder](https://github.com/mfesiem/msiempy/tree/master/samples) for other implementation examples and scripts !
 
 ### Documentation and links
@@ -82,25 +83,7 @@ See [`examples.py`](https://github.com/mfesiem/msiempy/tree/master/samples/examp
 For further informations, please visit the [module documentation](https://mfesiem.github.io/docs/msiempy/index.html) ! :)  
 
 #### Alarm
-Print all `unacknowledged` alarms of the year who's name match `'IPS alarm'` and triggering event message match `'Wordpress'`. Then print all of their JSON representations.
-
-```python
-from msiempy.alarm import AlarmManager
-
-alarms=AlarmManager(
-        time_range='CURRENT_YEAR',
-        status_filter='unacknowledged',
-        filters=[
-                ('alarmName', 'IPS alarm')],
-        event_filters=[
-                ('ruleMessage','Wordpress')],
-        page_size=400)
-
-alarms.load_data()
-print(alarms)
-print(alarms.json)
-```
-
+Print all `unacknowledged` alarms of the year who's name match `'IPS alarm'` and triggering event message match `'Wordpress'`. Then print all of their JSON representations.  
 
 Print and acknowledge some alarms based on filters.  
 ```python
@@ -212,7 +195,7 @@ print(events.get_text(fields=['AlertID','LastTime','SrcIP', 'Rule.msg']))
 
 Setting the note of an event, retreiving the genuine event from IPSIDAlertID and checking the note is well set. See [`add_wpsan_note.py`](https://github.com/mfesiem/msiempy/blob/master/samples/add_wpsan_note.py) script to see more how to add note to event that triggered alarms !  
 ```python
-from  msiempy.event import EventManager
+from  msiempy.event import EventManager, Event
 events = EventManager(
         time_range='CURRENT_YEAR',
         limit=2
@@ -221,7 +204,7 @@ events.load_data()
 
 for event in events :
         event.set_note("Test note")
-        genuine_event = msiempy.event.Event(id=event['IPSIDAlertID'])
+        genuine_event = Event(id=event['IPSIDAlertID']) # Event data will be loaded with ipsGetAlertData
         assert "Test note" in genuine_event['note'], "The note doesn't seem to have been added to the event \n {}".format(event)
 ```
 
@@ -270,6 +253,21 @@ watchlists=WatchlistManager()
 print(watchlists)
 ```
 See: [WatchlistManager](https://mfesiem.github.io/docs/msiempy/watchlist.html#msiempy.watchlist.WatchlistManager), [Watchlist](https://mfesiem.github.io/docs/msiempy/watchlist.html#msiempy.watchlist.Watchlist)
+
+#### Use the lower level Session oject
+
+You can choose not to use wrapper ojects like `AlarmManager` and use directly the Session object to make any API calls you want with any data. The Session object will handle intermittent SIEM errors.  
+
+```python
+from msiempy import NitroSession
+s = NitroSession()
+s.login()
+# Get all last 24h alarms details with ESM API v2.  
+alarms = s.api_request('v2/alarmGetTriggeredAlarms?triggeredTimeRange=LAST_24_HOURS&status=&pageSize=500&pageNumber=1')
+for a in alarms:
+    a.update(s.api_request('v2/notifyGetTriggeredNotificationDetail', {'id':a['id']}))
+```
+See [NitroSession](https://mfesiem.github.io/docs/test/msiempy/core/session.html#msiempy.core.session.NitroSession)
 
 ### Questions ?
 If you have any questions, please create a new issue.

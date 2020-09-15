@@ -294,11 +294,13 @@ class ESM(NitroObject):
                     for mod in ven['models']]
 
 class DevTree(NitroList):
-    """ESM device tree interface.  
+    """
+    List-Like object.  
+    ESM device tree interface.  
     
     - `__contains__` method returns:  (`bool`) `True/None` the name or IP matches the provided search term.
     
-    Usage exemple:
+    Exemple:
     ```
     ```
 
@@ -1043,7 +1045,9 @@ class DevTree(NitroList):
         return d
 
 class DataSource(NitroDict):
-    """DataSource class  
+    """
+    Dict-Like object.  
+    DataSource class.    
         
     Best instantiated from DevTree():
     ```

@@ -16,8 +16,6 @@ The pythonic way to deal with McAfee SIEM API.
 
 # "Public" API imports 
 from .core import (
-    NitroList,
-    NitroDict,
     NitroConfig,
     NitroError,
     NitroSession

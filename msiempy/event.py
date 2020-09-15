@@ -14,8 +14,10 @@ from .core import NitroDict, NitroError, FilteredQueryList
 from .core.utils import timerange_gettimes, parse_query_result, format_fields_for_query, divide_times, parse_timedelta
 
 class EventManager(FilteredQueryList):
-    """Interface to query and manage events.  
-    Inherits from `msiempy.core.query.FilteredQueryList`.
+    """
+    List-Like object.  
+    Interface to query and manage events.  
+    Inherits from `msiempy.core.query.FilteredQueryList`.  
 
     Arguments:  
 
@@ -33,9 +35,9 @@ class EventManager(FilteredQueryList):
     #Constants
     #TODO Try grouped queries !
     TYPE='EVENT'
-    """EVENT: Flow query or other are not implemented"""
+    """`EVENT`: Flow query or other are not implemented"""
     GROUPTYPE='NO_GROUP'
-    """NO_GROUP: Group query is not implemented"""
+    """`NO_GROUP`: Grouped query is not implemented"""
     POSSBILE_ROW_ORDER=[
             'ASCENDING',
             'DESCENDING'
@@ -86,7 +88,7 @@ class EventManager(FilteredQueryList):
     def order(self):
         """
         Orders representing the what the SIEM is expecting as the 'order'.
-        The `order` must be tuple (direction, field).
+        The `order` must be `tuple (direction, field)`.
         """
         return((self._order_direction, self._order_field))
 
@@ -115,8 +117,8 @@ class EventManager(FilteredQueryList):
 
     def add_filter(self, afilter):
         """
-        Concrete description of the `msiempy.core.query.FilteredQueryList` method.
-        It can take a `tuple(fiels, [values])`,  `msiempy.event.GroupFilter` or `msiempy.event.FieldFilter` or a `dict`.  
+        Add a filter to the query.  
+        Argument must be a `tuple(fiels, [values])`,  `msiempy.event.GroupFilter`, `msiempy.event.FieldFilter`.  
         """
         if isinstance(afilter, tuple) :
             self._filters.append(FieldFilter(afilter[0], afilter[1]))
@@ -139,16 +141,10 @@ class EventManager(FilteredQueryList):
             "values": [{'type':'EsmBasicValue', 'value':'0.0.0.0/0'}]
             }]
 
-    def get_possible_fields(self):
-        """
-        Indicate a list of possible fields that you can request in a query.
-        The list is loaded from the SIEM.
-        """
-        return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
 
     def qry_load_data(self, retry=1, wait_timeout_sec=120):
         """
-        Concrete helper method to execute the query and load the data :  
+        Helper method to execute the query and load the data :  
             -> Submit the query  
             -> Wait the query to be executed  
             -> Get and parse the events  
@@ -159,7 +155,7 @@ class EventManager(FilteredQueryList):
             Retries only when 'ResultUnavailable','UnknownList' or 'JobEngine_GetQueryResults_QueryNotFound_Unrecoverable' errors.  
         - `wait_timeout_sec` (`int`): wait timeout in seconds
 
-        Returns : `tuple` : (( `msiempy.event.EventManager`, Status of the query (completed?) `True/False` ))
+        Returns : `tuple` : (( `msiempy.event.EventManager`, Query completed? `True/False` ))
 
         Raises `msiempy.core.session.NitroError` if any unhandled errors.  
         Raises `TimeoutError` if wait_timeout_sec counter gets to 0.  
@@ -367,15 +363,24 @@ class EventManager(FilteredQueryList):
         else :
             return self.__parent__.__root_parent__
 
+    def get_possible_fields(self):
+        """
+        Return the list of possible fields that you can request in a query.  
+        The list is loaded from the SIEM.  
+        """
+        return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
+
     def get_possible_filters(self):
         """
-        Return all the fields that you can filter on in a query.
+        Return the list of possible fields that you can use as a filter in a query.  
+        The list is loaded from the SIEM.  
         """
         return(self.nitro.request('get_possible_filters'))
           
 class Event(NitroDict):
-    """        
-    Dictionary keys :  
+    """
+    Dict-Like object.          
+    Minimal keys :  
 
     - `Rule.msg`  
     - `Alert.LastTime`  
@@ -386,12 +391,20 @@ class Event(NitroDict):
     `msiempy.event.Event.REGULAR_EVENT_FIELDS` offer a base list of regular fields that may be useful.
     See msiempy/static JSON files to browse complete list : https://github.com/mfesiem/msiempy/blob/master/static/all_fields.json  
     You can also use this script to dinamically print the available fields and filters : https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py  
-    Prefixes `Alert.`, `Rule.`, etc are optionnal, prefix autocompletion is computed in any case within the `__getitem__` method ;)  
 
     Arguments:
 
     - `adict`: Event parameters  
     - `id`: The event `IPSIDAlertID` to instanciate. Will load informations
+
+    Best effort to match SIEM returned fields with initially requested fields.  Prefixes `Alert.`, `Rule.`, etc are optionnal, autocompletion is computed in any case.    
+    `__getitem__`, `__contains__`, `__setitem__` and `__delitem__` method have been rewrote in order to offer more straight-forward `dict` usage.
+    For exemple, if the SIEM will return dicts with keys like  `Alert.65613`, `Alert.BIN(7)` or `Alert.SrcIP`: you'll be able to get `Event` keys with your initial queried fields like `Web_Doamin`, `UserIDSrc` or `SrcIP`. (You can still use internal keys if you want). 
+
+    Exemple:
+
+        
+
     """
    
     FIELDS_TABLES=[
@@ -749,6 +762,9 @@ class Event(NitroDict):
     'Alert.WriteTime': 'WriteTime',
     'Alert.ZoneDst': 'ZoneDst',
     'Alert.ZoneSrc': 'ZoneSrc'}
+    """
+    Fields name mapping.  
+    """
 
     # NICKNAME TO INTERNAL NAMES
     SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME={'ASNGeoDst': 'Alert.ASNGeoDst',
@@ -1051,9 +1067,7 @@ class Event(NitroDict):
     'Zone_ZoneDst.Name': 'Zone_ZoneDst.Name',  # This is useless
     'Zone_ZoneSrc.Name': 'Zone_ZoneSrc.Name'}  # This is useless
     """
-    Best effort to match SIEM returned fields with initial.
-    __getitem__, __contains__, __setitem__ and __delitem__ method have been rewrote in order to offer more comprehensive dict usage.
-    For exemple, the SIEM will return dicts with keys like  `Alert.65613`, `Alert.BIN(7)` or `Alert.SrcIP`, you'll be able to use `Event` dictionnary object with your initial queried fields like `Web_Doamin`, `UserIDSrc` or `SrcIP`. 
+    Fields name mapping (reversed).  
     """
     def _find_key(self, key):
         if collections.UserDict.__contains__(self, key): 
@@ -1079,7 +1093,6 @@ class Event(NitroDict):
     def __setitem__(self, key, value):
         try: return collections.UserDict.__setitem__(self, self._find_key(key), value)
         except KeyError: return collections.UserDict.__setitem__(self, key, value)
-    
 
 
     def clear_notes(self):
@@ -1189,7 +1202,7 @@ class FieldFilter(_QueryFilter):
     This class is automatically used when instanciating `EventManager` objects to dump filters in the right `dict` format if tuples are gave as the `filters` argument like:  
 
     ```
-    e = EventManager(time_range='LAST_MINUTE', filters=[ ('SrcIP', ['10.5.0..0/16']) ])
+    e = EventManager(time_range='LAST_MINUTE', filters=[ ('SrcIP', ['10.5.0.0/16']) ])
     ```
 
     Default operator is `"IN"`.  
@@ -1462,6 +1475,7 @@ class FieldFilter(_QueryFilter):
         'ASNGeoSrc',
         'DstMac',
         'LastTime']
+    """ List fo documented filter names, show a warning if trying to filter on a unknown filter name """
 
     def __init__(self, name, values, operator='IN') :
         super().__init__()
