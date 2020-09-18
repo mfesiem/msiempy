@@ -41,12 +41,8 @@ class FilteredQueryList(NitroList):
             del kwargs['load_async']
 
         super().__init__(*arg, **kwargs)
-
         
         self.not_completed=False
-
-        #self.nitro.config.default_rows #nb rows per request : eq limit/page_size = requests_size
-        #self.nitro.config.max_rows #max nb rows 
 
         #Declaring attributes and types
         self._time_range=str()

@@ -77,32 +77,29 @@ while getopts ":hp:" arg; do
 
             # Cloning or pulling changes from the documentation
             if [[ ! -d mfesiem.github.io ]]; then
-                echo "[RUNNING] git clone https://github.com/mfesiem/mfesiem.github.io"
                 git clone https://github.com/mfesiem/mfesiem.github.io
             else
-                echo "[RUNNING] cd mfesiem.github.io && git pull -v && cd .."
                 cd mfesiem.github.io && git pull --quiet && cd ..
             fi
             
             # Generating documentation
-            echo "[RUNNING] pdoc3 msiempy --output-dir ./mfesiem.github.io/docs --html --force --config ..."
+            echo "[RUNNING] pdoc"
             rm -rf ./${docs_folder}/msiempy/
-            pdoc3 msiempy --output-dir ./${docs_folder} --html --force \
-                --config sort_identifiers=False \
-                --config show_type_annotations=True
+            pdoc3 msiempy --output-dir ./${docs_folder} --html --force --template-dir ./.pdoc_templates
+
 
             mv ./classes.png ./${docs_folder}/msiempy
             mv ./packages.png ./${docs_folder}/msiempy
             
             # Pushing docs
-            echo "[RUNNING] cd mfesiem.github.io && git add . && git commit -m \"Generate ${keyword} docs $(date)\" && git push origin master"
+            echo "[RUNNING] pushing docs"
             cd mfesiem.github.io && git add . && git commit -m "Generate ${keyword} docs $(date)" --quiet && git push origin master --quiet
             cd ..
             
             echo "[SUCCESS] Documentation at : https://${docs_folder}/msiempy/"
 
             # Building module
-            echo "[RUNNING] python3 setup.py build check sdist bdist_wheel"
+            echo "[RUNNING] building"
             rm -rf dist
             python3 setup.py --quiet build check sdist bdist_wheel
             

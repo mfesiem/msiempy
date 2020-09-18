@@ -187,8 +187,8 @@ class T(unittest.TestCase):
             message="Just loading details of the first 3 alarms of the list")
 
         for alarm in detailed :
-            events = alarm.get('events')
-            self.assertIn(type(events), [type(str()), type(None)] )
+            events = alarm.get('events', 0) # Events should not be zero
+            self.assertIn(type(events), [str, type(None), list] , msg="No events loaded for the alarm after load_details() call")
 
         detailed_w_events = alarms.perform(msiempy.alarm.Alarm.load_events, 
             data=[alarms[1]], 
@@ -211,7 +211,7 @@ class T(unittest.TestCase):
 
         alarms.load_data()
         print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
-        [ self.assertTrue(alarm['acknowledgedDate'] == None) for alarm in alarms ]
+        [ self.assertTrue(alarm['acknowledgedDate'] == None, msg="acknowledgedDate is not None for an unacknowledged alarm, it's {}".format(alarm['acknowledgedDate'])) for alarm in alarms ]
 
         # alarms.nitro._init_log(verbose=True)
 

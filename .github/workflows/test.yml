@@ -1,5 +1,8 @@
 name: test
-on: pull_request
+on:
+  schedule:
+    # Run complete tests every month
+    - cron:  '0 0 1 * *'
 jobs: 
   test:
     name: ${{ matrix.os }} py${{ matrix.python-version }}

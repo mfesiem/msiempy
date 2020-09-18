@@ -127,6 +127,15 @@ class NitroDict(collections.UserDict, NitroObject):
         """
         pass
 
+    @abc.abstractmethod
+    def get_id(self):
+        """
+        Return the object ID.  
+        Abstract definition.  
+        """
+
+        pass
+
 class NitroList(collections.UserList, NitroObject):
     """
     Base class for list objects.  

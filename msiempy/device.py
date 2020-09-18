@@ -1047,9 +1047,8 @@ class DevTree(NitroList):
 class DataSource(NitroDict):
     """
     Dict-Like object.  
-    DataSource class.    
         
-    Best instantiated from DevTree():
+    DataSources are best instantiated from DevTree():
     ```
     >>> dt = DevTree()
     >>> ds = dt[25]
@@ -1161,3 +1160,9 @@ class DataSource(NitroDict):
                     # The value is called value and the value is the value.
                     new_dev[d.get('key')] = d.get('value')
         return new_dev
+
+    def get_id(self):
+        """
+        Returns the Datasource ID.  
+        """
+        return self['ds_id']

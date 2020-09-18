@@ -177,3 +177,9 @@ class Watchlist(NitroDict):
             raise
         data = self.nitro.get_internal_file(file)
         self.data['values'] = ''.join(data).split('\n')
+
+    def get_id(self):
+        """
+        Returns the Watchlist ID.  
+        """
+        return self['id']

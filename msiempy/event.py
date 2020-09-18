@@ -10,8 +10,13 @@ import copy
 from datetime import datetime, timedelta
 log = logging.getLogger('msiempy')
 
+__pdoc__={}
+
 from .core import NitroDict, NitroError, FilteredQueryList
 from .core.utils import timerange_gettimes, parse_query_result, format_fields_for_query, divide_times, parse_timedelta
+
+__pdoc__['EventManager.fields']="List of query fields"
+__pdoc__['EventManager.limit']="Max number of rows per query"
 
 class EventManager(FilteredQueryList):
     """
@@ -27,16 +32,16 @@ class EventManager(FilteredQueryList):
     - `order` : `tuple ((direction, field))`. Direction can be 'ASCENDING' or 'DESCENDING'.
     - `limit` : max number of rows per query.
     - `filters` : list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter` if you wish to use advanced filtering.
-    - `time_range` : Query time range. String representation of a time range.  
-    - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
-    - `end_time` : Query endding time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
+    - `time_range` : Query time range. String representation of a time range. Not need to specify 'CUSTOM' if `start_time` and `end_time` are set.  
+    - `start_time` : Query start time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
+    - `end_time` : Query end time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
     """ 
 
     #Constants
     #TODO Try grouped queries !
-    TYPE='EVENT'
+    _TYPE='EVENT'
     """`EVENT`: Flow query or other are not implemented"""
-    GROUPTYPE='NO_GROUP'
+    _GROUPTYPE='NO_GROUP'
     """`NO_GROUP`: Grouped query is not implemented"""
     POSSBILE_ROW_ORDER=[
             'ASCENDING',
@@ -65,7 +70,8 @@ class EventManager(FilteredQueryList):
                     uniquekeys.add(Event.SIEM_FIELDS_MAP_INTERNAL_NAME_TO_NICKNAME[k])
                 else: uniquekeys.add(k)
             self.fields=list(uniquekeys)
-        else: self.fields=Event.DEFAULTS_EVENT_FIELDS
+        else: 
+            self.fields=Event.DEFAULTS_EVENT_FIELDS
         #log.debug('{}\nFIELDS : {}'.format(locals(), self.fields))
 
         #Setting limit according to config or limit argument
@@ -87,8 +93,8 @@ class EventManager(FilteredQueryList):
     @property
     def order(self):
         """
-        Orders representing the what the SIEM is expecting as the 'order'.
-        The `order` must be `tuple (direction, field)`.
+        The `order` is a `tuple (direction, field)`.  
+        Default value is `(DESCENDING, LastTime)`.  
         """
         return((self._order_direction, self._order_field))
 
@@ -118,7 +124,7 @@ class EventManager(FilteredQueryList):
     def add_filter(self, afilter):
         """
         Add a filter to the query.  
-        Argument must be a `tuple(fiels, [values])`,  `msiempy.event.GroupFilter`, `msiempy.event.FieldFilter`.  
+        Argument must be a `tuple(field, [values])` or `(field, value)` or `msiempy.event.GroupFilter` or `msiempy.event.FieldFilter`.  
         """
         if isinstance(afilter, tuple) :
             self._filters.append(FieldFilter(afilter[0], afilter[1]))
@@ -127,7 +133,7 @@ class EventManager(FilteredQueryList):
             self._filters.append(afilter)
 
         else :
-            raise NitroError("Sorry the filters must be either a tuple(fiels, [values]) a GroupFilter, a FieldFilter or a dict, not a {}: {}".format(type(afilter), afilter))
+            raise TypeError("Sorry, filters must be either a tuple a GroupFilter, a FieldFilter or a dict. Not {}".format(afilter))
 
     def clear_filters(self):
         """
@@ -206,16 +212,15 @@ class EventManager(FilteredQueryList):
             #     or isinstance(error, TimeoutError)) ):
             if retry > 0:
                 log.warning('Retring qry_load_data() after error: '+str(error))
-                time.sleep(0.2)
+                time.sleep(1)
                 return self.qry_load_data(retry=retry-1)
             else: raise
 
-        events=EventManager(alist=events_raw)
-        self.data=events
-        return((events,len(events)<self.limit))
+        return((events_raw,len(events_raw)<self.limit))
 
     def load_data(self, workers=10, slots=10, delta=None, max_query_depth=0, **kwargs):
-        """Load the data from the SIEM into the manager list.  
+        """
+        Load the data into the list.  
         Split the query in defferents time slots if the query apprears not to be completed.  
         Wraps around `msiempy.event.EventManager.qry_load_data`.    
 
@@ -228,12 +233,11 @@ class EventManager(FilteredQueryList):
             divided according to the number of slots  
         - `delta` : exemple : '6h30m', the query will be firstly divided in chuncks according to the time delta read
             with dateutil.  
-        - `max_query_depth` : maximum number of supplement reccursions of division of the query times
-        Meaning, if EventManager query limit=500, slots=5 and max_query_depth=3, then the maximum capacity of 
-        the list is (500*5)*(500*5)*(500*5) = 15625000000.  Only works for certain time ranges.  
+        - `max_query_depth` : maximum number of reccursive divisions the query before to . 
+        Meaning, if EventManager query `limit=500`, `slots=5 `and `max_query_depth=3`, then the maximum capacity of 
+        the list is `(500*5)*(500*5)*(500*5)` = `15625000000`.  Only works for certain time ranges.  
         - `retry` (`int`): number of time the query can be failed and retried
         - `wait_timeout_sec` (`int`): wait timeout in seconds
-
 
         Returns : `msiempy.event.EventManager`
         """
@@ -293,8 +297,9 @@ class EventManager(FilteredQueryList):
                 if not self.__root_parent__.not_completed :
                     log.warning("The query is not complete... Try to divide in more slots or increase the limit")
                     self.__root_parent__.not_completed=True
-
-        self.data=items
+        
+        events=[Event(adict=item) for item in items]
+        self.data=events
         return(self)
 
     def _wait_for(self, resultID, wait_timeout_sec, sleep_time=0.2):
@@ -308,10 +313,8 @@ class EventManager(FilteredQueryList):
         Raises: 
 
         - `msiempy.NitroError`: 'ResultUnavailable' error some times...
-        - `msiempy.NitroError`: 'Query wait timeout'
+        - `TimeoutError`: Query wait timeout
         """
-        # time_out=parse_timedelta(wait_timeout).total_seconds()
-        # retry = wait_timeout_sec / sleep_time
 
         begin=datetime.now()
         timeout_delta=timedelta(seconds=wait_timeout_sec)
@@ -324,7 +327,6 @@ class EventManager(FilteredQueryList):
                 return True
             else :
                 time.sleep(sleep_time)
-            # retry=retry-1
         raise TimeoutError("Query wait timeout. resultID={}, sleep_time={}, wait_timeout_sec={}".format(
             resultID, sleep_time, wait_timeout_sec))
 
@@ -368,7 +370,7 @@ class EventManager(FilteredQueryList):
         Return the list of possible fields that you can request in a query.  
         The list is loaded from the SIEM.  
         """
-        return self.nitro.request('get_possible_fields', type=self.TYPE, groupType=self.GROUPTYPE)
+        return self.nitro.request('get_possible_fields', type=self._TYPE, groupType=self._GROUPTYPE)
 
     def get_possible_filters(self):
         """
@@ -376,16 +378,55 @@ class EventManager(FilteredQueryList):
         The list is loaded from the SIEM.  
         """
         return(self.nitro.request('get_possible_filters'))
-          
+
 class Event(NitroDict):
     """
-    Dict-Like object.          
-    Minimal keys :  
+    Dict-Like object.   
+
+    Event interface.
+    This object handles events objects created with `msiempy.event.EventManager` (From the `qryGetResults` api call) 
+        and events objects created with `msiempy.alarm.AlarmManager` (From `ipsGetAlertData` api call or `notifyGetTriggeredNotificationDetail` depending of the value of `load_data(events_details=True/False)` ) .  
+
+    Common keys for alert data events (When loading from ID or with `AlarmManager.load_data(events_details=False)` :  
+
+    - `ruleName`
+    - `srcIp`
+    - `destIp`
+    - `protocol`
+    - `lastTime`
+    - `subtype`
+    - `destPort`
+    - `destMac`
+    - `srcMac`
+    - `srcPort`
+    - `deviceName`
+    - `sigId`
+    - `normId`
+    - `srcUser`
+    - `destUser`
+    - `normMessage`
+    - `normDesc`
+    - `host`
+    - `domain`
+    - `ipsId`
+
+    Common keys for triggered alarms events (When `AlarmManager.load_data(events_details=False)`):  
+    - `ruleMessage`  
+    - `eventId`  
+    - `severity`  
+    - `eventCount`  
+    - `sourceIp`  
+    - `destIp`  
+    - `protocol`  
+    - `lastTime`  
+    - `eventSubType`  
+
+    Common keys for query events (When using `EventManager`):  
 
     - `Rule.msg`  
     - `Alert.LastTime`  
     - `Alert.IPSIDAlertID`  
-    - and others...  
+    - and any other...  
 
     You can request more fields by passing a list of fields to the `msiempy.event.EventManager` object. 
     `msiempy.event.Event.REGULAR_EVENT_FIELDS` offer a base list of regular fields that may be useful.
@@ -397,11 +438,12 @@ class Event(NitroDict):
     - `adict`: Event parameters  
     - `id`: The event `IPSIDAlertID` to instanciate. Will load informations
 
-    Best effort to match SIEM returned fields with initially requested fields.  Prefixes `Alert.`, `Rule.`, etc are optionnal, autocompletion is computed in any case.    
+    **For query events**: We tried our best effort to match SIEM returned fields with initially requested fields.  Prefixes `Alert.`, `Rule.`, etc are optionnal, autocompletion is computed in any case.    
     `__getitem__`, `__contains__`, `__setitem__` and `__delitem__` method have been rewrote in order to offer more straight-forward `dict` usage.
-    For exemple, if the SIEM will return dicts with keys like  `Alert.65613`, `Alert.BIN(7)` or `Alert.SrcIP`: you'll be able to get `Event` keys with your initial queried fields like `Web_Doamin`, `UserIDSrc` or `SrcIP`. (You can still use internal keys if you want). 
+    For exemple, if the SIEM returns results with keys like  `Alert.65613`, `Alert.BIN(7)` or `Alert.SrcIP`: you'll be able to use `Event` dict with your initial 
+    queried keys like `Event['Web_Doamin'] `, `Event['UserIDSrc']` or `Event['SrcIP']`. (You can still use internal keys if you want).   
 
-    Exemple:
+    Exemple:  
 
         
 
@@ -447,7 +489,7 @@ class Event(NitroDict):
     """
 
     # Minimal default query fields
-    DEFAULTS_EVENT_FIELDS=["Rule.msg", "LastTime","IPSIDAlertID"]
+    DEFAULTS_EVENT_FIELDS=["Rule.msg", "LastTime", "IPSIDAlertID"]
     """Always present when using `msiempy.event.EventManager` querying :  
         `Rule.msg`  
         `Alert.LastTime`  
@@ -469,19 +511,21 @@ class Event(NitroDict):
         "Alert.DSIDSigID",
         "Alert.IPSIDAlertID"]
     """
-        `Rule.msg`  
-        `Alert.SrcIP`  
-        `Alert.DstIP`   
-        `Alert.SrcMac`  
-        `Alert.DstMac`  
-        `Rule.NormID`  
-        `HostID`  
-        `UserIDSrc`  
-        `ObjectID`  
-        `Alert.Severity`  
-        `Alert.LastTime`  
-        `Alert.DSIDSigID`  
-        `Alert.IPSIDAlertID` 
+    List of regular event fields.  
+
+    `Rule.msg`  
+    `Alert.SrcIP`  
+    `Alert.DstIP`   
+    `Alert.SrcMac`  
+    `Alert.DstMac`  
+    `Rule.NormID`  
+    `HostID`  
+    `UserIDSrc`  
+    `ObjectID`  
+    `Alert.Severity`  
+    `Alert.LastTime`  
+    `Alert.DSIDSigID`  
+    `Alert.IPSIDAlertID` 
     """
     
     SIEM_FIELDS_MAP_INTERNAL_NAME_TO_NICKNAME = {
@@ -1072,7 +1116,8 @@ class Event(NitroDict):
     def _find_key(self, key):
         if collections.UserDict.__contains__(self, key): 
             return key
-        if key in self.SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME.keys() and collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME[key]): 
+        if ( key in self.SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME.keys() and 
+            collections.UserDict.__contains__(self, self.SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME[key]) ): 
             return self.SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME[key]
 
         # Loop thought FIELDS_TABLES and try with table prefix
@@ -1094,6 +1139,18 @@ class Event(NitroDict):
         try: return collections.UserDict.__setitem__(self, self._find_key(key), value)
         except KeyError: return collections.UserDict.__setitem__(self, key, value)
 
+    def get_id(self):
+        """
+        Get the event ID.  
+        Try to return `e['Alert.IPSIDAlertID']` or e['eventId']` or concatenate `e['ipsId']['id']` and `e['alertId']` depending of the Event dictionnary keys.  
+        """
+        the_id = ( self.data["Alert.IPSIDAlertID"] if ( "Alert.IPSIDAlertID" in self.data )
+            else str(self.data['ipsId']['id'])+'|'+str(self.data["alertId"]) if ( "alertId" in self.data )
+            else self.data["eventId"] if ( "eventId" in self.data ) else None )
+        if the_id:
+            return the_id
+        else:
+            return None
 
     def clear_notes(self):
         """
@@ -1105,8 +1162,8 @@ class Event(NitroDict):
         """
         Set the event's note. Desctructive action.
         """
-        the_id = self.data["Alert.IPSIDAlertID"] if "Alert.IPSIDAlertID" in self.data else str(self.data['ipsId']['id'])+'|'+str(self.data["alertId"]) if "alertId" in self.data else None
-
+        the_id = self.get_id()
+        
         if isinstance(the_id, str):
 
             if len(note) >= 4000:
@@ -1124,7 +1181,7 @@ class Event(NitroDict):
                 id=the_id,
                 note=note)
         else :
-            log.error("Couldn't set event's note, the event ID hasn't been found.")
+            log.error("Couldn't set event's note, the event ID hasn't been found. Event: {}".format(self))
         
     def data_from_id(self, id, use_query=False, extra_fields=[]):
         """
@@ -1133,7 +1190,8 @@ class Event(NitroDict):
         Arguments:   
 
         - `id` : The event ID. (i.e. : `144128388087414784|747122896`)  
-        - `use_query` : Uses the query module to retreive common event data. Only works with SIEM >=11.2.x.  
+        - `use_query` : Uses the query module to retreive common event data. Only works with SIEM 11.2 or greater.    
+        Default behaviour will call `ipsGetAlertData` to retreive the complete event definition.  
         - `extra_fields` : Only when `use_query=True`. Additionnal event fields to load in the query.  
         """
         
@@ -1164,11 +1222,12 @@ class Event(NitroDict):
     def refresh(self): 
         """Re-load event's data"""
         if 'Alert.IPSIDAlertID' in self.data.keys() :
+            # ensure to re-use the query module if that's the case
             self.data.update(self.data_from_id(self.data['Alert.IPSIDAlertID'], 
                 use_query=True, extra_fields=self.data.keys()))
         else :
-            id = '|'.join([str(self.data['ipsId']['id']), str(self.data['alertId'])])
-            self.data.update(self.data_from_id(id))
+            the_id = self.get_id()
+            self.data.update(self.data_from_id(the_id))
    
 class _QueryFilter(collections.UserDict): 
     """Base class for all SIEM query objects in order to dump the filter as dict.
@@ -1194,7 +1253,7 @@ class GroupFilter(_QueryFilter):
             "filters": [dict(f) for f in filters],
             "logic":logic
             }
-        
+
 class FieldFilter(_QueryFilter):
     """
     Based on EsmFieldFilter SIEM api doc.  
@@ -1486,7 +1545,11 @@ class FieldFilter(_QueryFilter):
         
         self.operator = operator
         self.values = values
+
         self.name = name
+        """
+        Name of the field
+        """
 
         self.data={
             "type": "EsmFieldFilter",
@@ -1497,7 +1560,7 @@ class FieldFilter(_QueryFilter):
         
         # check the name against the list of possible filters and log warning if not present.  
         if name not in FieldFilter.DOCUMENTED_FILTERS :
-            log.warning("You're using an undocumented filter name: '{name}'.  ".format(name=name, filter=self.data))
+            log.warning("You're using an undocumented filter name: '{name}'.  ".format(name=name))
     
     POSSIBLE_OPERATORS=['IN',
         'NOT_IN',
@@ -1525,8 +1588,8 @@ class FieldFilter(_QueryFilter):
 
     @property
     def operator(self):
-        """Field operator.  
-        Setter check the value against the list of possible operators and trow `AttributeError` if not present.
+        """Filter operator.  
+        Throws `AttributeError` if trying to set an unknown operator.  
         """
         return (self._operator)
     
@@ -1577,11 +1640,14 @@ class FieldFilter(_QueryFilter):
         
     def add_value(self, type=None, **kwargs):
         """
-        Add a new value to the field filter.  
+        Add a new value to the filter.  
         
         Arguments (`**kwargs` depends on the value `type`):  
 
         - `type` (`str`) : Type of the value    
+
+        Dynamic arguments:  
+        
         - `value` (`str`) : If `type` is `EsmBasicValue`  
         - `watchlist` (`int`) : if `type` is `EsmWatchlistValue`    
         - `variable` (`int`) if `type` is `EsmVariableValue`    

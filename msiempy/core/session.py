@@ -202,7 +202,7 @@ _PARAMS = {
 
         "get_alarms": (Template("""alarmGetTriggeredAlarms?triggeredTimeRange=$time_range&status=$status&pageSize=$page_size&pageNumber=$page_number"""), None),
 
-        "get_alarm_details_new": ("""notifyGetTriggeredNotificationDetail""", Template("""{"id":$id}""")),
+        "get_notification_detail": ("""notifyGetTriggeredNotificationDetail""", Template("""{"id":$id}""")),
 
         "get_alarm_details": ("""notifyGetTriggeredNotification""", Template("""{"id":$id}""")),
 
@@ -349,18 +349,17 @@ Important note :
 
 """
 
+# Do not document esm_request() it's been replaced by api_request()
+__pdoc__['NitroSession.esm_request']=False
+
 class NitroSession():
     """
     `msiempy.core.session.NitroSession` is the point of convergence of every requests that goes to the ESM.  
     It provides easier dialogue with the ESM by doing argument interpolation with `msiempy.core.session.NitroSession.PARAMS`.  
 
-    It uses `msiempy.core.config.NitroConfig` to setup authentication, other configuration like verbosity, logfile, general timeout, are offered throught the config file.
-
-    The init method is called every time you call NitroSession() constructor. But the properties are actually initiated only once.  
-
     Arguments:  
 
-    - `config` : `msiempy.core.confg.NitroConfig` object, find default config if `None`.  
+    - `config` : `msiempy.core.config.NitroConfig` object, find default config if missing.  
 
     See `msiempy.core.session.NitroSession.api_request` and `msiempy.core.session.NitroSession.request` for usage.  
 
@@ -399,13 +398,10 @@ class NitroSession():
             self.logged_in=False
 
             self.login_info=dict()
-            """
-            Login user infos as returned by `login` API method.
-            """
-            self.session = None
-            """ 
-            Underlying `requests.Session` object. 
-            """
+            """Login user infos as returned by `login` API method."""
+
+            self.session = requests.Session()
+            """Underlying `requests.Session` object. """
 
             try :
                 requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
@@ -447,7 +443,6 @@ class NitroSession():
         userb64 = tob64(self.config.user)
         passb64 = self.config.passwd
         
-        self.session = requests.Session()
         self.session.headers = {'Content-Type': 'application/json'}
 
         resp = self.request('login', username=userb64, password=passb64, raw=True, secure=True)
@@ -469,13 +464,19 @@ class NitroSession():
             self.logged_in = True
             self.login_info=self._unpack_resp(resp)
 
-            # Shorthanding the API version check 
+            # Saving version number
+            self.esm_v=self.version()
+            # Shorthanding the 2019 API major changes  
+            # 10.4.x Release Notes: https://docs.mcafee.com/bundle/enterprise-security-manager-10.4.x-release-notes/page/GUID-53A62E21-F256-4D39-9B33-EDB3955FF7F2.html
+            # 11.2.x Release Notes: https://docs.mcafee.com/bundle/enterprise-security-manager-11.2.x-release-notes/page/GUID-DD551A43-13A2-4649-B9C2-D618C291C9C2.html
             # 1 for pre 11.2.1, 2 for 11.2.1 and later
             # Not be confused with the ESM API v1 and v2 which are different.
-            if str(self.version).startswith(('9', '10', '11.0', '11.1')):
+            if self.esm_v.startswith(('9', '10', '11.0', '11.1')):
                 self.api_v = 1
             else:
                 self.api_v = 2
+
+            
 
             log.info('Logged into ESM {} with username {}. Last login {}'.format(
                 str(self.config.host),
@@ -491,6 +492,7 @@ class NitroSession():
         This method will logout the session.
         """
         self.api_v = 0
+        self.esm_v = '0'
         self.request('logout', http='delete')
         self.logged_in=False
         self.login_info=dict()
@@ -555,7 +557,7 @@ class NitroSession():
         if method == method.upper():
             privateApiCall=True
             url = self.BASE_URL_PRIV
-            http_data = self.format_params(method, **data)
+            http_data = self._format_params(method, **data)
             log.debug('Private API call : '+str(method)+' Formatted params : '+str(http_data))
         
         #Normal API calls
@@ -719,9 +721,9 @@ class NitroSession():
             # Get all last 24h alarms details
             alarms = s.request('get_alarms', time_range='LAST_24_HOURS',  status='', page_size=500, page_number=0)
             for a in alarms:
-                a.update(s.request('get_alarm_details_new', id=a['id']))
+                a.update(s.request('get_notification_detail', id=a['id']))
 
-        See all possible requests on the documentation webpage:   
+        If you're reading this thom an IDE, all possible requests are listed on the documentation webpage:   
         https://mfesiem.github.io/docs/msiempy/core/session.html#msiempy.core.session.NitroSession.request  
         """
         
@@ -792,7 +794,7 @@ class NitroSession():
         return (log)
 
     @staticmethod
-    def format_params(cmd, **params):
+    def _format_params(cmd, **params):
         """
         Format private API call.  
         """

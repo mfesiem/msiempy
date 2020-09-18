@@ -3,15 +3,15 @@
 The core objects of the library.  
 
 Public objects:  
-- `msiempy.core.session.NitroSession`  
-- `msiempy.core.config.NitroConfig`
+- `msiempy.core.session.NitroSession`   
+- `msiempy.core.config.NitroConfig`  
 - `msiempy.core.session.NitroError`    
 
 Base objects:  
 - `msiempy.core.types.NitroObject`  
 - `msiempy.core.types.NitroDict`   
 - `msiempy.core.types.NitroList`  
-- `msiempy.query.types.FilteredQueryList`  
+- `msiempy.core.query.FilteredQueryList`  
 
 """
 
