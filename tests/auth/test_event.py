@@ -217,7 +217,6 @@ class T(unittest.TestCase):
         [ self.assertFalse(key in an_event) for key in ["Rule.msg","Alert.SrcIP","Alert.DstIP", "Alert.SrcMac","Alert.DstMac","Alert.NormID","Alert.BIN(4)"] ]
         [ self.assertFalse(key in an_event) for key in ["Rule.msg","SrcIP","DstIP", "SrcMac","DstMac","NormID","HostID"] ]
 
-    @unittest.skip("Skipping this test until the test ESM can generate Alarms with event associated ")
     def test_get_id(self):
 
         alarms = AlarmManager(

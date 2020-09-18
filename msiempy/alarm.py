@@ -5,7 +5,7 @@ import logging
 log = logging.getLogger('msiempy')
 
 from .core import NitroDict, FilteredQueryList
-from .event import Event
+from .event import Event, EventManager
 from .core.utils import regex_match, dehexify
 
 __pdoc__={}
@@ -22,8 +22,8 @@ class AlarmManager(FilteredQueryList):
     `filters` are computed locally - Unlike `msiempy.event.EventManager` filters.  
     - `page_size` : max number of rows per query.  
     - `page_number` : defaulted to 1.
-    - `filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.alarm.Alarm` objects. A single `tuple` is also accepted. 
-    - `event_filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.event.Event` objects. A single `tuple` is also accepted.  
+    - `filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.alarm.Alarm` objects. A single `tuple` is also accepted.  
+    - `event_filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.event.Event` objects. A single `tuple` is also accepted.   
     - `time_range` : Query time range. String representation of a time range.  
     - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
     - `end_time` : Query endding time, can be a `string` or a `datetime` object. Parsed with `dateutil`.  
@@ -204,7 +204,6 @@ class AlarmManager(FilteredQueryList):
 
         if 'page_number' not in kwargs:
             log.info(str(len(alarms)) + " alarms are matching your filter(s)")
-
         
         self.data=alarms
         return(self)
@@ -253,32 +252,28 @@ class AlarmManager(FilteredQueryList):
                 )
 
         #Casting to list of Alarms to be able to call load_details etc...        
-        alarm_based_filtered = [Alarm(adict=a) for a in no_filtered_alarms if self._alarm_match(a)]
+        alarm_based_filtered = AlarmManager([a for a in no_filtered_alarms if self._alarm_match(a)])
 
         if alarms_details :
 
             log.info("Getting alarms infos...")
-            alarm_detailed = self.perform(Alarm.load_details,
-                list(alarm_based_filtered),
+            alarm_based_filtered.perform(Alarm.load_details,
                 asynch=True,
                 progress=True,
                 workers=workers)
 
             #Casting to list of Alarms to be able to call load_details etc...        
-            detailed_alarm_based_filtered = [Alarm(adict=a) for a in alarm_detailed if self._alarm_match(a)]
+            detailed_alarm_based_filtered = AlarmManager([ a for a in alarm_based_filtered if self._alarm_match(a) ])
 
             if events_details :
                 log.info("Getting full events infos...")
-                event_detailed = self.perform(Alarm.load_events, 
-                    list(alarm_detailed),
+                detailed_alarm_based_filtered.perform(Alarm.load_events, 
                     func_args=dict(use_query=use_query, extra_fields=extra_fields),
                     asynch=True, 
                     progress=True, 
                     workers=workers)
 
-                filtered_alarms = [Alarm(adict=a) for a in event_detailed if self._event_match(a)]
-            else:
-                filtered_alarms = [Alarm(adict=a) for a in detailed_alarm_based_filtered if self._event_match(a)] 
+            filtered_alarms = AlarmManager([ a for a in detailed_alarm_based_filtered if self._event_match(a)]) 
         else :
             filtered_alarms = alarm_based_filtered
             log.warning('Event filters and some Alarm filters are ignored when `alarms_details is False`')
@@ -287,13 +282,13 @@ class AlarmManager(FilteredQueryList):
 
     def _alarm_match(self, alarm):
         """
-        Internal filter method that is going to return True if the passed alarm match any alarm related filters.
+        Internal filter method that is going to return True if the passed alarm match all alarm related filters.
         """
         match=True
         for alarm_filter in self._alarm_filters :
             match=False
             try: value = str(alarm[alarm_filter[0]]) #Can only match strings
-            except KeyError: continue
+            except KeyError: break
             for filter_value in alarm_filter[1]:
                 if regex_match(filter_value.lower(), value.lower()):
                     match=True
@@ -304,13 +299,13 @@ class AlarmManager(FilteredQueryList):
         
     def _event_match(self, alarm):
         """
-        Internal filter method that is going to return True if the passed alarm match any event related filters.
+        Internal filter method that is going to return True if the passed alarm match all event related filters.
         """
         match=True
         for event_filter in self._event_filters :
             match=False
             try: value = str(alarm['events'][0][event_filter[0]])
-            except KeyError: continue
+            except KeyError: break
             for filter_value in event_filter[1]:
                 if regex_match(filter_value.lower(), value.lower()) :
                     match=True
@@ -352,7 +347,7 @@ class Alarm(NitroDict):
             self.data['id'] = {'value':str(kwargs['id'])}
         # Casting all events to Event object
         if 'events' in self.data and isinstance(self.data['events'], list):
-            self.data['events'] = [Event(d) for d in self.data['events']]
+            self['events']=EventManager(self.data['events'])
 
     POSSIBLE_ALARM_STATUS=[
         ['acknowledged', 'ack',],
@@ -425,8 +420,10 @@ class Alarm(NitroDict):
         """
         the_id = self.data['id']['value']
         self.data.update(self.data_from_id(the_id))
+        if isinstance(self.data['events'], (list)):
+            self['events']=EventManager(self.data['events'])
         self.data['id']['value']=the_id
-
+        
         return self
 
     def refresh(self):
@@ -434,15 +431,16 @@ class Alarm(NitroDict):
         """        
         self.load_details()
 
-    def load_events(self, use_query=False, extra_fields=[]):
+    def load_events(self, use_query=False, extra_fields=[], workers=1):
         """
-        Retreive the complete trigerring Event objects from an Alarm.  
-        This methos is automatically called automatically bu default when calling `load_data()`.   
+        Retreive the complete trigerring Event(s) objects from an Alarm.  
+        This methos is automatically called automatically by default when calling `load_data()`.   
         Arguments:  
 
-        - `use_query` : Uses the query module to retreive common event data. Only works with SIEM v 11.2 or greater.    
+        - `use_query` : Uses the query module to retreive the event(s) data. Only works with SIEM v 11.2 or greater.    
         Default behaviour will call `ipsGetAlertData` to retreive the complete event definition.  
         - `extra_fields` : Only when `use_query=True`. Additionnal event fields to load in the query. See : `msiempy.event.EventManager`  
+        - `workers`: The number of asynchronous workers.  
 
         .. Warning:: On SIEM v10.X This method will only load the details of the first triggering event.  
         """
@@ -459,6 +457,9 @@ class Alarm(NitroDict):
             #set it as the only item of the event list
             self.data['events']= [ the_first_event ]
 
+        elif isinstance(self.data['events'], (EventManager)):
+            # The list has been loaded from notifyGetTriggeredNotificationDetail
+            self.data['events'].perform(Event.refresh, asynch=True, workers=workers, func_args=dict(use_query=use_query, extra_fields=extra_fields))
         else:
             log.info('The alarm {} ({}) has no events associated'.format(self.data['alarmName'], self.data['triggeredDate']))
             self.data['events']= [ Event() ]

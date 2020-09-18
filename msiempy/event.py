@@ -1188,9 +1188,9 @@ class Event(NitroDict):
         Arguments:   
 
         - `id` : The event ID. (i.e. : `144128388087414784|747122896`)  
-        - `use_query` : Uses the query module to retreive common event data. Only works with SIEM 11.2 or greater.    
+        - `use_query` (`bool`): Uses the query module to retreive common event data. Only works with SIEM 11.2 or greater.    
         Default behaviour will call `ipsGetAlertData` to retreive the complete event definition.  
-        - `extra_fields` : Only when `use_query=True`. Additionnal event fields to load in the query.  
+        - `extra_fields` (`list`): Only when `use_query=True`. Additionnal event fields to load in the query.  
         """
         
         if use_query == True :
@@ -1217,15 +1217,37 @@ class Event(NitroDict):
         elif use_query == False :
             return self.nitro.request('get_alert_data', id=id)
 
-    def refresh(self): 
-        """Re-load event's data"""
-        if 'Alert.IPSIDAlertID' in self.data.keys() :
-            # ensure to re-use the query module if that's the case
-            self.data.update(self.data_from_id(self.data['Alert.IPSIDAlertID'], 
-                use_query=True, extra_fields=self.data.keys()))
-        else :
+    def refresh(self, use_query=None, extra_fields=None): 
+        """
+        Re-load event's data.
+
+        Arguments:  
+        - `use_query` (`bool`): Force the use of the query module to retreive the event data. 
+        The default behaviour will use `EventManager` query if an 'Alert.IPSIDAlertID' key is present in the event, 
+        else call `ipsGetAlertData` to get the full details.  
+        - `extra_fields` (`list`): Only when `use_query=True` or the Event is already a query event. Additionnal event fields to load in the query.  
+
+        .. Warning:: Enforce `use_query=True` will reset the Events fields to whatever is passed to `extra_fields`
+
+        Raise `AttributeError` if the event ID has not been found.  
+        """
+        if not self.get_id():
+            raise AttributeError("Can't refresh a Event without an ID: {}".format(self.data))
+        if use_query==None:
+            if 'Alert.IPSIDAlertID' in self.data.keys() :
+                # ensure to re-use the query module if that's the case
+                self.data.update(self.data_from_id(self.data['Alert.IPSIDAlertID'], 
+                    use_query=True, extra_fields=self.data.keys() + extra_fields if extra_fields else [] ))
+            else :
+                the_id = self.get_id()
+                self.data.update(self.data_from_id(the_id))
+        elif use_query:
+            self.data.update(self.data_from_id(self.get_id(), 
+                use_query=True, extra_fields=extra_fields if extra_fields else [] ))
+        else:
             the_id = self.get_id()
             self.data.update(self.data_from_id(the_id))
+
    
 class _QueryFilter(collections.UserDict): 
     """Base class for all SIEM query objects in order to dump the filter as dict.

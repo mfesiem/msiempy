@@ -290,7 +290,6 @@ class NitroList(collections.UserList, NitroObject):
         """
         Execute refresh function on all items.
         """
-        log.warning("The function NitroList.refresh hasn't been correctly tested")
         self.perform(NitroDict.refresh, message='Refreshing all items...')
 
     def perform(self, func, data=None, func_args=None, confirm=False, asynch=False,  workers=None , progress=False, message=None):

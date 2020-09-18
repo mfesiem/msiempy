@@ -628,10 +628,15 @@ class NitroSession():
 
                     return result
 
-        #Hard errors, could retry
-        except requests.exceptions.Timeout as e:
-            log.error(e)
-            raise
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            
+            if retry>0 :
+                log.warning('An network error occured ({}), retrying api_request()'.format(e))
+                time.sleep(1)
+                return self.api_request(method, data, http, callback, raw, secure, retry=retry-1)
+            else :
+                raise e
+
         except requests.exceptions.TooManyRedirects as e :
             log.error(e)
             raise

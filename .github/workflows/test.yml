@@ -2,7 +2,7 @@ name: test
 on:
   schedule:
     # Run complete tests every month
-    - cron:  '0 0 1 * *'
+    - cron:  '0 0 20 * *'
 jobs: 
   test:
     name: ${{ matrix.os }} py${{ matrix.python-version }}

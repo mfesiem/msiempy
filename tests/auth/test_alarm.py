@@ -1,5 +1,6 @@
 import msiempy
 from msiempy.core import NitroList
+from msiempy import EventManager
 import msiempy.alarm
 import unittest
 import pprint
@@ -188,7 +189,7 @@ class T(unittest.TestCase):
 
         for alarm in detailed :
             events = alarm.get('events', 0) # Events should not be zero
-            self.assertIn(type(events), [str, type(None), list] , msg="No events loaded for the alarm after load_details() call")
+            self.assertIn(type(events), [str, type(None), list, EventManager] , msg="No events loaded for the alarm after load_details() call")
 
         detailed_w_events = alarms.perform(msiempy.alarm.Alarm.load_events, 
             data=[alarms[1]], 
@@ -228,7 +229,6 @@ class T(unittest.TestCase):
         #     alarms.perform(msiempy.alarm.Alarm.refresh)
         #     alarms.perform(msiempy.alarm.Alarm.refresh)
 
-        alarms.perform(msiempy.alarm.Alarm.refresh)
         print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
         [ self.assertTrue(len(alarm['acknowledgedDate']) > 0) for alarm in alarms ]
     
