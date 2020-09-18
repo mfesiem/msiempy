@@ -5,11 +5,12 @@ import logging
 import collections
 log = logging.getLogger('msiempy')
 
-from . import NitroDict, NitroList
+from .core import NitroDict, NitroList
 
 class WatchlistManager(NitroList):
     """
-    Summary of ESM watchlists.
+    List-Like object.  
+    Summary of ESM watchlists.  
 
     Example:
     ```
@@ -102,7 +103,7 @@ class WatchlistManager(NitroList):
 
 class Watchlist(NitroDict):
     """
-
+    Dict-Like object.  
     Complete list of watchlist fields (not values) once load with load_details()
 
     Dictionary keys:
@@ -130,15 +131,6 @@ class Watchlist(NitroDict):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    # this should not be necessary neitehr
-    # def __repr__(self):
-    #     return self.data.__repr__()
-    
-    # This should not be necessary
-    # def __iter__(self):
-    #     for data in self.data:
-    #         yield data
 
     def add_values(self, values):
         """
@@ -185,3 +177,9 @@ class Watchlist(NitroDict):
             raise
         data = self.nitro.get_internal_file(file)
         self.data['values'] = ''.join(data).split('\n')
+
+    def get_id(self):
+        """
+        Returns the Watchlist ID.  
+        """
+        return self['id']

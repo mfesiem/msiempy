@@ -12,3 +12,16 @@ If you like the project and think you could help with making it better, there ar
 - Spread a word about the project to your collegues, friends, blogs or any other channels
 - Any other things you could imagine
 - Any contribution would be of great help and I will highly appreciate it!
+
+### Install for dev
+```
+For development
+# Fork the repo
+git clone https://github.com/mfesiem/msiempy.git
+cd msiempy
+# Install dev requirements
+python3 -m pip install -r requirements.txt
+# Install module
+python3 ./setup.py install
+# Hack and pull request
+```

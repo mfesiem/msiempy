@@ -1,22 +1,17 @@
-"""Provide ESM, ERC and data source management.
+"""Provide ESM, Receiver and Datasource management.
 """
 
 import logging
 log = logging.getLogger('msiempy')
 
 import csv
-import ipaddress
-import inspect
-import json
 import logging
-import re
-import sys
 from itertools import chain
 from io import StringIO
 from functools import partial, lru_cache
 
-from . import NitroDict, NitroList, NitroError, NitroObject
-from .__utils__ import dehexify
+from .core import NitroDict, NitroList, NitroError, NitroObject
+from .core.utils import dehexify
 
 class ESM(NitroObject):
     """Enterprise Security Manager interface"""
@@ -150,7 +145,8 @@ class ESM(NitroObject):
                 if self.key in self._fields}
 
     def get_alerts(self, ds_id, flows=False):
-        """Tells the ESM to retrieve alerts from the provided device ID.  
+        """
+        Tells the ESM to retrieve alerts from the provided device ID.  
         
         Arguments:  
 
@@ -158,6 +154,7 @@ class ESM(NitroObject):
         - `flows`: (`bool`) Also get flows from the device (default: False)  
         
         Returns: `None`
+        # TODO: add test method in tests/auth/test_device.py
         """
         self.nitro.request('get_alerts_now', ds_id=ds_id)
         if flows:
@@ -297,9 +294,15 @@ class ESM(NitroObject):
                     for mod in ven['models']]
 
 class DevTree(NitroList):
-    """ESM device tree interface.  
+    """
+    List-Like object.  
+    ESM device tree interface.  
     
     - `__contains__` method returns:  (`bool`) `True/None` the name or IP matches the provided search term.
+    
+    Exemple:
+    ```
+    ```
 
     """
     def __init__(self, *args, **kwargs):
@@ -1042,9 +1045,10 @@ class DevTree(NitroList):
         return d
 
 class DataSource(NitroDict):
-    """DataSource class  
+    """
+    Dict-Like object.  
         
-    Best instantiated from DevTree():
+    DataSources are best instantiated from DevTree():
     ```
     >>> dt = DevTree()
     >>> ds = dt[25]
@@ -1156,3 +1160,9 @@ class DataSource(NitroDict):
                     # The value is called value and the value is the value.
                     new_dev[d.get('key')] = d.get('value')
         return new_dev
+
+    def get_id(self):
+        """
+        Returns the Datasource ID.  
+        """
+        return self['ds_id']

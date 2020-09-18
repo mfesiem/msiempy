@@ -1,6 +1,6 @@
 import unittest
 import pytest
-import msiempy
+from msiempy.core import NitroList
 import csv
 import time
 import json
@@ -11,7 +11,7 @@ def get_testing_data():
 
 class T(unittest.TestCase):
 
-    manager = msiempy.NitroList(alist=get_testing_data())
+    manager = NitroList(alist=get_testing_data())
 
     def test_json(self):
 
@@ -28,7 +28,7 @@ class T(unittest.TestCase):
         pass
 
     def test_manager(self):
-        sublist = msiempy.NitroList(alist=[item for item in T.manager if item['Alert.EventCount']=='1']) #.search('CLIM_RANK.*0','Eco_Name.*north')#.search('County.*GLENN') #len = 52
+        sublist = NitroList(alist=[item for item in T.manager if item['Alert.EventCount']=='1']) #.search('CLIM_RANK.*0','Eco_Name.*north')#.search('County.*GLENN') #len = 52
         
         # sublist.perform(self.test_add_money_money, progress=True, asynch=True, workers=500)
         # for item in sublist :
@@ -47,9 +47,9 @@ class T(unittest.TestCase):
 
     def test_print(self):
         data=get_testing_data()
-        manager = msiempy.NitroList(alist=data[:30])
+        manager = NitroList(alist=data[:30])
         # Messing arround with the list
-        manager[10]['Rule.msg']=msiempy.NitroList(alist=data[:5])
+        manager[10]['Rule.msg']=NitroList(alist=data[:5])
         manager[20]['Rule.msg']=data[:5]
 
         print('CSV')

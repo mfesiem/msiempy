@@ -1,4 +1,5 @@
 import msiempy
+from msiempy.core import NitroList
 import msiempy.alarm
 import unittest
 import pprint
@@ -52,7 +53,7 @@ class T(unittest.TestCase):
         for alarm in alarms :
             self.assertEqual(type(alarm), msiempy.alarm.Alarm, 'Type error')
             self.assertEqual(type(alarm['events'][0]), msiempy.event.Event, 'Type error')
-            self.assertEqual(type(alarm['events']), msiempy.NitroList, 'Type error')
+            self.assertEqual(type(alarm['events']), NitroList, 'Type error')
 
             self.assertRegex(str(alarm['severity']), '50|80|85|90|95|100', 'Filtering alarms is not working')
 
@@ -186,8 +187,8 @@ class T(unittest.TestCase):
             message="Just loading details of the first 3 alarms of the list")
 
         for alarm in detailed :
-            events = alarm.get('events')
-            self.assertIn(type(events), [type(str()), type(None)] )
+            events = alarm.get('events', 0) # Events should not be zero
+            self.assertIn(type(events), [str, type(None), list] , msg="No events loaded for the alarm after load_details() call")
 
         detailed_w_events = alarms.perform(msiempy.alarm.Alarm.load_events, 
             data=[alarms[1]], 
@@ -210,7 +211,7 @@ class T(unittest.TestCase):
 
         alarms.load_data()
         print(alarms.get_text(fields=['id','acknowledgedDate','acknowledgedUsername']))
-        [ self.assertTrue(alarm['acknowledgedDate'] == None) for alarm in alarms ]
+        [ self.assertTrue(alarm['acknowledgedDate'] == None, msg="acknowledgedDate is not None for an unacknowledged alarm, it's {}".format(alarm['acknowledgedDate'])) for alarm in alarms ]
 
         # alarms.nitro._init_log(verbose=True)
 

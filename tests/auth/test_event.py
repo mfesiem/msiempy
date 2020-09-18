@@ -115,7 +115,7 @@ class T(unittest.TestCase):
         qry_filters = [FieldFilter(name='SrcIP', values=['22.0.0.0/8'])] 
         e = EventManager(fields=['SrcIP'], filters=qry_filters).load_data()
         for event in e :
-            self.assertIn( '22.', event['SrcIP'] )
+            self.assertTrue( event['SrcIP'].startswith('22.') )
 
         qry_filters = [ GroupFilter( 
             [   FieldFilter(name='SrcIP', values=['22.0.0.0/8']),
@@ -124,7 +124,7 @@ class T(unittest.TestCase):
 
         e = EventManager(fields=['SrcIP', 'AppID'], filters=qry_filters).load_data()
         for event in e :
-            self.assertIn( '22.', event['SrcIP'] )
+            self.assertTrue( event['SrcIP'].startswith('22.') )
             self.assertEqual(event['AppID'], 'CRON')
 
     def test_ordered_query(self):
