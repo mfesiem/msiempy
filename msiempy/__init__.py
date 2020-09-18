@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-
 Welcome to the **msiempy** library documentation.  
 The pythonic way to deal with McAfee SIEM API.  
 Head out to one of the sub-modules to see objects definitions or scroll down for general documentation.  
