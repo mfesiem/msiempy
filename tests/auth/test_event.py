@@ -1,5 +1,6 @@
-from msiempy.event import EventManager, Event, FieldFilter, GroupFilter
-import msiempy
+from re import L
+from unittest.case import skip
+from msiempy import EventManager, Event, FieldFilter, GroupFilter, AlarmManager, NitroSession
 import unittest
 from datetime import datetime, timedelta
 
@@ -24,7 +25,7 @@ class T(unittest.TestCase):
             [str(event_from_ips_get_alert_data['ipsId']['id']),
             str(event_from_ips_get_alert_data['alertId'])]))
         
-        if msiempy.NitroSession().api_v == 2 :
+        if NitroSession().api_v == 2 :
             print('CREATING EVENT MANUALLY FROM ID')
             data=Event().data_from_id(id=event['IPSIDAlertID'], use_query=True)
             event_from_direct_id_query=Event(data)
@@ -216,5 +217,24 @@ class T(unittest.TestCase):
         [ self.assertFalse(key in an_event) for key in ["Rule.msg","Alert.SrcIP","Alert.DstIP", "Alert.SrcMac","Alert.DstMac","Alert.NormID","Alert.BIN(4)"] ]
         [ self.assertFalse(key in an_event) for key in ["Rule.msg","SrcIP","DstIP", "SrcMac","DstMac","NormID","HostID"] ]
 
+    @unittest.skip("Skipping this test until the test ESM can generate Alarms with event associated ")
+    def test_get_id(self):
 
+        alarms = AlarmManager(
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
+            page_size=10
+            )
 
+        event_from_ipsGetAlertData = list(alarms.load_data())[0]['events'][0]
+        event_from_notifyGetTriggeredNotificationDetail = list(alarms.load_data(events_details=False))[0]['events'][0]
+        event_from_qryGetResults = list(alarms.load_data(use_query=True))[0]['events'][0]
+
+        self.assertIsInstance(event_from_ipsGetAlertData, Event, "Event record from ipsGetAlertData has not been cast to Event object during the AlarmManager data loading")
+        self.assertIsInstance(event_from_notifyGetTriggeredNotificationDetail, Event, "Event record from notifyGetTriggeredNotificationDetail has not been cast to Event object during the AlarmManager data loading")
+        self.assertIsInstance(event_from_qryGetResults, Event, "Event record from qryGetResults has not been cast to Event object during the AlarmManager data loading")
+        
+        self.assertEqual(event_from_ipsGetAlertData.get_id(), str(event_from_ipsGetAlertData['ipsId']['id'])+'|'+str(event_from_ipsGetAlertData["alertId"]), "get_id() returned an ivalid ID for ipsGetAlertData type events")
+        self.assertEqual(event_from_notifyGetTriggeredNotificationDetail.get_id(), event_from_notifyGetTriggeredNotificationDetail['eventId'], "get_id() returned an ivalid ID for notifyGetTriggeredNotificationDetail type events")
+        self.assertEqual(event_from_qryGetResults.get_id(), event_from_qryGetResults['IPSIDAlertID'], "get_id() returned an ivalid ID for qryGetResults type events")

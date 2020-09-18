@@ -5,7 +5,6 @@ import logging
 log = logging.getLogger('msiempy')
 
 import csv
-import logging
 from itertools import chain
 from io import StringIO
 from functools import partial, lru_cache
@@ -386,14 +385,6 @@ class DevTree(NitroList):
         """Rebuilds the devtree"""
         self.data = self.build_devtree()
         self._cast_datasources()
-
-    # Unused bugged method    
-    # def get_ds_times(self):
-    #     """
-    #     """
-    #     last_times = self._get_last_event_times()
-    #     self._insert_ds_last_times()
-    #     return last_times
         
     def recs(self):
         """
@@ -813,7 +804,7 @@ class DevTree(NitroList):
 
         - `attr` (`dict`): datasource attributes
         
-        `attr` should contain followinf keys :   
+        `attr` should contain following keys :   
 
         - `client` (`bool`): designate a client datasource (not child)  
         - `name` (`str`): name of datasource (req)  
@@ -875,7 +866,7 @@ class DevTree(NitroList):
 
         - `attr` (`dict`) : datasource attributes  
         
-        `attr` should contain followinf keys :   
+        `attr` should contain following keys :   
 
         - `parent_id` (`str`): datasource id of the client group datasource  
         - `name` (`str`): name of the client  
@@ -926,7 +917,7 @@ class DevTree(NitroList):
         """
         # Common for all datasources
         if not p.get('name'):
-            logging.error('Error: New datasource requires "name".')
+            log.error('Error: New datasource requires "name".')
             return
 
         if not p.get('ds_ip'):
@@ -934,7 +925,7 @@ class DevTree(NitroList):
                  p['ds_ip'] = p['ip']
              else:
                 if not p.get('hostname'):
-                    logging.error('Error: New datasource requires "ip" or "hostname".')
+                    log.error('Error: New datasource requires "ip" or "hostname".')
                     return
         
         if not p.get('hostname'):
@@ -968,7 +959,7 @@ class DevTree(NitroList):
 
         else:
             if not p.get('type_id'):
-                logging.error('Error: New datasource requires "type_id".')
+                log.error('Error: New datasource requires "type_id".')
                 return
 
             if not p.get('zone_id'):
@@ -1014,10 +1005,10 @@ class DevTree(NitroList):
                 return p
             try:
                 if not 0 <= int(p.get('tz_id')) <= 75:
-                    logging.error('Error: New datasource "tz_id" must be int between 1-74 or GMT.')
+                    log.error('Error: New datasource "tz_id" must be int between 1-74 or GMT.')
                     return
             except ValueError:
-                logging.error('Error: New datasource "tz_id" must be int between 1-74 or GMT.')
+                log.error('Error: New datasource "tz_id" must be int between 1-74 or GMT.')
                 return
         else:
             p['tz_id'] = 26

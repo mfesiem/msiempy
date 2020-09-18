@@ -2,11 +2,8 @@
 """
 
 import time
-import json
-import abc
 import collections
 import logging
-import copy
 from datetime import datetime, timedelta
 log = logging.getLogger('msiempy')
 
@@ -387,7 +384,7 @@ class Event(NitroDict):
     This object handles events objects created with `msiempy.event.EventManager` (From the `qryGetResults` api call) 
         and events objects created with `msiempy.alarm.AlarmManager` (From `ipsGetAlertData` api call or `notifyGetTriggeredNotificationDetail` depending of the value of `load_data(events_details=True/False)` ) .  
 
-    Common keys for alert data events (When loading from ID or with `AlarmManager.load_data(events_details=False)` :  
+    Common keys for alert data events (When loading from ID or with `AlarmManager.load_data()`:  
 
     - `ruleName`
     - `srcIp`
@@ -410,7 +407,8 @@ class Event(NitroDict):
     - `domain`
     - `ipsId`
 
-    Common keys for triggered alarms events (When `AlarmManager.load_data(events_details=False)`):  
+    Common keys for triggered alarms events (When using `AlarmManager.load_data(events_details=False)`) (SIEM v11.x only):   
+
     - `ruleMessage`  
     - `eventId`  
     - `severity`  

@@ -106,14 +106,14 @@ class AlarmManager(FilteredQueryList):
 
         for synonims in Alarm.ALARM_EVENT_FILTER_FIELDS :
             if afilter[0] in synonims :
-                log.warning('Passing event related filters in `filters` argument is not safe consider using `event_filters` argument. You\'ll be able to use more filters dynamically.')
+                log.warning('Passing event related filters in `filters` argument is deprecated, consider using `event_filters` argument. You\'ll be able to use more filters dynamically.')
                 self._event_filters.append((synonims[0], values))
                 added=True
 
         #support query related filtering if the filter's field is composed by a table name then a field name separated by a dot.
         if len(afilter[0].split('.')) == 2 :
             self._event_filters.append((afilter[0], values))
-            log.warning('Passing event related filters in `filters` argument is not safe, consider using `event_filters` argument. You\'ll be able to use more filters dynamically.')
+            log.warning('Passing event related filters in `filters` argument is deprecated, consider using `event_filters` argument. You\'ll be able to use more filters dynamically.')
             added=True
 
         if added==False:
@@ -180,7 +180,7 @@ class AlarmManager(FilteredQueryList):
 
         - `workers` : Number of asynchronous workers   
         - `alarms_details` : Load detailed alarms infos. If `False`, only a couple values are loaded, no `events` infos.  
-        - `events_details` : Load detailed events infos. If `False`, no detailed `events` will be loaded only `str` representation.  
+        - `events_details` : Load detailed events infos. If `False`, no detailed `events` will be loaded. Only `str` representation for SIEM 10.x and minimal events records from SIEM 11.x.  
         - `use_query` : Uses the query module to retreive event data. Only works with SIEM v11.2.1 or greater.  
         Default behaviour will call `ipsGetAlertData` to retreive the complete event definition.    
         - `extra_fields` :  Only when `use_query=True`. Additionnal event fields to load in the query. See : `msiempy.event.EventManager`  
@@ -268,7 +268,7 @@ class AlarmManager(FilteredQueryList):
             detailed_alarm_based_filtered = [Alarm(adict=a) for a in alarm_detailed if self._alarm_match(a)]
 
             if events_details :
-                log.info("Getting events infos...")
+                log.info("Getting full events infos...")
                 event_detailed = self.perform(Alarm.load_events, 
                     list(alarm_detailed),
                     func_args=dict(use_query=use_query, extra_fields=extra_fields),
@@ -276,9 +276,9 @@ class AlarmManager(FilteredQueryList):
                     progress=True, 
                     workers=workers)
 
-                filtered_alarms = [a for a in event_detailed if self._event_match(a)]
+                filtered_alarms = [Alarm(adict=a) for a in event_detailed if self._event_match(a)]
             else:
-                filtered_alarms=detailed_alarm_based_filtered
+                filtered_alarms = [Alarm(adict=a) for a in detailed_alarm_based_filtered if self._event_match(a)] 
         else :
             filtered_alarms = alarm_based_filtered
             log.warning('Event filters and some Alarm filters are ignored when `alarms_details is False`')
@@ -350,6 +350,9 @@ class Alarm(NitroDict):
         #Keep the id in the dict when instanciating an Alarm directly from its id.
         if 'id' in kwargs :
             self.data['id'] = {'value':str(kwargs['id'])}
+        # Casting all events to Event object
+        if 'events' in self.data and isinstance(self.data['events'], list):
+            self.data['events'] = [Event(d) for d in self.data['events']]
 
     POSSIBLE_ALARM_STATUS=[
         ['acknowledged', 'ack',],

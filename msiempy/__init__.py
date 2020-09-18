@@ -58,7 +58,7 @@ Then acknowledge the alarms and make sure they are all acknowledged.
 The number of alarms retreived is defined by the `page_size` property.
 
 ```python
-from msiempy.alarm import AlarmManager, Alarm
+from msiempy import AlarmManager, Alarm
 # Make an alarm query
 alarms=AlarmManager(
         time_range='CURRENT_YEAR',
@@ -86,7 +86,7 @@ See objects: `msiempy.event.EventManager`, `msiempy.event.FieldFilter`, `msiempy
 
 Query events according to destination IP and hostname filters, sorted by AlertID. 
 ```python
-from  msiempy.event import EventManager, FieldFilter
+from  msiempy import EventManager, FieldFilter
 
 print('Simple event query sorted by AlertID')
 events = EventManager(
@@ -107,7 +107,7 @@ print(events.get_text(fields=['AlertID','LastTime','SrcIP', 'Rule.msg']))
 
 Setting the note of an event, retreiving the genuine event from IPSIDAlertID and checking the note is well set. See [`add_wpsan_note.py`](https://github.com/mfesiem/msiempy/blob/master/samples/add_wpsan_note.py) script to see more how to add note to event that triggered alarms !  
 ```python
-from  msiempy.event import EventManager, Event
+from  msiempy import EventManager, Event
 events = EventManager(
         time_range='CURRENT_YEAR',
         limit=2
@@ -123,7 +123,7 @@ for event in events :
 `msiempy.event.EventManager()` have other arguments: `order`, `start_time` and `end_time` or `time_rage`  
 
 `msiempy.event.EventManager.load_data()` method accept also several parameters. It controls the query's division time range into slots of `delta` duration, then the query would be divided into the specified number of `slots`. Control also the number of asyncronous jobs using `workers` parameter. `max_query_depth` parameter specify the number of sub-divisions the query can take at most (zero by default). The query is divided only if it hasn't completed with the current query settings.   
-See  module documentation for more infos.  
+See method documentation for more infos.  
  
 See [`dump_all_fields.py`](https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py) script to have full list of `fields` you can request and fields you can use with `FieldFilter` .
 
@@ -133,8 +133,7 @@ See object: `msiempy.device.ESM`
 
 Print a few esm infos. ESM object has not state for it self, it's a simple interface to data structures / values returned by the SIEM.  
 ```python
->>> from msiempy.device import ESM
-
+>>> from msiempy import ESM
 >>> esm=ESM()
 >>> esm.version()
 '11.2.1'
@@ -150,7 +149,7 @@ See objects: `msiempy.device.DevTree`, `msiempy.device.DataSource`
 
 Load all datasources and write all infos in a CSV file.  
 ```python
-from msiempy.device import DevTree
+from msiempy import DevTree
 
 devtree = DevTree()
 
@@ -164,7 +163,7 @@ See objects: `msiempy.watchlist.WatchlistManager`, `msiempy.watchlist.Watchlist`
 
 Print whatchlist list.
 ```python
-from msiempy.watchlist import WatchlistManager
+from msiempy import WatchlistManager
 watchlists=WatchlistManager()
 print(watchlists)
 ```
@@ -226,9 +225,31 @@ cat /path/to/your/log/file | grep -i error | sort | uniq
 
 """
 
-# "Public" API imports 
+# List all library objects that the user might need
+
 from .core import (
     NitroConfig,
     NitroError,
-    NitroSession
+    NitroSession,
+    FilteredQueryList,
+    NitroList
+)
+from .alarm import (
+    Alarm,
+    AlarmManager
+)
+from .device import (
+    ESM,
+    DevTree,
+    DataSource
+)
+from .event import (
+    Event,
+    EventManager,
+    GroupFilter,
+    FieldFilter
+)
+from .watchlist import (
+    Watchlist,
+    WatchlistManager
 )
