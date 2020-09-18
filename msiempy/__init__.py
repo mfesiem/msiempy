@@ -10,13 +10,14 @@ Links : [GitHub](https://github.com/mfesiem/msiempy), [PyPI](https://pypi.org/pr
 
 ***
 
- Installation 
+## Installation 
 
 ```
 python3 -m pip install msiempy
 ```
 
-Authentication and configuration setup
+## Authentication and configuration setup  
+
 The module offers a single point of authentication against your SIEM, so you don't have to worry about authentication when writting your scripts. This means that you need to preconfigure the authentication using the configuration file.
 
 The configuration file is located (by default) securely in your user directory since it contains credentials.  
