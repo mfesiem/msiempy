@@ -229,7 +229,7 @@ _PARAMS = {
 
         "get_alerts_now" : ("""IPS_GETALERTSNOW""", Template("""{"IPSID": "$ds_id"}""")),
 
-        "get_flows_now" : ("""IPS_GETALERTSNOW""", Template("""{"IPSID": "$ds_id"}""")),
+        "get_flows_now" : ("""IPS_GETFLOWSNOW""", Template("""{"IPSID": "$ds_id"}""")),
 
         "logout" : ( """userLogout""", None ),
 
