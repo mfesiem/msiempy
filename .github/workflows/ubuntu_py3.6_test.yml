@@ -1,4 +1,4 @@
-name: ubuntu py3.6 test
+name: ubuntu py3.8 test
 on: push
 jobs: 
   test:
@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.6']
+        python-version: ['3.8']
       max-parallel: 1
       fail-fast: false
     steps:
@@ -22,7 +22,7 @@ jobs:
           python -m pip install -r requirements.txt
           python setup.py install
       - name: Setup msiempy config
-        run: python ./samples/msiempy_setup.py --set esm host 207.179.200.58:4443 --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
+        run: python ./samples/msiempy_setup.py --set esm host ${{ secrets.esmhost }} --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
       - name: Run tests
         run: pytest --cov=./ --cov-report=xml --reruns 5 --reruns-delay 1
       - name: Upload code coverage
