@@ -2,7 +2,7 @@ name: test
 on:
   schedule:
     # Run complete tests every month
-    - cron:  '0 0 20 * *'
+    - cron:  '0 0 1 * *'
 jobs: 
   test:
     name: ${{ matrix.os }} py${{ matrix.python-version }}
@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python-version: ['3.5','3.6','3.7','3.8']
+        python-version: ['3.6','3.7','3.8']
       max-parallel: 1
       fail-fast: false
     steps:
@@ -25,7 +25,7 @@ jobs:
           python -m pip install -r requirements.txt
           python setup.py install
       - name: Setup msiempy config
-        run: python ./samples/msiempy_setup.py --set esm host 207.179.200.58:4443 --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
+        run: python ./samples/msiempy_setup.py --set esm host ${{ secrets.esmhost }} --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
       - name: Run tests
         run: pytest --cov=./ --cov-report=xml --reruns 5 --reruns-delay 1
       - name: Upload code coverage
