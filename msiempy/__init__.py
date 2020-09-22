@@ -245,10 +245,13 @@ from .device import (
     DataSource
 )
 from .event import (
+    QueryExecuteManager,
     Event,
     EventManager,
     GroupFilter,
-    FieldFilter
+    FieldFilter,
+    GroupedEventManager,
+    GroupedEvent,
 )
 from .watchlist import (
     Watchlist,
