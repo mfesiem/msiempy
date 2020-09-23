@@ -128,9 +128,9 @@ See method documentation for more infos.
  
 See [`dump_all_fields.py`](https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py) script to have full list of `fields` you can request and fields you can use with `FieldFilter` .
 
-### Execute an grouped event query
+### Execute a grouped event query
 
-Query the curent day events grouped by `ScrIP`.  
+Query the curent day events filtered by `IPSID` grouped by `ScrIP`.  
 
 See objects: `msiempy.event.GroupedEventManager` and `msiempy.event.GroupedEvent`.  
 
