@@ -31,12 +31,14 @@ class AlarmManager(FilteredQueryList):
     **Unlike `EventManager`, filters are computed after the data loaded with regex matching.**  
     
     """
-    def __init__(self, *args, status_filter='all', page_size=200, filters=None, event_filters=None, **kwargs):
+    def __init__(self, *args, status_filter='all', page_size=200, event_filters=None, **kwargs):
+
+        #Declaring attributes before calling super() because it would overwrite values 
+        self._alarm_filters = []
+        self._event_filters = []
+
         super().__init__(*args, **kwargs)
 
-        #Declaring attributes
-        self._alarm_filters = list(tuple())
-        self._event_filters = list(tuple())
         self._status_filter = str()
 
         #Setting attributes
@@ -53,7 +55,7 @@ class AlarmManager(FilteredQueryList):
         #uses the parent filter setter
         #TODO : find a soltuion not to use this
         #calling super().filters=filters #https://bugs.python.org/issue14965
-        super(self.__class__, self.__class__).filters.__set__(self, filters)
+        # super(self.__class__, self.__class__).filters.__set__(self, filters)
 
         #Seeting events filters after alarms filters cause it would overwrite it
         self.event_filters=event_filters
@@ -61,8 +63,8 @@ class AlarmManager(FilteredQueryList):
         #Casting all data to Alarms objects, better way to do it ?
         collections.UserList.__init__(self, [Alarm(adict=item) for item in self.data if isinstance(item, (dict, NitroDict))])
 
-    @property
-    def filters(self):
+    
+    def _get_filters(self):
         """
         The alarm related filters
         """
@@ -162,8 +164,8 @@ class AlarmManager(FilteredQueryList):
         """
         Reset local alarm and event filters.
         """
-        self._alarm_filters = list(tuple())
-        self._event_filters = list(tuple())
+        self._alarm_filters = []
+        self._event_filters = []
 
     def load_data(self, pages=1, **kwargs):
         """

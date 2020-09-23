@@ -142,6 +142,16 @@ class Watchlist(NitroDict):
         """
         self.nitro.request('add_watchlist_values', watchlist=self['id'], values=values)
 
+    def remove_values(self, values):
+        """
+        Remove values from static watchlist.
+
+        Arguments:  
+
+        - `values` (`list`): list of values
+        """
+        self.nitro.request('remove_watchlist_values', watchlist=self['id'], values=values)
+
     def data_from_id(self, id):
         """
         Retrieve watchlist details for ID.

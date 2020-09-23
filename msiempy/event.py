@@ -11,15 +11,123 @@ __pdoc__={}
 
 from .core import NitroDict, NitroError, FilteredQueryList
 from .core.utils import timerange_gettimes, parse_query_result, format_fields_for_query, divide_times, parse_timedelta
+from .device import DevTree
 
 __pdoc__['EventManager.fields']="List of query fields"
 __pdoc__['EventManager.limit']="Max number of rows per query"
 
-class EventManager(FilteredQueryList):
+class _QueryExecuteManager(FilteredQueryList):
+    """
+    *Abstract* class to handle common `filters` properties that grouped and non-grouped queries share.   
+    As well as providing helper functions to wait the query and get the results (see source code).  
+    Only Events query are currently supported.  
+    """
+
+    _TYPE='EVENT'
+    """`EVENT`: Flow queries are not implemented (yet)"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Declaring filter attributes before calling super() because it would overwrite values 
+        self._filters=[]
+
+        # Calling super constructor : time_range, filters etc...
+        super().__init__(*args, **kwargs)
+
+    
+    def _get_filters(self):
+        """
+        Returns SIEM formatted filters for the query structured from `msiempy.event.GroupFilter` and/or `msiempy.event.FieldFilter`
+        See `msiempy.core.query.FilteredQueryList.filters`.
+        """
+        return([dict(f) for f in self._filters])
+
+    def add_filter(self, afilter):
+        """
+        Add a filter to the query.  
+        Argument must be a `tuple(field, [values])` or `(field, value)` or `msiempy.event.GroupFilter` or `msiempy.event.FieldFilter`.  
+        """
+        if isinstance(afilter, tuple) :
+            self._filters.append(FieldFilter(afilter[0], afilter[1]))
+
+        elif isinstance(afilter, (GroupFilter, FieldFilter, dict)) :
+            self._filters.append(afilter)
+
+        else :
+            raise TypeError("Sorry, filters must be either a tuple a GroupFilter, a FieldFilter or a dict. Not {}".format(afilter))
+
+    def _close_query(self, resultID):
+        self.nitro.request('close_query', resultID=resultID)
+
+    def _wait_for(self, resultID, wait_timeout_sec, sleep_time=0.2):
+        """
+        Internal method called by qry_load_data
+        Wait and sleep - for `sleep_time` duration in seconds -
+            until the query is completed or retry countdown arrives at zero.    
+        
+        Return: `True`  
+
+        Raises: 
+
+        - `msiempy.NitroError`: 'ResultUnavailable' error some times...
+        - `TimeoutError`: Query wait timeout
+        """
+
+        begin=datetime.now()
+        timeout_delta=timedelta(seconds=wait_timeout_sec)
+
+        log.debug("Waiting for the query to be executed on the SIEM...")
+        
+        while datetime.now()-timeout_delta < begin :
+            status = self.nitro.request(
+                'query_status', 
+                resultID=resultID #['value'] # APIv2 change
+                )
+            if status['complete'] is True :
+                return True
+            else :
+                time.sleep(sleep_time)
+        raise TimeoutError("Query wait timeout. resultID={}, sleep_time={}, wait_timeout_sec={}".format(
+            resultID, sleep_time, wait_timeout_sec))
+
+    def _get_events(self, resultID, startPos=0, numRows=500):
+        """
+        Internal method that will get the query events, 
+            called by qry_load_data
+        by default, numRows correspond to limit
+        """     
+        result=self.nitro.request(
+            'query_result',
+            startPos=startPos,
+            numRows=numRows,
+            resultID=resultID #['value'] # APIv2 change
+            )
+
+        #Calls a utils function to parse the [columns][rows]
+        #   to format into list of dict
+        # log.debug("Parsing colums : "+str(result['columns'])[:200])
+        # log.debug("Parsing rows : "+str(result['rows'])[:200])
+        if len(result['columns']) != len(set([column['name'] for column in result['columns']])) :
+            log.error("You requested duplicated fields, the parsed fields/values results will be missmatched !")
+        events=parse_query_result(result['columns'], result['rows'])
+        # log.debug("Event(s) parsed : "+str(events)[:200])
+        return events
+
+    @staticmethod
+    def get_field_nickname(field):
+        """
+        Resolve SIEM events field nickname base on `Event.SIEM_FIELDS_MAP_INTERNAL_NAME_TO_NICKNAME` mapping.  
+        Returns the valid query field nickname if found else the initial value.  
+        """
+        if field in Event.SIEM_FIELDS_MAP_INTERNAL_NAME_TO_NICKNAME:
+            return Event.SIEM_FIELDS_MAP_INTERNAL_NAME_TO_NICKNAME[field]
+        else: 
+            return field
+    
+class EventManager(_QueryExecuteManager):
     """
     List-Like object.  
-    Interface to query and manage events.  
-    Inherits from `msiempy.core.query.FilteredQueryList`.  
+    Interface to execute a event query.  
 
     Arguments:  
 
@@ -35,37 +143,27 @@ class EventManager(FilteredQueryList):
     """ 
 
     #Constants
-    #TODO Try grouped queries !
-    _TYPE='EVENT'
-    """`EVENT`: Flow query or other are not implemented"""
     _GROUPTYPE='NO_GROUP'
-    """`NO_GROUP`: Grouped query is not implemented"""
+    """`NO_GROUP`: EventManager handles only events see `GroupedEventManager` for grouped queries"""
     POSSBILE_ROW_ORDER=[
             'ASCENDING',
             'DESCENDING'
     ]
     """`ASCENDING` or `DESCENDING`"""
 
-    def __init__(self, *args, fields=None, 
-        order=None, limit=500, filters=None, 
-        __parent__=None, **kwargs):
-        #Calling super constructor : time_range set etc...
+    def __init__(self, *args, fields=None, order=None, limit=500, __parent__=None, **kwargs):
+        # Calling super constructor : filters, time_range set etc...
         super().__init__(*args, **kwargs)
 
         #Store the query parent 
         self.__parent__=__parent__
-
-        #Declaring attributes
-        self._filters=list()
         
         #Setting the default fields Adds the specified fields, make sure there is no duplicates and delete TABLE identifiers
         if fields and len(fields)>0: 
             all_keys=Event.DEFAULTS_EVENT_FIELDS+list(fields)
             uniquekeys=set()
             for k in all_keys:
-                if k in Event.SIEM_FIELDS_MAP_INTERNAL_NAME_TO_NICKNAME:
-                    uniquekeys.add(Event.SIEM_FIELDS_MAP_INTERNAL_NAME_TO_NICKNAME[k])
-                else: uniquekeys.add(k)
+                uniquekeys.add(self.get_field_nickname(k))
             self.fields=list(uniquekeys)
         else: 
             self.fields=Event.DEFAULTS_EVENT_FIELDS
@@ -78,10 +176,6 @@ class EventManager(FilteredQueryList):
         
         # Save order
         self.order=order
-            
-        #TODO : find a solution not to use this
-        #callign super().filters=filters #https://bugs.python.org/issue14965
-        super(self.__class__, self.__class__).filters.__set__(self, filters)
 
         #Type cast all items in the list "data" to events type objects
         #Casting all data to Event objects, better way to do it ?
@@ -110,28 +204,6 @@ class EventManager(FilteredQueryList):
             self._order_direction = 'DESCENDING'
             self._order_field = 'LastTime'
 
-    @property
-    def filters(self):
-        """
-        Returns SIEM formatted filters for the query structured from `msiempy.event.GroupFilter` and/or `msiempy.event.FieldFilter`
-        See `msiempy.core.query.FilteredQueryList.filters`.
-        """
-        return([dict(f) for f in self._filters])
-
-    def add_filter(self, afilter):
-        """
-        Add a filter to the query.  
-        Argument must be a `tuple(field, [values])` or `(field, value)` or `msiempy.event.GroupFilter` or `msiempy.event.FieldFilter`.  
-        """
-        if isinstance(afilter, tuple) :
-            self._filters.append(FieldFilter(afilter[0], afilter[1]))
-
-        elif isinstance(afilter, (GroupFilter, FieldFilter, dict)) :
-            self._filters.append(afilter)
-
-        else :
-            raise TypeError("Sorry, filters must be either a tuple a GroupFilter, a FieldFilter or a dict. Not {}".format(afilter))
-
     def clear_filters(self):
         """
         Replace all filters by a non filtering rule.  
@@ -144,7 +216,6 @@ class EventManager(FilteredQueryList):
             "values": [{'type':'EsmBasicValue', 'value':'0.0.0.0/0'}]
             }]
 
-
     def qry_load_data(self, retry=1, wait_timeout_sec=120):
         """
         Helper method to execute the query and load the data :  
@@ -154,8 +225,7 @@ class EventManager(FilteredQueryList):
 
         Arguments:
 
-        - `retry` (`int`): number of time the query can be failed and retried.
-            Retries only when 'ResultUnavailable','UnknownList' or 'JobEngine_GetQueryResults_QueryNotFound_Unrecoverable' errors.  
+        - `retry` (`int`): number of time the query can be failed and retried.  
         - `wait_timeout_sec` (`int`): wait timeout in seconds
 
         Returns : `tuple` : (( `msiempy.event.EventManager`, Query completed? `True/False` ))
@@ -198,7 +268,8 @@ class EventManager(FilteredQueryList):
             log.debug("Waiting for EsmRunningQuery object : "+str(query_infos))
         
             self._wait_for(query_infos['resultID'], wait_timeout_sec)
-            events_raw=self._get_events(query_infos['resultID'])
+            events_raw=self._get_events(query_infos['resultID'], numRows=self.limit)
+            self._close_query(query_infos['resultID'])
 
         except (NitroError, TimeoutError) as error :
             # if (retry >0 and ( any(match in str(error) for match in [
@@ -213,7 +284,7 @@ class EventManager(FilteredQueryList):
                 return self.qry_load_data(retry=retry-1)
             else: raise
 
-        return((events_raw,len(events_raw)<self.limit))
+        return(events_raw, len(events_raw)<self.limit)
 
     def load_data(self, workers=10, slots=10, delta=None, max_query_depth=0, **kwargs):
         """
@@ -260,7 +331,7 @@ class EventManager(FilteredQueryList):
                     times=divide_times(start, end, slots=slots)
 
                 if workers > len(times) :
-                    log.warning("The numbre of slots is smaller than the number of workers, only "+str(len(times))+" asynch workers will be used when you could use up to "+str(workers)+". Number of slots should be greater than the number of workers for better performance.")
+                    log.warning("The number of slots is smaller than the number of workers, only "+str(len(times))+" asynch workers will be used when you could use up to "+str(workers)+". Number of slots should be greater than the number of workers for better performance.")
                 
                 sub_queries=list()
 
@@ -299,59 +370,6 @@ class EventManager(FilteredQueryList):
         self.data=events
         return(self)
 
-    def _wait_for(self, resultID, wait_timeout_sec, sleep_time=0.2):
-        """
-        Internal method called by qry_load_data
-        Wait and sleep - for `sleep_time` duration in seconds -
-            until the query is completed or retry countdown arrives at zero.    
-        
-        Return: `True`  
-
-        Raises: 
-
-        - `msiempy.NitroError`: 'ResultUnavailable' error some times...
-        - `TimeoutError`: Query wait timeout
-        """
-
-        begin=datetime.now()
-        timeout_delta=timedelta(seconds=wait_timeout_sec)
-
-        log.debug("Waiting for the query to be executed on the SIEM...")
-        
-        while datetime.now()-timeout_delta < begin :
-            status = self.nitro.request('query_status', resultID=resultID)
-            if status['complete'] is True :
-                return True
-            else :
-                time.sleep(sleep_time)
-        raise TimeoutError("Query wait timeout. resultID={}, sleep_time={}, wait_timeout_sec={}".format(
-            resultID, sleep_time, wait_timeout_sec))
-
-    def _get_events(self, resultID, startPos=0, numRows=None):
-        """
-        Internal method that will get the query events, 
-            called by qry_load_data
-        by default, numRows correspond to limit
-        """
-        
-        if not numRows :
-            numRows=self.limit
-                
-        result=self.nitro.request('query_result',
-            startPos=startPos,
-            numRows=numRows,
-            resultID=resultID)
-
-        #Calls a utils function to parse the [columns][rows]
-        #   to format into list of dict
-        #log.debug("Parsing colums : "+str(result['columns']))
-        #log.debug("Parsing rows : "+str(result['rows']))
-        if len(result['columns']) != len(set([column['name'] for column in result['columns']])) :
-            log.error("You requested duplicated fields, the parsed fields/values results will be missmatched !")
-        events=parse_query_result(result['columns'], result['rows'])
-        #log.debug("Events parsed : "+str(events))
-        return events
-
     @property
     def __root_parent__(self):
         """
@@ -364,7 +382,7 @@ class EventManager(FilteredQueryList):
 
     def get_possible_fields(self):
         """
-        Return the list of possible fields that you can request in a query.  
+        Return the list of possible fields that you can request in a Events query.  
         The list is loaded from the SIEM.  
         """
         return self.nitro.request('get_possible_fields', type=self._TYPE, groupType=self._GROUPTYPE)
@@ -375,6 +393,126 @@ class EventManager(FilteredQueryList):
         The list is loaded from the SIEM.  
         """
         return(self.nitro.request('get_possible_filters'))
+
+class GroupedEventManager(_QueryExecuteManager):
+    """
+    List-Like object.  
+    Interface to execute a grouped event query.    
+
+    Arguments:  
+    - `field` (`str`): The field that will be selected when this query is executed.  
+    - `filters` (`list`): list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter` if you wish to use advanced filtering.  
+    - `time_range` (`str`): Query time range. String representation of a time range. Not need to specify 'CUSTOM' if `start_time` and `end_time` are set.  
+    - `start_time` : Query start time, can be a `str` or a `datetime` object. Parsed with `dateutil`.  
+    - `end_time` : Query end time, can be a `str` or a `datetime` object. Parsed with `dateutil`.  
+    
+    """
+
+    def __init__(self, *args, field=None, **kwargs):
+        # Calling super constructor : time_range set etc...
+        super().__init__(*args, **kwargs)
+        
+        # Declaring attributes
+        if field:
+            if not isinstance(field, str): 
+                raise TypeError("Argument field must be a string. Not {}".format(field))
+            self.field=self.get_field_nickname(field)
+        else:
+            self.field=None
+
+        #Type cast all items in the list "data" to events type objects
+        #Casting all data to Event objects, better way to do it ?
+        collections.UserList.__init__(self, [GroupedEvent(item) for item in self.data if isinstance(item, (dict, NitroDict))])
+
+    def load_data(self, *args, **kwargs):
+        """
+        Load the data into the list.  
+
+        Arguments:  
+
+        - `num_rows` (`int`): Maximum number of rows to load.  
+        - `retry` (`int`): number of time the query can be failed and retried.  
+        - `wait_timeout_sec` (`int`): wait timeout in seconds.  
+        
+        Returns `GroupedEventManager`  
+        """
+        items, completed = self.qry_load_data(*args, **kwargs)
+        if not completed:
+            log.warning("The query is not complete... Try to increase the num_rows")
+        self.data=[GroupedEvent(item) for item in items ]
+        return self
+
+    def clear_filters(self):
+        """
+        Replace all filters by a non filtering rule with all datasources IPSIDs (Using `msiempy.device.DevTree`).
+        Acts like there is no filters.  
+        """ 
+        log.info("Setting a generic filter to the grouped query with all datasources IPSIDs...")
+        tree = DevTree()
+        dsids=[d['ds_id'] for d in tree]
+        self._filters=[{
+            "type": "EsmFieldFilter",
+            "field": {"name": 'IPSID'},
+            "operator": 'IN',
+            "values": [{'type':'EsmCompoundValue', 'values':dsids}]
+            }]
+
+    def qry_load_data(self, num_rows=500, retry=1, wait_timeout_sec=120):
+        """
+        Helper method to execute the grouped query and load the data :  
+            -> Submit the query  
+            -> Wait the query to be executed  
+            -> Get and parse the events  
+
+        Arguments:
+
+        - `num_rows` (`int`): Maximum number of rows to load.  
+        - `retry` (`int`): number of time the query can be failed and retried.  
+        - `wait_timeout_sec` (`int`): wait timeout in seconds.  
+
+        Returns : `tuple` : (( `list`, Query completed? `True/False` ))
+
+        Raises `msiempy.core.session.NitroError` if any unhandled errors.  
+        Raises `TimeoutError` if wait_timeout_sec counter gets to 0.  
+        """
+        if not any( [f['field']['name'] == "IPSID" for f in self.filters ] ):
+            raise ValueError("An 'IPSID' filter must be specified when issuing a grouped query.  ")
+        try:
+            query_infos=dict()
+
+            #Queries api calls are very different if the time range is custom.
+            if self.time_range == 'CUSTOM' :
+                query_infos=self.nitro.request(
+                    'grouped_event_query_custom_time',
+                    time_range=self.time_range,
+                    start_time=self.start_time,
+                    end_time=self.end_time,
+                    field=self.field,
+                    filters=self.filters
+                    )
+
+            else :
+                query_infos=self.nitro.request(
+                    'grouped_event_query',
+                    time_range=self.time_range,
+                    field=self.field,
+                    filters=self.filters,
+                    )
+            
+            log.debug("Waiting for EsmRunningQuery object : "+str(query_infos))
+        
+            self._wait_for(query_infos['resultID'], wait_timeout_sec)
+            events_raw = self._get_events(query_infos['resultID'], numRows=num_rows)
+            self._close_query(query_infos['resultID'])
+
+        except (NitroError, TimeoutError) as error :
+            if retry > 0:
+                log.warning('Retring qry_load_data() after error: '+str(error))
+                time.sleep(1)
+                return self.qry_load_data(retry=retry-1)
+            else: raise
+
+        return(events_raw, len(events_raw)<num_rows)
 
 class Event(NitroDict):
     """
@@ -1248,7 +1386,31 @@ class Event(NitroDict):
             the_id = self.get_id()
             self.data.update(self.data_from_id(the_id))
 
-   
+class GroupedEvent(Event):
+    """
+    Dict-Like object.  
+    Grouped event item, represents a row of grouped query results.  
+
+    Common keys:  
+    - The requested field  
+    - `COUNT(*)`: The number of event for the result row  
+    - `SUM(Alert.EventCount)`:  The sum of their `EventCount` attribute  
+
+    
+    The following `__getitem__` key mapping are added on top of `Event`'s :  
+
+        "Count":"COUNT(*)", 
+        "TotalEventCount":"SUM(Alert.EventCount)"
+
+    Meaning that you can use `e['TotalEventCount']`, it will return `e['SUM(Alert.EventCount)']`.  
+
+    Note: `GroupedEvent` is not suitable for `Event`s operations like `set_note()` or `refresh()` because there is no ID associated with events records.   
+
+    """
+    SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME=Event.SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME
+    SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME['Count']='COUNT(*)'
+    SIEM_FIELDS_MAP_NICKNAME_TO_INTERNAL_NAME['TotalEventCount']='SUM(Alert.EventCount)'
+
 class _QueryFilter(collections.UserDict): 
     """Base class for all SIEM query objects in order to dump the filter as dict.
     """
@@ -1319,6 +1481,7 @@ class FieldFilter(_QueryFilter):
 
     # Basically [ item.get('name') for item in EventManager().get_possible_filters() ]
     DOCUMENTED_FILTERS = [
+        "IPSID", # IPSID has been manually added to this list
         "IPSIDAlertID", # IPSIDAlertID has been manually added to this list
         'AppID',
         'CommandID',
@@ -1712,3 +1875,4 @@ class FieldFilter(_QueryFilter):
         Wrapper arround `add_value` method to simply add a `EsmBasicValue`.
         """
         self.add_value(type='EsmBasicValue', value=value)
+

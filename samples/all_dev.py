@@ -7,7 +7,7 @@ from msiempy.device import DevTree
 
 devtree = DevTree()
 print("All Datasources")
-print(devtree.get_text(fields=['parent_name', 'name']))
+print(devtree.get_text(fields=['parent_name', 'name', 'ds_id']))
 
 df = pandas.DataFrame(devtree)
 print("Datasources grouped by parent")

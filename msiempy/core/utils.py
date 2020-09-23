@@ -236,17 +236,24 @@ def convert_to_time_obj(time_str):
 def parse_query_result(columns, rows):
     """
     For input :
-        columns = ['key1','name','password']
-        rows = [
-            ['67','bob','b08b'],
-            ['68','mike','kaas'],
-            ['69','jean','p992'],
-        ]
+        columns = [{'name': 'Alert.LastTime'}, {'name': 'Rule.msg'}, {'name': 'Alert.DstIP'}, {'name': 'Alert.IPSIDAlertID'}]
+        rows = 
+            [
+                {'values': ['09/22/2020 15:51:14', 'Postfix Disconnect from host', '::', '144116287604260864|547123']}, 
+                {'values': ['09/22/2020 15:51:14', 'Postfix Lost connection from host', '::', '144116287604260864|547122']}
+            } 
+
     Returns :
     [
-        {key1=67, name=bob, password=b08b},
-        {...},
-        {},
+        {
+            "Alert.LastTime":"09/22/2020 15:51:14", 
+            "Rule.msg":"Postfix Disconnect from host",
+            "Alert.DstIP":"::",
+            "Alert.IPSIDAlertID":"144116287604260864|547123"
+        },
+        {
+            ...
+        },
     ]
 
     """

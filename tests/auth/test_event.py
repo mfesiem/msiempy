@@ -1,6 +1,6 @@
 from re import L
 from unittest.case import skip
-from msiempy import EventManager, Event, FieldFilter, GroupFilter, AlarmManager, NitroSession
+from msiempy import EventManager, Event, FieldFilter, GroupFilter, AlarmManager, NitroSession, GroupedEventManager, GroupedEvent, DevTree
 import unittest
 from datetime import datetime, timedelta
 
@@ -237,3 +237,25 @@ class T(unittest.TestCase):
         self.assertEqual(event_from_ipsGetAlertData.get_id(), str(event_from_ipsGetAlertData['ipsId']['id'])+'|'+str(event_from_ipsGetAlertData["alertId"]), "get_id() returned an ivalid ID for ipsGetAlertData type events")
         self.assertEqual(event_from_notifyGetTriggeredNotificationDetail.get_id(), event_from_notifyGetTriggeredNotificationDetail['eventId'], "get_id() returned an ivalid ID for notifyGetTriggeredNotificationDetail type events")
         self.assertEqual(event_from_qryGetResults.get_id(), event_from_qryGetResults['IPSIDAlertID'], "get_id() returned an ivalid ID for qryGetResults type events")
+
+        self.assertEqual(event_from_ipsGetAlertData.get_id(), event_from_notifyGetTriggeredNotificationDetail.get_id(), "Same events don't seem to have the same ID with get_id() method")
+        self.assertEqual(event_from_ipsGetAlertData.get_id(), event_from_qryGetResults.get_id(), "Same events don't seem to have the same ID with get_id() method")
+
+    def test_grouped_query(self):
+        
+        gevents = GroupedEventManager(field='SrcIP', filters=[FieldFilter('DstIP', ['127.0.0.1'], operator='IN')])
+        with self.assertRaisesRegex(ValueError, "filter must be specified when issuing a grouped query"):
+            gevents.load_data()
+        
+        gevents.clear_filters()
+        gevents.add_filter(FieldFilter('DstIP', ['0.0.0.0/0'], operator='IN'))
+        gevents.load_data()
+
+        self.assertGreater(len(gevents), 2)
+        [ self.assertGreater(int(e['COUNT(*)']), 1) for e in gevents ]
+        [ self.assertGreater(int(e['SUM(Alert.EventCount)']), 1) for e in gevents ]
+        [ self.assertIsInstance(e, GroupedEvent) for e in gevents ]
+
+        for e in gevents:
+            self.assertEqual(e['COUNT(*)'], e['Count'])
+            self.assertEqual(e['SUM(Alert.EventCount)'], e['TotalEventCount'])

@@ -27,6 +27,8 @@ _PARAMS = {
                 "os": "Win32"}
                 """)),
 
+    ### DATASOURCES
+
     "get_devtree": ("GRP_GETVIRTUALGROUPIPSLISTDATA",
                     """{"ITEMS": "#{DC1 + DC2}",
                         "DID": "1",
@@ -196,6 +198,7 @@ _PARAMS = {
         "ds_details2": ("dsGetDataSourceDetail",
                         Template("""{"datasourceId": {"value": "$ds_id"}}""")),
 
+        ### ALARMS
 
         "get_alarms_custom_time": (Template("""alarmGetTriggeredAlarms?triggeredTimeRange=$time_range&customStart=$start_time&customEnd=$end_time&status=$status&pageSize=$page_size&pageNumber=$page_number"""),
                     None),
@@ -221,21 +224,17 @@ _PARAMS = {
         
         "delete_alarms_11_2_1": ("""alarmDeleteTriggeredAlarm""", Template("""{"triggeredIds":{"alarmIdList":[$ids]}}""")),
 
-        "get_possible_filters" : ( """qryGetFilterFields""", None ),
-
-        "get_possible_fields" : ( Template("""qryGetSelectFields?type=$type&groupType=$groupType"""), None ),
-
-        "get_esm_time" : ( """essmgtGetESSTime""",None),
-
         "get_alerts_now" : ("""IPS_GETALERTSNOW""", Template("""{"IPSID": "$ds_id"}""")),
 
         "get_flows_now" : ("""IPS_GETFLOWSNOW""", Template("""{"IPSID": "$ds_id"}""")),
 
-        "logout" : ( """userLogout""", None ),
+        ### QUERY MODULE 
 
-        "get_user_locale" : ( """getUserLocale""", None ),
+        "get_possible_filters" : ( """v2/qryGetFilterFields""", None ),
 
-        "event_query_custom_time" : ("""qryExecuteDetail?type=EVENT&reverse=false""", Template("""{
+        "get_possible_fields" : ( Template("""v2/qryGetSelectFields?type=$type&groupType=$groupType"""), None ),
+
+        "event_query_custom_time" : ("""v2/qryExecuteDetail?type=EVENT&reverse=false""", Template("""{
                 "config": {
                     "timeRange": "$time_range",
                     "customStart": "$start_time",
@@ -249,7 +248,7 @@ _PARAMS = {
                     }
                     }""")),
 
-        "event_query" : ("""qryExecuteDetail?type=EVENT&reverse=false""", Template("""{
+        "event_query" : ("""v2/qryExecuteDetail?type=EVENT&reverse=false""", Template("""{
                 "config": {
                     "timeRange":"$time_range",
                     "fields":$fields,
@@ -261,14 +260,34 @@ _PARAMS = {
                     }
                     }""")),
 
-        "query_status" : ("""qryGetStatus""", Template("""{"resultID": $resultID}""")),
+        "query_status" : ("""v2/qryGetStatus""", Template("""{"resultID": $resultID}""")),
 
-        "query_result" : (Template("""qryGetResults?startPos=$startPos&numRows=$numRows&reverse=false"""), Template("""{"resultID": $resultID}""")),
+        "query_result" : (Template("""v2/qryGetResults?startPos=$startPos&numRows=$numRows&reverse=false"""), Template("""{"resultID": $resultID}""")),
         
-        "time_zones" : ("""userGetTimeZones""", None),
+        "grouped_event_query": ("""v2/qryExecuteGrouped?queryType=EVENT""", Template("""{
+                "config": { 
+                    "filters": $filters,
+                    "field": {"name": "$field"},
+                    "timeRange": "$time_range"
+                    }
+        }""")),
 
-        "logout" : ("""logout""", None),
-        
+        "grouped_event_query_custom_time": ("""v2/qryExecuteGrouped?queryType=EVENT""", Template("""{
+                "config": { 
+                    "filters": $filters,
+                    "field": {"name": "$field"},
+                    "timeRange": "$time_range",
+                    "customStart": "$start_time",
+                    "customEnd": "$end_time",
+                    }
+        }""")),
+
+        "close_query" : ("""v2/qryClose""", Template("""{"resultID": $resultID}""")),
+
+        ### EVENTS OPERATIONS
+
+        "get_alert_data": ("""ipsGetAlertData""", Template("""{"id": {"value":"$id"}}""")),
+
         "add_note_to_event" : ("""ipsAddAlertNote""", Template("""{
             "id": {"value": "$id"},
             "note": {"note": "$note"}
@@ -276,6 +295,8 @@ _PARAMS = {
 
         "add_note_to_event_int": ("""IPS_ADDALERTNOTE""", Template("""{"AID": "$id",
                                                             "NOTE": "$note"}""")),
+
+        ### WATCHLISTS OPERATIONS
 
         "get_wl_types": ("""sysGetWatchlistFields""", None),
         "get_watchlists_no_filters" : (Template("""sysGetWatchlists?hidden=$hidden&dynamic=$dynamic&writeOnly=$writeOnly&indexedOnly=$indexedOnly"""), 
@@ -323,14 +344,27 @@ _PARAMS = {
             "values": $values,
             }""")),
 
+        "remove_watchlist_values": ("""sysRemoveWatchlistValues""", Template("""{
+            "watchlist": $watchlist,
+            "values": $values,
+            }""")),
+
         "get_watchlist_values": ("SYS_GETWATCHLISTDETAILS",
                                         Template("""{"WID": "$id", "LIM": "T"}""")),
 
         "remove_watchlists": ("""sysRemoveWatchlist""", Template("""{"ids": {"watchlistIdList": ["$wl_id_list"]}}""")),
 
-        "get_alert_data": ("""ipsGetAlertData""", Template("""{"id": {"value":"$id"}}""")),
+        ### MISC
+
+        "get_user_locale" : ( """getUserLocale""", None ),
+
+        "time_zones" : ("""userGetTimeZones""", None),
+
+        "logout" : ("""logout""", None),
         
         "get_sys_info"  : ("SYS_GETSYSINFO","""{}"""),
+
+        "get_esm_time" : ( """essmgtGetESSTime""",None),
         
         "build_stamp" : ("essmgtGetBuildStamp",None)
 } 
@@ -623,7 +657,7 @@ class NitroSession():
                     log.debug('{} -> Result ({}): {}'.format(
                         str(response),
                         type(result),
-                        str(result)[:200] + '[...]' if len(str(result))>200 else ''
+                        str(result)[:200]
                     ))
 
                     return result
@@ -840,6 +874,7 @@ class NitroSession():
             response: requests.Response response object
         Returns a list, a dict or a string
         """
+        log.debug("Unpacking SIEM response: {}".format(str(response.text)[:200]))
         try :
             data = response.json()
             if isinstance(response.json(), dict):

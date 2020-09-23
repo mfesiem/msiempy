@@ -3,6 +3,7 @@
 Base query class with timerange handling.  
 """
 
+from abc import abstractproperty
 import logging
 import abc
 import datetime
@@ -49,8 +50,7 @@ class FilteredQueryList(NitroList):
         self._start_time=None
         self._end_time=None
 
-        #self.filters=filters filter property setter should be called in the concrete class
-        #TODO find a better solution to integrate the filter propertie
+        self.filters=filters # filter property setter
 
         if start_time != None and end_time != None :
             self.start_time=start_time
@@ -129,7 +129,7 @@ class FilteredQueryList(NitroList):
         elif isinstance(start_time, datetime.datetime):
             self._start_time = start_time
         elif start_time==None:
-             self._start_time=None #raise ValueError("Time must be string or datetime object, not None")#self.start_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+             self._start_time=None
         else:
             raise ValueError("Time must be string or datetime object.")
 
@@ -150,24 +150,27 @@ class FilteredQueryList(NitroList):
         elif isinstance(end_time, datetime.datetime):
             self._end_time = end_time
         elif end_time==None:
-             self._end_time=None #raise ValueError("Time must be string or datetime object, not None")
+             self._end_time=None
         else:
             raise ValueError("Time must be string or datetime object.")
-
-    @abc.abstractproperty
+    
+    @property
     def filters(self):
         """ 
-        Filter property : Returns a list of filters.
+        Filter property : Returns a list of filters.  
         Can be set with list of tuple(field, [values]), a `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter` in the case of a `msiempy.event.EventManager` query. A single tuple is also accepted.  
-        `None` value will trigger `msiempy.core.query.FilteredQueryList.clear_filters()`.  
-        Raises : `AttributeError` if type not supported.
+        Filters will always be added to the list, use `clear_filters()` to remove all filters from a query.   
+        Raises : `AttributeError` if type not supported.  
         Abstract declaration.
-        TODO find a better solution to integrate the filter property
         """
-        pass
-
+        return self._get_filters()
+    
     @filters.setter
     def filters(self, filters):
+        self._set_filters(filters)
+
+
+    def _set_filters(self, filters):
         if isinstance(filters, list):
             for f in filters :
                 self.add_filter(f)
@@ -180,6 +183,14 @@ class FilteredQueryList(NitroList):
         
         else :
             raise AttributeError("Illegal type for the filter object, it must be a list, a tuple or None.")
+    
+    @abc.abstractmethod
+    def _get_filters(self):
+        """
+        Returns the filters in the right format.  
+        Abstract declaration.
+        """
+        pass
 
     
     @abc.abstractmethod
@@ -210,4 +221,3 @@ class FilteredQueryList(NitroList):
         """Load the data from the SIEM into the list.  
         Abstract declaration."""
         pass
-
