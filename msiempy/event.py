@@ -127,7 +127,7 @@ class _QueryExecuteManager(FilteredQueryList):
 class EventManager(_QueryExecuteManager):
     """
     List-Like object.  
-    Interface to execute events query.  
+    Interface to execute a event query.  
 
     Arguments:  
 
@@ -397,7 +397,7 @@ class EventManager(_QueryExecuteManager):
 class GroupedEventManager(_QueryExecuteManager):
     """
     List-Like object.  
-    Interface to execute grouped events queries.    
+    Interface to execute a grouped event query.    
 
     Arguments:  
     - `field` (`str`): The field that will be selected when this query is executed.  

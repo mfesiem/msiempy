@@ -81,7 +81,7 @@ for alarm in alarms:
     alarm.acknowledge()
 ```  
 
-### Execute an Event query 
+### Execute an event query 
 
 See objects: `msiempy.event.EventManager`, `msiempy.event.FieldFilter`, `msiempy.event.Event`  \
 
@@ -128,7 +128,7 @@ See method documentation for more infos.
  
 See [`dump_all_fields.py`](https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py) script to have full list of `fields` you can request and fields you can use with `FieldFilter` .
 
-### Execute an grouped Event query
+### Execute an grouped event query
 
 Query the curent day events grouped by `ScrIP`.  
 
