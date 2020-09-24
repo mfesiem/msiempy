@@ -223,7 +223,7 @@ class T(unittest.TestCase):
             time_range='CUSTOM',
             start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
             end_time=datetime.now()+timedelta(days=1),
-            page_size=10
+            page_size=3
             )
 
         event_from_ipsGetAlertData = list(alarms.load_data())[0]['events'][0]
