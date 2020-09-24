@@ -13,10 +13,12 @@ usage(){
     echo -e "\t\tInstall the requirements.txt."
     echo
     echo -e "\t\t'test' keyword :"
+    echo -e "\t\t\t- Ask to format the code with black and commit"
     echo -e "\t\t\t- Publish docs to https://mfesiem.github.io/docs/test/msiempy/"
     echo -e "\t\t\t- Publish module to https://test.pypi.org/project/msiempy/"
     echo
     echo -e "\t\t'master' keyword :"
+    echo -e "\t\t\t- Ask to format the code with black and commit"
     echo -e "\t\t\t- Print git log since last tag"
     echo -e "\t\t\t- Publish docs to https://mfesiem.github.io/docs/msiempy/"
     echo -e "\t\t\t- Publish module to https://pypi.org/project/msiempy/"
@@ -57,6 +59,16 @@ while getopts ":hp:" arg; do
                 fi
             fi
 
+            # Ask to format code and push it
+            echo "[QUESTION] Do you want to format code with black ?"
+            read REPLY < /dev/tty
+            if [ "$REPLY" = "y" ] || [ "$REPLY" = "yes" ] || [ "$REPLY" = "Y" ] || [ "$REPLY" = "Yes" ]; then
+                black "msiempy/"
+                git add "msiempy"
+                git commit -m "Format code"
+                git push
+            fi
+
             
             if [ "$keyword" = "master" ]; then
                 last_tag=`git tag -l | tail -1`
@@ -85,7 +97,7 @@ while getopts ":hp:" arg; do
             # Generating documentation
             echo "[RUNNING] pdoc"
             rm -rf ./${docs_folder}/msiempy/
-            pdoc3 msiempy --output-dir ./${docs_folder} --html --force --template-dir ./.pdoc_templates
+            python3 -m pdoc msiempy --output-dir ./${docs_folder} --html --force --template-dir ./.pdoc_templates
 
 
             mv ./classes.png ./${docs_folder}/msiempy
@@ -121,7 +133,7 @@ while getopts ":hp:" arg; do
 
                 # Tag
                 touch ./tmp_tag.txt
-                echo "McAfee SIEM API Python wrapper ${version}" > ./tmp_tag.txt
+                echo "msiempy ${version}" > ./tmp_tag.txt
                 echo >> ./tmp_tag.txt
                 echo "New features: " >> ./tmp_tag.txt
                 echo >> ./tmp_tag.txt
@@ -132,7 +144,7 @@ while getopts ":hp:" arg; do
                 read -p "[QUESTION] Are you sure, tag this version with the message? [y/n]" -n 1 -r
                 echo    # (optional) move to a new line
                 if [[ $REPLY =~ ^[Yy]$ ]]; then
-                    echo "[RUNNING] git tag -a ${version} -m ${tag_msg} && git push --tags"
+                    echo "[RUNNING] pushing tags"
                     git tag -a ${version} -F ./tmp_tag.txt && git push --tags
                     echo "[SUCCESS] msiempy ${version} tagged and pushed to https://github.com/mfesiem/msiempy/tags"
                     echo "[INFO] Note that you'll still need to create the realease from github"

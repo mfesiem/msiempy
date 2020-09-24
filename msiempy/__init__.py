@@ -251,22 +251,9 @@ cat /path/to/your/log/file | grep -i error | sort | uniq
 
 # List all library objects that the user might need
 
-from .core import (
-    NitroConfig,
-    NitroError,
-    NitroSession,
-    FilteredQueryList,
-    NitroList
-)
-from .alarm import (
-    Alarm,
-    AlarmManager
-)
-from .device import (
-    ESM,
-    DevTree,
-    DataSource
-)
+from .core import NitroConfig, NitroError, NitroSession, FilteredQueryList, NitroList
+from .alarm import Alarm, AlarmManager
+from .device import ESM, DevTree, DataSource
 from .event import (
     Event,
     EventManager,
@@ -275,7 +262,4 @@ from .event import (
     GroupedEventManager,
     GroupedEvent,
 )
-from .watchlist import (
-    Watchlist,
-    WatchlistManager
-)
+from .watchlist import Watchlist, WatchlistManager

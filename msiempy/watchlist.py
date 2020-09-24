@@ -3,14 +3,16 @@
 
 import logging
 import collections
-log = logging.getLogger('msiempy')
+
+log = logging.getLogger("msiempy")
 
 from .core import NitroDict, NitroList
 
+
 class WatchlistManager(NitroList):
     """
-    List-Like object.  
-    Summary of ESM watchlists.  
+    List-Like object.
+    Summary of ESM watchlists.
 
     Example:
     ```
@@ -33,13 +35,23 @@ class WatchlistManager(NitroList):
         """
         Loads the watchlist summary.
         """
-        self.data = self.nitro.request('get_watchlists_no_filters',
-            hidden=False, dynamic=False, writeOnly=False, indexedOnly=False)
+        self.data = self.nitro.request(
+            "get_watchlists_no_filters",
+            hidden=False,
+            dynamic=False,
+            writeOnly=False,
+            indexedOnly=False,
+        )
 
-        #Casting all data to Watchlist objects, better way to do it ?
-        collections.UserList.__init__(self,
-            [Watchlist(adict=item) for item in self.data
-                if isinstance(item, (dict, NitroDict))])
+        # Casting all data to Watchlist objects, better way to do it ?
+        collections.UserList.__init__(
+            self,
+            [
+                Watchlist(adict=item)
+                for item in self.data
+                if isinstance(item, (dict, NitroDict))
+            ],
+        )
 
     def load_details(self):
         """
@@ -57,11 +69,11 @@ class WatchlistManager(NitroList):
         """
         Create a static watchlist.
 
-        Arguments:  
+        Arguments:
 
         - `name` (`str`): Name of the watchlist.
         - `wl_type` (`str`): Watchlist data type.
-        Get the list of types with: `msiempy.watchlist.WatchlistManager.get_wl_types`.  
+        Get the list of types with: `msiempy.watchlist.WatchlistManager.get_wl_types`.
         Most common types are: `IPAddress`,
                                 `Hash`,
                                 `SHA1`,
@@ -78,32 +90,33 @@ class WatchlistManager(NitroList):
                                 `File_Hash`
         """
         for wl in self.data:
-            if wl.get('name') == name:
-                logging.error('Cannot add: {} watchlist already exists.'.format(name))
+            if wl.get("name") == name:
+                logging.error("Cannot add: {} watchlist already exists.".format(name))
                 return
-        self.nitro.request('add_watchlist', name=name, wl_type=wl_type)
+        self.nitro.request("add_watchlist", name=name, wl_type=wl_type)
         self.refresh()
 
     def remove(self, wl_id_list):
         """
-        Remove watchlist(s).  
+        Remove watchlist(s).
 
-        Arguments:  
+        Arguments:
 
-        - `wl_ids` (`list`): list of watchlist IDs. Example: `[1, 2, 3]`.   
+        - `wl_ids` (`list`): list of watchlist IDs. Example: `[1, 2, 3]`.
         """
-        self.nitro.request('remove_watchlists', wl_id_list=wl_id_list)
+        self.nitro.request("remove_watchlists", wl_id_list=wl_id_list)
 
     def get_wl_types(self):
         """
         Get a list of watchlist types.
         Returns: `list` of watchlist types.
         """
-        return self.nitro.request('get_wl_types')
+        return self.nitro.request("get_wl_types")
+
 
 class Watchlist(NitroDict):
     """
-    Dict-Like object.  
+    Dict-Like object.
     Complete list of watchlist fields (not values) once load with load_details()
 
     Dictionary keys:
@@ -126,9 +139,10 @@ class Watchlist(NitroDict):
 
     - `adict`: Watchlist parameters
     - `id`: The watchlist ID to instanciate. Will load informations
-    
+
 
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -136,38 +150,40 @@ class Watchlist(NitroDict):
         """
         Add values to static watchlist.
 
-        Arguments:  
+        Arguments:
 
         - `values` (`list`): list of values
         """
-        self.nitro.request('add_watchlist_values', watchlist=self['id'], values=values)
+        self.nitro.request("add_watchlist_values", watchlist=self["id"], values=values)
 
     def remove_values(self, values):
         """
         Remove values from static watchlist.
 
-        Arguments:  
+        Arguments:
 
         - `values` (`list`): list of values
         """
-        self.nitro.request('remove_watchlist_values', watchlist=self['id'], values=values)
+        self.nitro.request(
+            "remove_watchlist_values", watchlist=self["id"], values=values
+        )
 
     def data_from_id(self, id):
         """
         Retrieve watchlist details for ID.
-        
-        Arguments:  
+
+        Arguments:
 
         - `id` (`str`): watchlist ID
         """
-        info=self.nitro.request('get_watchlist_details', id=id)
+        info = self.nitro.request("get_watchlist_details", id=id)
         return info
 
     def load_details(self):
         """
         Load Watchlist details.
         """
-        self.data.update(self.data_from_id(self.data['id']))
+        self.data.update(self.data_from_id(self.data["id"]))
 
     def refresh(self):
         """Load Watchlist details."""
@@ -175,21 +191,21 @@ class Watchlist(NitroDict):
 
     def load_values(self):
         """
-        Load Watchlist values.  
+        Load Watchlist values.
         Raises: `KeyError` if watchlist invalid.
         """
-        wl_details = self.nitro.request('get_watchlist_values', id=self.data['id'])
+        wl_details = self.nitro.request("get_watchlist_values", id=self.data["id"])
 
         try:
-            file = wl_details['WLVFILE']
+            file = wl_details["WLVFILE"]
         except KeyError:
-            log.error('Is watchlist valid? ({})'.format(str(self)))
+            log.error("Is watchlist valid? ({})".format(str(self)))
             raise
         data = self.nitro.get_internal_file(file)
-        self.data['values'] = ''.join(data).split('\n')
+        self.data["values"] = "".join(data).split("\n")
 
     def get_id(self):
         """
-        Returns the Watchlist ID.  
+        Returns the Watchlist ID.
         """
-        return self['id']
+        return self["id"]

@@ -252,8 +252,8 @@ class T(unittest.TestCase):
         gevents.load_data()
 
         self.assertGreater(len(gevents), 2)
-        [ self.assertGreater(int(e['COUNT(*)']), 1) for e in gevents ]
-        [ self.assertGreater(int(e['SUM(Alert.EventCount)']), 1) for e in gevents ]
+        [ self.assertGreaterEqual(int(e['COUNT(*)']), 1) for e in gevents ]
+        [ self.assertGreaterEqual(int(e['SUM(Alert.EventCount)']), 1) for e in gevents ]
         [ self.assertIsInstance(e, GroupedEvent) for e in gevents ]
 
         for e in gevents:
