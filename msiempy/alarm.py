@@ -48,13 +48,13 @@ class AlarmManager(FilteredQueryList):
 
         # Setting attributes
         self.status_filter = status_filter
-        """"
+        """
         Alarms status filter
         """
 
         self.page_size = page_size
-        """"
-        Max number of alarms per query
+        """
+        Maximum number of alarms per query
         """
 
         # uses the parent filter setter
@@ -107,7 +107,9 @@ class AlarmManager(FilteredQueryList):
 
     def add_filter(self, afilter):
         """
-        Add a filter to the query.
+        Add a filter to the alarm query.  
+        
+        Some event related filters can be added with this method. See `Alarm.ALARM_EVENT_FILTER_FIELDS`.  
 
         Arguments :
 
@@ -123,20 +125,17 @@ class AlarmManager(FilteredQueryList):
         values = [str(v) for v in values]
         added = False
 
-        for synonims in Alarm.ALARM_EVENT_FILTER_FIELDS:
-            if afilter[0] in synonims:
+        for field_name in Alarm.ALARM_EVENT_FILTER_FIELDS:
+            if afilter[0] == field_name:
                 log.warning(
-                    "Passing event related filters in `filters` argument is deprecated, consider using `event_filters` argument. You'll be able to use more filters dynamically."
+                    "Passing event related filters in `filters` argument only works for a couple field names, consider using `event_filters` argument to use any field name.  "
                 )
-                self._event_filters.append((synonims[0], values))
+                self._event_filters.append((field_name, values))
                 added = True
 
         # support query related filtering if the filter's field is composed by a table name then a field name separated by a dot.
         if len(afilter[0].split(".")) == 2:
             self._event_filters.append((afilter[0], values))
-            log.warning(
-                "Passing event related filters in `filters` argument is deprecated, consider using `event_filters` argument. You'll be able to use more filters dynamically."
-            )
             added = True
 
         if added == False:
@@ -413,27 +412,30 @@ class Alarm(NitroDict):
     )
 
     ALARM_EVENT_FILTER_FIELDS = [
-        ("ruleName",),
-        ("srcIp",),
-        ("destIp",),
-        ("protocol",),
-        ("lastTime",),
-        ("subtype",),
-        ("destPort",),
-        ("destMac",),
-        ("srcMac",),
-        ("srcPort",),
-        ("deviceName",),
-        ("sigId",),
-        ("normId",),
-        ("srcUser",),
-        ("destUser",),
-        ("normMessage",),
-        ("normDesc",),
-        ("host",),
-        ("domain",),
-        ("ipsId",),
+        "ruleName",
+        "ruleMessage",
+        "srcIp",
+        "sourceIp",
+        "destIp",
+        "protocol",
+        "lastTime",
+        "subtype",
+        "destPort",
+        "destMac",
+        "srcMac",
+        "srcPort",
+        "deviceName",
+        "sigId",
+        "normId",
+        "srcUser",
+        "destUser",
+        "normMessage",
+        "normDesc",
+        "host",
+        "domain",
+        "ipsId",
     ]
+    """Few Events fields names can be automatically added as event's filters when passing to `AlarmManager()`'s `filter` argument. See `msiempy.event.Event`.  """
 
     ALARM_DEFAULT_FIELDS = [
         "id",
@@ -444,8 +446,7 @@ class Alarm(NitroDict):
     ]
     __pdoc__[
         "Alarm.ALARM_DEFAULT_FIELDS"
-    ] = """Defaulfs fields : `%(fields)s` 
-    (not used in library, can bu useful for printing with `get_text(fields=msiempy.alarm.ALARM_DEFAULT_FIELDS)`)""" % dict(
+    ] = """`%(fields)s`. Just a list of regular fields.  Can bu useful for printing with `AlarmManager.get_text(fields=msiempy.alarm.ALARM_DEFAULT_FIELDS)`""" % dict(
         fields=", ".join(ALARM_DEFAULT_FIELDS)
     )
 
@@ -611,6 +612,7 @@ class Alarm(NitroDict):
         Will still use private method if SIEM if v10.X because it's the only way to get the trigerring event ID.
 
         Arguments:
+
         - `use_priv`: (`bool`): Use the private API methods to retreive the INFO, will use it anyway with ESM v10.x.
         Will only load the details of the first triggering event.
 

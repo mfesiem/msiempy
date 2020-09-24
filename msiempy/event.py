@@ -176,6 +176,10 @@ class EventManager(_QueryExecuteManager):
         self.__parent__ = __parent__
 
         # Setting the default fields Adds the specified fields, make sure there is no duplicates and delete TABLE identifiers
+        self.fields=[]
+        """
+        Query fields
+        """
         if fields and len(fields) > 0:
             all_keys = Event.DEFAULTS_EVENT_FIELDS + list(fields)
             uniquekeys = set()
@@ -186,10 +190,13 @@ class EventManager(_QueryExecuteManager):
             self.fields = Event.DEFAULTS_EVENT_FIELDS
         # log.debug('{}\nFIELDS : {}'.format(locals(), self.fields))
 
-        # Setting limit according to config or limit argument
+        # Setting limit according to limit argument
         # TODO Try to load queries with a limit of 10k and get result as chucks of 500 with starPost nbRows
         #   and compare efficiency
         self.limit = int(limit)
+        """
+        Maximum number of rows per query.  
+        """
 
         # Save order
         self.order = order
@@ -445,15 +452,16 @@ class EventManager(_QueryExecuteManager):
 
 class GroupedEventManager(_QueryExecuteManager):
     """
-    List-Like object.
-    Interface to execute a grouped event query.
+    List-Like object.  
+    Interface to execute a grouped event query.  
 
-    Arguments:
-    - `field` (`str`): The field that will be selected when this query is executed.
-    - `filters` (`list`): list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter` if you wish to use advanced filtering.
-    - `time_range` (`str`): Query time range. String representation of a time range. Not need to specify 'CUSTOM' if `start_time` and `end_time` are set.
-    - `start_time` : Query start time, can be a `str` or a `datetime` object. Parsed with `dateutil`.
-    - `end_time` : Query end time, can be a `str` or a `datetime` object. Parsed with `dateutil`.
+    Arguments: 
+
+    - `field` (`str`): The field that will be selected when this query is executed.  
+    - `filters` (`list`): list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter` if you wish to use advanced filtering.  
+    - `time_range` (`str`): Query time range. String representation of a time range. Not need to specify 'CUSTOM' if `start_time` and `end_time` are set.  
+    - `start_time` : Query start time, can be a `str` or a `datetime` object. Parsed with `dateutil`.  
+    - `end_time` : Query end time, can be a `str` or a `datetime` object. Parsed with `dateutil`.  
 
     """
 
@@ -462,12 +470,14 @@ class GroupedEventManager(_QueryExecuteManager):
         super().__init__(*args, **kwargs)
 
         # Declaring attributes
+        self.field = None
+        """
+        Grouped query field
+        """
         if field:
             if not isinstance(field, str):
                 raise TypeError("Argument field must be a string. Not {}".format(field))
             self.field = self.get_field_nickname(field)
-        else:
-            self.field = None
 
         # Type cast all items in the list "data" to events type objects
         # Casting all data to Event objects, better way to do it ?
@@ -534,6 +544,7 @@ class GroupedEventManager(_QueryExecuteManager):
 
         Raises `msiempy.core.session.NitroError` if any unhandled errors.
         Raises `TimeoutError` if wait_timeout_sec counter gets to 0.
+        Raises `ValueError` if an `IPSID` filter is not present.  
         """
         if not any([f["field"]["name"] == "IPSID" for f in self.filters]):
             raise ValueError(
@@ -586,7 +597,7 @@ class Event(NitroDict):
     This object handles events objects created with `msiempy.event.EventManager` (From the `qryGetResults` api call)
         and events objects created with `msiempy.alarm.AlarmManager` (From `ipsGetAlertData` api call or `notifyGetTriggeredNotificationDetail` depending of the value of `load_data(events_details=True/False)` ) .
 
-    Common keys for alert data events (When loading from ID or with `AlarmManager.load_data()`:
+    *Common* keys for alert data events (When loading from ID or with `AlarmManager.load_data()`:
 
     - `ruleName`
     - `srcIp`
@@ -608,8 +619,9 @@ class Event(NitroDict):
     - `host`
     - `domain`
     - `ipsId`
+    - And others
 
-    Common keys for triggered alarms events (When using `AlarmManager.load_data(events_details=False)`) (SIEM v11.x only):
+    All keys for triggered alarms events (When using `AlarmManager.load_data(events_details=False)`) (SIEM v11.x only):
 
     - `ruleMessage`
     - `eventId`
@@ -626,7 +638,7 @@ class Event(NitroDict):
     - `Rule.msg`
     - `Alert.LastTime`
     - `Alert.IPSIDAlertID`
-    - and any other...
+    - And any other
 
     You can request more fields by passing a list of fields to the `msiempy.event.EventManager` object.
     `msiempy.event.Event.REGULAR_EVENT_FIELDS` offer a base list of regular fields that may be useful.
@@ -642,10 +654,6 @@ class Event(NitroDict):
     `__getitem__`, `__contains__`, `__setitem__` and `__delitem__` method have been rewrote in order to offer more straight-forward `dict` usage.
     For exemple, if the SIEM returns results with keys like  `Alert.65613`, `Alert.BIN(7)` or `Alert.SrcIP`: you'll be able to use `Event` dict with your initial
     queried keys like `Event['Web_Doamin'] `, `Event['UserIDSrc']` or `Event['SrcIP']`. (You can still use internal keys if you want).
-
-    Exemple:
-
-
 
     """
 
@@ -1506,6 +1514,7 @@ class GroupedEvent(Event):
     Grouped event item, represents a row of grouped query results.
 
     Common keys:
+
     - The requested field
     - `COUNT(*)`: The number of event for the result row
     - `SUM(Alert.EventCount)`:  The sum of their `EventCount` attribute
@@ -1518,7 +1527,7 @@ class GroupedEvent(Event):
 
     Meaning that you can use `e['TotalEventCount']`, it will return `e['SUM(Alert.EventCount)']`.
 
-    Note: `GroupedEvent` is not suitable for `Event`s operations like `set_note()` or `refresh()` because there is no ID associated with events records.
+    .. note:: `GroupedEvent` is NOT suitable for `Event`s operations like `set_note()` or `refresh()` because there is no ID associated with events records.
 
     """
 
@@ -1576,7 +1585,7 @@ class FieldFilter(_QueryFilter):
     e = EventManager(time_range='LAST_24_HOURS', filters=[ FieldFilter('DSIDSigID', ["49190-4294967295"], operator='EQUALS') ])
     ```
 
-    *Make sure the filter name is valid by checking the result of `msiempy.event.EventManager.get_possible_filters` or use the provided script in the sample folder*
+    .. note:: Make sure the filter name is valid by checking the result of `msiempy.event.EventManager.get_possible_filters` or use the provided script in the sample folder
 
     Arguments:
 

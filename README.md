@@ -12,10 +12,10 @@ Code design is accessible and pythonic via list-like and dict-like objects inter
 
 ### Main features
 - ESM operations: monitor, show statuses  
-- Datasource operations: add, edit, delete - including client datasources  
-- Alarm operations and querying: filter, load pages, acknowledge, unacknowledge, delete, get triggering event, retreive from id  
-- Event operations and querying: split queries, filter, add fields, set event's note, retreive from IPSIDAlertID  
-- Watchlist operations : list, add, remove watchlists, add values, get values, retreive from id   
+- Datasource operations: add, edit, delete - including client datasources, retreive from ID     
+- Alarm operations and querying: filter, load pages, acknowledge, unacknowledge, delete, get triggering event, retreive from ID  
+- Event operations and querying: group queries, filter, add fields, set event's note, retreive from ID   
+- Watchlist operations : list, add/remove watchlists, add/remove values, get values, retreive from ID  
 - Single stable session handler  
 
 #### Known module implementations

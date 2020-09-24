@@ -459,14 +459,9 @@ _PARAMS = {
     "build_stamp": ("essmgtGetBuildStamp", None),
 }
 """
-Args:  
-    - `method` (str): Dict key associated with desired function
-    Use normal dict access, `PARAMS["method"]`, or `PARAMS.get("method")`
 
-Returns:  
-    - `tuple `: (`string` or `Template`, `string` or `Template`) :  
-    The first string is the SIEM API endpoint name.  
-    The second string is the JSON string data parameters required for the enpoint call. 
+Central place to aggregate methods and parameters.
+
 
 Important note : 
     Do not use sigle quotes (`'`) to delimit data into the interpolated strings !
@@ -560,6 +555,14 @@ class NitroSession:
     """
     SIEM API methos/parameters mapping.  
     This structure provide a central place to aggregate API methods and parameters.  
+
+    Usage: `NitroSession.PARAMS.get("method")`
+
+    Returns:  
+        - `tuple `: (`str` or `Template`, `str` or `Template`) :  
+        The first item is the SIEM API endpoint name.  
+        The second item is the JSON string data parameters required for the enpoint call. 
+        If the string is `Template` string, it needs to be interpolate with paramaters.  
 
     See `msiempy.core.session.NitroSession.request` for a list of all possible calls.  
     """
@@ -674,15 +677,17 @@ class NitroSession:
 
         Exemple:
 
-            from msiempy import NitroSession
-            s = NitroSession()
-            s.login()
-            # qryGetFilterFields
-            s.api_request('qryGetFilterFields')
-            # Get all last 24h alarms details with ESM API v2.
-            alarms = s.api_request('v2/alarmGetTriggeredAlarms?triggeredTimeRange=LAST_24_HOURS&status=&pageSize=500&pageNumber=1', None)
-            for a in alarms:
-                a.update(s.api_request('v2/notifyGetTriggeredNotificationDetail', {'id':a['id']}))
+        ```python
+        from msiempy import NitroSession
+        s = NitroSession()
+        s.login()
+        # qryGetFilterFields
+        s.api_request('qryGetFilterFields')
+        # Get all last 24h alarms details with ESM API v2.
+        alarms = s.api_request('v2/alarmGetTriggeredAlarms?triggeredTimeRange=LAST_24_HOURS&status=&pageSize=500&pageNumber=1', None)
+        for a in alarms:
+            a.update(s.api_request('v2/notifyGetTriggeredNotificationDetail', {'id':a['id']}))
+        ```
 
         """
 
@@ -898,16 +903,18 @@ class NitroSession:
         - `result.text` if `requests.HTTPError`,
         - `None` if Timeout or TooManyRedirects if raw=False
 
-        Exemple:
+        Exemple:  
 
-            from msiempy import NitroSession
-            s = NitroSession()
-            s.login()
-            # Get all last 24h alarms details
-            alarms = s.request('get_alarms', time_range='LAST_24_HOURS',  status='', page_size=500, page_number=0)
-            for a in alarms:
-                a.update(s.request('get_notification_detail', id=a['id']))
-
+        ```python
+        from msiempy import NitroSession
+        s = NitroSession()
+        s.login()
+        # Get all last 24h alarms details
+        alarms = s.request('get_alarms', time_range='LAST_24_HOURS',  status='', page_size=500, page_number=0)
+        for a in alarms:
+            a.update(s.request('get_notification_detail', id=a['id']))
+        ```
+        
         If you're reading this thom an IDE, all possible requests are listed on the documentation webpage:
         https://mfesiem.github.io/docs/msiempy/core/session.html#msiempy.core.session.NitroSession.request
         """
