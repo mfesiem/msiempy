@@ -97,7 +97,7 @@ while getopts ":hp:" arg; do
             # Generating documentation
             echo "[RUNNING] pdoc"
             rm -rf ./${docs_folder}/msiempy/
-            pdoc3 msiempy --output-dir ./${docs_folder} --html --force --template-dir ./.pdoc_templates
+            python3 -m pdoc msiempy --output-dir ./${docs_folder} --html --force --template-dir ./.pdoc_templates
 
 
             mv ./classes.png ./${docs_folder}/msiempy
@@ -133,7 +133,7 @@ while getopts ":hp:" arg; do
 
                 # Tag
                 touch ./tmp_tag.txt
-                echo "McAfee SIEM API Python wrapper ${version}" > ./tmp_tag.txt
+                echo "msiempy ${version}" > ./tmp_tag.txt
                 echo >> ./tmp_tag.txt
                 echo "New features: " >> ./tmp_tag.txt
                 echo >> ./tmp_tag.txt
