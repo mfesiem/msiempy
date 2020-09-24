@@ -40,7 +40,7 @@ while getopts ":hp:" arg; do
             python3 setup.py install
             
             # Figuring version
-            version=`grep __version__ ./msiempy/__version__.py | cut -d "'" -f 2`
+            version="$(grep __version__ ./msiempy/__version__.py | cut -d '"' -f 2)"
         
             # Checking keyword
             keyword=${OPTARG}
@@ -127,7 +127,7 @@ while getopts ":hp:" arg; do
             echo "[SUCCESS] Module published at : https://${repository_url}/project/msiempy/"
 
             # Ask to Tag ?
-            read -p "[QUESTION] Do you want to tag this version ${version}? You'll be asked to write the tag message. [y/n]" -n 1 -r
+            read -p "[QUESTION] Do you want to tag this version '${version}'? You'll be asked to write the tag message. [y/n]" -n 1 -r
             echo    # (optional) move to a new line
             if [[ $REPLY =~ ^[Yy]$ ]]; then
 
