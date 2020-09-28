@@ -3,10 +3,11 @@
 Welcome to the **msiempy** library documentation.  
 The pythonic way to deal with McAfee SIEM API.  
 Head out to one of the sub-modules to see objects definitions or scroll down for general documentation.  
+Checkout the [msiem CLI](https://github.com/mfesiem/msiem) if you're looking for a CLI tool.  
 
 ***
 
-Links : [GitHub](https://github.com/mfesiem/msiempy), [PyPI](https://pypi.org/project/msiempy/), [Class diagram](https://mfesiem.github.io/docs/msiempy/classes.png), [Packages diagram](https://mfesiem.github.io/docs/msiempy/packages.png), [SIEM API documentation](https://mfesiem.github.io) (generated PDFs)  
+Links : [GitHub](https://github.com/mfesiem/msiempy), [PyPI](https://pypi.org/project/msiempy/), [Class diagram](https://mfesiem.github.io/docs/msiempy/classes.png), [Packages diagram](https://mfesiem.github.io/docs/msiempy/packages.png), [SIEM API references Home](https://mfesiem.github.io) (generated PDFs and other links)  
 
 ***
 
