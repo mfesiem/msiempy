@@ -22,9 +22,6 @@ setup(
     maintainer_email='aw@krakencodes.com, tris.la.tr@gmail.com',
     version=version['__version__'],
     packages=['msiempy','msiempy.core'],
-    entry_points = {
-        'console_scripts': ['msiempy=msiempy.cli:main'],
-    },
     install_requires=[
           'requests','tqdm','PTable','python-dateutil', 'urllib3'
     ],

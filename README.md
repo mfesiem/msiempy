@@ -19,8 +19,8 @@ Code design is accessible and pythonic via list-like and dict-like objects inter
 - Single stable session handler  
 
 #### Known module implementations
+- msiem CLI : [CLI tools for ESM](https://github.com/mfesiem/msiem)
 - esm_healthmon : [Monitors ESM operations](https://github.com/andywalden/esm_healthmon)
-- msiem : [Query and manage ESM alarms](https://github.com/tristanlatr/msiem)
 - track-host: [Rapidly request event logs to track a workstation](https://github.com/mfesiem/track-host) 
 - See [samples folder](https://github.com/mfesiem/msiempy/tree/master/samples) for other implementation examples and scripts !
 
