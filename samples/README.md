@@ -1,6 +1,6 @@
 ### Samples
 
-*Not all samples are listed in the readme!*
+*Not all samples are listed in this readme!*
 
 #### A few quick examples
 
