@@ -19,7 +19,7 @@ if __name__ == "__main__":
         my_wl.load_values()
         if args.out:
             with open(args.out, 'w') as o:
-                o.writelines(my_wl['values'])
+                o.write('\n'.join(my_wl['values']))
         else:
             print('\n'.join(my_wl['values']))
     
