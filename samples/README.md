@@ -1,5 +1,7 @@
 ### Samples
 
+*Not all samples are listed in the readme!*
+
 #### A few quick examples
 
 Onpen the file `examples.py` and look it up :). 
