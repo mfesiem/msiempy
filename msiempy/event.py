@@ -260,8 +260,8 @@ class EventManager(_QueryExecuteManager):
 
         Arguments:
 
-        - `retry` (`int`): number of time the query can be failed and retried.
-        - `wait_timeout_sec` (`int`): wait timeout in seconds
+        - `retry` (`int`): number of time the query can be failed and retried.  1 by default. 
+        - `wait_timeout_sec` (`int`): wait timeout in seconds. 120 by default.  
 
         Returns : `tuple` : (( `msiempy.event.EventManager`, Query completed? `True/False` ))
 
@@ -307,12 +307,6 @@ class EventManager(_QueryExecuteManager):
             self._close_query(query_infos["resultID"])
 
         except (NitroError, TimeoutError) as error:
-            # if (retry >0 and ( any(match in str(error) for match in [
-            #         'ResultUnavailable',
-            #         'ERROR_JEC_ResponseNotAvailable',
-            #         'UnknownList',
-            #         'JobEngine_GetQueryResults_QueryNotFound_Unrecoverable'])
-            #     or isinstance(error, TimeoutError)) ):
             if retry > 0:
                 log.warning("Retring qry_load_data() after error: " + str(error))
                 time.sleep(1)
@@ -324,24 +318,24 @@ class EventManager(_QueryExecuteManager):
 
     def load_data(self, workers=10, slots=10, delta=None, max_query_depth=0, **kwargs):
         """
-        Load the data into the list.
-        Split the query in defferents time slots if the query apprears not to be completed.
-        Wraps around `msiempy.event.EventManager.qry_load_data`.
-
-        Note: Only the first query is loaded asynchronously.
+        Load the events data into the list.  
+        Wraps around `msiempy.event.EventManager.qry_load_data`.  
 
         Arguments:
 
-        - `workers` : numbre of parrallels tasks, should be equal or less than the number of slots.
+        - `max_query_depth` : Positive value splits the query in differents time slots if the query apprears not to be completed. 
+        Divisions are reccursive, `max_query_depth` is the maximum number of reccursive calls load_data() can apply to the query in order to load all events.  
+        Meaning, if `EventManager.limit=500`, `slots=10 `and `max_query_depth=2`, then the maximum capacity of
+        the list is `(500*10)*(500*10)` = `25000000` (instead of `500` with `max_query_depth=0`).  Only works with custom times and a few time ranges...  
         - `slots` : number of time slots the query can be divided. The loading bar is
-            divided according to the number of slots
-        - `delta` : exemple : '6h30m', the query will be firstly divided in chuncks according to the time delta read
-            with dateutil.
-        - `max_query_depth` : maximum number of reccursive divisions the query before to .
-        Meaning, if EventManager query `limit=500`, `slots=5 `and `max_query_depth=3`, then the maximum capacity of
-        the list is `(500*5)*(500*5)*(500*5)` = `15625000000`.  Only works for certain time ranges.
-        - `retry` (`int`): number of time the query can be failed and retried
-        - `wait_timeout_sec` (`int`): wait timeout in seconds
+            divided according to the number of slots. Applicable if max_query_depth>0. 
+        - `delta` : exemple : '2h', the query will be firstly divided in chuncks according to the time delta read
+            with dateutil. Applicable if max_query_depth>0. 
+        - `workers` : numbre of parrallels tasks, should be equal or less than the number of slots. Applicable if max_query_depth>0. 
+        - `retry` (`int`): number of time the query can be failed and retried.  1 by default. 
+        - `wait_timeout_sec` (`int`): wait timeout in seconds. 120 by default.  
+
+        Note: Only the first query is loaded asynchronously.  
 
         Returns : `msiempy.event.EventManager`
         """
@@ -415,7 +409,7 @@ class EventManager(_QueryExecuteManager):
             else:
                 if not self.__root_parent__.not_completed:
                     log.warning(
-                        "The query is not complete... Try to divide in more slots or increase the limit"
+                        "The query is not complete... Try to divide in more slots or increase max_query_depth"
                     )
                     self.__root_parent__.not_completed = True
 
@@ -426,7 +420,7 @@ class EventManager(_QueryExecuteManager):
     @property
     def __root_parent__(self):
         """
-        Internal method that return the first query of the query tree
+        Internal method that return the first query of the query tree. 
         """
         if self.__parent__ == None:
             return self

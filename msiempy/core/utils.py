@@ -171,9 +171,9 @@ def timerange_gettimes(time_range):
     return (times[0].isoformat(), times[1].isoformat())
 
 
-def divide_times(first, last, time=0, slots=0, delta=0):
-    """ "
-    Divide the time range based on another time, a delta or on a number of slots.
+def divide_times(first, last, slots=0, delta=0, time=0):
+    """
+    Divide the time range based on a delta or on a number of slots or another time,.
     Return list of tuple
     """
 
@@ -213,6 +213,9 @@ def divide_times(first, last, time=0, slots=0, delta=0):
 
 
 def regex_match(regex, string):
+    """
+    Return True if the string match the regex.  
+    """
     if re.search(regex, string):
         return True
     else:
@@ -223,9 +226,10 @@ def format_esm_time(esm_time):
     """Converts time object to ESM time string.
 
     Arguments:
-        time_obj {[type]} -- [description]
-    Returns:
-        time string in format: 2019-04-08T19:35:02.971Z
+
+    - `time_obj` (`datetime.datetime`)
+
+    Returns: time string in format `2019-04-08T19:35:02.971Z`
     """
     _esm_out_time_fmt = "%m/%d/%Y %H:%M:%S"
     _esm_in_time_fmt = "%Y-%m-%dT%H:%M:%S.000Z"
@@ -251,6 +255,7 @@ def convert_to_time_obj(time_str):
 def parse_query_result(columns, rows):
     """
     For input :
+
         columns = [{'name': 'Alert.LastTime'}, {'name': 'Rule.msg'}, {'name': 'Alert.DstIP'}, {'name': 'Alert.IPSIDAlertID'}]
         rows =
             [
@@ -259,17 +264,18 @@ def parse_query_result(columns, rows):
             }
 
     Returns :
-    [
-        {
-            "Alert.LastTime":"09/22/2020 15:51:14",
-            "Rule.msg":"Postfix Disconnect from host",
-            "Alert.DstIP":"::",
-            "Alert.IPSIDAlertID":"144116287604260864|547123"
-        },
-        {
-            ...
-        },
-    ]
+
+        [
+            {
+                "Alert.LastTime":"09/22/2020 15:51:14",
+                "Rule.msg":"Postfix Disconnect from host",
+                "Alert.DstIP":"::",
+                "Alert.IPSIDAlertID":"144116287604260864|547123"
+            },
+            {
+                ...
+            },
+        ]
 
     """
     events = list()
@@ -291,7 +297,7 @@ def format_fields_for_query(fields):
 
     - `fields`: list of fields, i.e. `['field1','name','user']`
 
-    Returns:
+    Returns:    
 
         [
             {'name':'field1'},
@@ -305,12 +311,16 @@ def format_fields_for_query(fields):
 
 def parse_timedelta(time_str):
     """
-    Parse a time string e.g. (2h13m) into a timedelta object.
+    Parse a time string e.g. (`2h13m`) into a timedelta object.
 
     Modified from virhilo's answer at https://stackoverflow.com/a/4628148/851699
 
-    :param time_str: A string identifying a duration.  (eg. 2h13m)
-    :return datetime.timedelta: A datetime.timedelta object
+    Arguments:
+    
+    - `time_str`: A string identifying a duration.  (eg. `2h13m`)
+    
+    
+    Returns `datetime.timedelta`: A datetime.timedelta object
     """
     regex = re.compile(
         r"^((?P<days>[\.\d]+?)d)?((?P<hours>[\.\d]+?)h)?((?P<minutes>[\.\d]+?)m)?((?P<seconds>[\.\d]+?)s)?$"

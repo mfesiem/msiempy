@@ -362,11 +362,13 @@ class NitroList(collections.UserList, NitroObject):
 
         This method is where the core of asynchronous tasks resides. `func` will be executed on all `data` elements.
         Basically, if `asynch==True`, will return :
+        
             returned=list(concurrent.futures.ThreadPoolExecutor(
                         max_workers=workers ).map(
                             func, data))
 
         if `asynch==False`, will iterate and return :
+
             for index_or_item in data:
                 returned.append(func(index_or_item))
 
