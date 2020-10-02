@@ -1461,9 +1461,9 @@ class Event(NitroDict):
         Re-load event's data.
 
         Arguments:
-        - `use_query` (`bool`): Force the use of the query module to retreive the event data.
-        The default behaviour will use `EventManager` query if an 'Alert.IPSIDAlertID' key is present in the event,
-        else call `ipsGetAlertData` to get the full details.
+        - `use_query` (`bool`): Force the use of the query module to retreive the event data. 
+        In contrario, if explicitely `False`, force the use of `ipsGetAlertData` to get the details. 
+        The default behaviour will figure out the event type/load method based on the existence if 'Alert.IPSIDAlertID' keys
         - `extra_fields` (`list`): Only when `use_query=True` or the Event is already a query event. Additionnal event fields to load in the query.
 
         .. Warning:: Enforce `use_query=True` will reset the Events fields to whatever is passed to `extra_fields`
