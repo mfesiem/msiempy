@@ -6,8 +6,8 @@ import time
 import json
 import requests
 
-def get_testing_data():
-    return json.load(open('./tests/local/test-events.json','r'))
+def get_testing_data(data='./tests/local/test-events.json'):
+    return json.load(open(data,'r'))
 
 class T(unittest.TestCase):
 
@@ -28,22 +28,24 @@ class T(unittest.TestCase):
         pass
 
     def test_manager(self):
-        sublist = NitroList(alist=[item for item in T.manager if item['Alert.EventCount']=='1']) #.search('CLIM_RANK.*0','Eco_Name.*north')#.search('County.*GLENN') #len = 52
-        
-        # sublist.perform(self.test_add_money_money, progress=True, asynch=True, workers=500)
-        # for item in sublist :
-        #     self.assertRegex(item['CLIM_RANK'], '1|2', "Perform method issue ")
-        
-        # sublist.perform(self.test_add_money_money, progress=True, asynch=True, func_args=dict(how_much=2), workers=500)
-        # for item in sublist :
-        #     self.assertRegex(item['pct_hex'], '2|3|4', "Perform method issue ")
+        manager = NitroList(alist=get_testing_data())
 
-        # mycouty=sublist.search('County.*GLENN')
-        # self.assertGreater(len(mycouty), 0, 'Search method issue')
+        sublist = manager.search('Postfix Disconnect from host', fields='Rule.msg')
+        sublist_1 = manager.search('Postfix Disconnect from host')
 
-        # mycouty.perform(self.test_add_money_money, progress=True, asynch=True, func_args=dict(how_much=500), workers=500)
-        # for item in mycouty :
-        #     self.assertRegex(item['pct_hex'], '502|503|504', "Perform method issue ")
+        for i in sublist:
+            self.assertIn('Postfix Disconnect from host', i['Rule.msg'])
+            self.assertIn(i, sublist_1)
+
+        sublist2 = manager.search('Postfix Disconnect from host', fields='Rule.msg', invert=True)
+        sublist2_1 = manager.search('Postfix Disconnect from host', invert=True)
+        for i in sublist2:
+            self.assertNotIn('Postfix Disconnect from host', i['Rule.msg'])
+            self.assertIn(i, sublist2_1)
+
+        sublist3 = manager.search('Postfix\|cron', fields='Rule.msg')
+        for i in sublist3:
+            self.assertTrue('Postfix' in i['Rule.msg'] or 'cron' in i['Rule.msg'])
 
     def test_print(self):
         data=get_testing_data()

@@ -243,7 +243,13 @@ class T(unittest.TestCase):
 
     def test_grouped_query(self):
         
-        gevents = GroupedEventManager(field='SrcIP', filters=[FieldFilter('DstIP', ['127.0.0.1'], operator='IN')])
+        gevents = GroupedEventManager(
+            time_range='CUSTOM',
+            start_time=datetime.now()-timedelta(days=QUERY_TIMERANGE),
+            end_time=datetime.now()+timedelta(days=1),
+            field='SrcIP', 
+            filters=[FieldFilter('DstIP', ['127.0.0.1'], operator='IN')])
+            
         with self.assertRaisesRegex(ValueError, "filter must be specified when issuing a grouped query"):
             gevents.load_data()
         
@@ -251,7 +257,7 @@ class T(unittest.TestCase):
         gevents.add_filter(FieldFilter('DstIP', ['0.0.0.0/0'], operator='IN'))
         gevents.load_data()
 
-        self.assertGreater(len(gevents), 2)
+        self.assertGreater(len(gevents), 1)
         [ self.assertGreaterEqual(int(e['COUNT(*)']), 1) for e in gevents ]
         [ self.assertGreaterEqual(int(e['SUM(Alert.EventCount)']), 1) for e in gevents ]
         [ self.assertIsInstance(e, GroupedEvent) for e in gevents ]
