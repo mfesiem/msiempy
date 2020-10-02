@@ -1,4 +1,4 @@
-name: ubuntu py3.8 test
+name: tests
 on: push
 jobs: 
   test:
@@ -6,8 +6,8 @@ jobs:
     runs-on: ${{ matrix.os }} 
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.8']
+        os: [windows-latest, macos-latest]
+        python-version: ['3.6','3.7','3.8']
       max-parallel: 1
       fail-fast: false
     steps:
@@ -18,19 +18,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python setup.py install
       - name: Setup msiempy config
         run: python ./samples/msiempy_setup.py --set esm host ${{ secrets.esmhost }} --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
       - name: Run tests
-        run: pytest --cov=./ --cov-report=xml --reruns 5 --reruns-delay 1
-      - name: Upload code coverage
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.xml
-          name: msiempy-code-coverage
-          yml: ./codecov.yml 
-          fail_ci_if_error: true
+        run: pytest --reruns 1 --reruns-delay 1
+      
         

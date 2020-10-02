@@ -1,33 +1,37 @@
-name: test
-on:
-  schedule:
-    # Run complete tests every month
-    - cron:  '0 0 1 * *'
+name: tests
+on: 
+  push:
+    branches: 
+      - master
 jobs: 
   test:
     name: ${{ matrix.os }} py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }} 
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        python-version: ['3.6','3.7','3.8']
+        os: [ubuntu-latest]
+        python-version: ['3.8']
       max-parallel: 1
-      fail-fast: false
+      fail-fast: true
     steps:
+
       - uses: actions/checkout@v1
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python setup.py install
+
       - name: Setup msiempy config
         run: python ./samples/msiempy_setup.py --set esm host ${{ secrets.esmhost }} --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
+      
       - name: Run tests
-        run: pytest --cov=./ --cov-report=xml --reruns 5 --reruns-delay 1
+        run: pytest --cov=./ --cov-report=xml --reruns 1 --reruns-delay 1
+      
       - name: Upload code coverage
         uses: codecov/codecov-action@v1
         with:
@@ -35,5 +39,4 @@ jobs:
           file: ./coverage.xml
           name: msiempy-code-coverage
           yml: ./codecov.yml 
-          fail_ci_if_error: true
-        
+          fail_ci_if_error: false
