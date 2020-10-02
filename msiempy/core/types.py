@@ -271,26 +271,26 @@ class NitroList(collections.UserList, NitroObject):
             cls=NitroObject.NitroJSONEncoder,
         )
 
-    def search(self, invert=False, match_prop="json", *pattern):
+    def search(self, invert=False, fields=None, *pattern, ):
         """
         Return a list of elements that matches one or more regex patterns.
         Patterns are applied one after another
         Use `|` inside patterns to search with logic OR.
-        This method will return a new NitroList with matching data. NitroDicts in the returned NitroList do not
+        This method will return a new list with matching data. NitroDicts in the returned NitroList do not
         references the items in the original NitroList.
 
         Arguments:
 
-        - `*pattern`: List or string regex patterns to look for.  Each
+        - `*pattern`:String regex patterns to look for. More on regex https://docs.python.org/3/library/re.html#re.Pattern.search
         - `invert`: Weither or not to invert the search and return elements that doesn't not match search.
-        - `match_prop`: Propertie that is going to be called to search. Could be `text` or `json`.
+        - `fields`: Dictionnary fields to consider in the search, all keys are considered by default.  
 
 
-        If you wish to apply more specific filters to NitroList list, please
-        use filter(), list comprehension, or other filtering method.
+        If you wish to apply more specific filters to list, please
+        use filter() or list comprehension.  
             i.e. : `[item for item in list if item['cost'] > 50]`
 
-        More on regex https://docs.python.org/3/library/re.html#re.Pattern.search
+        
         """
         if pattern is None:
             return self
@@ -305,13 +305,13 @@ class NitroList(collections.UserList, NitroObject):
         if isinstance(apattern, str):
             for item in list(self):
                 if (
-                    regex_match(
+                    any ( [ regex_match(
                         apattern,
-                        getattr(item, match_prop)
-                        if isinstance(item, NitroDict)
+                        item.get(f)
+                        if isinstance(item, (NitroDict, dict))
                         else str(item),
                     )
-                    != invert
+                    != invert for f in (self.keys() if fields==None else [fields] if not isinstance(fields, list) else fields ) ] )
                 ):
                     matching_items.append(item)
             log.debug(
@@ -320,8 +320,8 @@ class NitroList(collections.UserList, NitroObject):
                 )
             )
             # Apply AND reccursively
-            return type(self)(alist=matching_items).search(
-                *pattern, invert=invert, match_prop=match_prop
+            return type(self)(matching_items).search(
+                *pattern, invert=invert, fields=fields
             )
         else:
             raise ValueError("pattern must be str. Not {}".format(pattern))
