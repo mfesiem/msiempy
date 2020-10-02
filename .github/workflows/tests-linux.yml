@@ -1,5 +1,9 @@
-name: tests
-on: push
+name: tests-linux
+on: 
+  push:
+    branches: 
+      - master
+      - develop
 jobs: 
   test:
     name: ${{ matrix.container }} py${{ matrix.python-version }}

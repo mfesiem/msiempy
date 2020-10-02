@@ -1,15 +1,22 @@
-name: tests
-on: push
+name: tests-windows-mac
+on: 
+  push:
+    branches: 
+      - master
+      - develop
 jobs: 
+
   test:
     name: ${{ matrix.os }} py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }} 
+
     strategy:
       matrix:
         os: [windows-latest, macos-latest]
         python-version: ['3.6','3.7','3.8']
       max-parallel: 1
       fail-fast: false
+
     steps:
       - uses: actions/checkout@v1
       - name: Set up Python ${{ matrix.python-version }}

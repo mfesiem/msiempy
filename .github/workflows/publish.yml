@@ -1,7 +1,8 @@
-name: pdoc
-on:
-  release:
-    types: [published, created]
+name: publish
+on: 
+  push:
+    branches: 
+      - master
 jobs: 
   deploy:
     name: ${{ matrix.os }} py${{ matrix.python-version }}
@@ -23,23 +24,40 @@ jobs:
 
       - name: Install dependencies
         run: |
+          apt install Graphviz
           python -m pip install -r requirements.txt
           python setup.py install
+
+      - name: Lint code with black
+        run: |
+          black "msiempy/"
+          black "tests/"
+          black "samples/"
+
+      - name: Commit files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "Lint code with black" -a
+
+      - name: Publish linted code
+        uses: s0/git-publish-subdir-action@develop
+        env:
+          REPO: git@github.com:mfesiem/msiempy.git
+          BRANCH: master
+          FOLDER: ./
+          MESSAGE: "publish\n{msg}"
+          SSH_PRIVATE_KEY: ${{ secrets.MSIEMPY_PRIVATE_KEY }}
 
       - name: Generate documentation
         run: |
           git clone https://github.com/mfesiem/mfesiem.github.io
-
-          echo "Generating diagrams"
           pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-        
-          # Generating documentation
-          echo "[RUNNING] pdoc"
           rm -rf ./mfesiem.github.io/docs/msiempy/
           python3 -m pdoc msiempy --output-dir ./mfesiem.github.io/docs --html --force --template-dir ./.pdoc_templates
-
           mv ./classes.png ./mfesiem.github.io/docs/msiempy
           mv ./packages.png ./mfesiem.github.io/docs/msiempy
+          cd ./mfesiem.github.io && git add ./docs/test/msiempy && git commit "Generated mfesiem.github.io/docs/test/msiempy" $$ cd ..
 
       - name: Publish docs
         uses: s0/git-publish-subdir-action@develop
@@ -49,10 +67,10 @@ jobs:
           FOLDER: mfesiem.github.io
           SSH_PRIVATE_KEY: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
 
-      - name: Build
+      - name: Build msiempy
         run: python3 setup.py --quiet build check sdist bdist_wheel
 
-      - name: Publish a Python distribution to PyPI
+      - name: Publish msiempyn to PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__

@@ -39,4 +39,4 @@ jobs:
           file: ./coverage.xml
           name: msiempy-code-coverage
           yml: ./codecov.yml 
-          fail_ci_if_error: false
+          fail_ci_if_error: true
