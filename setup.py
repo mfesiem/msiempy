@@ -9,7 +9,7 @@ REQUIREMENTS = [ 'requests', 'tqdm', 'PTable', 'python-dateutil', 'urllib3' ]
 # The directory containing this file
 HERE = pathlib.Path(__file__).parent
 
-#Version of the project
+# About the project
 about = {}
 exec((HERE / "msiempy" / "__version__.py").read_text(), about)
 

@@ -24,13 +24,11 @@ class T(unittest.TestCase):
         except Exception as e:
             self.fail("Can't load json object :"+str(e))
 
-    def test_item(self):
-        pass
-
     def test_manager(self):
         manager = NitroList(alist=get_testing_data())
 
         sublist = manager.search('Postfix Disconnect from host', fields='Rule.msg')
+        print(sublist[:4])
         sublist_1 = manager.search('Postfix Disconnect from host')
 
         for i in sublist:
@@ -43,9 +41,13 @@ class T(unittest.TestCase):
             self.assertNotIn('Postfix Disconnect from host', i['Rule.msg'])
             self.assertIn(i, sublist2_1)
 
-        sublist3 = manager.search('Postfix\|cron', fields='Rule.msg')
+        sublist3 = manager.search('Postfix|cron', fields='Rule.msg')
         for i in sublist3:
             self.assertTrue('Postfix' in i['Rule.msg'] or 'cron' in i['Rule.msg'])
+
+        sublist4 = manager.search('Postfix', 'Connect', fields='Rule.msg')
+        for i in sublist4:
+            self.assertTrue('Postfix' in i['Rule.msg'] and 'Connect' in i['Rule.msg'])
 
     def test_print(self):
         data=get_testing_data()
