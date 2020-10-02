@@ -214,7 +214,7 @@ def divide_times(first, last, slots=0, delta=0, time=0):
 
 def regex_match(regex, string):
     """
-    Return True if the string match the regex.  
+    Return True if the string match the regex.
     """
     if re.search(regex, string):
         return True
@@ -297,7 +297,7 @@ def format_fields_for_query(fields):
 
     - `fields`: list of fields, i.e. `['field1','name','user']`
 
-    Returns:    
+    Returns:
 
         [
             {'name':'field1'},
@@ -316,10 +316,10 @@ def parse_timedelta(time_str):
     Modified from virhilo's answer at https://stackoverflow.com/a/4628148/851699
 
     Arguments:
-    
+
     - `time_str`: A string identifying a duration.  (eg. `2h13m`)
-    
-    
+
+
     Returns `datetime.timedelta`: A datetime.timedelta object
     """
     regex = re.compile(

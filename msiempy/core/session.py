@@ -903,7 +903,7 @@ class NitroSession:
         - `result.text` if `requests.HTTPError`,
         - `None` if Timeout or TooManyRedirects if raw=False
 
-        Exemple:  
+        Exemple:
 
         ```python
         from msiempy import NitroSession
@@ -914,7 +914,7 @@ class NitroSession:
         for a in alarms:
             a.update(s.request('get_notification_detail', id=a['id']))
         ```
-        
+
         If you're reading this thom an IDE, all possible requests are listed on the documentation webpage:
         https://mfesiem.github.io/docs/msiempy/core/session.html#msiempy.core.session.NitroSession.request
         """
