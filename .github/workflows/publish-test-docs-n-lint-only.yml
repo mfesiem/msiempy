@@ -34,20 +34,16 @@ jobs:
           black "tests/"
           black "samples/"
 
-      - name: Commit files
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git commit -m "Lint code with black" -a
-
-      - name: Publish linted code
-        uses: s0/git-publish-subdir-action@develop
-        env:
-          REPO: git@github.com:mfesiem/msiempy.git
-          BRANCH: develop
-          FOLDER: ./
-          MESSAGE: "publish-test-docs-n-lint-only\n{msg}"
-          SSH_PRIVATE_KEY: ${{ secrets.MSIEMPY_PRIVATE_KEY }}
+      - name: Push linted code
+        uses: github-actions-x/commit@v2.7
+        with:
+          github-token: ${{ secrets.GH_TOKEN }}
+          push-branch: 'master'
+          commit-message: 'Lint code with black'
+          force-add: 'true'
+          files: msiempy/ tests/ samples/
+          name: Github actions
+          email: actions@github.com 
 
       - name: Generate documentation
         run: |
