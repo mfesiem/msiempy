@@ -29,18 +29,9 @@ jobs:
           python -m pip install .
           python -m pip show msiempy
 
-      - name: Install SSH key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
-          known_hosts: github.com
-
-      - name: Generate and Publish documentation
+      - name: Generate documentation
         run: |
           python3 -m pdoc msiempy --output-dir docs_tmp --html --force --template-dir ./.pdoc_templates
-          
-          git config --global user.email "actions@github.com"
-          git config --global user.name "Github Actions"
           
           git clone https://github.com/mfesiem/mfesiem.github.io
           rm -rf ./mfesiem.github.io/docs/test/msiempy
@@ -50,10 +41,15 @@ jobs:
           # mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
           # mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
 
-          cd ./mfesiem.github.io
-          git add .
-          git commit -m "Generated mfesiem.github.io/docs/test/msiempy"
-          git push
-          cd ..
+      - name: Publish documentation
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          deploy_key: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
+          external_repository: mfesiem/mfesiem.github.io
+          publish_dir: mfesiem.github.io
+          publish_branch: 'master'
+          user_name: 'Github Actions'
+          user_email: "actions@github.com"
+          commit_message: "Generate documentation - develop"
 
       
