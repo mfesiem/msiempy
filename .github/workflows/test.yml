@@ -10,7 +10,7 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest]
         python-version: ['3.8']
-      # max-parallel: 1
+      max-parallel: 1
       fail-fast: false
 
     steps:

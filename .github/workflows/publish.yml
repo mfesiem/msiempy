@@ -12,7 +12,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ['3.8']
-      # max-parallel: 1
+      max-parallel: 1
       fail-fast: false
 
     steps:
@@ -41,22 +41,27 @@ jobs:
       - name: Generate documentation
         if: steps.waitforstatuschecks.outputs.status == 'success'
         run: |
+          python3 -m pdoc msiempy --output-dir docs_tmp --html --force --template-dir ./.pdoc_templates
+          
           git clone https://github.com/mfesiem/mfesiem.github.io
-          pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-          rm -rf ./mfesiem.github.io/docs/msiempy/
-          python3 -m pdoc msiempy --output-dir ./mfesiem.github.io/docs --html --force --template-dir ./.pdoc_templates
-          mv ./classes.png ./mfesiem.github.io/docs/msiempy
-          mv ./packages.png ./mfesiem.github.io/docs/msiempy
-          cd ./mfesiem.github.io && git add ./docs/test/msiempy && git commit "Generated mfesiem.github.io/docs/test/msiempy" $$ cd ..
+          rm -rf ./mfesiem.github.io/docs/test/msiempy
+          cp -r ./docs_tmp/msiempy mfesiem.github.io/docs/test/
 
-      - name: Publish docs
+          # pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
+          # mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
+          # mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
+
+      - name: Publish documentation
         if: steps.waitforstatuschecks.outputs.status == 'success'
-        uses: s0/git-publish-subdir-action@develop
-        env:
-          REPO: git@github.com:mfesiem/mfesiem.github.io.git
-          BRANCH: master
-          FOLDER: mfesiem.github.io
-          SSH_PRIVATE_KEY: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          deploy_key: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
+          external_repository: mfesiem/mfesiem.github.io
+          publish_dir: mfesiem.github.io
+          publish_branch: 'master'
+          user_name: 'Github Actions'
+          user_email: "actions@github.com"
+          commit_message: "Generate documentation - develop"
 
       - name: Build msiempy
         if: steps.waitforstatuschecks.outputs.status == 'success'
