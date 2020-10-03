@@ -42,7 +42,7 @@ jobs:
 
           cd ./mfesiem.github.io
           git add .
-          git commit "Generated mfesiem.github.io/docs/test/msiempy"
+          git commit -m "Generated mfesiem.github.io/docs/test/msiempy"
           cd ..
       
       - name: Publish test docs
