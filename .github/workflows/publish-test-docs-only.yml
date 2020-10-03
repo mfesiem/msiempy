@@ -12,7 +12,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ['3.8']
-      max-parallel: 1
+      # max-parallel: 1
       fail-fast: false
 
     steps:
@@ -40,7 +40,10 @@ jobs:
           # mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
           # mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
 
-          cd ./mfesiem.github.io && git add ./docs/test/msiempy && git commit "Generated mfesiem.github.io/docs/test/msiempy" $$ cd ..
+          cd ./mfesiem.github.io
+          git add .
+          git commit "Generated mfesiem.github.io/docs/test/msiempy"
+          cd ..
       
       - name: Publish test docs
         uses: s0/git-publish-subdir-action@develop
