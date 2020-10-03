@@ -13,10 +13,13 @@ jobs:
         os: [ubuntu-latest]
         python-version: ['3.8']
       max-parallel: 1
-      fail-fast: false
+      fail-fast: true
 
     steps:
       - uses: actions/checkout@v2
+        with:
+            # Fetches entire history, so we can analyze commits since last tag
+            fetch-depth: 0
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
@@ -76,3 +79,12 @@ jobs:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
       
+      - name: Tag version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          version="$(python setup.py --version)"
+          last_tag="$(git --no-pager tag -l | tail -1)"
+          git --no-pager log ${last_tag}.. --pretty=oneline > ./tmp_tag.txt
+          git tag -a ${version} -F ./tmp_tag.txt
+          git push --tags
