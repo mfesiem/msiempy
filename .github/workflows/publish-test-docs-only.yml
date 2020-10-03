@@ -16,9 +16,9 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -27,15 +27,16 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install .
+          python -m pip show msiempy
 
       - name: Generate documentation
         run: |
           git clone https://github.com/mfesiem/mfesiem.github.io
-          pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
+          # pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
           rm -rf ./mfesiem.github.io/docs/test/msiempy/
           python3 -m pdoc msiempy --output-dir ./mfesiem.github.io/docs --html --force --template-dir ./.pdoc_templates
-          mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
-          mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
+          # mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
+          # mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
           cd ./mfesiem.github.io && git add ./docs/test/msiempy && git commit "Generated mfesiem.github.io/docs/test/msiempy" $$ cd ..
       
       - name: Publish test docs
