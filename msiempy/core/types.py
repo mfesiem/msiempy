@@ -282,7 +282,7 @@ class NitroList(collections.UserList, NitroObject):
 
         - `*pattern`:String regex patterns to look for. More on regex https://docs.python.org/3/library/re.html#re.Pattern.search
         - `invert`: Weither or not to invert the search and return elements that doesn't not match search.
-        - `fields`: Dictionnary fields to consider in the search, all keys are considered by default.  
+        - `fields`: Dictionnary fields to consider in the search, all keys are considered by default.  Patterns are compared to str() representation of values.  
 
 
         If you wish to apply more specific filters to list, please
@@ -306,7 +306,7 @@ class NitroList(collections.UserList, NitroObject):
         if isinstance(apattern, str):
             for item in list(self):
                 for f in fields:
-                    if regex_match(apattern, item.get(f) ) != invert:
+                    if regex_match(apattern,  str(item.get(f))) != invert:
                         matching_items.append(item)
                         break # for f in fields
             log.debug(
