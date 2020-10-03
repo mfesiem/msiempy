@@ -31,12 +31,15 @@ jobs:
 
       - name: Generate documentation
         run: |
+          python3 -m pdoc msiempy --output-dir docs_tmp --html --force --template-dir ./.pdoc_templates
           git clone https://github.com/mfesiem/mfesiem.github.io
-          # pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
           rm -rf ./mfesiem.github.io/docs/test/msiempy/
-          python3 -m pdoc msiempy --output-dir ./mfesiem.github.io/docs --html --force --template-dir ./.pdoc_templates
+          cp ./docs_tmp/msiempy mfesiem.github.io/docs/test/
+
+          # pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
           # mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
           # mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
+
           cd ./mfesiem.github.io && git add ./docs/test/msiempy && git commit "Generated mfesiem.github.io/docs/test/msiempy" $$ cd ..
       
       - name: Publish test docs
