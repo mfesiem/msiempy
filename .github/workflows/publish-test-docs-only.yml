@@ -1,8 +1,8 @@
-name: publish
+name: publish-test-docs-only
 on: 
   push:
     branches: 
-      - master
+      - develop
 jobs: 
   deploy:
     name: ${{ matrix.os }} py${{ matrix.python-version }}
@@ -29,17 +29,7 @@ jobs:
           python -m pip install .
           python -m pip show msiempy
 
-      - name: 'Wait for status checks'
-        id: waitforstatuschecks
-        uses: WyriHaximus/github-action-wait-for-status@v2
-        with:
-          ignoreActions: publish
-          checkInterval: 60
-        env:
-          GITHUB_TOKEN: "${{ secrets.GH_TOKEN }}"
-
       - name: Generate documentation
-        if: steps.waitforstatuschecks.outputs.status == 'success'
         run: |
           python3 -m pdoc msiempy --output-dir docs_tmp --html --force --template-dir ./.pdoc_templates
           
@@ -52,7 +42,6 @@ jobs:
           # mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
 
       - name: Publish documentation
-        if: steps.waitforstatuschecks.outputs.status == 'success'
         uses: peaceiris/actions-gh-pages@v3
         with:
           deploy_key: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
@@ -63,14 +52,4 @@ jobs:
           user_email: "actions@github.com"
           commit_message: "Generate documentation - develop"
 
-      - name: Build msiempy
-        if: steps.waitforstatuschecks.outputs.status == 'success'
-        run: python3 setup.py --quiet build check sdist bdist_wheel
-
-      - name: Publish msiempyn to PyPI
-        if: steps.waitforstatuschecks.outputs.status == 'success'
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
       

@@ -23,7 +23,7 @@ setup(
     maintainer=about['__author__'],
     maintainer_email=about['__author_email__'],
     version=about['__version__'],
-    packages=find_packages(HERE.name),
+    packages=find_packages(exclude='tests',),
     install_requires=REQUIREMENTS,
     license=about['__license__'],
     long_description=README,
