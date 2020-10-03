@@ -26,9 +26,9 @@ jobs:
       
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-          python -m pip install .
+          sudo python -m pip install --upgrade pip
+          sudo python -m pip install -r requirements.txt
+          sudo python -m pip install .
       
       - name: Setup msiempy config
         run: python ./samples/msiempy_setup.py --set esm host ${{ secrets.esmhost }} --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
