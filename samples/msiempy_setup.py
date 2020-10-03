@@ -1,6 +1,7 @@
 from msiempy import NitroConfig
 from msiempy.__utils__ import tob64
 import argparse
+
 """
 Usage example:  
  1. 
@@ -14,17 +15,25 @@ Usage example:
 """
 
 parser = argparse.ArgumentParser(description="""Setup msiempy configuration.""")
-parser.add_argument('--set', '-s', metavar="'<section>' '<option>' '<value>'", action='append', nargs='+', help="""List of <section> <option> <value> to set.""", default=[])
-args= parser.parse_args()
+parser.add_argument(
+    "--set",
+    "-s",
+    metavar="'<section>' '<option>' '<value>'",
+    action="append",
+    nargs="+",
+    help="""List of <section> <option> <value> to set.""",
+    default=[],
+)
+args = parser.parse_args()
 
-config=NitroConfig()
+config = NitroConfig()
 
-if len(args.set)>0:
+if len(args.set) > 0:
     for setting in args.set:
-        if setting[1] == 'passwd':
-            setting[2]=tob64(setting[2])
+        if setting[1] == "passwd":
+            setting[2] = tob64(setting[2])
         config.set(setting[0], setting[1], setting[2])
-else :
-    config.iset('esm')
+else:
+    config.iset("esm")
 
 config.write()

@@ -176,7 +176,7 @@ class EventManager(_QueryExecuteManager):
         self.__parent__ = __parent__
 
         # Setting the default fields Adds the specified fields, make sure there is no duplicates and delete TABLE identifiers
-        self.fields=[]
+        self.fields = []
         """
         Query fields
         """
@@ -260,8 +260,8 @@ class EventManager(_QueryExecuteManager):
 
         Arguments:
 
-        - `retry` (`int`): number of time the query can be failed and retried.  1 by default. 
-        - `wait_timeout_sec` (`int`): wait timeout in seconds. 120 by default.  
+        - `retry` (`int`): number of time the query can be failed and retried.  1 by default.
+        - `wait_timeout_sec` (`int`): wait timeout in seconds. 120 by default.
 
         Returns : `tuple` : (( `msiempy.event.EventManager`, Query completed? `True/False` ))
 
@@ -318,24 +318,24 @@ class EventManager(_QueryExecuteManager):
 
     def load_data(self, workers=10, slots=10, delta=None, max_query_depth=0, **kwargs):
         """
-        Load the events data into the list.  
-        Wraps around `msiempy.event.EventManager.qry_load_data`.  
+        Load the events data into the list.
+        Wraps around `msiempy.event.EventManager.qry_load_data`.
 
         Arguments:
 
-        - `max_query_depth` : Positive value splits the query in differents time slots if the query apprears not to be completed. 
-        Divisions are reccursive, `max_query_depth` is the maximum number of reccursive calls load_data() can apply to the query in order to load all events.  
+        - `max_query_depth` : Positive value splits the query in differents time slots if the query apprears not to be completed.
+        Divisions are reccursive, `max_query_depth` is the maximum number of reccursive calls load_data() can apply to the query in order to load all events.
         Meaning, if `EventManager.limit=500`, `slots=10 `and `max_query_depth=2`, then the maximum capacity of
-        the list is `(500*10)*(500*10)` = `25000000` (instead of `500` with `max_query_depth=0`).  Only works with custom times and a few time ranges...  
+        the list is `(500*10)*(500*10)` = `25000000` (instead of `500` with `max_query_depth=0`).  Only works with custom times and a few time ranges...
         - `slots` : number of time slots the query can be divided. The loading bar is
-            divided according to the number of slots. Applicable if max_query_depth>0. 
+            divided according to the number of slots. Applicable if max_query_depth>0.
         - `delta` : exemple : '2h', the query will be firstly divided in chuncks according to the time delta read
-            with dateutil. Applicable if max_query_depth>0. 
-        - `workers` : numbre of parrallels tasks, should be equal or less than the number of slots. Applicable if max_query_depth>0. 
-        - `retry` (`int`): number of time the query can be failed and retried.  1 by default. 
-        - `wait_timeout_sec` (`int`): wait timeout in seconds. 120 by default.  
+            with dateutil. Applicable if max_query_depth>0.
+        - `workers` : numbre of parrallels tasks, should be equal or less than the number of slots. Applicable if max_query_depth>0.
+        - `retry` (`int`): number of time the query can be failed and retried.  1 by default.
+        - `wait_timeout_sec` (`int`): wait timeout in seconds. 120 by default.
 
-        Note: Only the first query is loaded asynchronously.  
+        Note: Only the first query is loaded asynchronously.
 
         Returns : `msiempy.event.EventManager`
         """
@@ -420,7 +420,7 @@ class EventManager(_QueryExecuteManager):
     @property
     def __root_parent__(self):
         """
-        Internal method that return the first query of the query tree. 
+        Internal method that return the first query of the query tree.
         """
         if self.__parent__ == None:
             return self
@@ -446,16 +446,16 @@ class EventManager(_QueryExecuteManager):
 
 class GroupedEventManager(_QueryExecuteManager):
     """
-    List-Like object.  
-    Interface to execute a grouped event query.  
+    List-Like object.
+    Interface to execute a grouped event query.
 
-    Arguments: 
+    Arguments:
 
-    - `field` (`str`): The field that will be selected when this query is executed.  
-    - `filters` (`list`): list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter` if you wish to use advanced filtering.  
-    - `time_range` (`str`): Query time range. String representation of a time range. Not need to specify 'CUSTOM' if `start_time` and `end_time` are set.  
-    - `start_time` : Query start time, can be a `str` or a `datetime` object. Parsed with `dateutil`.  
-    - `end_time` : Query end time, can be a `str` or a `datetime` object. Parsed with `dateutil`.  
+    - `field` (`str`): The field that will be selected when this query is executed.
+    - `filters` (`list`): list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter` if you wish to use advanced filtering.
+    - `time_range` (`str`): Query time range. String representation of a time range. Not need to specify 'CUSTOM' if `start_time` and `end_time` are set.
+    - `start_time` : Query start time, can be a `str` or a `datetime` object. Parsed with `dateutil`.
+    - `end_time` : Query end time, can be a `str` or a `datetime` object. Parsed with `dateutil`.
 
     """
 
@@ -538,7 +538,7 @@ class GroupedEventManager(_QueryExecuteManager):
 
         Raises `msiempy.core.session.NitroError` if any unhandled errors.
         Raises `TimeoutError` if wait_timeout_sec counter gets to 0.
-        Raises `ValueError` if an `IPSID` filter is not present.  
+        Raises `ValueError` if an `IPSID` filter is not present.
         """
         if not any([f["field"]["name"] == "IPSID" for f in self.filters]):
             raise ValueError(
@@ -1461,8 +1461,8 @@ class Event(NitroDict):
         Re-load event's data.
 
         Arguments:
-        - `use_query` (`bool`): Force the use of the query module to retreive the event data. 
-        In contrario, if explicitely `False`, force the use of `ipsGetAlertData` to get the details. 
+        - `use_query` (`bool`): Force the use of the query module to retreive the event data.
+        In contrario, if explicitely `False`, force the use of `ipsGetAlertData` to get the details.
         The default behaviour will figure out the event type/load method based on the existence if 'Alert.IPSIDAlertID' keys
         - `extra_fields` (`list`): Only when `use_query=True` or the Event is already a query event. Additionnal event fields to load in the query.
 

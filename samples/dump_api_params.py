@@ -1,4 +1,5 @@
 import pprint
 from msiempy import NitroSession
-session=NitroSession()
+
+session = NitroSession()
 pprint.pprint(session.PARAMS)

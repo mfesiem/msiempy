@@ -107,9 +107,9 @@ class AlarmManager(FilteredQueryList):
 
     def add_filter(self, afilter):
         """
-        Add a filter to the alarm query.  
-        
-        Some event related filters can be added with this method. See `Alarm.ALARM_EVENT_FILTER_FIELDS`.  
+        Add a filter to the alarm query.
+
+        Some event related filters can be added with this method. See `Alarm.ALARM_EVENT_FILTER_FIELDS`.
 
         Arguments :
 
@@ -444,10 +444,9 @@ class Alarm(NitroDict):
         "triggeredDate",
         "acknowledgedUsername",
     ]
-    __pdoc__[
-        "Alarm.ALARM_DEFAULT_FIELDS"
-    ] = """`%(fields)s`. Just a list of regular fields.  Can bu useful for printing with `AlarmManager.get_text(fields=msiempy.alarm.ALARM_DEFAULT_FIELDS)`""" % dict(
-        fields=", ".join(ALARM_DEFAULT_FIELDS)
+    __pdoc__["Alarm.ALARM_DEFAULT_FIELDS"] = (
+        """`%(fields)s`. Just a list of regular fields.  Can bu useful for printing with `AlarmManager.get_text(fields=msiempy.alarm.ALARM_DEFAULT_FIELDS)`"""
+        % dict(fields=", ".join(ALARM_DEFAULT_FIELDS))
     )
 
     def acknowledge(self):
