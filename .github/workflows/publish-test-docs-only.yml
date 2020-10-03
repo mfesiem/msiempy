@@ -34,7 +34,7 @@ jobs:
           python3 -m pdoc msiempy --output-dir docs_tmp --html --force --template-dir ./.pdoc_templates
           git clone https://github.com/mfesiem/mfesiem.github.io
           rm -rf ./mfesiem.github.io/docs/test/msiempy/
-          cp ./docs_tmp/msiempy mfesiem.github.io/docs/test/
+          cp -r ./docs_tmp/msiempy mfesiem.github.io/docs/test/
 
           # pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
           # mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
