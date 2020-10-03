@@ -29,30 +29,34 @@ jobs:
           python -m pip install .
           python -m pip show msiempy
 
-      - name: 'Wait for status checks'
-        id: waitforstatuschecks
-        uses: WyriHaximus/github-action-wait-for-status@v2
+      - name: Setup msiempy config
+        run: python ./samples/msiempy_setup.py --set esm host ${{ secrets.esmhost }} --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
+      
+      - name: Run tests
+        run: pytest --cov=./ --cov-report=xml --reruns 1 --reruns-delay 1
+      
+      - name: Upload code coverage
+        uses: codecov/codecov-action@v1
         with:
-          ignoreActions: publish
-          checkInterval: 60
-        env:
-          GITHUB_TOKEN: "${{ secrets.GH_TOKEN }}"
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.xml
+          name: msiempy-code-coverage
+          yml: ./codecov.yml 
+          fail_ci_if_error: true
 
       - name: Generate documentation
-        if: steps.waitforstatuschecks.outputs.status == 'success'
         run: |
           python3 -m pdoc msiempy --output-dir docs_tmp --html --force --template-dir ./.pdoc_templates
           
           git clone https://github.com/mfesiem/mfesiem.github.io
-          rm -rf ./mfesiem.github.io/docs/test/msiempy
-          cp -r ./docs_tmp/msiempy mfesiem.github.io/docs/test/
+          rm -rf ./mfesiem.github.io/docs/msiempy
+          cp -r ./docs_tmp/msiempy mfesiem.github.io/docs/
 
           # pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-          # mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
-          # mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
+          # mv ./classes.png ./mfesiem.github.io/docs/msiempy
+          # mv ./packages.png ./mfesiem.github.io/docs/msiempy
 
       - name: Publish documentation
-        if: steps.waitforstatuschecks.outputs.status == 'success'
         uses: peaceiris/actions-gh-pages@v3
         with:
           deploy_key: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
@@ -61,14 +65,12 @@ jobs:
           publish_branch: 'master'
           user_name: 'Github Actions'
           user_email: "actions@github.com"
-          commit_message: "Generate documentation - develop"
+          commit_message: "Generate documentation - master"
 
       - name: Build msiempy
-        if: steps.waitforstatuschecks.outputs.status == 'success'
         run: python3 setup.py --quiet build check sdist bdist_wheel
 
-      - name: Publish msiempyn to PyPI
-        if: steps.waitforstatuschecks.outputs.status == 'success'
+      - name: Publish msiempy to PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__
