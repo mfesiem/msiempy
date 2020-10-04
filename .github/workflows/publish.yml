@@ -60,7 +60,7 @@ jobs:
           mv ./classes.png ./mfesiem.github.io/docs/msiempy
           mv ./packages.png ./mfesiem.github.io/docs/msiempy
 
-      - name: Publish documentation
+      - name: Publish documentation to https://mfesiem.github.io/docs/msiempy/index.html
         uses: peaceiris/actions-gh-pages@v3
         with:
           deploy_key: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}

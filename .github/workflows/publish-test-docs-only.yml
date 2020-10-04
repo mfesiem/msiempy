@@ -33,7 +33,7 @@ jobs:
           python -m pip install .
           python -m pip show msiempy
 
-      - name: Generate documentation
+      - name: Generate test documentation
         run: |
           python3 -m pdoc msiempy --output-dir docs_tmp --html --force --template-dir ./.pdoc_templates
           
@@ -48,7 +48,7 @@ jobs:
           mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
           set -e
 
-      - name: Publish documentation
+      - name: Publish test documentation to https://mfesiem.github.io/docs/test/msiempy/index.html
         uses: peaceiris/actions-gh-pages@v3
         with:
           deploy_key: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
@@ -57,7 +57,7 @@ jobs:
           publish_branch: 'master'
           user_name: 'Github Actions'
           user_email: "actions@github.com"
-          commit_message: "Generate documentation - master"
+          commit_message: "Generate documentation - develop"
           enable_jekyll: true
 
       
