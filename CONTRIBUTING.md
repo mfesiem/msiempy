@@ -25,3 +25,17 @@ python3 -m pip install -r requirements.txt
 python3 ./setup.py install
 # Hack and pull request
 ```
+
+### Git flow
+- Commits to `master` branch are trigerring: 
+    - Tests + upload coverage
+    - Generate documentation + publish to gh-pages
+    - PyPi realeases and create new tag **if the `__version__` has been bumped**.  
+    - See [publish](https://github.com/mfesiem/msiempy/blob/master/.github/workflows/publish.yml)
+- Commits to `develop` branch are trigerring:
+    - Generate documentation + publish to gh-pages under `test` folder
+    - See [publish-test-docs-only](https://github.com/mfesiem/msiempy/blob/master/.github/workflows/publish-test-docs-only.yml)
+- Tests on Windows and MacOS are scheduled to run once a week. 
+    - See [test](https://github.com/mfesiem/msiempy/blob/master/.github/workflows/test.yml)
+
+See the github actions workflows for more details: 
