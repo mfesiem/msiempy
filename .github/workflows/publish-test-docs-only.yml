@@ -48,7 +48,7 @@ jobs:
           mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
           set -e
 
-      - name: Publish test documentation to https://mfesiem.github.io/docs/test/msiempy/index.html
+      - name: Publish documentation to mfesiem.github.io/docs/test/msiempy
         uses: peaceiris/actions-gh-pages@v3
         with:
           deploy_key: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
