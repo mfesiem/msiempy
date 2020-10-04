@@ -251,7 +251,7 @@ cat /path/to/your/log/file | grep -i error | sort | uniq
 """
 
 # List all library objects that the user might need
-
+__pdoc__= {}
 from .core import NitroConfig, NitroError, NitroSession, FilteredQueryList, NitroList
 from .alarm import Alarm, AlarmManager
 from .device import ESM, DevTree, DataSource
@@ -264,3 +264,6 @@ from .event import (
     GroupedEvent,
 )
 from .watchlist import Watchlist, WatchlistManager
+from .__version__ import __version__
+VERSION = __version__
+__pdoc__['VERSION'] = """Project version: {}""".format(VERSION)
