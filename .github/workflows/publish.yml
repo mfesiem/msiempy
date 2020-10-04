@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          apt-get install graphviz
+          sudo apt-get install graphviz
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install -r requirements.txt
           python -m pip install .
@@ -56,9 +56,9 @@ jobs:
           rm -rf ./mfesiem.github.io/docs/msiempy
           cp -r ./docs_tmp/msiempy mfesiem.github.io/docs/
 
-          # pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-          # mv ./classes.png ./mfesiem.github.io/docs/msiempy
-          # mv ./packages.png ./mfesiem.github.io/docs/msiempy
+          pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
+          mv ./classes.png ./mfesiem.github.io/docs/msiempy
+          mv ./packages.png ./mfesiem.github.io/docs/msiempy
 
       - name: Publish documentation
         uses: peaceiris/actions-gh-pages@v3
