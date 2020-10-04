@@ -342,20 +342,23 @@ class AlarmManager(FilteredQueryList):
 
     def _event_match(self, alarm):
         """
-        Internal filter method that is going to return True if the passed alarm match all event related filters.
+        Internal filter method that is going to return True if any triggering event match all passed event filters.
         """
         match = True
-        for event_filter in self._event_filters:
-            match = False
-            try:
-                value = str(alarm["events"][0][event_filter[0]])
-            except KeyError:
-                break
-            for filter_value in event_filter[1]:
-                if regex_match(filter_value.lower(), value.lower()):
-                    match = True
+        for event in alarm["events"]:
+            for event_filter in self._event_filters:
+                match = False
+                try:
+                    value = str(event[event_filter[0]])
+                except KeyError:
                     break
-            if not match:
+                for filter_value in event_filter[1]:
+                    if regex_match(filter_value.lower(), value.lower()):
+                        match = True
+                        break
+                if not match:
+                    break
+            if match:
                 break
         return match
 
