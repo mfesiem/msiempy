@@ -58,5 +58,6 @@ jobs:
           user_name: 'Github Actions'
           user_email: "actions@github.com"
           commit_message: "Generate documentation - master"
+          enable_jekyll: true
 
       

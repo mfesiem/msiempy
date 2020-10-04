@@ -70,6 +70,7 @@ jobs:
           user_name: 'Github Actions'
           user_email: "actions@github.com"
           commit_message: "Generate documentation - master"
+          enable_jekyll: true
 
       - name: Build msiempy
         run: python3 setup.py --quiet build check sdist bdist_wheel
