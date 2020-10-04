@@ -53,7 +53,7 @@ jobs:
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "Github actions"
-          ref = "$(git log --pretty=tformat:'%h' -n 1)"
+          ref="$(git log --pretty=tformat:'%h' -n 1)"
           cd mfesiem.github.io
           git add .
           git commit -m "Generate documentation - develop mfesiem/msiempy@${ref}"
