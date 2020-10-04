@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-__pdoc__= {}
-__pdoc__['msiempy']="""
+"""
 Welcome to the **msiempy** library documentation.  
 The pythonic way to deal with McAfee SIEM API.  
 Head out to one of the sub-modules to see objects definitions or scroll down for general documentation.  
@@ -266,4 +265,3 @@ from .event import (
 )
 from .watchlist import Watchlist, WatchlistManager
 from .__version__ import __version__ as VERSION
-__pdoc__['msiempy.VERSION'] = "msiempy {}".format(VERSION)
