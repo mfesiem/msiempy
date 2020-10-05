@@ -15,7 +15,10 @@ from .core.utils import dehexify
 
 
 class ESM(NitroObject):
-    """Enterprise Security Manager interface"""
+    """
+    Enterprise Security Manager interface.  
+    Object do not contain data, it's a simple interface to data structures / values returned by the SIEM or helper methods.  
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -66,8 +69,11 @@ class ESM(NitroObject):
         - `backupLastTime`
         - `rulesAndSoftwareCheckEnabled`
         - `rulesAndSoftNextCheck`
-        - `rulesAndSoftLastCheck`
-        Other functions exist to return subsets of this data also.
+        - `rulesAndSoftLastCheck`  
+
+        Other functions exist to return subsets of this data also.  
+
+        .. note:: Uses internal API method `SYS_GETSYSINFO`
         """
         status = self.nitro.request("get_sys_info")
         return self._map_status_int_fields(status)
@@ -104,7 +110,8 @@ class ESM(NitroObject):
 
     def backup_status(self):
         """
-        Returns: Backup status and timestamps.
+        Returns: Backup status and timestamps.  
+        Use `status()`.  
         Example :
         ```
             {'autoBackupEnabled': True,
@@ -125,14 +132,16 @@ class ESM(NitroObject):
 
     def callhome(self):
         """
-        Returns: `True/False` if there is currently a callhome connection
+        Returns: `True/False` if there is currently a callhome connection.  
+        Use `status()`.  
         """
         if self.status()["callHomeIp"]:
             return True
 
     def rules_status(self):
         """
-        Returns: Rules autocheck status and timestamps.
+        Returns: Rules autocheck status and timestamps.  
+        Use `status()`.  
         Example:
         ```
             { 'rulesAndSoftwareCheckEnabled': True
@@ -161,8 +170,10 @@ class ESM(NitroObject):
         - `flows`: (`bool`) Also get flows from the device (default: False)
 
         Returns: `None`
-        # TODO: add test method in tests/auth/test_device.py
+
+        .. note:: Uses internal API methods `IPS_GETALERTSNOW` and `IPS_GETFLOWSNOW`
         """
+        # TODO add test method in `tests/auth/test_device.py`
         self.nitro.request("get_alerts_now", ds_id=ds_id)
         if flows:
             self.nitro.request("get_flows_now", ds_id=ds_id)
@@ -170,15 +181,14 @@ class ESM(NitroObject):
     @lru_cache(maxsize=None)
     def recs(self):
         """
-        Returns: `list(tuple())`, List of receivers name and id
+        Returns: `list(tuple())`, List of receivers name and id.  
         """
         rec_list = self.nitro.request("get_recs")
         return [(rec["name"], rec["id"]["id"]) for rec in rec_list]
 
     @lru_cache(maxsize=None)
     def _get_timezones(self):
-        """Gets list of timezones from the ESM.
-        Returns: Raw `string` from ESM
+        """Gets `list` of timezones from the ESM.  
         """
         return self.nitro.request("time_zones")
 
@@ -259,6 +269,7 @@ class ESM(NitroObject):
 
         Returns: `str` Matching type_id or None if there is no match
         """
+        # TODO Write a test method in `tests/auth/test_device.py`
         for venmod in self._get_ds_types():
             if vendor == venmod[1]:
                 if model == venmod[2]:
@@ -317,8 +328,15 @@ class DevTree(NitroList):
 
     Exemple:
     ```
+    # Quick python code to list all McAfee SIEM Datasources
+    from msiempy.device import DevTree
+    devtree = DevTree()
+    print("All Datasources")
+    print(devtree.get_text(fields=["parent_name", "name", "ds_id"]))
     ```
 
+
+    .. note:: Uses internal API methods such as `GRP_GETVIRTUALGROUPIPSLISTDATA` to assemble `DevTree` object.  
     """
 
     def __init__(self, *args, **kwargs):
