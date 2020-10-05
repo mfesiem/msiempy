@@ -1359,8 +1359,9 @@ class Event(NitroDict):
 
     def get_id(self):
         """
-        Get the event ID.
-        Try to return `e['Alert.IPSIDAlertID']` or e['eventId']` or concatenate `e['ipsId']['id']` and `e['alertId']` depending of the Event dictionnary keys.
+        Get the event ID.  
+
+        Return the full event ID or `None`.  
         """
         the_id = (
             self.data["Alert.IPSIDAlertID"]
@@ -1384,7 +1385,9 @@ class Event(NitroDict):
 
     def set_note(self, note, no_date=False):
         """
-        Set the event's note. Desctructive action.
+        Set the event's note. Desctructive action.  
+
+        .. note:: Uses the internal API method `IPS_ADDALERTNOTE`
         """
         the_id = self.get_id()
 

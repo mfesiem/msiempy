@@ -27,6 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo apt-get install graphviz
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install -r requirements.txt
           python -m pip install .
@@ -55,11 +56,11 @@ jobs:
           rm -rf ./mfesiem.github.io/docs/msiempy
           cp -r ./docs_tmp/msiempy mfesiem.github.io/docs/
 
-          # pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-          # mv ./classes.png ./mfesiem.github.io/docs/msiempy
-          # mv ./packages.png ./mfesiem.github.io/docs/msiempy
+          pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
+          mv ./classes.png ./mfesiem.github.io/docs/msiempy
+          mv ./packages.png ./mfesiem.github.io/docs/msiempy
 
-      - name: Publish documentation
+      - name: Publish documentation to mfesiem.github.io/docs/msiempy
         uses: peaceiris/actions-gh-pages@v3
         with:
           deploy_key: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
@@ -69,6 +70,7 @@ jobs:
           user_name: 'Github Actions'
           user_email: "actions@github.com"
           commit_message: "Generate documentation - master"
+          enable_jekyll: true
 
       - name: Build msiempy
         run: python3 setup.py --quiet build check sdist bdist_wheel
@@ -85,7 +87,8 @@ jobs:
         run: |
           version="$(python setup.py --version)"
           last_tag="$(git --no-pager tag -l | tail -1)"
-          git --no-pager log ${last_tag}.. --pretty=oneline > ./tmp_tag.txt
+          echo "msiempy ${version}" > ./tmp_tag.txt
+          git --no-pager log ${last_tag}.. --pretty=oneline >> ./tmp_tag.txt
           git config --global user.email "actions@github.com"
           git config --global user.name "Github actions"
           git tag -a ${version} -F ./tmp_tag.txt

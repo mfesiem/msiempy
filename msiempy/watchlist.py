@@ -193,6 +193,8 @@ class Watchlist(NitroDict):
         """
         Load Watchlist values.
         Raises: `KeyError` if watchlist invalid.
+
+        .. note:: Uses the internal API method `SYS_GETWATCHLISTDETAILS`
         """
         wl_details = self.nitro.request("get_watchlist_values", id=self.data["id"])
 
