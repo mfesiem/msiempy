@@ -18,6 +18,11 @@ class T(unittest.TestCase):
         for r in res :
             self.assertTrue(alarms._event_match(r))
 
+        alarms.event_filters=[('srcIp','10.1.1.1')]
+
+        for r in res :
+            self.assertFalse(alarms._event_match(r))
+
     def test_alarm_match(self):
     
         alarms = AlarmManager(get_testing_data())
