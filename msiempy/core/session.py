@@ -468,9 +468,6 @@ Important note :
 
 """
 
-# Do not document esm_request() it's been replaced by api_request()
-__pdoc__["NitroSession.esm_request"] = False
-
 
 class NitroSession:
     """
