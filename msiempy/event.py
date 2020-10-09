@@ -68,8 +68,12 @@ class _QueryExecuteManager(FilteredQueryList):
     def _wait_for(self, resultID, wait_timeout_sec, sleep_time=0.2):
         """
         Internal method called by qry_load_data
-        Wait and sleep - for `sleep_time` duration in seconds -
-            until the query is completed or retry countdown arrives at zero.
+        Wait and sleep - for 
+        
+        Args:
+            resultID: Query result ID
+            wait_timeout_sec (int): Duration in seconds until the query is completed or countdown arrives at zero.
+            sleep_time (float): Time to sleep in the waiting loop
 
         Returns: 
             `True`
@@ -100,9 +104,9 @@ class _QueryExecuteManager(FilteredQueryList):
 
     def _get_events(self, resultID, startPos=0, numRows=500):
         """
-        Internal method that will get the query events,
-            called by qry_load_data
-        by default, numRows correspond to limit
+        Internal method that will get the query events. 
+        Called by `qry_load_data`.
+        By default, ``numRows`` correspond to ``limit``.  
         """
         result = self.nitro.request(
             "query_result",
@@ -596,7 +600,7 @@ class Event(NitroDict):
 
     Event interface.
     This object handles events objects created with `msiempy.event.EventManager` (From the ``qryGetResults`` api call)
-        and events objects created with `msiempy.alarm.AlarmManager` (From `ipsGetAlertData` api call or `notifyGetTriggeredNotificationDetail` depending of the value of `load_data(events_details=True/False)` ) .
+        and events objects created with `msiempy.alarm.AlarmManager` (From ``ipsGetAlertData`` api call or ``notifyGetTriggeredNotificationDetail`` depending of the value of ``load_data(events_details=True/False)`` ) .
 
     *Common* keys for alert data events (When loading from ID or with `AlarmManager.load_data()`:
 
@@ -639,7 +643,7 @@ class Event(NitroDict):
     - ``Rule.msg``
     - ``Alert.LastTime``
     - ``Alert.IPSIDAlertID``
-    - And any other
+    - **And any other**
 
     You can request more fields by passing a list of fields to the `msiempy.event.EventManager` object.
     `msiempy.event.Event.REGULAR_EVENT_FIELDS` offer a base list of regular fields that may be useful.
@@ -1430,11 +1434,10 @@ class Event(NitroDict):
         Load event's data.
 
         Args:
-
-        - `id` : The event ID. (i.e. : `144128388087414784|747122896`)
-        - `use_query` (`bool`): Uses the query module to retreive common event data. Only works with SIEM 11.2 or greater.
-        Default behaviour will call `ipsGetAlertData` to retreive the complete event definition.
-        - `extra_fields` (`list`): Only when `use_query=True`. Additionnal event fields to load in the query.
+            id (str): The event ID. (i.e. : ``"144128388087414784|747122896"``)
+            use_query (bool): Uses the query module to retreive common event data. Only works with SIEM 11.2 or greater.
+                Default behaviour will call ``ipsGetAlertData`` to retreive the complete event definition.
+            extra_fields (list): Only when ``use_query=True``. Additionnal event fields to load in the query.
         """
 
         if use_query == True:
@@ -1475,10 +1478,10 @@ class Event(NitroDict):
         Re-load event's data.
 
         Args:
-        - `use_query` (`bool`): Force the use of the query module to retreive the event data.
-        In contrario, if explicitely `False`, force the use of `ipsGetAlertData` to get the details.
-        The default behaviour will figure out the event type/load method based on the existence if 'Alert.IPSIDAlertID' keys
-        - `extra_fields` (`list`): Only when `use_query=True` or the Event is already a query event. Additionnal event fields to load in the query.
+            use_query (bool): Force the use of the query module to retreive the event data.
+                In contrario, if explicitely `False`, force the use of `ipsGetAlertData` to get the details.
+                The default behaviour will figure out the event type/load method based on the existence if 'Alert.IPSIDAlertID' keys
+            extra_fields (list): Only when `use_query=True` or the Event is already a query event. Additionnal event fields to load in the query.
 
         Warning:
             Enforce `use_query=True` will reset the Events fields to whatever is passed to `extra_fields`

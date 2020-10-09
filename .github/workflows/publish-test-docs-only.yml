@@ -32,7 +32,7 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install .
           python -m pip show msiempy
-
+      
       - name: Generate test documentation 1
         run: |
 
@@ -54,7 +54,7 @@ jobs:
 
       - name: Generate test documentation 2
         run: |
-        
+
           echo "Formatting __init__.py to reST docstrings"
           pyment msiempy/__init__.py -w
           echo "Formatting event.py to reST docstrings"
