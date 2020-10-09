@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 
+External hyperlinks, like Python_.
+
+.. _Python: http://www.python.org/
+
 **The pythonic way to deal with the McAfee SIEM API**.  
 
 Looking for a CLI tool? Checkout the `msiem CLI<https://github.com/mfesiem/msiem>`_  
@@ -21,13 +25,13 @@ Table of content:
 - `Authentication and configuration setup`_
 - `A few usage exemples`_
 
-        * `Execute an event query`_
-        * `Acknowledge alarms`_
-        * `Make direct API calls`_
-        * `Add a note to events`_
-        * `Fetch ESM infos`_
-        * `Add a Datasource`_
-        * `Add values to a Watchlist`_
+  * `Execute an event query`_
+  * `Acknowledge alarms`_
+  * `Make direct API calls`_
+  * `Add a note to events`_
+  * `Fetch ESM infos`_
+  * `Add a Datasource`_
+  * `Add values to a Watchlist`_
 
 
 Installation
