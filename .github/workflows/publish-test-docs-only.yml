@@ -40,6 +40,9 @@ jobs:
           rm -rf ./mfesiem.github.io/docs/test/msiempy
           mkdir ./mfesiem.github.io/docs/test/msiempy
 
+          # Ignore any warnings or errors on pydoctor and diagram generation
+          set +e
+
           pydoctor \
             --add-module=msiempy \
             --project-name=msiempy \
@@ -49,12 +52,11 @@ jobs:
             -v --docformat=restructuredtext
 
           cp -r ./apidocs mfesiem.github.io/docs/test/msiempy/
-
-          # Ignore any errors on diagram generation
-          set +e
+         
           pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
           mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
           mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
+          
           set -e
 
       - name: Publish documentation to mfesiem.github.io/docs/test/msiempy
