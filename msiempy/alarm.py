@@ -366,18 +366,19 @@ class AlarmManager(FilteredQueryList):
 class Alarm(NitroDict):
     """
     Dict-Like object.
+    Represents a triggered alarm.  
 
     Common keys :
 
-    - `id` : The ID of the triggered alarm
-    - `summary`  : The summary of the triggered alarm
-    - `assignee` : The assignee for this triggered alarm
-    - `severity` : The severity for this triggered alarm
-    - `triggeredDate` : The date this alarm was triggered
-    - `acknowledgedDate` : The date this triggered alarm was acknowledged
-    - `acknowledgedUsername` : The user that acknowledged this triggered alarm
-    - `alarmName` : The name of the alarm that was triggered
-    - `events` : The events that triggered the alarm
+    - ``id`` : The ID of the triggered alarm
+    - ``summary``  : The summary of the triggered alarm
+    - ``assignee`` : The assignee for this triggered alarm
+    - ``severity`` : The severity for this triggered alarm
+    - ``triggeredDate`` : The date this alarm was triggered
+    - ``acknowledgedDate`` : The date this triggered alarm was acknowledged
+    - ``acknowledgedUsername`` : The user that acknowledged this triggered alarm
+    - ``alarmName`` : The name of the alarm that was triggered
+    - ``events`` : The events that triggered the alarm
     - And others...
 
     Arguments:
