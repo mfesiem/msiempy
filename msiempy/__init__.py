@@ -13,7 +13,6 @@ Table of content:
         - `Installation`_
         - `Authentication and configuration setup`_
         - `A few usage exemples`_
-
           * `Execute an event query`_
           * `Acknowledge alarms`_
           * `Make direct API calls`_
@@ -25,7 +24,7 @@ Table of content:
 
 Installation
 ============
-::
+Run::
 
         pip install msiempy
 

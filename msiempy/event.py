@@ -1480,9 +1480,11 @@ class Event(NitroDict):
         The default behaviour will figure out the event type/load method based on the existence if 'Alert.IPSIDAlertID' keys
         - `extra_fields` (`list`): Only when `use_query=True` or the Event is already a query event. Additionnal event fields to load in the query.
 
-        .. Warning:: Enforce `use_query=True` will reset the Events fields to whatever is passed to `extra_fields`
+        Warning:
+            Enforce `use_query=True` will reset the Events fields to whatever is passed to `extra_fields`
 
-        Raise `AttributeError` if the event ID has not been found.
+        Raises:
+            `AttributeError` if the event ID has not been found.
         """
         if not self.get_id():
             raise AttributeError(
