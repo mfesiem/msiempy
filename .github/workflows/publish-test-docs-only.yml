@@ -33,15 +33,13 @@ jobs:
           python -m pip install .
           python -m pip show msiempy
 
-      - name: Generate test documentation
+      - name: Generate test documentation 1
         run: |
 
           git clone https://github.com/mfesiem/mfesiem.github.io
           rm -rf ./mfesiem.github.io/docs/test/msiempy
           mkdir ./mfesiem.github.io/docs/test/msiempy
           
-
-          # Ignore any warnings or errors on pydoctor and diagram generation
           set +e
 
           pydoctor \
@@ -54,13 +52,17 @@ jobs:
 
           cp ./apidocs/* mfesiem.github.io/docs/test/msiempy/
 
+      - name: Generate test documentation 2
+        run: |
           mkdir ./mfesiem.github.io/docs/test/msiempy/pymented
           
           rm -rf apidocs
 
-          pyment -w msiempy/
+          pyment -t -w msiempy/
 
           python -m pip install .
+
+          set +e
 
           pydoctor \
             --add-module=msiempy \
@@ -72,11 +74,11 @@ jobs:
 
           cp ./apidocs/* mfesiem.github.io/docs/test/msiempy/pymented/
 
+      - name: Generate diagrams
+        run: |
           pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
           mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
           mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
-
-          set -e
 
       - name: Publish documentation to mfesiem.github.io/docs/test/msiempy
         uses: peaceiris/actions-gh-pages@v3
