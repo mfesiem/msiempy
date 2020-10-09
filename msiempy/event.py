@@ -160,12 +160,12 @@ class EventManager(_QueryExecuteManager):
 
         Arguments:
             - `fields` (`list` of `str`): Query fields
-            - `order` (``tuple(direction, field)``. Direction can be "ASCENDING" or "DESCENDING"): Query order direction and field
+            - `order` (`tuple(direction, field)`. Direction can be "ASCENDING" or "DESCENDING"): Query order direction and field
             - `limit` (int): Max number of rows per query result.
-            - `filters` (`list` of ``tuple(field, [values])`` or `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter`): Query filters
+            - `filters` (`list` of `tuple(field, [values])` or `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter`): Query filters
             - `time_range` (str): Query time range. No need to specify "CUSTOM" if `start_time` and `end_time` are set.
-            - `start_time` ( `str` (Parsed with ``dateutil``) or `datetime`): Query start time
-            - `end_time` (`str` (Parsed with ``dateutil``) or `datetime`): Query end time
+            - `start_time` ( `str` (Parsed with `dateutil`) or `datetime`): Query start time
+            - `end_time` (`str` (Parsed with `dateutil`) or `datetime`): Query end time
 
         Note: 
             Some minimal fields will always be present. Get the list of possible fields with `msiempy.event.EventManager.get_possible_fields`
@@ -267,15 +267,15 @@ class EventManager(_QueryExecuteManager):
             - Get and parse the events
 
         Arguments:
-            - `retry` (`int`): number of time the query can be failed and retried.  1 by default.
+            - `retry` (`int`): number of time the query can be failed and retried.  
             - `wait_timeout_sec` (`int`): wait timeout in seconds. 120 by default.
 
         Returns : 
-            `tuple`: (( `msiempy.event.EventManager`, Query completed? `True/False` ))
+            `tuple`: ( `msiempy.event.EventManager`, Query completed? `True/False` )
 
         Raises:
             - `msiempy.core.session.NitroError` if any unhandled errors.
-            - `TimeoutError` if ``wait_timeout_sec`` counter gets to 0.
+            - `TimeoutError` if `wait_timeout_sec` counter gets to 0.
         """
         try:
             query_infos = dict()
@@ -331,20 +331,16 @@ class EventManager(_QueryExecuteManager):
         Wraps around `msiempy.event.EventManager.qry_load_data`.
 
         Arguments:
-            - `max_query_depth` : Positive value splits the query in differents time slots if the query apprears not to be completed.
-                Divisions are reccursive, `max_query_depth` is the maximum number of reccursive calls `load_data()` can apply to the query in order to load all events.
-                Meaning, if `EventManager.limit=500`, `slots=10 `and `max_query_depth=2`, then the maximum capacity of
-                the list is `(500*10)*(500*10)` = `25000000` (instead of `500` with `max_query_depth=0`).  Only works with custom times and a few time ranges...
-            - `slots` : number of time slots the query can be divided. The loading bar is
-                divided according to the number of slots. Applicable if max_query_depth>0.
-            - `delta` : exemple : '2h', the query will be firstly divided in chuncks according to the time delta read
-                with dateutil. Applicable if max_query_depth>0.
-            - `workers` : numbre of parrallels tasks, should be equal or less than the number of slots. Applicable if max_query_depth>0.
-            - `retry` (`int`): number of time the query can be failed and retried.  1 by default.
-            - `wait_timeout_sec` (`int`): wait timeout in seconds. 120 by default.
+            - `max_query_depth` (`int`): Maximum number of reccursive divisions `load_data()` can apply to the query in order to load all events. Splits the query in differents time slots if the query apprears not to be completed.  Only works with custom times and some time ranges.
+            - `slots` (`int`): number of time slots the query can be divided. Loading bar is divided according to the number of slots. Applicable if ``max_query_depth>0``.
+            - `delta` (`str`): exemple : '2h', the query will be firstly divided in chuncks according to the time delta read with dateutil. Applicable if ``max_query_depth>0``.
+            - `workers` (`int`): numbre of parrallels tasks, should be equal or less than the number of slots. Applicable if ``max_query_depth>0``.
+            - `retry` (`int`): number of time the query can be failed and retried.  (Default value = 1)
+            - `wait_timeout_sec` (`int`): wait timeout in seconds. (Default value = 120)
 
-        Note: 
-            Only the first query is loaded asynchronously.
+        Notes: 
+            - Only the first query is loaded asynchronously.
+            - Clarification of max_query_depth argument: If ``EventManager.limit=500``, ``slots=10`` and ``max_query_depth=2``, then the maximum capacity of the list is ``(500*10)*(500*10)`` = ``25000000`` (instead of ``500`` with ``max_query_depth=0``). 
 
         Returns: 
             `msiempy.event.EventManager`

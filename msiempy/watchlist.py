@@ -13,7 +13,6 @@ class WatchlistManager(NitroList):
     """
     List-Like object. 
 
-
     Summary of ESM watchlists.
     """
 
