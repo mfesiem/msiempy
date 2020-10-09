@@ -71,12 +71,11 @@ class _QueryExecuteManager(FilteredQueryList):
         Wait and sleep - for `sleep_time` duration in seconds -
             until the query is completed or retry countdown arrives at zero.
 
-        Return: `True`
+        Returns: 
+            `True`
 
         Raises:
-
             `msiempy.NitroError`: 'ResultUnavailable' error some times...
-            
             `TimeoutError`: Query wait timeout
         """
 
@@ -160,27 +159,18 @@ class EventManager(_QueryExecuteManager):
         Create a new event query.  
 
         Args: 
-
             fields (list of str): Query fields
-
             order (tuple(direction, field)): Query order direction and field. Direction can be ``"ASCENDING"`` or ``"DESCENDING"``. 
-
             limit (int): Max number of rows per query result.
-
             filters (list of tuple(field, [values]) or `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter`): Query filters
-
             time_range (str): Query time range. No need to specify "CUSTOM" if ``start_time`` and ``end_time`` are set.
-
             start_time (str or datetime): Query start time
-
             end_time (str or datetime): Query end time
 
         Note: 
-
             Some minimal fields will always be present. Get the list of possible fields with `msiempy.event.EventManager.get_possible_fields`
 
         See: 
-
             `msiempy.event.Event`
 
         """
@@ -278,19 +268,14 @@ class EventManager(_QueryExecuteManager):
             - Get and parse the events
 
         Args:
-        
             retry (int): number of time the query can be failed and retried.  
-
             wait_timeout_sec (int): wait timeout in seconds. 120 by default.
 
         Returns: 
-
             tuple: ( `msiempy.event.EventManager`, Query completed? `bool` )
 
         Raises:
-
             msiempy.core.session.NitroError: If any unhandled errors.
-
             TimeoutError: If ``wait_timeout_sec`` counter gets to 0.
         """
         try:
@@ -347,26 +332,18 @@ class EventManager(_QueryExecuteManager):
         Wraps around `msiempy.event.EventManager.qry_load_data`.
 
         Args:
-
             max_query_depth (int): Maximum number of reccursive divisions `load_data()` can apply to the query in order to load all events. Splits the query in differents time slots if the query apprears not to be completed.  Only works with custom times and some time ranges.
                 If ``EventManager.limit=500``, ``slots=10`` and ``max_query_depth=2``, then the maximum capacity of the list is ``(500*10)*(500*10)`` = ``25000000`` (instead of ``500`` with ``max_query_depth=0``). 
-
             slots (int): number of time slots the query can be divided. Loading bar is divided according to the number of slots. Applicable if ``max_query_depth>0``.
-            
             delta (str): exemple : '2h', the query will be firstly divided in chuncks according to the time delta read with dateutil. Applicable if ``max_query_depth>0``.
-            
             workers (int): numbre of parrallels tasks, should be equal or less than the number of slots. Applicable if ``max_query_depth>0``.
-            
             retry (int): number of time the query can be failed and retried.  (Default value = 1)
-            
             wait_timeout_sec (int): wait timeout in seconds. (Default value = 120)
 
         Returns: 
-
             `msiempy.event.EventManager`
 
         Note: 
-
             Only the first query is loaded asynchronously.
         """
 
@@ -480,15 +457,10 @@ class GroupedEventManager(_QueryExecuteManager):
     Interface to execute a grouped event query.
 
     Args:
-
         field (str): The field that will be selected when this query is executed.
-
         filters (list): list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter` if you wish to use advanced filtering.
-
         time_range (str): Query time range. String representation of a time range. Not need to specify ``"CUSTOM"`` if `start_time` and `end_time` are set.
-
         start_time : Query start time, can be a `str` or a `datetime` object. Parsed with `dateutil`.
-
         end_time : Query end time, can be a `str` or a `datetime` object. Parsed with `dateutil`.
 
     """
@@ -523,11 +495,8 @@ class GroupedEventManager(_QueryExecuteManager):
         Load the data into the list.
 
         Args:
-
             num_rows (int): Maximum number of rows to load.
-
             retry (int): number of time the query can be failed and retried.
-
             wait_timeout_sec (int): wait timeout in seconds.
 
         Returns: 
@@ -566,23 +535,16 @@ class GroupedEventManager(_QueryExecuteManager):
             - Get and parse the events
 
         Args:
-
             num_rows (int): Maximum number of rows to load.
-
             retry (int): number of time the query can be failed and retried.
-
             wait_timeout_sec (int): wait timeout in seconds.
 
         Returns:
-
             tuple : ( `list`, Query completed? `bool` )
 
         Raises:
-        
             `msiempy.core.session.NitroError` if any unhandled errors.
-
             `TimeoutError` if ``wait_timeout_sec`` counter gets to 0.
-
             `ValueError` if an `IPSID` filter is not present.
         """
         if not any([f["field"]["name"] == "IPSID" for f in self.filters]):
@@ -1363,9 +1325,7 @@ class Event(NitroDict):
     def __init__(*args, **kwargs):
         """"
         Args:
-
             adict (dict): Event parameters
-
             id (str): The event ``IPSIDAlertID`` to instanciate. Will load informations.  
         """
         super().__init__(*args, **kwargs)
@@ -1437,7 +1397,8 @@ class Event(NitroDict):
         """
         Set the event's note. Desctructive action.  
 
-        .. note:: Uses the internal API method `IPS_ADDALERTNOTE`
+        Note: 
+            Uses the internal API method `IPS_ADDALERTNOTE`
         """
         the_id = self.get_id()
 
@@ -1599,9 +1560,7 @@ class GroupFilter(_QueryFilter):
     Used to dump groups of filters in the right format.
 
     Args :
-
         filters (list): a list of filters. Filters can be `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter`
-
         logic (str): 'AND' or 'OR'
     """
 
@@ -1636,7 +1595,6 @@ class FieldFilter(_QueryFilter):
     
 
     Note:
-    
         Make sure the filter name is valid by checking the result of `msiempy.event.EventManager.get_possible_filters` or use the provided script in the sample folder
 
     """
@@ -1888,11 +1846,8 @@ class FieldFilter(_QueryFilter):
     def __init__(self, name, values, operator="IN"):
         """
         Args:
-
             name (str): field name as string. Field name property. Example : `SrcIP`. See full list here: https://github.com/mfesiem/msiempy/blob/master/static/all_filters.json
-            
             values (list): list of values the field is going to be tested againts with the specified orperator.
-            
             orperator (str): ``IN``,
                 ``NOT_IN``,
                 ``GREATER_THAN``,
@@ -2028,23 +1983,16 @@ class FieldFilter(_QueryFilter):
         Add a new value to the filter.
 
         Args:
-
             type (str): Type of the value
-
             value (str): If ``type`` is ``"EsmBasicValue"``
-
             watchlist (int): If ``type`` is ``"EsmWatchlistValue"``
-
             variable (int): If ``type`` is ``"EsmVariableValue"``
-
             values (list): If ``type`` is ``"EsmCompoundValue"``
 
         Raises: 
-        
             `KeyError` or `AttributeError` if you don't respect the correct type/key/value combo.
 
         Note: 
-            
             Filtering query with other type of filter than `EsmBasicValue` is not tested.
         """
         try:

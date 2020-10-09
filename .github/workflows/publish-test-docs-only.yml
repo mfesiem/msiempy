@@ -55,8 +55,6 @@ jobs:
       - name: Generate test documentation 2
         run: |
 
-          
-
           pyment -w msiempy/  
 
           python -m pip install .
@@ -66,6 +64,7 @@ jobs:
           rm -rf apidocs
 
           set +e
+          
           pydoctor \
             --add-module=msiempy \
             --project-name=msiempy \
