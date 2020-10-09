@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.8']
+        python-version: ['3.7']
       max-parallel: 1
       fail-fast: false
 
@@ -54,15 +54,18 @@ jobs:
 
       - name: Generate test documentation 2
         run: |
+
+          set +e
+
+          pyment -w msiempy/  
+
+          python -m pip install .
+
           mkdir ./mfesiem.github.io/docs/test/msiempy/pymented
           
           rm -rf apidocs
 
-          pyment -t -w msiempy/
-
-          python -m pip install .
-
-          set +e
+          
 
           pydoctor \
             --add-module=msiempy \
