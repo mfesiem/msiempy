@@ -7,17 +7,17 @@ External hyperlinks, like Python_.
 
 **The pythonic way to deal with the McAfee SIEM API**.  
 
-Looking for a CLI tool? Checkout the `msiem CLI<https://github.com/mfesiem/msiem>`_  
+Looking for a CLI tool? Checkout the `msiem CLI <https://github.com/mfesiem/msiem>`_  
 
 Already know what you're looking for? Checkout the Class Hierarchy.    
 
 Quick links: 
 
-- `GitHub<https://github.com/mfesiem/msiempy>`_ 
-- `PyPI<https://pypi.org/project/msiempy/>`_ 
-- `Class diagram<https://mfesiem.github.io/docs/msiempy/classes.png>`_ 
-- `Packages diagram<https://mfesiem.github.io/docs/msiempy/packages.png>`_
-- `other SIEM API references<https://mfesiem.github.io>`_ (generated PDFs and other links)  
+- `GitHub <https://github.com/mfesiem/msiempy>`_ 
+- `PyPI <https://pypi.org/project/msiempy/>`_ 
+- `Class diagram <https://mfesiem.github.io/docs/msiempy/classes.png>`_ 
+- `Packages diagram <https://mfesiem.github.io/docs/msiempy/packages.png>`_
+- `other SIEM API references <https://mfesiem.github.io>`_ (generated PDFs and other links)  
 
 Table of content:
 
@@ -66,7 +66,7 @@ Exemple::
         ssl_verify = no
 
 
-To set the password, you can use the `msiempy_setup.py<https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py>`_ script.  
+To set the password, you can use the `msiempy_setup.py <https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py>`_ script.  
 You can also directly paste the password's base64 in the config file by doing:  
 
 >>> import base64
@@ -78,7 +78,7 @@ A few usage exemples
 ====================
 
 See also: 
-        The `samples folder<https://github.com/mfesiem/msiempy/tree/master/samples>`_ for more, and/or review the `tests<https://github.com/mfesiem/msiempy/tree/master/tests>`_.     
+        The `samples folder <https://github.com/mfesiem/msiempy/tree/master/samples>`_ for more, and/or review the `tests <https://github.com/mfesiem/msiempy/tree/master/tests>`_.     
 
 Execute an event query 
 ----------------------
@@ -101,7 +101,7 @@ Query events according to destination IP and hostname filters, sorted by AlertID
 
 Notes: 
         - The ``limit`` argument should be increased to 500 or 1000 once finish testing for better performance.  
-        - Dump full list of fields usable in query `msiempy.event.FieldFilter` with `dump_all_fields.py<https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py>`_ script.  
+        - Dump full list of fields usable in query `msiempy.event.FieldFilter` with `dump_all_fields.py <https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py>`_ script.  
 
 See: 
         Objects `msiempy.event.EventManager` and `msiempy.event.FieldFilter`
@@ -179,7 +179,7 @@ Set the note of 2 events and check if the note is well set.
         assert "Test note" in genuine_event['note'], "Error, the note hasn't been added"
 
 See: 
-        - `add_wpsan_note.py<https://github.com/mfesiem/msiempy/blob/master/samples/add_wpsan_note.py>`_ script for more on how to add notes to event that triggered alarms.   
+        - `add_wpsan_note.py <https://github.com/mfesiem/msiempy/blob/master/samples/add_wpsan_note.py>`_ script for more on how to add notes to event that triggered alarms.   
 
         - Object `msiempy.event.Event`
 
@@ -220,7 +220,7 @@ See:
 
 Note: 
         `msiempy.device.DevTree.add` do not ensure the Datasource is well added, the methods returns a `dict` with the request ID fetched from the SIEM.
-        There is still place for improvment `#82<https://github.com/mfesiem/msiempy/issues/82>`_.  
+        There is still place for improvment `#82 <https://github.com/mfesiem/msiempy/issues/82>`_.  
 
 Add values to a Watchlist
 -------------------------
