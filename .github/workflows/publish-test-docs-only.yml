@@ -54,8 +54,19 @@ jobs:
 
       - name: Generate test documentation 2
         run: |
-
-          pyment -w msiempy/  
+        
+          echo "Formatting __init__.py to reST docstrings"
+          pyment msiempy/__init__.py -w
+          echo "Formatting event.py to reST docstrings"
+          pyment msiempy/event.py -w
+          echo "Formatting alarm.py to reST docstrings"
+          pyment msiempy/alarm.py -w
+          echo "Formatting device.py to reST docstrings"
+          pyment msiempy/device.py -w
+          echo "Formatting watchlist.py to reST docstrings"
+          pyment msiempy/watchlist.py -w
+          echo "Formatting query to reST docstrings"
+          pyment msiempy/query -w
 
           python -m pip install .
 
