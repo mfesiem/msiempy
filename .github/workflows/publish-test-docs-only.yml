@@ -55,9 +55,11 @@ jobs:
           cp ./apidocs/* mfesiem.github.io/docs/test/msiempy/
 
           mkdir ./mfesiem.github.io/docs/test/msiempy/pymented
-
-          pyment -m msiempy/
           
+          rm -rf apidocs
+          
+          pyment -w msiempy/
+
           python -m pip install .
 
           pydoctor \
