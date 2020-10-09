@@ -7,5 +7,5 @@ pytest
 pytest-rerunfailures
 pytest-cov
 black
-pydoctor
+git+https://github.com/twisted/pydoctor.git@20.7.x
 pyment
