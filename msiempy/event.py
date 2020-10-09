@@ -8,8 +8,6 @@ from datetime import datetime, timedelta
 
 log = logging.getLogger("msiempy")
 
-__pdoc__ = {}
-
 from .core import NitroDict, NitroError, FilteredQueryList
 from .core.utils import (
     timerange_gettimes,
@@ -19,9 +17,6 @@ from .core.utils import (
     parse_timedelta,
 )
 from .device import DevTree
-
-__pdoc__["EventManager.fields"] = "List of query fields"
-__pdoc__["EventManager.limit"] = "Max number of rows per query"
 
 
 class _QueryExecuteManager(FilteredQueryList):
@@ -144,20 +139,11 @@ class _QueryExecuteManager(FilteredQueryList):
 
 class EventManager(_QueryExecuteManager):
     """
-    List-Like object.
+    List-Like object.  
+
     Interface to execute a event query.
 
-    Arguments:
-
-    - `fields` : list of strings representing all fields you want to apprear in the Events records.
-        Get the list of possible fields by calling `msiempy.event.EventManager.get_possible_fields()` method or see `msiempy.event.Event`.
-        Some default fields will be present.
-    - `order` : `tuple ((direction, field))`. Direction can be 'ASCENDING' or 'DESCENDING'.
-    - `limit` : max number of rows per query.
-    - `filters` : list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter` if you wish to use advanced filtering.
-    - `time_range` : Query time range. String representation of a time range. Not need to specify 'CUSTOM' if `start_time` and `end_time` are set.
-    - `start_time` : Query start time, can be a `string` or a `datetime` object. Parsed with `dateutil`.
-    - `end_time` : Query end time, can be a `string` or a `datetime` object. Parsed with `dateutil`.
+    :ivar order: `tuple` Query order direction and field
     """
 
     # Constants
@@ -167,19 +153,39 @@ class EventManager(_QueryExecuteManager):
     """`ASCENDING` or `DESCENDING`"""
 
     def __init__(
-        self, *args, fields=None, order=None, limit=500, __parent__=None, **kwargs
+        self, *args, fields=None, order=None, limit=500, _parent=None, **kwargs
     ):
+        """
+        Create a new event query.  
+
+        Arguments:
+            - `fields` (`list` of `str`): Query fields
+            - `order` (``tuple(direction, field)``. Direction can be "ASCENDING" or "DESCENDING"): Query order direction and field
+            - `limit` (int): Max number of rows per query result.
+            - `filters` (`list` of ``tuple(field, [values])`` or `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter`): Query filters
+            - `time_range` (str): Query time range. No need to specify "CUSTOM" if `start_time` and `end_time` are set.
+            - `start_time` ( `str` (Parsed with ``dateutil``) or `datetime`): Query start time
+            - `end_time` (`str` (Parsed with ``dateutil``) or `datetime`): Query end time
+
+        Note: 
+            Some minimal fields will always be present. Get the list of possible fields with `msiempy.event.EventManager.get_possible_fields`
+
+        See: 
+            `msiempy.event.Event`
+
+        """
         # Calling super constructor : filters, time_range set etc...
         super().__init__(*args, **kwargs)
 
         # Store the query parent
-        self.__parent__ = __parent__
+        self._parent = _parent
 
         # Setting the default fields Adds the specified fields, make sure there is no duplicates and delete TABLE identifiers
         self.fields = []
         """
-        Query fields
+        List of query fields
         """
+
         if fields and len(fields) > 0:
             all_keys = Event.DEFAULTS_EVENT_FIELDS + list(fields)
             uniquekeys = set()
@@ -253,20 +259,23 @@ class EventManager(_QueryExecuteManager):
 
     def qry_load_data(self, retry=1, wait_timeout_sec=120):
         """
-        Helper method to execute the query and load the data :
-            -> Submit the query
-            -> Wait the query to be executed
-            -> Get and parse the events
+        Internal
+
+        Helper method to execute the query and load the data:
+            - Submit the query
+            - Wait the query to be executed
+            - Get and parse the events
 
         Arguments:
+            - `retry` (`int`): number of time the query can be failed and retried.  1 by default.
+            - `wait_timeout_sec` (`int`): wait timeout in seconds. 120 by default.
 
-        - `retry` (`int`): number of time the query can be failed and retried.  1 by default.
-        - `wait_timeout_sec` (`int`): wait timeout in seconds. 120 by default.
+        Returns : 
+            `tuple`: (( `msiempy.event.EventManager`, Query completed? `True/False` ))
 
-        Returns : `tuple` : (( `msiempy.event.EventManager`, Query completed? `True/False` ))
-
-        Raises `msiempy.core.session.NitroError` if any unhandled errors.
-        Raises `TimeoutError` if wait_timeout_sec counter gets to 0.
+        Raises:
+            - `msiempy.core.session.NitroError` if any unhandled errors.
+            - `TimeoutError` if ``wait_timeout_sec`` counter gets to 0.
         """
         try:
             query_infos = dict()
@@ -318,26 +327,27 @@ class EventManager(_QueryExecuteManager):
 
     def load_data(self, workers=10, slots=10, delta=None, max_query_depth=0, **kwargs):
         """
-        Load the events data into the list.
+        **Load the events data into the list.**  
         Wraps around `msiempy.event.EventManager.qry_load_data`.
 
         Arguments:
+            - `max_query_depth` : Positive value splits the query in differents time slots if the query apprears not to be completed.
+                Divisions are reccursive, `max_query_depth` is the maximum number of reccursive calls `load_data()` can apply to the query in order to load all events.
+                Meaning, if `EventManager.limit=500`, `slots=10 `and `max_query_depth=2`, then the maximum capacity of
+                the list is `(500*10)*(500*10)` = `25000000` (instead of `500` with `max_query_depth=0`).  Only works with custom times and a few time ranges...
+            - `slots` : number of time slots the query can be divided. The loading bar is
+                divided according to the number of slots. Applicable if max_query_depth>0.
+            - `delta` : exemple : '2h', the query will be firstly divided in chuncks according to the time delta read
+                with dateutil. Applicable if max_query_depth>0.
+            - `workers` : numbre of parrallels tasks, should be equal or less than the number of slots. Applicable if max_query_depth>0.
+            - `retry` (`int`): number of time the query can be failed and retried.  1 by default.
+            - `wait_timeout_sec` (`int`): wait timeout in seconds. 120 by default.
 
-        - `max_query_depth` : Positive value splits the query in differents time slots if the query apprears not to be completed.
-        Divisions are reccursive, `max_query_depth` is the maximum number of reccursive calls load_data() can apply to the query in order to load all events.
-        Meaning, if `EventManager.limit=500`, `slots=10 `and `max_query_depth=2`, then the maximum capacity of
-        the list is `(500*10)*(500*10)` = `25000000` (instead of `500` with `max_query_depth=0`).  Only works with custom times and a few time ranges...
-        - `slots` : number of time slots the query can be divided. The loading bar is
-            divided according to the number of slots. Applicable if max_query_depth>0.
-        - `delta` : exemple : '2h', the query will be firstly divided in chuncks according to the time delta read
-            with dateutil. Applicable if max_query_depth>0.
-        - `workers` : numbre of parrallels tasks, should be equal or less than the number of slots. Applicable if max_query_depth>0.
-        - `retry` (`int`): number of time the query can be failed and retried.  1 by default.
-        - `wait_timeout_sec` (`int`): wait timeout in seconds. 120 by default.
+        Note: 
+            Only the first query is loaded asynchronously.
 
-        Note: Only the first query is loaded asynchronously.
-
-        Returns : `msiempy.event.EventManager`
+        Returns: 
+            `msiempy.event.EventManager`
         """
 
         items, completed = self.qry_load_data()
@@ -355,7 +365,7 @@ class EventManager(_QueryExecuteManager):
                 else:
                     start, end = self.start_time, self.end_time
 
-                if self.__parent__ == None and isinstance(delta, str):
+                if self._parent == None and isinstance(delta, str):
                     # if it's the first query and delta is speficied, cut the time_range in slots according to the delta
                     times = divide_times(start, end, delta=parse_timedelta(delta))
 
@@ -383,7 +393,7 @@ class EventManager(_QueryExecuteManager):
                         time_range="CUSTOM",
                         start_time=time[0].isoformat(),
                         end_time=time[1].isoformat(),
-                        __parent__=self,
+                        _parent=self,
                     )
 
                     sub_queries.append(sub_query)
@@ -392,8 +402,8 @@ class EventManager(_QueryExecuteManager):
                     EventManager.load_data,
                     sub_queries,
                     # The sub query is asynch only when it's the first query (root parent)
-                    asynch=self.__parent__ == None,
-                    progress=self.__parent__ == None,
+                    asynch=self._parent == None,
+                    progress=self._parent == None,
                     message="Loading data from "
                     + start
                     + " to "
@@ -407,25 +417,25 @@ class EventManager(_QueryExecuteManager):
                 items = [item for sublist in results for item in sublist]
 
             else:
-                if not self.__root_parent__.not_completed:
+                if not self._root_parent.not_completed:
                     log.warning(
                         "The query is not complete... Try to divide in more slots or increase max_query_depth"
                     )
-                    self.__root_parent__.not_completed = True
+                    self._root_parent.not_completed = True
 
         events = [Event(adict=item) for item in items]
         self.data = events
         return self
 
     @property
-    def __root_parent__(self):
+    def _root_parent(self):
         """
         Internal method that return the first query of the query tree.
         """
-        if self.__parent__ == None:
+        if self._parent == None:
             return self
         else:
-            return self.__parent__.__root_parent__
+            return self._parent._root_parent
 
     def get_possible_fields(self):
         """
@@ -588,7 +598,7 @@ class Event(NitroDict):
     Dict-Like object.
 
     Event interface.
-    This object handles events objects created with `msiempy.event.EventManager` (From the `qryGetResults` api call)
+    This object handles events objects created with `msiempy.event.EventManager` (From the ``qryGetResults`` api call)
         and events objects created with `msiempy.alarm.AlarmManager` (From `ipsGetAlertData` api call or `notifyGetTriggeredNotificationDetail` depending of the value of `load_data(events_details=True/False)` ) .
 
     *Common* keys for alert data events (When loading from ID or with `AlarmManager.load_data()`:
@@ -716,19 +726,19 @@ class Event(NitroDict):
     """
     List of regular event fields.  
 
-    `Rule.msg`  
-    `Alert.SrcIP`  
-    `Alert.DstIP`   
-    `Alert.SrcMac`  
-    `Alert.DstMac`  
-    `Rule.NormID`  
-    `HostID`  
-    `UserIDSrc`  
-    `ObjectID`  
-    `Alert.Severity`  
-    `Alert.LastTime`  
-    `Alert.DSIDSigID`  
-    `Alert.IPSIDAlertID` 
+    ``Rule.msg``  
+    ``Alert.SrcIP``  
+    ``Alert.DstIP``   
+    ``Alert.SrcMac``  
+    ``Alert.DstMac``  
+    ``Rule.NormID``  
+    ``HostID``  
+    ``UserIDSrc``  
+    ``ObjectID``  
+    ``Alert.Severity``  
+    ``Alert.LastTime``  
+    ``Alert.DSIDSigID``  
+    ``Alert.IPSIDAlertID`` 
     """
 
     SIEM_FIELDS_MAP_INTERNAL_NAME_TO_NICKNAME = {

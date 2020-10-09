@@ -17,8 +17,6 @@ from .config import NitroConfig
 
 log = logging.getLogger("msiempy")
 
-__pdoc__ = {}  # Init pdoc to document dynamically
-
 _PARAMS = {
     "login": (
         "login",
@@ -464,7 +462,7 @@ Central place to aggregate methods and parameters.
 
 
 Important note : 
-    Do not use sigle quotes (`'`) to delimit data into the interpolated strings !
+    Do not use sigle quotes (``'``) to delimit data into the interpolated strings !
 
 """
 
@@ -474,15 +472,20 @@ class NitroSession:
     `msiempy.core.session.NitroSession` is the point of convergence of every requests that goes to the ESM.
     It provides easier dialogue with the ESM by doing argument interpolation with `msiempy.core.session.NitroSession.PARAMS`.
 
-    Arguments:
-
-    - `config` : `msiempy.core.config.NitroConfig` object, find default config if missing.
-
     See `msiempy.core.session.NitroSession.api_request` and `msiempy.core.session.NitroSession.request` for usage.
-
+    
+    :ivar session: Underlying `requests.Session` object. 
+    :ivar config: `msiempy.core.config.NitroConfig` object.  
+    :ivar login_info: Login user infos as returned by ``login`` API method.
     """
 
     def __init__(self, config=None):
+        """
+        Create or get the ESM session
+
+        Arguments:
+            - `config` (`msiempy.core.config.NitroConfig`): Config object. Find default config if `None`.
+        """
 
         self.__dict__ = NitroSession.__unique_state__
 
@@ -490,14 +493,8 @@ class NitroSession:
         if NitroSession.__initiated__ == False:
             NitroSession.__initiated__ = True
 
-            # Private attributes
-            # self._headers={'Content-Type': 'application/json'}
-
             # Config parsing
             self.config = None
-            """
-            `msiempy.core.config.NitroConfig` object.  
-            """
 
             if config == None:
                 self.config = NitroConfig()
@@ -518,12 +515,8 @@ class NitroSession:
 
             self.api_v = 0
             self.logged_in = False
-
             self.login_info = dict()
-            """Login user infos as returned by `login` API method."""
-
             self.session = requests.Session()
-            """Underlying `requests.Session` object. """
 
             try:
                 requests.packages.urllib3.disable_warnings(
@@ -534,10 +527,10 @@ class NitroSession:
                 pass
 
     BASE_URL = "https://{}/rs/esm/"
-    """API base url: `'https://{}/rs/esm/'`"""
+    """API base url: ``https://{}/rs/esm/``"""
 
     BASE_URL_PRIV = "https://{}/ess/"
-    """Private API base URL: `'https://{}/ess/'`"""
+    """Private API base URL: ``https://{}/ess/``"""
 
     __initiated__ = False
     """
@@ -557,19 +550,23 @@ class NitroSession:
 
     Returns:  
         - `tuple `: (`str` or `Template`, `str` or `Template`) :  
-        The first item is the SIEM API endpoint name.  
-        The second item is the JSON string data parameters required for the enpoint call. 
-        If the string is `Template` string, it needs to be interpolate with paramaters.  
+            The first item is the SIEM API endpoint name.  
+            The second item is the JSON string data parameters required for the enpoint call. 
+            If the string is `Template` string, it needs to be interpolate with paramaters.  
 
-    See `msiempy.core.session.NitroSession.request` for a list of all possible calls.  
+    See:
+        `msiempy.core.session.NitroSession.request` for a list of all possible calls.  
     """
 
     def __str__(self):
         return repr(self.__unique_state__)
 
     def login(self, retry=1):
-        """Authentication is done lazily upon the first call to `msiempy.core.session.NitroSession.request` method, but you can still do it manually by calling this method.
-        Throws `msiempy.core.session.NitroError` if login fails.
+        """
+        Authentication is done lazily upon the first call to `msiempy.core.session.NitroSession.request` method, but you can still do it manually by calling this method.
+        
+        Raises:
+            `msiempy.core.session.NitroError` if login fails
         """
         userb64 = tob64(self.config.user)
         passb64 = self.config.passwd
@@ -651,40 +648,37 @@ class NitroSession:
         All upper cases method names signals to use the private API methods.
 
         Arguments:
-
-        - `method` : ESM API enpoint name and url formatted parameters
-        - `http`: HTTP method.
-        - `data` : dict data to send
-        - `callback` : function to apply afterwards
-        - `raw` : If true will return the Response object from requests module. No retry when raw=True.
-        - `secure` : If true will not log the content of the request.
-        - `retry` : Number of time the request can be retried
+            - `method` : ESM API enpoint name and url formatted parameters
+            - `http`: HTTP method.
+            - `data` : dict data to send
+            - `callback` : function to apply afterwards
+            - `raw` : If true will return the Response object from requests module. No retry when raw=True.
+            - `secure` : If true will not log the content of the request.
+            - `retry` : Number of time the request can be retried
 
         Returns:
-
-        - a `dict`, `list` or `str` object.
-        - the `resquest.Response` object if raw=True
-        - `None` if Timeout or TooManyRedirects if raw=False
+            - a `dict`, `list` or `str` object.
+            - the `resquest.Response` object if raw=True
+            - `None` if Timeout or TooManyRedirects if raw=False
 
         Raises:
-
-        - `msiempy.core.session.NitroError` if any `HTTPError`
+            - `msiempy.core.session.NitroError` if any `HTTPError`
 
         Note : Private API is under /ess/ and public api is under /rs/esm
 
         Exemple:
 
-        ```python
-        from msiempy import NitroSession
-        s = NitroSession()
-        s.login()
-        # qryGetFilterFields
-        s.api_request('qryGetFilterFields')
-        # Get all last 24h alarms details with ESM API v2.
-        alarms = s.api_request('v2/alarmGetTriggeredAlarms?triggeredTimeRange=LAST_24_HOURS&status=&pageSize=500&pageNumber=1', None)
-        for a in alarms:
-            a.update(s.api_request('v2/notifyGetTriggeredNotificationDetail', {'id':a['id']}))
-        ```
+        
+            from msiempy import NitroSession
+            s = NitroSession()
+            s.login()
+            # qryGetFilterFields
+            s.api_request('qryGetFilterFields')
+            # Get all last 24h alarms details with ESM API v2.
+            alarms = s.api_request('v2/alarmGetTriggeredAlarms?triggeredTimeRange=LAST_24_HOURS&status=&pageSize=500&pageNumber=1', None)
+            for a in alarms:
+                a.update(s.api_request('v2/notifyGetTriggeredNotificationDetail', {'id':a['id']}))
+        
 
         """
 
@@ -881,36 +875,33 @@ class NitroSession:
         Also handles auto-login.
 
         Arguments:
-
-        - `request`: Name keyword corresponding to the request name in `msiempy.core.session.NitroSession.PARAMS` mapping.
-        - `http`: HTTP method.
-        - `callback` : function to apply afterwards
-        - `raw` : If true will return the Response object from requests module.
-        - `secure` : If true will not log the content of the request.
-        - `retry` : Number of time the request can be retried
+            - `request`: Name keyword corresponding to the request name in `msiempy.core.session.NitroSession.PARAMS` mapping.
+            - `http`: HTTP method.
+            - `callback` : function to apply afterwards
+            - `raw` : If true will return the Response object from requests module.
+            - `secure` : If true will not log the content of the request.
+            - `retry` : Number of time the request can be retried
 
         Interpolation parameters :
-
-        - `**kwargs` : Interpolation parameters that will be match to `msiempy.core.session.NitroSession.PARAMS` templates. Dynamic keyword arguments.
+            - ``**kwargs`` : Interpolation parameters that will be match to `msiempy.core.session.NitroSession.PARAMS` templates. Dynamic keyword arguments.
 
         Returns:
-
-        - a `dict`, `list` or `str` object
-        - the `resquest.Response` object if raw=True
-        - `result.text` if `requests.HTTPError`,
-        - `None` if Timeout or TooManyRedirects if raw=False
+            - a `dict`, `list` or `str` object
+            - the `resquest.Response` object if raw=True
+            - `result.text` if `requests.HTTPError`,
+            - `None` if Timeout or TooManyRedirects if raw=False
 
         Exemple:
 
-        ```python
-        from msiempy import NitroSession
-        s = NitroSession()
-        s.login()
-        # Get all last 24h alarms details
-        alarms = s.request('get_alarms', time_range='LAST_24_HOURS',  status='', page_size=500, page_number=0)
-        for a in alarms:
-            a.update(s.request('get_notification_detail', id=a['id']))
-        ```
+        
+            from msiempy import NitroSession
+            s = NitroSession()
+            s.login()
+            # Get all last 24h alarms details
+            alarms = s.request('get_alarms', time_range='LAST_24_HOURS',  status='', page_size=500, page_number=0)
+            for a in alarms:
+                a.update(s.request('get_notification_detail', id=a['id']))
+        
 
         If you're reading this thom an IDE, all possible requests are listed on the documentation webpage:
         https://mfesiem.github.io/docs/msiempy/core/session.html#msiempy.core.session.NitroSession.request
@@ -1032,9 +1023,12 @@ class NitroSession:
     def _unpack_resp(response):
         """Unpack data from response.
         Should not be necessary with API v2.
-        Args:
-            response: requests.Response response object
-        Returns a list, a dict or a string
+        
+        Arguments:
+            - response: `requests.Response` response object
+        
+        Returns:
+            a list, a dict or a string
         """
         log.debug("Unpacking SIEM response: {}".format(str(response.text)[:200]))
         try:
@@ -1054,41 +1048,41 @@ class NitroSession:
         return data
 
 
-# Dynamically document all PARAMS requests
-_PARAMS_DOCS = ""
-for k, v in _PARAMS.items():
-    name = "{}".format(k)
-    keywords = []
-    params = ""
-    endpoint = "{}".format(
-        urlparse(v[0] if not isinstance(v[0], Template) else v[0].template).path
-    )
-    if isinstance(v[0], Template):
-        keywords += [
-            s[1] or s[2]
-            for s in Template.pattern.findall(v[0].template)
-            if s[1] or s[2]
-        ]
-    if isinstance(v[1], Template):
-        keywords += [
-            s[1] or s[2]
-            for s in Template.pattern.findall(v[1].template)
-            if s[1] or s[2]
-        ]
-    params = ", ".join(["{}".format(k) for k in keywords])
-    _PARAMS_DOCS += "            request('{}', {}) # Call {}  \n".format(
-        name, params, endpoint
-    )
+# # Dynamically document all PARAMS requests
+# _PARAMS_DOCS = ""
+# for k, v in _PARAMS.items():
+#     name = "{}".format(k)
+#     keywords = []
+#     params = ""
+#     endpoint = "{}".format(
+#         urlparse(v[0] if not isinstance(v[0], Template) else v[0].template).path
+#     )
+#     if isinstance(v[0], Template):
+#         keywords += [
+#             s[1] or s[2]
+#             for s in Template.pattern.findall(v[0].template)
+#             if s[1] or s[2]
+#         ]
+#     if isinstance(v[1], Template):
+#         keywords += [
+#             s[1] or s[2]
+#             for s in Template.pattern.findall(v[1].template)
+#             if s[1] or s[2]
+#         ]
+#     params = ", ".join(["{}".format(k) for k in keywords])
+#     _PARAMS_DOCS += "            request('{}', {}) # Call {}  \n".format(
+#         name, params, endpoint
+#     )
 
-__pdoc__["NitroSession.request"] = (
-    NitroSession.request.__doc__
-    + """
-        All requests:    
-        ( *All upper cases method names signals to use the private API methods.* )  
+# __pdoc__["NitroSession.request"] = (
+#     NitroSession.request.__doc__
+#     + """
+#         All requests:    
+#         ( *All upper cases method names signals to use the private API methods.* )  
 
-"""
-    + _PARAMS_DOCS
-)
+# """
+#     + _PARAMS_DOCS
+# )
 
 
 class NitroError(Exception):

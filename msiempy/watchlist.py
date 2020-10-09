@@ -11,17 +11,10 @@ from .core import NitroDict, NitroList
 
 class WatchlistManager(NitroList):
     """
-    List-Like object.
+    List-Like object. 
+
+
     Summary of ESM watchlists.
-
-    Example:
-    ```
-    wlman = WatchlistManager()
-    for wl in wlman:
-        if wl['name'] == 'IPs-To-Block-On-IPS-24hrs': break
-    wl.add_values(['1.1.1.2', '2.2.2.1', '3.3.3.1'])
-    ```
-
     """
 
     def __init__(self, *args, **kwargs):
@@ -69,25 +62,13 @@ class WatchlistManager(NitroList):
         """
         Create a static watchlist.
 
-        Arguments:
-
-        - `name` (`str`): Name of the watchlist.
-        - `wl_type` (`str`): Watchlist data type.
-        Get the list of types with: `msiempy.watchlist.WatchlistManager.get_wl_types`.
-        Most common types are: `IPAddress`,
-                                `Hash`,
-                                `SHA1`,
-                                `DSIDSigID`,
-                                `Port`,
-                                `MacAddress`,
-                                `NormID`,
-                                `AppID`,
-                                `CommandID`,
-                                `DomainID`,
-                                `HostID`,
-                                `ObjectID`,
-                                `Filename`,
-                                `File_Hash`
+        Arguments:   
+            - `name` (str): Name of the watchlist
+            - `wl_type` (str): Watchlist data type
+        
+        Note:
+            Get the list of types with: `msiempy.watchlist.WatchlistManager.get_wl_types`
+            Most common types are: "IPAddress", "Hash", "SHA1", "DSIDSigID", "Port", "MacAddress", "NormID", "AppID", "CommandID", "DomainID", "HostID", "ObjectID", "Filename", "File_Hash".
         """
         for wl in self.data:
             if wl.get("name") == name:
@@ -99,60 +80,67 @@ class WatchlistManager(NitroList):
     def remove(self, wl_id_list):
         """
         Remove watchlist(s).
-
+        
         Arguments:
+            - `wl_id_list` (list of int): list of watchlist IDs. Example: C{[1, 2, 3]}.
 
-        - `wl_ids` (`list`): list of watchlist IDs. Example: `[1, 2, 3]`.
         """
         self.nitro.request("remove_watchlists", wl_id_list=wl_id_list)
 
     def get_wl_types(self):
         """
         Get a list of watchlist types.
-        Returns: `list` of watchlist types.
+        
+        Returns: 
+            list: list of watchlist types.
         """
         return self.nitro.request("get_wl_types")
 
 
 class Watchlist(NitroDict):
     """
-    Dict-Like object.
-    Complete list of watchlist fields (not values) once load with load_details()
+    Dict-Like object.  
+
+    Represent a ESM Watchlist.  
 
     Dictionary keys:
 
-    - `name`: The name of the watchlist
-    - `type`: The watchlist type
-    - `customType`: The watchlist custom type (custom field)
-    - `dynamic`: Whether this watchlist is dynamic
-    - `hidden`:  Whether this watchlist is hidden
-    - `scored`: Whether this watchlist has a scoring component (GTI for example)
-    - `valueCount`: The number of values in this watchlist
-    - `active`: Whether this watchlist is a active
-    - `errorMsg`: The error message, if there is one associated with this watchlist
-    - `source`: source
-    - `id`: The id of the watchlist
-    - `values`: values
-    - And others...
+    - "name": The name of the watchlist
+    - "type": The watchlist type
+    - "customType": The watchlist custom type (custom field)
+    - "dynamic": Whether this watchlist is dynamic
+    - "hidden":  Whether this watchlist is hidden
+    - "scored": Whether this watchlist has a scoring component (GTI for example)
+    - "valueCount": The number of values in this watchlist
+    - "active": Whether this watchlist is a active
+    - "errorMsg": The error message, if there is one associated with this watchlist
+    - "source": source
+    - "id": The id of the watchlist
+    - "values": values
+        - And others...
 
-    Arguments:
-
-    - `adict`: Watchlist parameters
-    - `id`: The watchlist ID to instanciate. Will load informations
-
+    Note: 
+        Complete list of watchlist fields once loaded with C{load_details()}
 
     """
 
     def __init__(self, *args, **kwargs):
+        """
+        Create a new Watchlist object from parameters or ID.  
+
+        Arguments:
+            - `adict` (dict): Watchlist dict parameters
+            - `id` (str): The watchlist ID to instanciate. Will load informations for the SIEM. 
+
+        """
         super().__init__(*args, **kwargs)
 
     def add_values(self, values):
         """
         Add values to static watchlist.
-
+        
         Arguments:
-
-        - `values` (`list`): list of values
+            - `values` (list): list of values
         """
         self.nitro.request("add_watchlist_values", watchlist=self["id"], values=values)
 
@@ -161,8 +149,7 @@ class Watchlist(NitroDict):
         Remove values from static watchlist.
 
         Arguments:
-
-        - `values` (`list`): list of values
+            - `values` (list): list of values
         """
         self.nitro.request(
             "remove_watchlist_values", watchlist=self["id"], values=values
@@ -170,11 +157,10 @@ class Watchlist(NitroDict):
 
     def data_from_id(self, id):
         """
-        Retrieve watchlist details for ID.
+        Retrieve watchlist data from given ID.
 
         Arguments:
-
-        - `id` (`str`): watchlist ID
+            - `id` (str): watchlist ID
         """
         info = self.nitro.request("get_watchlist_details", id=id)
         return info
@@ -186,15 +172,20 @@ class Watchlist(NitroDict):
         self.data.update(self.data_from_id(self.data["id"]))
 
     def refresh(self):
-        """Load Watchlist details."""
+        """
+        Load Watchlist details. Same as `load_details()`
+        """
         self.load_details()
 
     def load_values(self):
         """
-        Load Watchlist values.
-        Raises: `KeyError` if watchlist invalid.
+        Load Watchlist values into the ``values`` Watchlist dict key.   
+        
+        Raises:
+            `KeyError` if watchlist invalid.  
 
-        .. note:: Uses the internal API method `SYS_GETWATCHLISTDETAILS`
+        Note:
+            Uses the internal API method ``SYS_GETWATCHLISTDETAILS``
         """
         wl_details = self.nitro.request("get_watchlist_values", id=self.data["id"])
 
@@ -208,6 +199,7 @@ class Watchlist(NitroDict):
 
     def get_id(self):
         """
-        Returns the Watchlist ID.
+        Returns:
+            int: The Watchlist ID.
         """
         return self["id"]

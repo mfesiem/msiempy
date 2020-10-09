@@ -35,11 +35,20 @@ jobs:
 
       - name: Generate test documentation
         run: |
-          python3 -m pdoc msiempy --output-dir docs_tmp --html --force --template-dir ./.pdoc_templates
-          
+
           git clone https://github.com/mfesiem/mfesiem.github.io
           rm -rf ./mfesiem.github.io/docs/test/msiempy
-          cp -r ./docs_tmp/msiempy mfesiem.github.io/docs/test/
+          mkdir ./mfesiem.github.io/docs/test/msiempy
+
+          pydoctor \
+            --add-module=msiempy \
+            --project-name=msiempy \
+            --html-viewsource-base https://github.com/mfesiem/msiempy/blob/master/ \
+            --make-html \
+            --project-base-dir "$(pwd)" \
+            -v --docformat=restructuredtext
+
+          cp -r ./apidocs mfesiem.github.io/docs/test/msiempy/
 
           # Ignore any errors on diagram generation
           set +e
