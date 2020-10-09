@@ -10,8 +10,8 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.7']
+        os: [macos-latest]
+        python-version: ['3.8']
       max-parallel: 1
       fail-fast: false
 
@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install graphviz
+          brew install graphviz
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install .
@@ -55,7 +55,7 @@ jobs:
       - name: Generate test documentation 2
         run: |
 
-          set +e
+          
 
           pyment -w msiempy/  
 
@@ -65,8 +65,7 @@ jobs:
           
           rm -rf apidocs
 
-          
-
+          set +e
           pydoctor \
             --add-module=msiempy \
             --project-name=msiempy \
