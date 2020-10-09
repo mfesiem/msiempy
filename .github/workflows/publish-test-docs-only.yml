@@ -51,12 +51,12 @@ jobs:
             --project-base-dir "$(pwd)" \
             -v --docformat=restructuredtext
 
-          cp -r ./apidocs mfesiem.github.io/docs/test/msiempy/
+          cp ./apidocs/* mfesiem.github.io/docs/test/msiempy/
          
           pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
           mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
           mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
-          
+
           set -e
 
       - name: Publish documentation to mfesiem.github.io/docs/test/msiempy
