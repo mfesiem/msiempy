@@ -270,7 +270,7 @@ class NitroList(collections.UserList, NitroObject):
             cls=NitroObject.NitroJSONEncoder,
         )
 
-    def search(self, pattern, fields=None, invert=False):
+    def search(self, term, fields=None, invert=False):
         """
         Return a list of elements that matches one or more regex patterns.
         Use `|` inside patterns to search with logic OR.
@@ -278,7 +278,7 @@ class NitroList(collections.UserList, NitroObject):
         references the items in the original NitroList.
 
         Arguments:
-            - `pattern`: String regex pattern to look for. More on regex https://docs.python.org/3/library/re.html#re.Pattern.search
+            - `term`: String regex pattern to look for in the list items values. More on regex https://docs.python.org/3/library/re.html#re.Pattern.search
             - `invert`: Weither or not to invert the search and return elements that doesn't not match search.
             - `fields`: Dictionnary fields to consider in the search, all keys are considered by default.  Patterns are compared to `str` representation of values.  
 
@@ -286,11 +286,8 @@ class NitroList(collections.UserList, NitroObject):
         use filter() or list comprehension.
             i.e. : `[e for e in events if int(e['severity']) > 50]`
         """
-        if not pattern:
-            return self
-        else:
-            pattern = list(pattern)
-            apattern = pattern.pop()
+        if not term:
+            raise ValueError("")
 
         if fields:
             if not isinstance(fields, list):
@@ -300,23 +297,24 @@ class NitroList(collections.UserList, NitroObject):
 
         matching_items = list()
 
-        if isinstance(apattern, str):
+        if isinstance(term, str):
+
             for item in list(self):
                 for f in fields:
-                    if regex_match(apattern, str(item.get(f))) != invert:
+                    if regex_match(term, str(item.get(f))) != invert:
                         matching_items.append(item)
                         break  # for f in fields
+
             log.debug(
                 "You're search returned {} rows : {}".format(
                     len(matching_items), str(matching_items)[:200] + "..."
                 )
             )
-            # Apply AND reccursively
-            return type(self)(matching_items).search(
-                *pattern, invert=invert, fields=fields
-            )
+
+            return type(self)(matching_items) 
+        
         else:
-            raise ValueError("pattern must be str. Not {}".format(pattern))
+            raise ValueError("pattern must be str. Not {}".format(term))
 
     def refresh(self):
         """
