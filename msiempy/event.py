@@ -1322,7 +1322,7 @@ class Event(NitroDict):
     Fields name mapping (reversed).  
     """
 
-    def __init__(*args, **kwargs):
+    def __init__(self, *args, **kwargs):
         """"
         Args:
             adict (dict): Event parameters
