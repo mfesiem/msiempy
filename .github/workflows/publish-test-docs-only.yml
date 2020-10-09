@@ -39,6 +39,7 @@ jobs:
           git clone https://github.com/mfesiem/mfesiem.github.io
           rm -rf ./mfesiem.github.io/docs/test/msiempy
           mkdir ./mfesiem.github.io/docs/test/msiempy
+          
 
           # Ignore any warnings or errors on pydoctor and diagram generation
           set +e
@@ -52,7 +53,23 @@ jobs:
             -v --docformat=restructuredtext
 
           cp ./apidocs/* mfesiem.github.io/docs/test/msiempy/
-         
+
+          mkdir ./mfesiem.github.io/docs/test/msiempy/pymented
+
+          pyment -m msiempy/
+          
+          python -m pip install .
+
+          pydoctor \
+            --add-module=msiempy \
+            --project-name=msiempy \
+            --html-viewsource-base https://github.com/mfesiem/msiempy/blob/master/ \
+            --make-html \
+            --project-base-dir "$(pwd)" \
+            -v --docformat=restructuredtext
+
+          cp ./apidocs/* mfesiem.github.io/docs/test/msiempy/pymented/
+
           pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
           mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
           mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
