@@ -82,7 +82,7 @@ jobs:
         run: python -m pytest --cov=./ --cov-report=xml --reruns 1 --reruns-delay 1
 
       - name: Build msiempy
-        run: python3 setup.py --quiet build check sdist bdist_wheel
+        run: python setup.py --quiet build check sdist bdist_wheel
 
 
       

@@ -49,4 +49,4 @@ jobs:
           fail_ci_if_error: true
 
       - name: Build msiempy
-        run: python3 setup.py --quiet build check sdist bdist_wheel
+        run: python setup.py --quiet build check sdist bdist_wheel
