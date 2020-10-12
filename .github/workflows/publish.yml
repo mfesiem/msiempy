@@ -11,13 +11,30 @@ jobs:
     steps:
       - uses: actions/checkout@master
 
-      # This step will retry until required check passes
+      # This steps will retry until required check passes, 
       # and will fail the whole workflow if the check conclusion is not a success
-      - name: Wait on tests
+      # Only checking python3.7 versions on the 3 OS before to publish 
+      # https://github.com/lewagon/wait-on-check-action/issues/4
+      
+      - name: Wait on ubuntu python 3.7 test
         uses: lewagon/wait-on-check-action@v0.1
         with:
           ref: master 
-          check-name: test 
+          check-name: ubuntu-latest py3.7
+          repo-token: ${{ secrets.GH_TOKEN }}
+          wait-interval: 20 # seconds
+      - name: Wait on windows python 3.7 test
+        uses: lewagon/wait-on-check-action@v0.1
+        with:
+          ref: master 
+          check-name: windows-latest py3.7 
+          repo-token: ${{ secrets.GH_TOKEN }}
+          wait-interval: 20 # seconds
+      - name: Wait on macos python 3.7 test
+        uses: lewagon/wait-on-check-action@v0.1
+        with:
+          ref: master 
+          check-name: macos-latest py3.9 
           repo-token: ${{ secrets.GH_TOKEN }}
           wait-interval: 20 # seconds
 
