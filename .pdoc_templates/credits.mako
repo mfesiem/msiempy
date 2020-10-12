@@ -1,1 +1,0 @@
-<span>This software is licensed under the <a href="https://github.com/mfesiem/msiempy/blob/master/LICENSE">MIT License</a></span>
