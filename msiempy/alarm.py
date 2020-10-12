@@ -13,8 +13,6 @@ from .core.utils import regex_match, dehexify
 class AlarmManager(FilteredQueryList):
     """
     List-Like object. Interface to query and manage alarms.
-
-    **Unlike `EventManager`, filters are computed after the data loaded with regex matching.**
     """
 
     def __init__(
@@ -24,16 +22,17 @@ class AlarmManager(FilteredQueryList):
         Create a new alarm query
 
         Arguments:
-            - `status_filter` : status of the alarms to query. `status_filter` is not a filter like other cause it's computed on the SIEM side.
-            Accepted values : `acknowledged`, `unacknowledged`, `all`, `` or `None` (default is ``).
-            `filters` are computed locally - Unlike `msiempy.event.EventManager` filters.
-            - `page_size` : max number of rows per query.
-            - `page_number` : defaulted to 1.
-            - `filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.alarm.Alarm` objects. A single `tuple` is also accepted.
-            - `event_filters` : `[(field, [values]), (field, [values])]` Filters applied to `msiempy.event.Event` objects. A single `tuple` is also accepted.
-            - `time_range` : Query time range. String representation of a time range.
-            - `start_time` : Query starting time, can be a `string` or a `datetime` object. Parsed with `dateutil`.
-            - `end_time` : Query endding time, can be a `string` or a `datetime` object. Parsed with `dateutil`.
+            - `status_filter` (`str`): status of the alarms to query. `status_filter` is not a filter like other cause it's computed on the SIEM side.
+                Accepted values : ``"acknowledged"``, ``"unacknowledged"``, ``""`` or `None` (Default value = ``""``).
+            - `page_size` (`int`): max number of rows per query.
+            - `filters` (`list[tuple(field, [values])]`):  Filters applied to `Alarm` objects. A single `tuple` is also accepted.
+            - `event_filters` (`list[tuple(field, [values])]`): Filters applied to `Event` objects. A single `tuple` is also accepted.
+            - `time_range` (`str`): Query time range. String representation of a time range.
+            - `start_time (`str` or a `datetime`): Query start time
+            - `end_time` (`str` or a `datetime`): Query end time
+        
+        Note:
+            Unlike `EventManager`, `filters` and `event_filters` ** are computed after the data loaded with regex matching.**
         """
 
         # Declaring attributes before calling super() because it would overwrite values
@@ -54,11 +53,6 @@ class AlarmManager(FilteredQueryList):
         """
         Maximum number of alarms per query
         """
-
-        # uses the parent filter setter
-        # TODO : find a soltuion not to use this
-        # calling super().filters=filters #https://bugs.python.org/issue14965
-        # super(self.__class__, self.__class__).filters.__set__(self, filters)
 
         # Seting events filters after alarms filters cause it would overwrite it
         self.event_filters = event_filters
@@ -101,10 +95,12 @@ class AlarmManager(FilteredQueryList):
 
     status_filter = property(fget=_get_status_filter, fset=_set_status_filter)
     """
-    Status filter for the alarm query: 
-    ``"acknowledged"``,
-    ``"unacknowledged"``,
-    or ``""``
+    Status filter for the alarm query.
+
+    Can be: 
+        - ``"acknowledged"``
+        - ``"unacknowledged"``
+        - or ``""``
 
     """
 

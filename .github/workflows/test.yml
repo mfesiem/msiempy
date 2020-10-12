@@ -4,7 +4,7 @@ on:
     branches: 
       - master
 jobs: 
-  deploy:
+  test:
     name: ${{ matrix.os }} py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }} 
 
@@ -47,54 +47,6 @@ jobs:
           name: msiempy-code-coverage
           yml: ./codecov.yml 
           fail_ci_if_error: true
-
-      - name: Update list of NitroSession.request() arguments before documenting
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          python ./samples/list_request_args.py > ./all_request_args.rst
-
-      - name: Generate documentation
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8'
-        run: |
-
-          git clone https://github.com/mfesiem/mfesiem.github.io
-          rm -rf ./mfesiem.github.io/docs/msiempy
-          mkdir ./mfesiem.github.io/docs/msiempy
-          
-          set +e
-
-          pydoctor \
-            --add-module=msiempy \
-            --project-name=msiempy \
-            --html-viewsource-base https://github.com/mfesiem/msiempy/blob/master/ \
-            --make-html \
-            --project-base-dir "$(pwd)" \
-            -v --docformat=restructuredtext
-
-          cp ./apidocs/* mfesiem.github.io/docs/msiempy/
-
-      - name: Generate diagrams
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8'
-        run: |
-          sudo apt-get install graphviz
-          pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-          mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
-          mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
-
-      - name: Publish documentation to mfesiem.github.io/docs/msiempy
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8'
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          deploy_key: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
-          external_repository: mfesiem/mfesiem.github.io
-          publish_dir: mfesiem.github.io
-          publish_branch: 'master'
-          user_name: 'Github Actions'
-          user_email: "actions@github.com"
-          commit_message: "Generate documentation - master"
-          enable_jekyll: true
 
       - name: Build msiempy
         run: python3 setup.py --quiet build check sdist bdist_wheel
