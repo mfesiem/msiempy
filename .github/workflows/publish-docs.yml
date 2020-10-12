@@ -1,0 +1,66 @@
+name: publish-docs
+on:
+  push:
+    branches: 
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -r requirements.txt
+          python -m pip install .
+          python -m pip show msiempy
+
+      - name: Update list of NitroSession.request() arguments before documenting
+        run: |
+          python ./samples/list_request_args.py > ./all_request_args.rst
+
+      - name: Generate documentation
+        run: |
+
+          git clone https://github.com/mfesiem/mfesiem.github.io
+          rm -rf ./mfesiem.github.io/docs/msiempy
+          mkdir ./mfesiem.github.io/docs/msiempy
+          
+          set +e
+
+          pydoctor \
+            --add-module=msiempy \
+            --project-name=msiempy \
+            --html-viewsource-base https://github.com/mfesiem/msiempy/blob/master/ \
+            --make-html \
+            --project-base-dir "$(pwd)" \
+            -v --docformat=restructuredtext
+
+          cp ./apidocs/* mfesiem.github.io/docs/msiempy/
+
+      - name: Generate diagrams
+        run: |
+          sudo apt-get install graphviz
+          pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
+          mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
+          mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
+
+      - name: Publish documentation to mfesiem.github.io/docs/msiempy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          deploy_key: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
+          external_repository: mfesiem/mfesiem.github.io
+          publish_dir: mfesiem.github.io
+          publish_branch: 'master'
+          user_name: 'Github Actions'
+          user_email: "actions@github.com"
+          commit_message: "Generate documentation - master"
+          enable_jekyll: true
