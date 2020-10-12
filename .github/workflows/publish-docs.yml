@@ -23,7 +23,7 @@ jobs:
           python -m pip install .
           python -m pip show msiempy
 
-      - name: Update list of NitroSession.request() arguments before documenting
+      - name: Generate list of NitroSession.request() arguments to include in docstring
         run: |
           python ./samples/list_request_args.py > ./all_request_args.rst
 
@@ -50,8 +50,8 @@ jobs:
         run: |
           sudo apt-get install graphviz
           pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-          mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
-          mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
+          mv ./classes.png ./mfesiem.github.io/docs/msiempy
+          mv ./packages.png ./mfesiem.github.io/docs/msiempy
 
       - name: Publish documentation to mfesiem.github.io/docs/msiempy
         uses: peaceiris/actions-gh-pages@v3

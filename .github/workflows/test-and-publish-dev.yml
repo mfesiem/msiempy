@@ -32,7 +32,7 @@ jobs:
           python -m pip install .
           python -m pip show msiempy
 
-      - name: Update list of NitroSession.request() arguments before documenting
+      - name: Generate list of NitroSession.request() arguments to include in docstring
         run: |
           python ./samples/list_request_args.py > ./all_request_args.rst
 
