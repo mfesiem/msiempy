@@ -27,8 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install graphviz
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools wheel
           python -m pip install -r requirements.txt
           python -m pip install .
           python -m pip show msiempy
@@ -57,7 +56,9 @@ jobs:
           cp ./apidocs/* mfesiem.github.io/docs/test/msiempy/
 
       - name: Generate diagrams
+        if: matrix.os == 'ubuntu-latest'
         run: |
+          sudo apt-get install graphviz
           pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
           mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
           mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
