@@ -11,9 +11,7 @@ from .core import NitroDict, NitroList
 
 class WatchlistManager(NitroList):
     """
-    List-Like object. 
-
-    Summary of ESM watchlists.
+    List-Like object. Summary of ESM watchlists.
     """
 
     def __init__(self, *args, **kwargs):
@@ -91,35 +89,32 @@ class WatchlistManager(NitroList):
         Get a list of watchlist types.
         
         Returns: 
-            list: list of watchlist types.
+            `list`: list of watchlist types.
         """
         return self.nitro.request("get_wl_types")
 
 
 class Watchlist(NitroDict):
     """
-    Dict-Like object.  
-
-    Represent a ESM Watchlist.  
+    Dict-Like object. Represent a ESM Watchlist.  
 
     Dictionary keys:
+        - ``name``: The name of the watchlist
+        - ``type``: The watchlist type
+        - ``customType``: The watchlist custom type (custom field)
+        - ``dynamic``: Whether this watchlist is dynamic
+        - ``hidden``:  Whether this watchlist is hidden
+        - ``scored``: Whether this watchlist has a scoring component (GTI for example)
+        - ``valueCount``: The number of values in this watchlist
+        - ``active``: Whether this watchlist is a active
+        - ``errorMsg``: The error message, if there is one associated with this watchlist
+        - ``source``: source
+        - ``id``: The id of the watchlist
+        - ``values``: values
+        - And others, see SIEM API docs
 
-    - "name": The name of the watchlist
-    - "type": The watchlist type
-    - "customType": The watchlist custom type (custom field)
-    - "dynamic": Whether this watchlist is dynamic
-    - "hidden":  Whether this watchlist is hidden
-    - "scored": Whether this watchlist has a scoring component (GTI for example)
-    - "valueCount": The number of values in this watchlist
-    - "active": Whether this watchlist is a active
-    - "errorMsg": The error message, if there is one associated with this watchlist
-    - "source": source
-    - "id": The id of the watchlist
-    - "values": values
-        - And others...
-
-    Note: 
-        Complete list of watchlist fields once loaded with C{load_details()}
+    Note:
+        Complete list of watchlist fields is loaded once `load_details` is called. 
 
     """
 
@@ -128,8 +123,8 @@ class Watchlist(NitroDict):
         Create a new Watchlist object from parameters or ID.  
 
         Arguments:
-            - `adict` (dict): Watchlist dict parameters
-            - `id` (str): The watchlist ID to instanciate. Will load informations for the SIEM. 
+            - `adict` (`dict`): Watchlist dict parameters
+            - `id` (`str`): The watchlist ID to instanciate. Will load informations for the SIEM. 
 
         """
         super().__init__(*args, **kwargs)
@@ -160,6 +155,9 @@ class Watchlist(NitroDict):
 
         Arguments:
             - `id` (str): watchlist ID
+
+        Returns:
+            `dict`: The watchlist paramaters
         """
         info = self.nitro.request("get_watchlist_details", id=id)
         return info
@@ -180,7 +178,7 @@ class Watchlist(NitroDict):
         """
         Load Watchlist values into the ``values`` Watchlist dict key.   
         
-        Raises:
+        Raises: 
             `KeyError` if watchlist invalid.  
 
         Note:
@@ -199,6 +197,6 @@ class Watchlist(NitroDict):
     def get_id(self):
         """
         Returns:
-            int: The Watchlist ID.
+            `int`: The Watchlist ID.
         """
         return self["id"]

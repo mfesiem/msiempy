@@ -53,7 +53,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          python ./samples/list_request_args.py > ./static/all_request_args.rst
+          python ./samples/list_request_args.py > ./all_request_args.rst
 
       - name: Generate documentation
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8'

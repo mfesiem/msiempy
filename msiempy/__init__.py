@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-**The pythonic way to deal with the McAfee SIEM API**.  
+**The pythonic way to deal with the McAfee SIEM API**
+
+.. image:: https://avatars0.githubusercontent.com/u/50667087?s=200&v=4
+        :target: https://mfesiem.github.io/docs/msiempy/msiempy.html
+        :alt: Nitro
+        :width: 50
+        :height: 50
+
+Welcome to the **msiempy** library documentation. 
 
 Looking for a CLI tool? Checkout the `msiem CLI <https://github.com/mfesiem/msiem>`_  
 
-Already know what you're looking for? Checkout the `Module Index <https://mfesiem.github.io/docs/msiempy/moduleIndex.html>`_.    
-
+Already know what you're looking for?
+Checkout the `Module Index <https://mfesiem.github.io/docs/msiempy/moduleIndex.html>`_.    
+  
 Quick links:
-        `GitHub <https://github.com/mfesiem/msiempy>`_, `PyPI <https://pypi.org/project/msiempy/>`_, `Class diagram <https://mfesiem.github.io/docs/msiempy/classes.png>`_, `Packages diagram <https://mfesiem.github.io/docs/msiempy/packages.png>`_, `other SIEM API references <https://mfesiem.github.io>`_ (generated PDFs and other links)  
+        - `GitHub | README.md <https://github.com/mfesiem/msiempy>`_
+        - `Class diagram <https://mfesiem.github.io/docs/msiempy/classes.png>`_, (`Packages diagram <https://mfesiem.github.io/docs/msiempy/packages.png>`_)
+        - `mfesiem.github.io <https://mfesiem.github.io>`_ (generated PDFs and other links)  
 
-Table of content:
-        - `Installation`_
-        - `Authentication and configuration setup`_
-        - `A few usage exemples`_
-          * `Execute an event query`_
-          * `Acknowledge alarms`_
-          * `Make direct API calls`_
-          * `Add a note to events`_
-          * `Fetch ESM infos`_
-          * `Add a Datasource`_
-          * `Add values to a Watchlist`_
-
+.. contents:: **Table of Contents**
 
 Installation
 ============
@@ -65,9 +65,6 @@ UEBhc3NXMHJk
 A few usage exemples
 ====================
 
-See also: 
-        The `samples folder <https://github.com/mfesiem/msiempy/tree/master/samples>`_ for more, and/or review the `tests <https://github.com/mfesiem/msiempy/tree/master/tests>`_.     
-
 Execute an event query 
 ----------------------
 
@@ -89,18 +86,17 @@ Query events according to destination IP and hostname filters, sorted by AlertID
 
 Notes: 
         - The ``limit`` argument should be increased to 500 or 1000 once finish testing for better performance.  
-        - Dump full list of fields usable in query `msiempy.event.FieldFilter` with `dump_all_fields.py <https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py>`_ script.  
+        - Dump full list of fields usable in query `FieldFilter` with `dump_all_fields.py <https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py>`_ script.  
 
 See: 
-        Objects `msiempy.event.EventManager` and `msiempy.event.FieldFilter`
+        Objects `EventManager` and `FieldFilter`
 
 Acknowledge alarms
 ------------------
 
-Print all ``unacknowledged`` alarms filtered by alarm name and event message
+Print all ``unacknowledged`` alarms filtered by alarm name and event message, then acknowledge the alarms.  
 
-match} ``'Test alarm'`` and triggering event message match ``'Wordpress'``.  
-Then acknowledge the alarms.  
+Filter with alarm match ``'Test alarm'`` and triggering event message match ``'Wordpress'``.  
 
 >>> from msiempy import AlarmManager, Alarm
 # Make an alarm query
@@ -125,11 +121,10 @@ Then acknowledge the alarms.
 
 Notes: 
         - The ``page_size`` argument should be increased to 500 or 1000 once finish testing for better performance.  
-
-        - The `msiempy.alarm.AlarmManager` filtering feature is an addon to what the SIEM API offers, filters are applied locally as regular expressions.  
+        - The `AlarmManager` filtering feature is an addon to what the SIEM API offers, filters are applied locally as regular expressions.  
 
 See: 
-        Objects `msiempy.alarm.AlarmManager` and `msiempy.alarm.Alarm`
+        Objects `AlarmManager` and `Alarm`
 
 Make direct API calls
 ---------------------
@@ -149,7 +144,7 @@ This is useful when dealing with features of the ESM API that are not explicitly
 The session object will handle authentication and intermittent (but annoying) SIEM errors.  
 
 See: 
-        Object `msiempy.core.session.NitroSession`
+        Object `NitroSession`
 
 Add a note to events
 --------------------
@@ -168,8 +163,7 @@ Set the note of 2 events and check if the note is well set.
 
 See: 
         - `add_wpsan_note.py <https://github.com/mfesiem/msiempy/blob/master/samples/add_wpsan_note.py>`_ script for more on how to add notes to event that triggered alarms.   
-
-        - Object `msiempy.event.Event`
+        - Object `Event`
 
 Fetch ESM infos
 ---------------
@@ -186,7 +180,7 @@ Print a few esm infos. ESM object has not state for it self, it's a simple inter
 '11.2.1 20190725050014'
 
 See: 
-        Object `msiempy.device.ESM`
+        Object `ESM`
 
 Add a Datasource 
 ----------------
@@ -204,11 +198,7 @@ Add a Datasource
 >>> devtree.refresh() # Refresh the DevTree
 
 See: 
-        Objects `msiempy.device.DevTree` and `msiempy.device.DataSource`
-
-Note: 
-        `msiempy.device.DevTree.add` do not ensure the Datasource is well added, the methods returns a `dict` with the request ID fetched from the SIEM.
-        There is still place for improvment `#82 <https://github.com/mfesiem/msiempy/issues/82>`_.  
+        Objects `DevTree` and `DataSource`
 
 Add values to a Watchlist
 -------------------------
@@ -218,8 +208,74 @@ Add values to a Watchlist
 >>> wl.add_values(['1.1.1.2', '2.2.2.1', '3.3.3.1'])
 
 See: 
-        Objects `msiempy.watchlist.WatchlistManager`, `msiempy.watchlist.Watchlist`
-        
+        Objects `WatchlistManager`, `Watchlist`
+
+Execute a grouped event query
+-----------------------------
+
+Query the curent day events filtered by `IPSID` grouped by `ScrIP`.  
+
+>>> from msiempy import GroupedEventManager
+>>> import pprint
+>>> query = GroupedEventManager(
+                time_range='LAST_3_DAYS', 
+                field='SrcIP', 
+                filters=[('IPSID', '144116287587483648')]) 
+>>> query.load_data()
+# Sort the results by total count
+>>> results = list(reversed(sorted(query, key=lambda k: int(k['SUM(Alert.EventCount)']))))
+# Display top 10
+>>> top10=results[:10]
+>>> pprint.pprint(top10)
+
+
+See:
+        Objects `GroupedEventManager` and `GroupedEvent`.  
+
+Tip:
+        `all_dev.py script <https://github.com/mfesiem/msiempy/blob/master/samples/all_dev.py>`_ can help you list all your datasources IDs (for the required ``IPSID`` filter).  
+
+
+And more...
+-----------
+
+See: 
+        - The `samples folder <https://github.com/mfesiem/msiempy/tree/master/samples>`_ 
+        - The `tests <https://github.com/mfesiem/msiempy/tree/master/tests>`_.     
+
+
+Changelog
+=========
+
+Please refer to the `releases <https://github.com/mfesiem/msiempy/releases>`_ github page.  
+
+Contribute
+==========
+
+Pull requests are welcome!  
+        Please read the `contributing <https://github.com/mfesiem/msiempy/blob/master/CONTRIBUTING.md>`_ file.  
+
+
+Code analysis
+=============
+
+.. image:: https://app.codacy.com/project/badge/Grade/114821fcf6e14b8eb0f927e0112488c8
+        :target: https://www.codacy.com/gh/mfesiem/msiempy?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mfesiem/msiempy&amp;utm_campaign=Badge_Grade
+        :alt: Codacy Badge
+
+.. image:: https://api.codeclimate.com/v1/badges/0cc21ba8f82394cb05f3/maintainability
+        :target: https://codeclimate.com/github/mfesiem/msiempy/maintainability
+        :alt: Code climate Maintainability
+
+Error report
+============
+
+Configure log file reporting in the configuration file and and look for ``"ERROR"``.  
+Useful shell command to get simple list of errors::  
+
+        cat /path/to/your/log/file | grep -i error | sort | uniq
+
+
 """
         
 

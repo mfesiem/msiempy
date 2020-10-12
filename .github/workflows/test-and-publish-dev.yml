@@ -35,7 +35,7 @@ jobs:
 
       - name: Update list of NitroSession.request() arguments before documenting
         run: |
-          python ./samples/list_request_args.py > ./static/all_request_args.rst
+          python ./samples/list_request_args.py > ./all_request_args.rst
 
       - name: Generate test documentation
         run: |
