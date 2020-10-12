@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Configuration parser object.  
+Provide simple configuration object with a few custom properties
 """
 import logging
 import configparser
@@ -12,48 +12,45 @@ from .utils import tob64
 
 log = logging.getLogger("msiempy")
 
-__pdoc__ = {}  # Init pdoc to document dynamically
-
-
 class NitroConfig(configparser.ConfigParser):
     """
+    `configparser.ConfigParser` parser object.  
 
-    Handles the configuration. Reads the config file `.msiem/conf.ini` where ever it is and make accessible it's values throught object properties.
-    If a `.msiem/` directory exists in your current directory, the program will assume the `conf.ini` file is there, if not, it will create it with default values.
-    Secondly, if no `.msiem/` directory exists in the current directory, it will be automatically placed in a appropriate place depending of your platform:
+    Handles the configuration. Reads the config file `.msiem/conf.ini` and make accessible it's values throught object properties.
+    Additionnal 
 
-    Default configuration file should look like this. Authentication is left empty.
-    ```
-    [esm]
-    host =
-    user =
-    passwd =
+    Default configuration file should look like this. Authentication is left empty::
 
-    [general]
-    verbose = False
-    quiet = False
-    logfile =
-    timeout = 60
-    ssl_verify = False
-    ```
+        [esm]
+        host =
+        user =
+        passwd =
 
-    For Windows: `%APPDATA%\.msiem\conf.ini`
-    For Mac : `$HOME/.msiem/conf.ini`
-    For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`
-    If `.msiem` folder exists in you local directory : `./.msiem/conf.ini`
+        [general]
+        verbose = False
+        quiet = False
+        logfile =
+        timeout = 60
+        ssl_verify = False
 
-    You can setup the configuration by command line with `msiempy_setup.py` script at https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py .
+    It automatically for the configuration file in the following places:
+        - For Windows: `%APPDATA%\.msiem\conf.ini`
+        - For Mac : `$HOME/.msiem/conf.ini`
+        - For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`
+        - If `.msiem` folder exists in your current directory : `./.msiem/conf.ini`
 
-
-    Arguments:
-
-    - `path`: Config file special path, if path is left None, will automatically look for it.
-    - `config`: Manual config dict. ex: `{'general':{'verbose':True}}`.
-    - `*args, **kwargs` : Passed to `configparser.ConfigParser.__init__()` method.
-
+    You can setup the configuration by command line with `msiempy_setup.py <https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py>`_ script.
     """
 
     def __init__(self, path=None, config=None, *arg, **kwarg):
+        """
+        Create the configuration parser
+
+        Arguments:
+            - `path`: Config file special path, if path is left `None`, will automatically look for it.
+            - `config`: Manual config dict. ex: `{'general':{'verbose':True}}`.
+            - `*args, **kwargs` : Passed to `configparser.ConfigParser.__init__()` method.
+        """
         super().__init__(*arg, **kwarg)
         if not path:
             self._path = self.find_ini_location()
@@ -104,7 +101,7 @@ class NitroConfig(configparser.ConfigParser):
         )
 
     def write(self):
-        """Write the config file to the predetermined path."""
+        """Write the config file to the predetermined `path`."""
         with open(self._path, "w") as conf:
             super().write(conf)
             log.info("Config file has been written at " + self._path)
@@ -134,11 +131,11 @@ class NitroConfig(configparser.ConfigParser):
 
     def iset(self, section, option=None, secure=False):
         """Interactively set the specified section/option by asking the user the input.
+        
         Arguments:
-
-        - `section`: Configuration's section. Exemple : 'esm' or 'general'.
-        - `option`: Configuraion's option. Leave to `None` to set the whole section one after another. Exemple : 'user', 'timeout'.
-        - `secure`: Will use getpass to retreive the configuration value and won't print old value.
+            - `section` (`str`): Configuration's section. Exemple : 'esm' or 'general'.
+            - `option` (`bool`): Configuraion's option. Leave to `None` to set the whole section one after another. Exemple : 'user', 'timeout'.
+            - `secure` (`bool`): Will use getpass to retreive the configuration value and won't print old value.
         """
         if option is None:
             for key in self.options(section):
@@ -148,34 +145,82 @@ class NitroConfig(configparser.ConfigParser):
 
     @property
     def user(self):
+        """
+        Config value of::
+        
+            [esm]
+            user=
+        """
         return self.get("esm", "user")
 
     @property
     def host(self):
+        """
+        Config value of::
+        
+            [esm]
+            host=
+        """
         return self.get("esm", "host")
 
     @property
     def passwd(self):
+        """
+        Config value of::
+        
+            [esm]
+            passwd=
+        """
         return self.get("esm", "passwd")
 
     @property
     def verbose(self):
+        """
+        Config value of::
+        
+            [general]
+            verbose=
+        """
         return self.getboolean("general", "verbose")
 
     @property
     def quiet(self):
+        """
+        Config value of::
+        
+            [general]
+            quiet=
+        """
         return self.getboolean("general", "quiet")
 
     @property
     def logfile(self):
+        """
+        Config value of::
+        
+            [general]
+            logfile=
+        """
         return self.get("general", "logfile")
 
     @property
     def timeout(self):
+        """
+        Config value of::
+        
+            [general]
+            timeout=
+        """
         return self.getint("general", "timeout")
 
     @property
     def ssl_verify(self):
+        """
+        Config value of::
+        
+            [general]
+            ssl_verify=
+        """
         return self.getboolean("general", "ssl_verify")
 
     @staticmethod

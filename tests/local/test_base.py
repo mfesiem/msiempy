@@ -57,7 +57,7 @@ class T(unittest.TestCase):
         for i in sublist3:
             self.assertTrue("Postfix" in i["Rule.msg"] or "cron" in i["Rule.msg"])
 
-        sublist4 = manager.search("Postfix", "Connect", fields="Rule.msg")
+        sublist4 = manager.search("Postfix", fields="Rule.msg").search("Connect", fields="Rule.msg")
         for i in sublist4:
             self.assertTrue("Postfix" in i["Rule.msg"] and "Connect" in i["Rule.msg"])
 

@@ -2,10 +2,10 @@
 
 ## McAfee SIEM API Python wrapper  
 
-[![Tests](https://github.com/mfesiem/msiempy/workflows/test/badge.svg)](https://github.com/mfesiem/msiempy/actions)
+[![Tests](https://github.com/mfesiem/msiempy/workflows/test-and-publish/badge.svg)](https://github.com/mfesiem/msiempy/actions)
 [![Coverage](https://codecov.io/gh/mfesiem/msiempy/branch/master/graph/badge.svg)](https://codecov.io/gh/mfesiem/msiempy)
-[![PyPI version](https://badge.fury.io/py/msiempy.svg)](https://pypi.org/project/msiempy/)
-[![Docs](https://img.shields.io/badge/-documentation-blue)](https://mfesiem.github.io/docs/msiempy/index.html)
+[![PyPI version](https://badge.fury.io/py/msiempy.svg)](https://pypi.org/project/msiempy)
+[![Docs](https://img.shields.io/badge/-documentation-blue)](https://mfesiem.github.io/docs/msiempy/msiempy.html)
 
 This module aims to provide a simple API wrapper around the McAfee SIEM API principal components.  
 Code design is accessible and pythonic via list-like and dict-like objects interfaces.    
@@ -29,7 +29,7 @@ Code design is accessible and pythonic via list-like and dict-like objects inter
 python3 -m pip install msiempy
 ```
 
-### **Read the [module documentation](https://mfesiem.github.io/docs/msiempy/index.html)**  
+### **Read the [library documentation](https://mfesiem.github.io/docs/msiempy/msiempy.html)**  
 
 ### Disclaimer
 This is an **UNOFFICIAL** project and is **NOT** sponsored or supported by **McAfee, Inc**. If you accidentally delete all of your datasources, don't call support (or us). Product access will always be in respect to McAfee's intellectual property.

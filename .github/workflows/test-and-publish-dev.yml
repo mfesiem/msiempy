@@ -1,4 +1,4 @@
-name: publish-test-docs-only
+name: test-and-publish-dev
 on: 
   push:
     branches: 
@@ -27,26 +27,41 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install graphviz
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools wheel
           python -m pip install -r requirements.txt
           python -m pip install .
           python -m pip show msiempy
 
+      - name: Update list of NitroSession.request() arguments before documenting
+        run: |
+          python ./samples/list_request_args.py > ./all_request_args.rst
+
       - name: Generate test documentation
         run: |
-          python3 -m pdoc msiempy --output-dir docs_tmp --html --force --template-dir ./.pdoc_templates
-          
+
           git clone https://github.com/mfesiem/mfesiem.github.io
           rm -rf ./mfesiem.github.io/docs/test/msiempy
-          cp -r ./docs_tmp/msiempy mfesiem.github.io/docs/test/
-
-          # Ignore any errors on diagram generation
+          mkdir ./mfesiem.github.io/docs/test/msiempy
+          
           set +e
+
+          pydoctor \
+            --add-module=msiempy \
+            --project-name=msiempy \
+            --html-viewsource-base https://github.com/mfesiem/msiempy/blob/develop/ \
+            --make-html \
+            --project-base-dir "$(pwd)" \
+            -v --docformat=restructuredtext
+
+          cp ./apidocs/* mfesiem.github.io/docs/test/msiempy/
+
+      - name: Generate diagrams
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get install graphviz
           pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
           mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
           mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
-          set -e
 
       - name: Publish documentation to mfesiem.github.io/docs/test/msiempy
         uses: peaceiris/actions-gh-pages@v3
@@ -59,5 +74,15 @@ jobs:
           user_email: "actions@github.com"
           commit_message: "Generate documentation - develop"
           enable_jekyll: true
+      
+      - name: Setup msiempy config
+        run: python ./samples/msiempy_setup.py --set esm host ${{ secrets.esmhost }} --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
+      
+      - name: Run tests
+        run: python -m pytest --cov=./ --cov-report=xml --reruns 1 --reruns-delay 1
+
+      - name: Build msiempy
+        run: python3 setup.py --quiet build check sdist bdist_wheel
+
 
       
