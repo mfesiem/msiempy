@@ -2,7 +2,7 @@
 
 ## McAfee SIEM API Python wrapper  
 
-[![Tests](https://github.com/mfesiem/msiempy/workflows/test-and-publish/badge.svg)](https://github.com/mfesiem/msiempy/actions)
+[![Tests](https://github.com/mfesiem/msiempy/workflows/test/badge.svg)](https://github.com/mfesiem/msiempy/actions)
 [![Coverage](https://codecov.io/gh/mfesiem/msiempy/branch/master/graph/badge.svg)](https://codecov.io/gh/mfesiem/msiempy)
 [![PyPI version](https://badge.fury.io/py/msiempy.svg)](https://pypi.org/project/msiempy)
 [![Docs](https://img.shields.io/badge/-documentation-blue)](https://mfesiem.github.io/docs/msiempy/msiempy.html)

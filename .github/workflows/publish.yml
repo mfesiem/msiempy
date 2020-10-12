@@ -1,0 +1,56 @@
+name: publish
+on:
+  push:
+    branches: 
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@master
+
+      # This step will retry until required check passes
+      # and will fail the whole workflow if the check conclusion is not a success
+      - name: Wait on tests
+        uses: lewagon/wait-on-check-action@v0.1
+        with:
+          ref: master 
+          check-name: test 
+          repo-token: ${{ secrets.GH_TOKEN }}
+          wait-interval: 20 # seconds
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -r requirements.txt
+          python -m pip install .
+          python -m pip show msiempy
+
+      - name: Build msiempy
+        run: python3 setup.py --quiet build check sdist bdist_wheel
+
+      - name: Publish msiempy to PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}
+      
+      - name: Tag version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          version="$(python setup.py --version)"
+          last_tag="$(git --no-pager tag -l | tail -1)"
+          echo "msiempy ${version}" > ./tmp_tag.txt
+          git --no-pager log ${last_tag}.. --pretty=oneline >> ./tmp_tag.txt
+          git config --global user.email "actions@github.com"
+          git config --global user.name "Github actions"
+          git tag -a ${version} -F ./tmp_tag.txt
+          git push --tags

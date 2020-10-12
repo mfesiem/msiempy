@@ -1,4 +1,4 @@
-name: test-and-publish
+name: test
 on: 
   push:
     branches: 
@@ -13,7 +13,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ['3.6','3.7','3.8','3.9']
       max-parallel: 1
-      fail-fast: true
+      fail-fast: false
 
     steps:
       - uses: actions/checkout@v2
@@ -98,24 +98,3 @@ jobs:
 
       - name: Build msiempy
         run: python3 setup.py --quiet build check sdist bdist_wheel
-
-      - name: Publish msiempy to PyPI
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8'
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
-      
-      - name: Tag version
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          version="$(python setup.py --version)"
-          last_tag="$(git --no-pager tag -l | tail -1)"
-          echo "msiempy ${version}" > ./tmp_tag.txt
-          git --no-pager log ${last_tag}.. --pretty=oneline >> ./tmp_tag.txt
-          git config --global user.email "actions@github.com"
-          git config --global user.name "Github actions"
-          git tag -a ${version} -F ./tmp_tag.txt
-          git push --tags
