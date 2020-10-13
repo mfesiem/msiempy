@@ -203,6 +203,7 @@ See:
 Add values to a Watchlist
 -------------------------
 
+>>> from msiempy import WatchlistManager
 >>> wl_list = WatchlistManager()
 >>> wl = wl_list.search('test_Watchlist')[0]
 >>> wl.add_values(['1.1.1.2', '2.2.2.1', '3.3.3.1'])
