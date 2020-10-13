@@ -33,7 +33,7 @@ class NitroConfig(configparser.ConfigParser):
         timeout = 60
         ssl_verify = False
 
-    It automatically for the configuration file in the following places:
+    It automatically look for the configuration file in the following places:
         - For Windows: `%APPDATA%\.msiem\conf.ini`
         - For Mac : `$HOME/.msiem/conf.ini`
         - For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`
