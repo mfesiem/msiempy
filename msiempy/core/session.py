@@ -662,7 +662,9 @@ class NitroSession:
         Note: 
             Private API is under ``/ess/`` and public api is under ``/rs/esm``
 
-        Exemple::
+        Exemple:
+
+        .. python::
         
             from msiempy import NitroSession
             s = NitroSession()
@@ -861,14 +863,14 @@ class NitroSession:
 
     def request(self, request, **kwargs):
         """
-        Interface to make ESM API calls more simple by interpolating `**kwargs` arguments with `msiempy.core.session.NitroSession.PARAMS` docstrings and build a valid datastructure for the HTTP data.
+        Interface to make ESM API calls more simple by interpolating `**kwargs` arguments with `NitroSession.PARAMS` docstrings and build a valid datastructure for the HTTP data.
 
-        Then call the `msiempy.core.session.NitroSession.api_request` method with the built data.
+        Then call the `NitroSession.api_request` method with the built data.
 
         Also handles auto-login.
 
         Arguments:
-            - `request`: Name keyword corresponding to the request name in `msiempy.core.session.NitroSession.PARAMS` mapping.
+            - `request`: Name keyword corresponding to the request name in `NitroSession.PARAMS` mapping.
             - `http`: HTTP method.
             - `callback` : function to apply afterwards
             - `raw` : If true will return the Response object from requests module.
@@ -876,7 +878,7 @@ class NitroSession:
             - `retry` : Number of time the request can be retried
 
         Interpolation parameters :
-            - ``**kwargs`` : Interpolation parameters that will be match to `msiempy.core.session.NitroSession.PARAMS` templates. Dynamic keyword arguments.
+            - `**kwargs` : Interpolation parameters that will be match to `NitroSession.PARAMS` templates. Dynamic keyword arguments.
 
         Returns:
             - a `dict`, `list` or `str` object
@@ -884,7 +886,9 @@ class NitroSession:
             - `result.text` if `requests.HTTPError`,
             - `None` if Timeout or TooManyRedirects if raw=False
 
-        Exemple::
+        Exemple:
+
+        .. python::
         
             from msiempy import NitroSession
             s = NitroSession()

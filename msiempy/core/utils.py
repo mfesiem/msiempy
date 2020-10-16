@@ -13,8 +13,11 @@ __pdoc__ = {}  # Init pdoc to document dynamically
 
 def dehexify(data):
     """
-    A URL and Hexadecimal Decoding Library.
-    Credit: Larry Dewey. In the case of the SIEM API, this is used only when dealing with the pricate API calls.
+    A URL and Hexadecimal Decoding Method.
+
+    Credit: Larry Dewey. 
+    
+    In the case of the SIEM API, this is used only when dealing with the pricate API calls.
     """
 
     hexen = {
@@ -174,7 +177,9 @@ def timerange_gettimes(time_range):
 def divide_times(first, last, slots=0, delta=0, time=0):
     """
     Divide the time range based on a delta or on a number of slots or another time,.
-    Return list of tuple
+    
+    Returns:
+        `list[tuple(datetime, datetime)]`
     """
 
     # parse the dates
@@ -214,7 +219,8 @@ def divide_times(first, last, slots=0, delta=0, time=0):
 
 def regex_match(regex, string):
     """
-    Return True if the string match the regex.
+    Returns:
+        `True` if the string match the regex.
     """
     if re.search(regex, string):
         return True
@@ -223,13 +229,14 @@ def regex_match(regex, string):
 
 
 def format_esm_time(esm_time):
-    """Converts time object to ESM time string.
+    """
+    Converts time object to ESM time string.
 
     Arguments:
+        - `time_obj` (`datetime`)
 
-    - `time_obj` (`datetime.datetime`)
-
-    Returns: time string in format `2019-04-08T19:35:02.971Z`
+    Returns: 
+        `str` in format `2019-04-08T19:35:02.971Z`
     """
     _esm_out_time_fmt = "%m/%d/%Y %H:%M:%S"
     _esm_in_time_fmt = "%Y-%m-%dT%H:%M:%S.000Z"
@@ -242,9 +249,8 @@ def convert_to_time_obj(time_str):
     """
     Converts given timestamp string to datetime object
 
-    Args:
-        time_str: timestamp in format 'YYYY/MM/DD HH:MM:SS',
-                         'MM/DD/YYYY HH:MM:SS', or 'DD/MM/YYYY HH:MM:SS'
+    Arguments:
+        - `time_str` (`str`): timestamp in format ``'YYYY/MM/DD HH:MM:SS'``, ``'MM/DD/YYYY HH:MM:SS'``, or ``'DD/MM/YYYY HH:MM:SS'``
 
     Returns:
         datetime object or None if no format matches
@@ -254,16 +260,24 @@ def convert_to_time_obj(time_str):
 
 def parse_query_result(columns, rows):
     """
-    For input :
+    Parse the query results into a list of dict 
+    
+    Arguments:
+        - `columns` (`list[dict]`): Returned by the SIEM. Exemple:: 
+        
+            [{'name': 'Alert.LastTime'}, {'name': 'Rule.msg'}, {'name': 'Alert.DstIP'}, {'name': 'Alert.IPSIDAlertID'}]
 
-        columns = [{'name': 'Alert.LastTime'}, {'name': 'Rule.msg'}, {'name': 'Alert.DstIP'}, {'name': 'Alert.IPSIDAlertID'}]
-        rows =
+        - `rows` (`list[dict]`):  Returned by the SIEM. Exemple::
+
             [
                 {'values': ['09/22/2020 15:51:14', 'Postfix Disconnect from host', '::', '144116287604260864|547123']},
                 {'values': ['09/22/2020 15:51:14', 'Postfix Lost connection from host', '::', '144116287604260864|547122']}
-            }
+            ]
 
     Returns :
+        `list[dict]`
+
+    Exemple::
 
         [
             {
@@ -294,10 +308,11 @@ def format_fields_for_query(fields):
     Format fields names to cann query module.
 
     Arguments:
+        - `fields`: list of fields, exemple:: 
+            
+            ['field1','name','user']
 
-    - `fields`: list of fields, i.e. `['field1','name','user']`
-
-    Returns:
+    Returns::
 
         [
             {'name':'field1'},
@@ -316,11 +331,11 @@ def parse_timedelta(time_str):
     Modified from virhilo's answer at https://stackoverflow.com/a/4628148/851699
 
     Arguments:
+        - `time_str`: A string identifying a duration.  (eg. `2h13m`)
 
-    - `time_str`: A string identifying a duration.  (eg. `2h13m`)
 
-
-    Returns `datetime.timedelta`: A datetime.timedelta object
+    Returns:
+        `timedelta`: A timedelta object
     """
     regex = re.compile(
         r"^((?P<days>[\.\d]+?)d)?((?P<hours>[\.\d]+?)h)?((?P<minutes>[\.\d]+?)m)?((?P<seconds>[\.\d]+?)s)?$"
@@ -370,11 +385,11 @@ def nitro_tz(tz_id):
     """Maps McAfee SIEM/Nitro ESM internal timezone IDs to
     the tz database at: http://web.cs.ucla.edu/~eggert/tz/tz-link.htm
 
-    Args:
-        tz_id (str/int): McAfee ESM internal timezone ID
+    Arguments:
+        - `tz_id` (`int`): McAfee ESM internal timezone ID
 
     Returns:
-        timezone name (str)
+        `str`: timezone name
 
     """
 

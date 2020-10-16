@@ -70,19 +70,21 @@ Execute an event query
 
 Query events according to destination IP and hostname filters, sorted by AlertID.  
 
->>> from  msiempy import EventManager, FieldFilter
->>> print('Simple event query sorted by AlertID')
->>> events = EventManager(
-        time_range='CURRENT_YEAR',
-        fields=['SrcIP', 'AlertID'], # SrcIP and AlertID are not queried by default
-        filters=[
-                FieldFilter('DstIP', ['0.0.0.0/0',]),
-                FieldFilter('HostID', ['mail'], operator='CONTAINS')], # Replace "mail" by a test hostname
-        order=(('ASCENDING', 'AlertID')),
-        limit=10) # Will only load 10 events (per query)
->>> events.load_data()
->>> print(events)
->>> print(events.get_text(fields=['AlertID','LastTime','SrcIP', 'Rule.msg']))
+.. python::
+
+        from  msiempy import EventManager, FieldFilter
+        print('Simple event query sorted by AlertID')
+        events = EventManager(
+                time_range='CURRENT_YEAR',
+                fields=['SrcIP', 'AlertID'], # SrcIP and AlertID are not queried by default
+                filters=[
+                        FieldFilter('DstIP', ['0.0.0.0/0',]),
+                        FieldFilter('HostID', ['mail'], operator='CONTAINS')], # Replace "mail" by a test hostname
+                order=(('ASCENDING', 'AlertID')),
+                limit=10) # Will only load 10 events (per query)
+        events.load_data()
+        print(events)
+        print(events.get_text(fields=['AlertID','LastTime','SrcIP', 'Rule.msg']))
 
 Notes: 
         - The ``limit`` argument should be increased to 500 or 1000 once finish testing for better performance.  
@@ -98,26 +100,28 @@ Print all ``unacknowledged`` alarms filtered by alarm name and event message, th
 
 Filter with alarm match ``'Test alarm'`` and triggering event message match ``'Wordpress'``.  
 
->>> from msiempy import AlarmManager, Alarm
-# Make an alarm query
->>> alarms=AlarmManager(
-        time_range='CURRENT_YEAR',
-        status_filter='unacknowledged', # passed to alarmGetTriggeredAlarms
-        filters=[('alarmName', 'Test alarm')], # Regex  
-        event_filters=[('ruleName','Wordpress')], # Regex  
-        page_size=5 # Will only load 5 alarms (per page)  
-) 
-# Load the data into the list
->>> alarms.load_data() 
-# Print results
->>> print("Alarm list: ")
->>> print(alarms)
->>> print(alarms.get_text(
-        fields=['id','triggeredDate','acknowledgedDate', 'alarmName', 'acknowledgedUsername']))
-# Acknowledge alarms
->>> print("Acknowledge alarms")
->>> for alarm in alarms:
-        alarm.acknowledge()
+.. python::
+
+        from msiempy import AlarmManager, Alarm
+        # Make an alarm query
+        alarms=AlarmManager(
+                time_range='CURRENT_YEAR',
+                status_filter='unacknowledged', # passed to alarmGetTriggeredAlarms
+                filters=[('alarmName', 'Test alarm')], # Regex  
+                event_filters=[('ruleName','Wordpress')], # Regex  
+                page_size=5 # Will only load 5 alarms (per page)  
+        ) 
+        # Load the data into the list
+        alarms.load_data() 
+        # Print results
+        print("Alarm list: ")
+        print(alarms)
+        print(alarms.get_text(
+                fields=['id','triggeredDate','acknowledgedDate', 'alarmName', 'acknowledgedUsername']))
+        # Acknowledge alarms
+        print("Acknowledge alarms")
+        for alarm in alarms:
+                alarm.acknowledge()
 
 Notes: 
         - The ``page_size`` argument should be increased to 500 or 1000 once finish testing for better performance.  
@@ -133,13 +137,15 @@ This is useful when dealing with features of the ESM API that are not explicitly
 
 **Use the session object** to make direct API calls with any data. 
 
->>> from msiempy import NitroSession
->>> s = NitroSession()
->>> s.login()
-# Get all last 24h alarms details with ESM API v2 (not supported yet)  
->>> alarms = s.api_request('v2/alarmGetTriggeredAlarms?triggeredTimeRange=LAST_24_HOURS&status=&pageSize=500&pageNumber=1')
->>> for a in alarms:
-        a.update(s.api_request('v2/notifyGetTriggeredNotificationDetail', {'id':a['id']}))
+.. python::
+
+        from msiempy import NitroSession
+        s = NitroSession()
+        s.login()
+        # Get all last 24h alarms details with ESM API v2 (not supported yet)  
+        alarms = s.api_request('v2/alarmGetTriggeredAlarms?triggeredTimeRange=LAST_24_HOURS&status=&pageSize=500&pageNumber=1')
+        for a in alarms:
+                a.update(s.api_request('v2/notifyGetTriggeredNotificationDetail', {'id':a['id']}))
 
 The session object will handle authentication and intermittent (but annoying) SIEM errors.  
 
@@ -151,15 +157,17 @@ Add a note to events
 
 Set the note of 2 events and check if the note is well set.  
 
->>> from  msiempy import EventManager, Event
->>> events = EventManager(
-        time_range='CURRENT_YEAR',
-        limit=2 )
->>> events.load_data()
->>> for event in events :
-        event.set_note("Test note")
-        event.refresh(use_query=False) # Event data will be loaded with ipsGetAlertData API method
-        assert "Test note" in genuine_event['note'], "Error, the note hasn't been added"
+.. python::
+
+        from  msiempy import EventManager, Event
+        events = EventManager(
+                time_range='CURRENT_YEAR',
+                limit=2 )
+        events.load_data()
+        for event in events :
+                event.set_note("Test note")
+                event.refresh(use_query=False) # Event data will be loaded with ipsGetAlertData API method
+                assert "Test note" in genuine_event['note'], "Error, the note hasn't been added"
 
 See: 
         - `add_wpsan_note.py <https://github.com/mfesiem/msiempy/blob/master/samples/add_wpsan_note.py>`_ script for more on how to add notes to event that triggered alarms.   
@@ -188,12 +196,11 @@ Add a Datasource
 >>> from msiempy import DevTree
 >>> devtree = DevTree()
 >>> devtree.add({
-        "name": "Test DS",
-        "parent_id": "144116287587483648",
-        "ds_ip": "10.2.2.2",
-        "hostname": "testds.domain.ca",
-        "type_id": "65"
-}) 
+...     "name": "Test DS",
+...     "parent_id": "144116287587483648",
+...     "ds_ip": "10.2.2.2",
+...     "hostname": "testds.domain.ca",
+...     "type_id": "65" }) 
 {'value': 1385420} # Wait a bit for the request
 >>> devtree.refresh() # Refresh the DevTree
 
@@ -216,18 +223,20 @@ Execute a grouped event query
 
 Query the curent day events filtered by `IPSID` grouped by `ScrIP`.  
 
->>> from msiempy import GroupedEventManager
->>> import pprint
->>> query = GroupedEventManager(
-                time_range='LAST_3_DAYS', 
-                field='SrcIP', 
-                filters=[('IPSID', '144116287587483648')]) 
->>> query.load_data()
-# Sort the results by total count
->>> results = list(reversed(sorted(query, key=lambda k: int(k['SUM(Alert.EventCount)']))))
-# Display top 10
->>> top10=results[:10]
->>> pprint.pprint(top10)
+.. python::
+
+        from msiempy import GroupedEventManager
+        import pprint
+        query = GroupedEventManager(
+                        time_range='LAST_3_DAYS', 
+                        field='SrcIP', 
+                        filters=[('IPSID', '144116287587483648')]) 
+        query.load_data()
+        # Sort the results by total count
+        results = list(reversed(sorted(query, key=lambda k: int(k['SUM(Alert.EventCount)']))))
+        # Display top 10
+        top10=results[:10]
+        pprint.pprint(top10)
 
 
 See:
