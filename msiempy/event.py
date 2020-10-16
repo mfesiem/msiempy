@@ -668,7 +668,7 @@ class Event(NitroDict):
 
         ======================   ===============   ======================
         >>> e["Alert.65613"]     is the same as    >>> e["Web_Doamin"]  
-        >>> e["Alert.BIN(7)]     is the same as    >>> e["UserIDSrc"]
+        >>> e["Alert.BIN(7)"]    is the same as    >>> e["UserIDSrc"]
         >>> e["Alert.SrcIP"]     is the same as    >>> e["SrcIP"]
         >>> "Alert.SrcIP" in e   is the same as    >>> "SrcIP" in e
         ======================   ===============   ======================

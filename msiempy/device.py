@@ -17,6 +17,7 @@ from .core.utils import dehexify
 class ESM(NitroObject):
     """
     Enterprise Security Manager interface.  
+    
     Object do not contain data, it's a simple interface to data structures / values returned by the SIEM or helper methods.  
     """
 
@@ -25,7 +26,7 @@ class ESM(NitroObject):
 
     @property
     def text(self):
-        """ ``"ESM object"`` """
+        """ Returns ``"ESM object"`` """
         return str("ESM object")
 
     @property
@@ -40,8 +41,10 @@ class ESM(NitroObject):
     def time(self):
         """
         Returns: 
-            string of ESM time (GMT)
-        Example: ``2017-07-06T12:21:59.0+0000``
+            str: ESM time (GMT)
+            
+        Example: 
+            ``2017-07-06T12:21:59.0+0000``
         """
         return self.nitro.request("get_esm_time")["value"]
 
@@ -315,7 +318,8 @@ class ESM(NitroObject):
 
     def rules_history(self):
         """
-        Returns: Policy Editor rule history.
+        Returns: 
+            Policy Editor rule history.
         """
         file = self.nitro.request("get_rule_history")["TK"]
         return self.nitro.get_internal_file(file)

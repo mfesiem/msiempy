@@ -8,4 +8,3 @@ pytest-rerunfailures
 pytest-cov
 black
 git+https://github.com/twisted/pydoctor.git@20.7.x
-pyment
