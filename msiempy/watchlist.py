@@ -19,9 +19,9 @@ class WatchlistManager(NitroList):
         Initialize the watchlist manager.
         """
         super().__init__(*args, **kwargs)
-        self.get_watchlist_summary()
+        self._init_watchlist_summary()
 
-    def get_watchlist_summary(self):
+    def _init_watchlist_summary(self):
         """
         Loads the watchlist summary.
         """
@@ -53,7 +53,7 @@ class WatchlistManager(NitroList):
         """
         Reloads the watchlist summary.
         """
-        self.get_watchlist_summary()
+        self._init_watchlist_summary()
 
     def add(self, name, wl_type):
         """
