@@ -79,7 +79,7 @@ jobs:
         run: python ./samples/msiempy_setup.py --set esm host ${{ secrets.esmhost }} --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
       
       - name: Run tests
-        run: python -m pytest --cov=./ --cov-report=xml --reruns 1 --reruns-delay 1
+        run: python -m pytest --cov=./ --cov-report=xml --reruns 5 --reruns-delay 1
 
       - name: Build msiempy
         run: python setup.py --quiet build check sdist bdist_wheel
