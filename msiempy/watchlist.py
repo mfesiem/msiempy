@@ -60,12 +60,12 @@ class WatchlistManager(NitroList):
         Create a static watchlist.
 
         Arguments:   
-            - `name` (str): Name of the watchlist
-            - `wl_type` (str): Watchlist data type
+            - `name` (`str`): Name of the watchlist
+            - `wl_type` (`str`): Watchlist data type
         
         Note:
             Get the list of types with: `msiempy.watchlist.WatchlistManager.get_wl_types`
-            Most common types are: "IPAddress", "Hash", "SHA1", "DSIDSigID", "Port", "MacAddress", "NormID", "AppID", "CommandID", "DomainID", "HostID", "ObjectID", "Filename", "File_Hash".
+            Most common types are: ``"IPAddress"``, ``"Hash"``, ``"SHA1"``, ``"DSIDSigID"``, ``"Port"``, ``"MacAddress"``, ``"NormID"``, ``"AppID"``, ``"CommandID"``, ``"DomainID"``, ``"HostID"``, ``"ObjectID"``, ``"Filename"``, ``"File_Hash"``.
         """
         for wl in self.data:
             if wl.get("name") == name:
@@ -79,7 +79,7 @@ class WatchlistManager(NitroList):
         Remove watchlist(s).
         
         Arguments:
-            - `wl_id_list` (list of int): list of watchlist IDs. Example: C{[1, 2, 3]}.
+            - `wl_id_list` (`list[int]`): list of watchlist IDs. Example: `[1, 2, 3]`.
 
         """
         self.nitro.request("remove_watchlists", wl_id_list=wl_id_list)
