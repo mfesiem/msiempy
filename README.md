@@ -16,7 +16,7 @@ Code design is accessible and pythonic via list-like and dict-like objects inter
 - Alarm operations and querying: filter, load pages, acknowledge, unacknowledge, delete, get triggering event, retreive from ID  
 - Event operations and querying: group queries, filter, add fields, set event's note, retreive from ID   
 - Watchlist operations : list, add/remove watchlists, add/remove values, get values, retreive from ID  
-- Single stable session handler  
+- Make direct API calls with a single stable session handler  
 
 #### Known module implementations
 - msiem CLI : [CLI tools for ESM](https://github.com/mfesiem/msiem)
