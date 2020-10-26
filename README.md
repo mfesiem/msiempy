@@ -15,8 +15,8 @@ Code design is accessible and pythonic via list-like and dict-like objects inter
 - Datasource operations: add, edit, delete - including client datasources, retreive from ID     
 - Alarm operations and querying: filter, load pages, acknowledge, unacknowledge, delete, get triggering event, retreive from ID  
 - Event operations and querying: group queries, filter, add fields, set event's note, retreive from ID   
-- Watchlist operations : list, add/remove watchlists, add/remove values, get values, retreive from ID  
-- Make direct API calls with a single stable session handler  
+- Watchlist operations: list, add/remove watchlists, add/remove values, get values, retreive from ID  
+- Also make direct API calls very easily
 
 #### Known module implementations
 - msiem CLI : [CLI tools for ESM](https://github.com/mfesiem/msiem)
@@ -26,7 +26,7 @@ Code design is accessible and pythonic via list-like and dict-like objects inter
 
 ### Installation 
 ```
-python3 -m pip install msiempy
+pip install msiempy
 ```
 
 ### **Read the [library documentation](https://mfesiem.github.io/docs/msiempy/msiempy.html)**  
