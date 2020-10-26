@@ -535,10 +535,6 @@ class NitroSession:
     SIEM API methos/parameters mapping.  
     This structure provide a central place to aggregate API methods and parameters.  
 
-    Usage:: 
-
-        NitroSession.PARAMS.get("method")
-
     Returns:  
         - `tuple`: (`str` or `Template`, `str` or `Template`) :  
             The first item is the SIEM API endpoint name.  
