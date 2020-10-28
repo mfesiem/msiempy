@@ -787,7 +787,7 @@ class NitroSession:
 
                     log.debug(
                         "{} -> Result ({}): {}".format(
-                            str(response), type(result), str(result)[:200]
+                            str(response), type(result), str(result)[:5000]
                         )
                     )
 
@@ -1024,7 +1024,7 @@ class NitroSession:
         Returns:
             a list, a dict or a string
         """
-        log.debug("Unpacking SIEM response: {}".format(str(response.text)[:200]))
+        log.debug("Unpacking SIEM response: {}".format(str(response.text))[:5000])
         try:
             data = response.json()
             if isinstance(response.json(), dict):
