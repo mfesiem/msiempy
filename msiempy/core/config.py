@@ -16,8 +16,7 @@ class NitroConfig(configparser.ConfigParser):
     """
     `configparser.ConfigParser` parser object.  
 
-    Handles the configuration. Reads the config file `.msiem/conf.ini` and make accessible it's values throught object properties.
-    Additionnal 
+    Handles the configuration. Reads the config file `.msiem/conf.ini` and make accessible it's values throught object properties.  
 
     Default configuration file should look like this. Authentication is left empty::
 
