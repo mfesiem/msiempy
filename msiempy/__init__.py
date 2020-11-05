@@ -39,17 +39,22 @@ The configuration file is located (by default) securely in your user directory s
 - For Windows:  ``%APPDATA%\.msiem\conf.ini``
 - For Mac :     ``$HOME/.msiem/conf.ini``  
 - For Linux :   ``$XDG_CONFIG_HOME/.msiem/conf.ini`` or ``$HOME/.msiem/conf.ini``
+- If ``.msiem`` folder exists in your current directory : ``./.msiem/conf.ini``
 
 Exemple::
 
         [esm]
+        # Your ESM credentials
         host = HOST
         user = USER
         passwd = PASSWORD's BASE64
         [general]
+        # Verbosity
         verbose = no
         quiet = no
-        logfile = /home/user/.msiem/log.txt
+        # Path to a logfile, the logfile output will always be verbose
+        logfile = 
+        # Misc 
         timeout = 60
         ssl_verify = no
 
