@@ -55,9 +55,9 @@ python3 -m unittest tests.auth.test_event.T.test_add_note
 
 See the github actions workflows for more details.  
 
-# Publish to PyPi
+### Publish
 
-Use the publish script, for more infos:
+Use the publish script to push tha package to PyPi and create a new tag, for Unix for more infos:
 ```
 % ./publish.sh -h
 ```

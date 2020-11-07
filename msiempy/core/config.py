@@ -146,6 +146,7 @@ class NitroConfig(configparser.ConfigParser):
     def user(self):
         """
         Config value
+        
         ::
             [esm]
             user=
@@ -156,6 +157,7 @@ class NitroConfig(configparser.ConfigParser):
     def host(self):
         """
         Config value
+        
         ::        
             [esm]
             host=
@@ -166,6 +168,7 @@ class NitroConfig(configparser.ConfigParser):
     def passwd(self):
         """
         Config value
+        
         ::        
             [esm]
             passwd=
@@ -176,6 +179,7 @@ class NitroConfig(configparser.ConfigParser):
     def verbose(self):
         """
         Config value
+        
         ::    
             [general]
             verbose=
@@ -186,6 +190,7 @@ class NitroConfig(configparser.ConfigParser):
     def quiet(self):
         """
         Config value
+        
         ::
             [general]
             quiet=
@@ -196,6 +201,7 @@ class NitroConfig(configparser.ConfigParser):
     def logfile(self):
         """
         Config value
+        
         ::
             [general]
             logfile=
@@ -206,6 +212,7 @@ class NitroConfig(configparser.ConfigParser):
     def timeout(self):
         """
         Config value
+        
         ::
             [general]
             timeout=
@@ -216,6 +223,7 @@ class NitroConfig(configparser.ConfigParser):
     def ssl_verify(self):
         """
         Config value
+        
         ::
             [general]
             ssl_verify=
