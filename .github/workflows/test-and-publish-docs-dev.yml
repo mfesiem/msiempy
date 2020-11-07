@@ -53,7 +53,7 @@ jobs:
             --project-base-dir="$(pwd)" \
             --docformat=restructuredtext \
             --intersphinx=https://docs.python.org/3/objects.inv \
-            --html-output=mfesiem.github.io/docs/msiempy/
+            --html-output=mfesiem.github.io/docs/test/msiempy/
 
 
       - name: Generate diagrams
