@@ -45,18 +45,27 @@ python3 -m unittest tests.auth.test_event.T.test_add_note
 ### Git flow
 - Commits to `master` branch are trigerring: 
     - Tests on Windows and MacOS and Ubuntu + upload coverage
-    - Generate documentation + publish to gh-pages
-    - PyPi realeases and create new tag **if the `__version__` has been bumped**.  
+
+- New Tags are trigerring:
+    - Generate documentation + [publish to gh-pages](https://mfesiem.github.io/docs/msiempy/)
 
 - Commits to `develop` branch are trigerring:
-    - Generate documentation + publish to gh-pages under `test` folder
-
+    - Tests on Ubuntu
+    - Generate documentation + publish to gh-pages [under `test` folder](https://mfesiem.github.io/docs/test/msiempy/)
 
 See the github actions workflows for more details.  
 
+# Publish to PyPi
+
+Use the publish script, for more infos:
+```
+% ./publish.sh -h
+```
+
 ### Documentation
-Documentation is automatically generated with `pydoctor` from docstrings. 
+Documentation is automatically generated with [`pydoctor`](https://pydoctor.readthedocs.io/en/latest/) from docstrings. 
 
 The main documentation is in the `msiempy/__init__.py` file.  
 
 Format use in docstrings is ReStructuredText.
+

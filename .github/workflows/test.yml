@@ -11,9 +11,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.6','3.7','3.8','3.9']
+        python-version: ['3.6','3.7','3.8','3.9', '3.10']
       max-parallel: 1
-      fail-fast: false
+      fail-fast: true
 
     steps:
       - uses: actions/checkout@v2
@@ -36,7 +36,7 @@ jobs:
         run: python ./samples/msiempy_setup.py --set esm host ${{ secrets.esmhost }} --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
       
       - name: Run tests
-        run: python -m pytest --cov=./ --cov-report=xml --reruns 5 --reruns-delay 1
+        run: python -m pytest --cov=./ --cov-report=xml --reruns 5 --reruns-delay 30
       
       - name: Upload code coverage
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8'

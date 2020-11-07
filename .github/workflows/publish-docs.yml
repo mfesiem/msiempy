@@ -1,11 +1,11 @@
 name: publish-docs
 on:
   push:
-    branches: 
-      - master
+    tags:
+      - '*'
 
 jobs:
-  deploy:
+  publish-docs:
     runs-on: ubuntu-latest
 
     steps:
@@ -31,20 +31,20 @@ jobs:
         run: |
 
           git clone https://github.com/mfesiem/mfesiem.github.io
+
           rm -rf ./mfesiem.github.io/docs/msiempy
           mkdir ./mfesiem.github.io/docs/msiempy
-          
-          set +e
 
           pydoctor \
-            --add-module=msiempy \
-            --project-name=msiempy \
-            --html-viewsource-base https://github.com/mfesiem/msiempy/blob/master/ \
+           --add-package=msiempy \
+            --project-name="McAfee SIEM Python Library" \
+            --project-url=https://github.com/$GITHUB_REPOSITORY \
+            --html-viewsource-base=https://github.com/$GITHUB_REPOSITORY/tree/$GITHUB_REF \
             --make-html \
-            --project-base-dir "$(pwd)" \
-            -v --docformat=restructuredtext
-
-          cp ./apidocs/* mfesiem.github.io/docs/msiempy/
+            --project-base-dir="$(pwd)" \
+            --docformat=restructuredtext \
+            --intersphinx=https://docs.python.org/3/objects.inv \
+            --html-output=./mfesiem.github.io/docs/msiempy
 
       - name: Generate diagrams
         run: |
