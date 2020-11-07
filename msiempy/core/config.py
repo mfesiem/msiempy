@@ -145,72 +145,56 @@ class NitroConfig(configparser.ConfigParser):
     @property
     def user(self):
         """
-        Config value::
-            [esm]
-            user=
+        Config value section "esm" optiom "user"
         """
         return self.get("esm", "user")
 
     @property
     def host(self):
         """
-        Config value::        
-            [esm]
-            host=
+        Config  section "esm" option "host"
         """
         return self.get("esm", "host")
 
     @property
     def passwd(self):
         """
-        Config value::        
-            [esm]
-            passwd=
+        Config value section "esm" option "passwd"
         """
         return self.get("esm", "passwd")
 
     @property
     def verbose(self):
         """
-        Config value::    
-            [general]
-            verbose=
+        Config value section "general" option "verbose"
         """
         return self.getboolean("general", "verbose")
 
     @property
     def quiet(self):
         """
-        Config value::
-            [general]
-            quiet=
+        Config value section "general" option "quiet"
         """
         return self.getboolean("general", "quiet")
 
     @property
     def logfile(self):
         """
-        Config value::
-            [general]
-            logfile=
+        Config value section "general" option "logfile"
         """
         return self.get("general", "logfile")
 
     @property
     def timeout(self):
         """
-        Config value::
-            [general]
-            timeout=
+        Config value section "general" option "timeout"
         """
         return self.getint("general", "timeout")
 
     @property
     def ssl_verify(self):
         """
-        Config value::
-            [general]
-            ssl_verify=
+        Config value section "general" option "ssl_verify"
         """
         return self.getboolean("general", "ssl_verify")
 
