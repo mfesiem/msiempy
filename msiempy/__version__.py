@@ -2,7 +2,7 @@
 Project version and meta informations.
 """
 
-__version__ = "0.3.5"
+__version__ = "0.3.6dev"
 __title__ = "msiempy"
 __description__ = "msiempy - McAfee SIEM API Python wrapper"
 __author__ = "andywalden, tristanlatr, mathieubeland, and other contributors. "

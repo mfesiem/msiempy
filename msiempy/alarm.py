@@ -207,7 +207,7 @@ class AlarmManager(FilteredQueryList):
             `msiempy.alarm.AlarmManager`
         """
 
-        items, completed = self.qry_load_data(**kwargs)
+        items, completed = self._qry_load_data(**kwargs)
         # Casting items to Alarms
         alarms = [Alarm(adict=item) for item in items]
 
@@ -228,7 +228,7 @@ class AlarmManager(FilteredQueryList):
         self.data = alarms
         return self
 
-    def qry_load_data(
+    def _qry_load_data(
         self,
         workers=10,
         alarms_details=True,

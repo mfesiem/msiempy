@@ -254,7 +254,7 @@ class FilteredQueryList(NitroList):
         pass
 
     @abc.abstractmethod
-    def qry_load_data(self, *args, **kwargs):
+    def _qry_load_data(self, *args, **kwargs):
         """
         Method to load the data from the SIEM.
         Rturns a `tuple ((items, completed))`.
