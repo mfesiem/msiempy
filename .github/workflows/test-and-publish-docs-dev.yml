@@ -47,7 +47,6 @@ jobs:
           pydoctor \
            --add-package=msiempy \
             --project-name="McAfee SIEM Python Library" \
-            --project-url=https://github.com/$GITHUB_REPOSITORY \
             --html-viewsource-base=https://github.com/$GITHUB_REPOSITORY/tree/$GITHUB_SHA \
             --make-html \
             --project-base-dir="$(pwd)" \
