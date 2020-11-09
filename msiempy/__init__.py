@@ -294,7 +294,10 @@ Useful shell command to get simple list of errors::
 """        
 
 # List all library objects that the user might need
-from .core import NitroConfig, NitroError, NitroSession, FilteredQueryList, NitroList
+from .core.config import NitroConfig
+from .core.session import NitroError, NitroSession
+from .core.types import NitroList
+from .core.query import FilteredQueryList
 from .alarm import Alarm, AlarmManager
 from .device import ESM, DevTree, DataSource
 from .event import (
