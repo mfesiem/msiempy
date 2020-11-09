@@ -2,7 +2,7 @@ name: test-and-publish-docs-dev
 on: 
   push:
     branches: 
-      - develop
+      - '*'
 jobs: 
   test-and-publish-docs-dev:
     name: ${{ matrix.os }} py${{ matrix.python-version }}
@@ -72,7 +72,7 @@ jobs:
           publish_branch: 'master'
           user_name: 'Github Actions'
           user_email: "actions@github.com"
-          commit_message: "Generate documentation - develop"
+          commit_message: "Generate documentation - (under test folder)"
           enable_jekyll: true
       
       - name: Setup msiempy config
