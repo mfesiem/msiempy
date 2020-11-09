@@ -207,7 +207,7 @@ class AlarmManager(FilteredQueryList):
             `msiempy.alarm.AlarmManager`
         """
 
-        items, completed = self.qry_load_data(**kwargs)
+        items, completed = self._qry_load_data(**kwargs)
         # Casting items to Alarms
         alarms = [Alarm(adict=item) for item in items]
 
@@ -228,7 +228,7 @@ class AlarmManager(FilteredQueryList):
         self.data = alarms
         return self
 
-    def qry_load_data(
+    def _qry_load_data(
         self,
         workers=10,
         alarms_details=True,
@@ -604,7 +604,7 @@ class Alarm(NitroDict):
 
         Arguments:
             - `use_priv`: (`bool`): Use the private API methods to retreive the INFO, will use it anyway with ESM v10.x. because it's the only way to get the trigerring event ID.
-            Will only load the details of the first triggering event.
+              Will only load the details of the first triggering event.
 
         Note:
             It replace empty strings by `None`

@@ -535,10 +535,6 @@ class NitroSession:
     SIEM API methos/parameters mapping.  
     This structure provide a central place to aggregate API methods and parameters.  
 
-    Usage:: 
-
-        NitroSession.PARAMS.get("method")
-
     Returns:  
         - `tuple`: (`str` or `Template`, `str` or `Template`) :  
             The first item is the SIEM API endpoint name.  
@@ -791,7 +787,7 @@ class NitroSession:
 
                     log.debug(
                         "{} -> Result ({}): {}".format(
-                            str(response), type(result), str(result)[:200]
+                            str(response), type(result), str(result)[:5000]
                         )
                     )
 
@@ -1028,7 +1024,7 @@ class NitroSession:
         Returns:
             a list, a dict or a string
         """
-        log.debug("Unpacking SIEM response: {}".format(str(response.text)[:200]))
+        log.debug("Unpacking SIEM response: {}".format(str(response.text))[:5000])
         try:
             data = response.json()
             if isinstance(response.json(), dict):

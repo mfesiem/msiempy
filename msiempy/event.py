@@ -71,7 +71,7 @@ class _QueryExecuteManager(FilteredQueryList):
         """
         Close the query
 
-        Internal method called by qry_load_data
+        Internal method called by _qry_load_data
         """
         self.nitro.request("close_query", resultID=resultID)
 
@@ -79,7 +79,7 @@ class _QueryExecuteManager(FilteredQueryList):
         """
         Wait and sleep for the query.  
 
-        Internal method called by qry_load_data
+        Internal method called by _qry_load_data
         
         Arguments:
             - `resultID`: Query result ID
@@ -116,7 +116,7 @@ class _QueryExecuteManager(FilteredQueryList):
     def _get_events(self, resultID, startPos=0, numRows=500):
         """
         Internal method that will get the query events. 
-        Called by `qry_load_data`.
+        Called by `_qry_load_data`.
         By default, ``numRows`` correspond to ``limit``.  
         """
         result = self.nitro.request(
@@ -269,7 +269,7 @@ class EventManager(_QueryExecuteManager):
             }
         ]
 
-    def qry_load_data(self, retry=1, wait_timeout_sec=120):
+    def _qry_load_data(self, retry=1, wait_timeout_sec=120):
         """
         Internal helper method to execute the query and load the data:
             - Submit the query
@@ -327,9 +327,9 @@ class EventManager(_QueryExecuteManager):
 
         except (NitroError, TimeoutError) as error:
             if retry > 0:
-                log.warning("Retring qry_load_data() after error: " + str(error))
+                log.warning("Retring _qry_load_data() after error: " + str(error))
                 time.sleep(1)
-                return self.qry_load_data(retry=retry - 1)
+                return self._qry_load_data(retry=retry - 1)
             else:
                 raise
 
@@ -338,7 +338,7 @@ class EventManager(_QueryExecuteManager):
     def load_data(self, workers=10, slots=10, delta=None, max_query_depth=0, **kwargs):
         """
         **Load the events data into the list.**  
-        Wraps around `msiempy.event.EventManager.qry_load_data`.
+        Wraps around `msiempy.event.EventManager._qry_load_data`.
 
         Arguments:
             - `max_query_depth` (`int`): Maximum number of reccursive divisions `load_data` method can apply to the query in order to load all events. Splits the query in differents time slots if the query apprears not to be completed.  Only works with custom times and some time ranges.
@@ -356,7 +356,7 @@ class EventManager(_QueryExecuteManager):
             Only the first query is loaded asynchronously.
         """
 
-        items, completed = self.qry_load_data()
+        items, completed = self._qry_load_data()
 
         if not completed:
             # If not completed the query is split and items aren't actually used
@@ -512,7 +512,7 @@ class GroupedEventManager(_QueryExecuteManager):
         Returns: 
             `GroupedEventManager`
         """
-        items, completed = self.qry_load_data(*args, **kwargs)
+        items, completed = self._qry_load_data(*args, **kwargs)
         if not completed:
             log.warning("The query is not complete... Try to increase the num_rows")
         self.data = [GroupedEvent(item) for item in items]
@@ -537,7 +537,7 @@ class GroupedEventManager(_QueryExecuteManager):
             }
         ]
 
-    def qry_load_data(self, num_rows=500, retry=1, wait_timeout_sec=120):
+    def _qry_load_data(self, num_rows=500, retry=1, wait_timeout_sec=120):
         """
         Helper method to execute the grouped query and load the data:
             - Submit the query
@@ -591,9 +591,9 @@ class GroupedEventManager(_QueryExecuteManager):
 
         except (NitroError, TimeoutError) as error:
             if retry > 0:
-                log.warning("Retring qry_load_data() after error: " + str(error))
+                log.warning("Retring _qry_load_data() after error: " + str(error))
                 time.sleep(1)
-                return self.qry_load_data(retry=retry - 1)
+                return self._qry_load_data(retry=retry - 1)
             else:
                 raise
 

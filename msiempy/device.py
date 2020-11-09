@@ -52,7 +52,9 @@ class ESM(NitroObject):
         """
         Returns: 
             Buildstamp string
-        Example: ``10.0.2 20170516001031``
+
+        Example: 
+            ``10.0.2 20170516001031``
         """
         return self.nitro.buildstamp()
 
@@ -60,7 +62,9 @@ class ESM(NitroObject):
         """
         Returns: 
             simple version string
-        Example: ``10.1.0``
+        
+        Example: 
+            ``10.1.0``
         """
         return self.nitro.version
 
@@ -917,7 +921,7 @@ class DevTree(NitroList):
             - `enabled` (`bool`): enabled or not (default: True)
             - `tz_id` (`str`): timezone of datasource (default UTC: 8)
             - `zone_id` (`str`): numberic ESM id for zone (default: 0)
-            Examples (`tz_id` only): PST: 27, MST: 12, CST: 11, EST: 32
+              Examples (`tz_id` only): PST: 27, MST: 12, CST: 11, EST: 32
             - `require_tls` (`bool`): datasource uses syslog tls
 
         Returns: 
@@ -1203,7 +1207,7 @@ class DataSource(NitroDict):
 
         Arguments:
             - `adict`: Datasource parameters
-            - `id`: Not working `#79 https://github.com/mfesiem/msiempy/issues/79`_
+            - `id`: Not working `#79 <https://github.com/mfesiem/msiempy/issues/79>`_
                 The datasource ID to instanciate. Will load informations.
         """
         super().__init__(*args, **kwargs)

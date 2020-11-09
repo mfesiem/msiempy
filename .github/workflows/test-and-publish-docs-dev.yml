@@ -1,10 +1,10 @@
-name: test-and-publish-dev
+name: test-and-publish-docs-dev
 on: 
   push:
     branches: 
       - develop
 jobs: 
-  deploy:
+  test-and-publish-docs-dev:
     name: ${{ matrix.os }} py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }} 
 
@@ -20,6 +20,7 @@ jobs:
         with:
           # Fetches entire history, so we can analyze commits since last tag
           fetch-depth: 0
+          
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
@@ -42,18 +43,17 @@ jobs:
           git clone https://github.com/mfesiem/mfesiem.github.io
           rm -rf ./mfesiem.github.io/docs/test/msiempy
           mkdir ./mfesiem.github.io/docs/test/msiempy
-          
-          set +e
 
           pydoctor \
-            --add-module=msiempy \
-            --project-name=msiempy \
-            --html-viewsource-base https://github.com/mfesiem/msiempy/blob/develop/ \
+           --add-package=msiempy \
+            --project-name="McAfee SIEM Python Library" \
+            --html-viewsource-base=https://github.com/$GITHUB_REPOSITORY/tree/$GITHUB_SHA \
             --make-html \
-            --project-base-dir "$(pwd)" \
-            -v --docformat=restructuredtext
+            --project-base-dir="$(pwd)" \
+            --docformat=restructuredtext \
+            --intersphinx=https://docs.python.org/3/objects.inv \
+            --html-output=mfesiem.github.io/docs/test/msiempy/
 
-          cp ./apidocs/* mfesiem.github.io/docs/test/msiempy/
 
       - name: Generate diagrams
         if: matrix.os == 'ubuntu-latest'
@@ -79,7 +79,7 @@ jobs:
         run: python ./samples/msiempy_setup.py --set esm host ${{ secrets.esmhost }} --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
       
       - name: Run tests
-        run: python -m pytest --cov=./ --cov-report=xml --reruns 1 --reruns-delay 1
+        run: python -m pytest --cov=./ --cov-report=xml --reruns 5 --reruns-delay 1
 
       - name: Build msiempy
         run: python setup.py --quiet build check sdist bdist_wheel
