@@ -291,8 +291,7 @@ Useful shell command to get simple list of errors::
         cat /path/to/your/log/file | grep -i error | sort | uniq
 
 
-"""
-        
+"""        
 
 # List all library objects that the user might need
 from .core import NitroConfig, NitroError, NitroSession, FilteredQueryList, NitroList
@@ -308,3 +307,9 @@ from .event import (
 )
 from .watchlist import Watchlist, WatchlistManager
 from .__version__ import __version__ as VERSION
+
+# Objects part of the public API of the library
+__all__=[       "NitroConfig", "NitroError", "NitroSession", 
+                "Alarm", "AlarmManager", "ESM", "DevTree", "DataSource", 
+                "Event", "EventManager", "FieldFilter", "GroupFilter",
+                "GroupedEvent", "GroupedEventManager", "Watchlist", "WatchlistManager" ]
