@@ -517,26 +517,26 @@ class GroupedEventManager(_QueryExecuteManager):
     Exemples:
         - Execute a grouped event query:
 
-            Query the curent day events filtered by `IPSID` grouped by `ScrIP`.  
+        Query the curent day events filtered by `IPSID` grouped by `ScrIP`.  
 
-            .. python::
+        .. python::
 
-                    from msiempy import GroupedEventManager
-                    import pprint
-                    query = GroupedEventManager(
-                                    time_range='LAST_3_DAYS', 
-                                    field='SrcIP', 
-                                    filters=[('IPSID', '144116287587483648')]) 
-                    query.load_data()
-                    # Sort the results by total count
-                    results = list(reversed(sorted(query, key=lambda k: int(k['SUM(Alert.EventCount)']))))
-                    # Display top 10
-                    top10=results[:10]
-                    pprint.pprint(top10)
+                from msiempy import GroupedEventManager
+                import pprint
+                query = GroupedEventManager(
+                                time_range='LAST_3_DAYS', 
+                                field='SrcIP', 
+                                filters=[('IPSID', '144116287587483648')]) 
+                query.load_data()
+                # Sort the results by total count
+                results = list(reversed(sorted(query, key=lambda k: int(k['SUM(Alert.EventCount)']))))
+                # Display top 10
+                top10=results[:10]
+                pprint.pprint(top10)
 
 
     See:
-            Object GroupedEvent`.  
+            Object `GroupedEvent`.  
 
     Tip:
             `all_dev.py script <https://github.com/mfesiem/msiempy/blob/master/samples/all_dev.py>`_ can help you list all your datasources IDs (for the required ``IPSID`` filter).  
