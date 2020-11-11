@@ -532,13 +532,13 @@ class NitroSession:
         "build_stamp": ("essmgtGetBuildStamp", None),
     }
     """
-    Private SIEM API methos/parameters mapping.  
+    Private SIEM API methos/parameters mapping `Dict[str, tuple]`.
     This structure provide a central place to aggregate API methods and parameters.  
-    
-    It's a Mapping[`str`, `tuple`(`str` or `Template`, `str` or `Template`)].  
+
     The first tuple item is the SIEM API endpoint name.  
     The second item is the JSON string data parameters required for the enpoint call. 
-    If the string is a `Template` string, it needs to be interpolate with paramaters.  
+
+    If the tuple item is a `string.Template` string, it needs to be interpolated with paramaters.  
 
     See:
         `NitroSession.request` for a list of all possible calls and usage.  
