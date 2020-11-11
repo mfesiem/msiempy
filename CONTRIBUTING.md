@@ -65,8 +65,6 @@ Use the publish script to push tha package to PyPi and create a new tag, for Uni
 ### Documentation
 Documentation is automatically generated with [`pydoctor`](https://pydoctor.readthedocs.io/en/latest/) from docstrings. 
 
-The main documentation is in the `msiempy/__init__.py` file.  
-
 Format use in docstrings is ReStructuredText.
 
 
