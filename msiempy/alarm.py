@@ -64,7 +64,7 @@ class AlarmManager(FilteredQueryList):
             - `filters` (`list[tuple(field, [values])]`):  Filters applied to `Alarm` objects. A single `tuple` is also accepted.
             - `event_filters` (`list[tuple(field, [values])]`): Filters applied to `Event` objects. A single `tuple` is also accepted.
             - `time_range` (`str`): Query time range. String representation of a time range.
-            - `start_time (`str` or a `datetime`): Query start time
+            - `start_time` (`str` or a `datetime`): Query start time
             - `end_time` (`str` or a `datetime`): Query end time
         
         Note:
@@ -148,7 +148,7 @@ class AlarmManager(FilteredQueryList):
 
         Arguments :
 
-        - `afilter` : Can be a a tuple `(field, [values])` or `(field, value)` or `str` 'field=value'
+        - `afilter` : Can be a a tuple `(field, [values])` or `(field, value)` or `str` ``'field=value'``
 
         Filters format is `tuple(field, [values])`.
         """
