@@ -1,5 +1,5 @@
 """
-HTTP level interface to the ESM API.  
+HTTP level interface to the ESM API. Define `NitroSession` and `NitroError`. 
 """
 import logging
 import requests
@@ -19,9 +19,9 @@ log = logging.getLogger("msiempy")
 
 class NitroSession:
     """
-    Single session handler and HTTP interface.  
+    Single session handler and HTTP interface. The session object will handle authentication and intermittent (but annoying) SIEM errors.  
 
-    It provides easier dialogue with the ESM by doing argument interpolation with `NitroSession.PARAMS`.
+    It provides easier dialogue with the ESM by doing argument interpolation.
 
     See `api_request` and `request` for usage.
     
@@ -532,14 +532,13 @@ class NitroSession:
         "build_stamp": ("essmgtGetBuildStamp", None),
     }
     """
-    SIEM API methos/parameters mapping.  
+    Private SIEM API methos/parameters mapping.  
     This structure provide a central place to aggregate API methods and parameters.  
-
-    Returns:  
-        - `tuple`: (`str` or `Template`, `str` or `Template`) :  
-            The first item is the SIEM API endpoint name.  
-            The second item is the JSON string data parameters required for the enpoint call. 
-            If the string is `Template` string, it needs to be interpolate with paramaters.  
+    
+    It's a Mapping[`str`, `tuple`(`str` or `Template`, `str` or `Template`)].  
+    The first tuple item is the SIEM API endpoint name.  
+    The second item is the JSON string data parameters required for the enpoint call. 
+    If the string is a `Template` string, it needs to be interpolate with paramaters.  
 
     See:
         `NitroSession.request` for a list of all possible calls and usage.  
@@ -632,7 +631,8 @@ class NitroSession:
         retry=1,
     ):
         """
-        Handle a lower level HTTP request to ESM API endpoints.
+        Handle a lower level HTTP request to ESM API endpoints. Make direct API calls with any data. 
+        This is useful when dealing with features of the ESM API that are not explicitly implemented in this library yet (i.e. user managment or latest API calls).  
 
         Format the request, handle the basic parsing of the SIEM result as well as other errors.
 
@@ -671,7 +671,6 @@ class NitroSession:
             alarms = s.api_request('v2/alarmGetTriggeredAlarms?triggeredTimeRange=LAST_24_HOURS&status=&pageSize=500&pageNumber=1', None)
             for a in alarms:
                 a.update(s.api_request('v2/notifyGetTriggeredNotificationDetail', {'id':a['id']}))
-        
 
         """
 

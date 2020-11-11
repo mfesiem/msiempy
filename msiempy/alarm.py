@@ -1,4 +1,4 @@
-"""Provide alarm management.  
+"""Provide alarm management. Define `AlarmManager` and `Alarm`. 
 """
 import collections
 import logging
@@ -12,7 +12,42 @@ from .core.utils import regex_match, dehexify
 
 class AlarmManager(FilteredQueryList):
     """
-    List-Like object. Interface to query and manage alarms.
+    List-Like object. Interface to query and manage alarms.  
+
+    Exemples:
+        - Acknowledge alarms:
+        Print all ``unacknowledged`` alarms filtered by alarm name and event message, then acknowledge the alarms.  
+        Filter with alarm match ``'Test alarm'`` and triggering event message match ``'Wordpress'``.  
+        
+        .. python::
+
+                from msiempy import AlarmManager, Alarm
+                # Make an alarm query
+                alarms=AlarmManager(
+                        time_range='CURRENT_YEAR',
+                        status_filter='unacknowledged', # passed to alarmGetTriggeredAlarms
+                        filters=[('alarmName', 'Test alarm')], # Regex  
+                        event_filters=[('ruleName','Wordpress')], # Regex  
+                        page_size=5 # Should be increased to 500 or 1000 once finish testing for better performance.
+                ) 
+                # Load the data into the list
+                alarms.load_data() 
+                # Print results
+                print("Alarm list: ")
+                print(alarms)
+                print(alarms.get_text(
+                        fields=['id','triggeredDate','acknowledgedDate', 'alarmName', 'acknowledgedUsername']))
+                # Acknowledge alarms
+                print("Acknowledge alarms")
+                for alarm in alarms:
+                        alarm.acknowledge()
+
+    Notes: 
+            - The `AlarmManager` filtering feature is an addon to what the SIEM API offers, filters are applied locally as regular expressions.  
+
+    See: 
+        `Alarm`
+
     """
 
     def __init__(
@@ -371,6 +406,9 @@ class Alarm(NitroDict):
         - ``alarmName`` : The name of the alarm that was triggered
         - ``events`` : The events that triggered the alarm
         - **And others**
+
+    See:
+        Object `AlarmManager`
     """
 
     def __init__(self, *arg, **kwargs):

@@ -69,3 +69,20 @@ The main documentation is in the `msiempy/__init__.py` file.
 
 Format use in docstrings is ReStructuredText.
 
+
+### Code analysis
+
+.. image:: https://app.codacy.com/project/badge/Grade/114821fcf6e14b8eb0f927e0112488c8
+        :target: https://www.codacy.com/gh/mfesiem/msiempy?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mfesiem/msiempy&amp;utm_campaign=Badge_Grade
+        :alt: Codacy Badge
+
+.. image:: https://api.codeclimate.com/v1/badges/0cc21ba8f82394cb05f3/maintainability
+        :target: https://codeclimate.com/github/mfesiem/msiempy/maintainability
+        :alt: Code climate Maintainability
+
+### Error report
+
+Configure log file reporting in the configuration file and and look for ``"ERROR"``.  
+Useful shell command to get simple list of errors::  
+
+        cat /path/to/your/log/file | grep -i error | sort | uniq

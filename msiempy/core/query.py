@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Base query class with timerange handling.  
+Base query class with timerange handling. Define `FilteredQueryList`. 
 """
 
 from abc import abstractproperty
