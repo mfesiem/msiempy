@@ -45,11 +45,9 @@ python3 -m unittest tests.auth.test_event.T.test_add_note
 ### Git flow
 - Commits to `master` branch are trigerring: 
     - Tests on Windows and MacOS and Ubuntu + upload coverage
-
-- New Tags are trigerring:
     - Generate documentation + [publish to gh-pages](https://mfesiem.github.io/docs/msiempy/)
 
-- Commits to `develop` branch are trigerring:
+- Commits to any branch are trigerring:
     - Tests on Ubuntu
     - Generate documentation + publish to gh-pages [under `test` folder](https://mfesiem.github.io/docs/test/msiempy/)
 
@@ -57,7 +55,8 @@ See the github actions workflows for more details.
 
 ### Publish
 
-Use the publish script to push tha package to PyPi and create a new tag, for Unix for more infos:
+Use the publish script to push tha package to PyPi and create a new tag, for Unix only. 
+For more infos:
 ```
 % ./publish.sh -h
 ```

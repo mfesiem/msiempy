@@ -1,8 +1,8 @@
 name: publish-docs
-on:
+on: 
   push:
-    tags:
-      - '*'
+    branches: 
+      - master
 
 jobs:
   publish-docs:
@@ -38,7 +38,7 @@ jobs:
           pydoctor \
            --add-package=msiempy \
             --project-name="McAfee SIEM Python Library" \
-            --html-viewsource-base=https://github.com/$GITHUB_REPOSITORY/tree/$GITHUB_REF \
+            --html-viewsource-base=https://github.com/$GITHUB_REPOSITORY/tree/$GITHUB_SHA \
             --make-html \
             --project-base-dir="$(pwd)" \
             --docformat=restructuredtext \
