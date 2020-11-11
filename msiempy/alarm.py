@@ -16,9 +16,9 @@ class AlarmManager(FilteredQueryList):
 
     Exemples:
         - Acknowledge alarms:
+        
         Print all ``unacknowledged`` alarms filtered by alarm name and event message, then acknowledge the alarms.  
         Filter with alarm match ``'Test alarm'`` and triggering event message match ``'Wordpress'``.  
-        
         .. python::
 
                 from msiempy import AlarmManager, Alarm
@@ -41,6 +41,7 @@ class AlarmManager(FilteredQueryList):
                 print("Acknowledge alarms")
                 for alarm in alarms:
                         alarm.acknowledge()
+
 
     Notes: 
             - The `AlarmManager` filtering feature is an addon to what the SIEM API offers, filters are applied locally as regular expressions.  
