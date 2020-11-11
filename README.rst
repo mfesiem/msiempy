@@ -62,7 +62,7 @@ Installation
 
     pip install msiempy
 
-**Read the [module documentation](https://mfesiem.github.io/docs/msiempy/msiempy.html)**  
+**Read the `module documentation <https://mfesiem.github.io/docs/msiempy/msiempy.html`_**  
 
 Authentication and configuration setup
 --------------------------------------
