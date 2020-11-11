@@ -1,5 +1,3 @@
-![Logo](https://avatars0.githubusercontent.com/u/50667087?s=200&v=4 "Logo") 
-
 .. image:: https://avatars0.githubusercontent.com/u/50667087?s=200&v=4
     :target: https://mfesiem.github.io/docs/msiempy/msiempy.html
     :alt: Nitro Logo
