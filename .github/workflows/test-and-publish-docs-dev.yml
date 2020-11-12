@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
         python-version: ['3.8']
       max-parallel: 1
       fail-fast: false
@@ -41,27 +41,10 @@ jobs:
         run: |
 
           git clone https://github.com/mfesiem/mfesiem.github.io
-          rm -rf ./mfesiem.github.io/docs/test/msiempy
-          mkdir ./mfesiem.github.io/docs/test/msiempy
+          
+          ./doc.sh
 
-          pydoctor \
-           --add-package=msiempy \
-            --project-name="McAfee SIEM Python Library" \
-            --html-viewsource-base=https://github.com/$GITHUB_REPOSITORY/tree/$GITHUB_SHA \
-            --make-html \
-            --project-base-dir="$(pwd)" \
-            --docformat=restructuredtext \
-            --intersphinx=https://docs.python.org/3/objects.inv \
-            --html-output=mfesiem.github.io/docs/test/msiempy/
-
-
-      - name: Generate diagrams
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get install graphviz
-          pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-          mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
-          mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
+          mv ./site/ ./mfesiem.github.io/docs/test/msiempy
 
       - name: Publish documentation to mfesiem.github.io/docs/test/msiempy
         uses: peaceiris/actions-gh-pages@v3
