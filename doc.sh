@@ -42,7 +42,11 @@ echo "[View Documentation](msiempy.html)" >> "${docsfolder}/index.md"
 echo "" >> "${docsfolder}/index.md"
 echo "[Project Home](https://github.com/mfesiem/msiempy)" >> "${docsfolder}/index.md"
 
-# Copy the docs in the versionned folder to the latest
-cp -r "${docsfolder}/" "./docs"
+# Copy the docs in the versionned folder to the latest, avoid same name error on unix
+if [ "$(uname)" = Linux ]; then
+    find "${docsfolder}/" -type f -print0 | sort -zu | xargs -0 cp -ut "./docs" 
+else
+    cp -r "${docsfolder}/" "./docs"
+fi
 
 mkdocs build
