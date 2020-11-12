@@ -44,13 +44,9 @@ jobs:
           
           ./doc.sh
 
-          # Copy the docs in the versionned folder to the latest, avoid same name error on unix and use -ut
-          if [ "$(uname)" = Linux ]; then
-              find "./site/" -type f -print0 | sort -zu | xargs -0 cp -ut "./mfesiem.github.io/docs/test/msiempy/" 
-              # cp -rf "./site/" "./mfesiem.github.io/docs/test/msiempy"
-          else
-              cp -rf "./site/" "./mfesiem.github.io/docs/test/msiempy"
-          fi
+          # Copy the docs in the versionned folder to the latest, avoid same name error on unix
+          cp -rf "./site/" "./mfesiem.github.io/docs/test/msiempy"
+
 
       - name: Publish documentation to mfesiem.github.io/docs/test/msiempy
         uses: peaceiris/actions-gh-pages@v3.7.3
