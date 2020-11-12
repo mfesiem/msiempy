@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Provide watchlist management."""
+"""Provide watchlist management. Define `WatchlistManager` and `Watchlist`. """
 
 import logging
 import collections
@@ -12,6 +12,18 @@ from .core import NitroDict, NitroList
 class WatchlistManager(NitroList):
     """
     List-Like object. Summary of ESM watchlists.
+    
+    Exemples:
+        - Add values to a Watchlist
+
+        >>> from msiempy import WatchlistManager
+        >>> wl_list = WatchlistManager()
+        >>> wl = wl_list.search('test_Watchlist')[0]
+        >>> wl.add_values(['1.1.1.2', '2.2.2.1', '3.3.3.1'])
+
+    See: 
+            Object `Watchlist`
+            
     """
 
     def __init__(self, *args, **kwargs):
@@ -116,6 +128,8 @@ class Watchlist(NitroDict):
     Note:
         Complete list of watchlist fields is loaded once `load_details` is called. 
 
+    See:
+        Object `WatchlistManager`
     """
 
     def __init__(self, *args, **kwargs):

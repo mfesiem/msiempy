@@ -1,4 +1,7 @@
-"""Provide event management.   
+"""Provide event management. Define `EventManager`, `Event`, `FieldFilter`, `GroupFilter`, `GroupedEventManager`, `GroupedEvent`.  
+
+Base object: 
+    - `_QueryExecuteManager`
 """
 
 import time
@@ -155,6 +158,53 @@ class _QueryExecuteManager(FilteredQueryList):
 class EventManager(_QueryExecuteManager):
     """
     List-Like object. Interface to execute a event query.
+
+    Exemples:
+        - Execute an event query 
+
+        Query events according to destination IP and hostname filters, sorted by AlertID.  
+
+        .. python::
+
+                from  msiempy import EventManager, FieldFilter
+                print('Simple event query sorted by AlertID')
+                events = EventManager(
+                        time_range='CURRENT_YEAR',
+                        fields=['SrcIP', 'AlertID'], # SrcIP and AlertID are not queried by default
+                        filters=[
+                                FieldFilter('DstIP', ['0.0.0.0/0',]),
+                                FieldFilter('HostID', ['mail'], operator='CONTAINS')], # Replace "mail" by a test hostname
+                        order=(('ASCENDING', 'AlertID')),
+                        limit=10) # Should be increased to 500 or 1000 once finish testing for better performance
+                events.load_data()
+                print(events)
+                print(events.get_text(fields=['AlertID','LastTime','SrcIP', 'Rule.msg']))
+
+        Note: 
+            You can dump full list of fields usable in query `FieldFilter` with `dump_all_fields.py <https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py>`_ script.  
+
+        - Add a note to events
+
+        Set the note of some events and check if the note is well set.  
+
+        .. python::
+
+                from  msiempy import EventManager, Event
+                events = EventManager(
+                        time_range='CURRENT_YEAR',
+                        limit=2 )
+                events.load_data()
+                for event in events :
+                        event.set_note("Test note")
+                        event.refresh(use_query=False) # Event data will be loaded with ipsGetAlertData API method
+                        assert "Test note" in genuine_event['note'], "Error, the note hasn't been added"
+
+        See: 
+                - `add_wpsan_note.py <https://github.com/mfesiem/msiempy/blob/master/samples/add_wpsan_note.py>`_ script for more on how to add notes to event that triggered alarms.       
+
+    See: 
+            Objects `Event` and `FieldFilter`
+            
     """
 
     # Constants
@@ -173,16 +223,16 @@ class EventManager(_QueryExecuteManager):
             - `fields` (`list[str]`): Query fields
             - `order` (`tuple(direction, field)`): Query order direction and field. Direction can be ``"ASCENDING"`` or ``"DESCENDING"``. 
             - `limit` (int): Max number of rows per query result.
-            - `filters` (`list[tuple(field, [values]) or msiempy.event.FieldFilter or msiempy.event.GroupFilter]`): Query filters
+            - `filters` (list[`tuple(field, [values])` or `FieldFilter` or `GroupFilter`]): Query filters
             - `time_range` (`str`): Query time range. No need to specify ``"CUSTOM"`` if ``start_time`` and ``end_time`` are set.
             - `start_time` (`str` or `datetime`): Query start time
             - `end_time` (`str` or `datetime`): Query end time
 
         Note: 
-            Some minimal fields will always be present. Get the list of possible fields with `msiempy.event.EventManager.get_possible_fields`
+            Some minimal fields will always be present. Get the list of possible fields with `EventManager.get_possible_fields`
 
         See: 
-            `msiempy.event.Event`
+            `Event`
 
         """
         # Calling super constructor : filters, time_range set etc...
@@ -463,6 +513,35 @@ class EventManager(_QueryExecuteManager):
 class GroupedEventManager(_QueryExecuteManager):
     """
     List-Like object. Interface to execute a grouped event query.
+
+    Exemples:
+        - Execute a grouped event query:
+
+        Query the curent day events filtered by `IPSID` grouped by `ScrIP`.  
+
+        .. python::
+
+                from msiempy import GroupedEventManager
+                import pprint
+                query = GroupedEventManager(
+                                time_range='LAST_3_DAYS', 
+                                field='SrcIP', 
+                                filters=[('IPSID', '144116287587483648')]) 
+                query.load_data()
+                # Sort the results by total count
+                results = list(reversed(sorted(query, key=lambda k: int(k['SUM(Alert.EventCount)']))))
+                # Display top 10
+                top10=results[:10]
+                pprint.pprint(top10)
+
+
+    See:
+            Object `GroupedEvent`.  
+
+    Tip:
+            `all_dev.py script <https://github.com/mfesiem/msiempy/blob/master/samples/all_dev.py>`_ can help you list all your datasources IDs (for the required ``IPSID`` filter).  
+
+
     """
 
     def __init__(self, *args, field=None, **kwargs):
@@ -1587,6 +1666,9 @@ class GroupFilter(_QueryFilter):
     Based on ``EsmFilterGroup`` SIEM API object.  
 
     Used to dump groups of filters in the right format.
+
+    See:
+        Object `FieldFilter`
     """
 
     def __init__(self, filters, logic="AND"):
@@ -1594,7 +1676,7 @@ class GroupFilter(_QueryFilter):
         Create a new group filter
 
         Arguments:
-            - `filters` (`list`): a list of filters. Filters can be `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter`
+            - `filters` (`list`): a list of filters. Filters can be `msiempy.FieldFilter` or `msiempy.GroupFilter`
             - `logic` (`str`): ``"AND"`` or ``"OR"``
         """
         super().__init__()
@@ -1626,6 +1708,8 @@ class FieldFilter(_QueryFilter):
     Note:
         Make sure the filter name is valid by checking the result of `EventManager.get_possible_filters` or use the provided script in the sample folder
 
+    See:
+        Object `GroupFilter`
     """
 
     # Declaring static value containing all the possibles

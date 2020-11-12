@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Provide simple configuration object with a few custom properties
+Provide simple configuration object with a few custom properties. Define `NitroConfig`. 
 """
 import logging
 import configparser
@@ -36,7 +36,7 @@ class NitroConfig(configparser.ConfigParser):
         - For Windows: `%APPDATA%\.msiem\conf.ini`
         - For Mac : `$HOME/.msiem/conf.ini`
         - For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`
-        - If `.msiem` folder exists in your current directory : `./.msiem/conf.ini`
+        - If `.msiem` folder exists in your current directory : `./.msiem/conf.ini` (Unix only)
 
     You can setup the configuration by command line with `msiempy_setup.py <https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py>`_ script.
     """

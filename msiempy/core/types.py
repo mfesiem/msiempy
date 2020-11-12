@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Base classes for SIEM interface objects and generic definitions.  
+Base classes for SIEM interface objects and generic definitions. Define `NitroObject`,  `NitroDict` and `NitroList`.
 """
 
 import logging

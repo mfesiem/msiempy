@@ -14,7 +14,7 @@ about = {}
 exec((HERE / "msiempy" / "__version__.py").read_text(), about)
 
 # The text of the README file
-README = (HERE / "README.md").read_text()
+README = (HERE / "README.rst").read_text()
 
 setup(
     name=about['__title__'],
@@ -27,7 +27,7 @@ setup(
     install_requires=REQUIREMENTS,
     license=about['__license__'],
     long_description=README,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     test_suite="tests",
     keywords=about['__keywords__'],
     classifiers=[

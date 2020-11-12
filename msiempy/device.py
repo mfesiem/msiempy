@@ -1,4 +1,4 @@
-"""Provide ESM, Receiver and Datasource management.
+"""Provide ESM, Receiver and Datasource management. Define `ESM`, `DevTree` and `DataSource`. 
 """
 
 import logging
@@ -19,6 +19,22 @@ class ESM(NitroObject):
     Enterprise Security Manager interface.  
     
     Object do not contain data, it's a simple interface to data structures / values returned by the SIEM or helper methods.  
+    
+    Exemples:
+        - Fetch ESM infos
+
+        Print a few esm infos. ESM object has not state for it self, it's a simple interface to data structures / values returned by the SIEM.  
+
+        >>> from msiempy import ESM
+        >>> esm=ESM()
+        >>> esm.version()
+        '11.2.1'
+        >>> esm.recs()
+        [('ERC-1', 144116287587483648)]
+        >>> esm.buildstamp()
+        '11.2.1 20190725050014'
+
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -375,13 +391,32 @@ class DevTree(NitroList):
 
     - `__contains__` method returns:  (`bool`) `True/None` the name or IP matches the provided search term.
 
-    Exemple (list datasources):
+    Exemples:
+        - List Datasources
 
-    >>> from msiempy.device import DevTree
-    >>> devtree = DevTree()
-    >>> print("All Datasources")
-    >>> print(devtree.get_text(fields=["parent_name", "name", "ds_id"]))
+        >>> from msiempy.device import DevTree
+        >>> devtree = DevTree()
+        >>> print("All Datasources")
+        >>> print(devtree.get_text(fields=["parent_name", "name", "ds_id"]))
 
+        The script `all_dev.py <https://github.com/mfesiem/msiempy/blob/master/samples/all_dev.py>`_ can help you list all your datasources. 
+
+        - Add a Datasource 
+
+        >>> from msiempy import DevTree
+        >>> devtree = DevTree()
+        >>> devtree.add({
+        ...     "name": "Test DS",
+        ...     "parent_id": "144116287587483648",
+        ...     "ds_ip": "10.2.2.2",
+        ...     "hostname": "testds.domain.ca",
+        ...     "type_id": "65" }) 
+        {'value': 1385420} # Wait a bit for the request
+        >>> devtree.refresh() # Refresh the DevTree
+
+        See: 
+                Object `DataSource`
+        
 
     Note: 
         Uses internal API methods such as `GRP_GETVIRTUALGROUPIPSLISTDATA` to assemble `DevTree` object.  
@@ -911,13 +946,13 @@ class DevTree(NitroList):
         Arguments:
             - `attr` (`dict`): datasource attributes
 
-        `attr` should contain following keys :
+        `attr` can contain following keys :
             - `client` (`bool`): designate a client datasource (not child)
-            - `name` (`str`): name of datasource (req)
-            - `parent_id` (`str`): id of parent device (req)
+            - `name` (`str`): name of datasource (required)
+            - `parent_id` (`str`): id of parent device (required)
             - `ds_ip` (`str`): ip of datasource (ip or hostname required)
             - `hostname` (`str`): hostname of datasource
-            - `type_id` (`str`): type of datasource (req)
+            - `type_id` (`str`): type of datasource (required)
             - `enabled` (`bool`): enabled or not (default: True)
             - `tz_id` (`str`): timezone of datasource (default UTC: 8)
             - `zone_id` (`str`): numberic ESM id for zone (default: 0)
@@ -982,13 +1017,13 @@ class DevTree(NitroList):
         Arguments:
             - `attr` (`dict`) : datasource attributes
 
-        `attr` should contain following keys :
-            - `parent_id` (`str`): datasource id of the client group datasource
-            - `name` (`str`): name of the client
+        `attr` can contain following keys :
+            - `parent_id` (`str`): datasource id of the client group datasource (required)
+            - `name` (`str`): name of the client (required)
             - `enabled` (`bool`): enabled or not (default: `True`)
-            - `ds_ip` (`str`): IP address for client
+            - `ds_ip` (`str`): IP address for client (ip or hostname required)
             - `hostname` (`str`): hostname for client
-            - `type_id` (`str`): numeric ESM type-id
+            - `type_id` (`str`): numeric ESM type-id (required)
             - `tz_id` (`str`): numeric ESM timezone id or GMT
             - `dorder` (`str`): Date order
             - `maskflag` (`str`):
@@ -1199,7 +1234,9 @@ class DataSource(NitroDict):
         - ``model`` (`str`): model of datasource (e.g. Windows)
         - ``require_tls`` (`str`): Use syslog over TLS
         - ``url`` (`str`): URL of the datasource
-
+    
+    See:
+        Object `DevTree`
     """
     def __init__(self, *args, **kwargs):
         """
