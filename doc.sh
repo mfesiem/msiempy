@@ -15,10 +15,14 @@ set -euo pipefail
 docs=${1:-"./docs"}    
 
 # Install python requirements
+python3 setup.py install
+python3 -m pip install -r requirements.txt
 python3 -m pip install pydoctor mkdocs mkdocs-awesome-pages-plugin
 
 docsfolder="${docs}/$(python3 setup.py -V)"
 mkdir -p "${docsfolder}"
+
+# Run pydoctor build
 
 pydoctor \
     --add-package=msiempy \
@@ -40,17 +44,14 @@ mv ./packages.png "${docsfolder}"
 # Hack the mkdocs index to show msiempy version
 
 project_version="$(python3 -c 'from msiempy import VERSION; print(VERSION)')"
+
 echo "# msiempy ${project_version}" > "${docsfolder}/index.md"
 echo "[View Documentation](msiempy.html)" >> "${docsfolder}/index.md"
 echo "" >> "${docsfolder}/index.md"
 echo "[Project Home](https://github.com/mfesiem/msiempy)" >> "${docsfolder}/index.md"
 
 # Copy the docs in the versionned folder to the latest
-if [ "$(uname)" = Linux ]; then
-    cp -rf "${docsfolder}/*" "${docs}"
-else
-    cp -rf "${docsfolder}/" "${docs}"
-fi
+cp -rf ${docsfolder}/* "${docs}"
 
-
+# Run mkdocs build
 mkdocs build
