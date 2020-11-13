@@ -43,7 +43,7 @@ jobs:
 
           git clone https://github.com/mfesiem/mfesiem.github.io
           
-          ./build_doc.sh
+          ./build_docs.sh
 
           # Copy the docs in the versionned folder to the latest
           cp -rf ./site/* "./mfesiem.github.io/docs/test/msiempy"
