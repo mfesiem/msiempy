@@ -1,5 +1,5 @@
-site_name: msiempy Documentation
-site_description: msiempy Documentation
+site_name: msiempy Documentation Index
+site_description: msiempy Documentation Index
 repo_url: https://github.com/mfesiem/msiempy
 repo_name: GitHub
 plugins:

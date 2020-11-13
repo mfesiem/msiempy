@@ -43,10 +43,10 @@ jobs:
 
           git clone https://github.com/mfesiem/mfesiem.github.io
           
-          ./doc.sh
+          ./build_doc.sh
 
           # Copy the docs in the versionned folder to the latest
-            cp -rf ./site/* "./mfesiem.github.io/docs/test/msiempy"
+          cp -rf ./site/* "./mfesiem.github.io/docs/test/msiempy"
 
       - name: Publish documentation to mfesiem.github.io/docs/test/msiempy
         uses: peaceiris/actions-gh-pages@v3.7.3
