@@ -1,4 +1,4 @@
-  #!/bin/bash
+#!/bin/bash
 # This shell script builds the api docs for msiempy 
 # I've been running it from MacOS but I beleive it's valid on Linux too. 
 
