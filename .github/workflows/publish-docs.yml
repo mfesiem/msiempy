@@ -27,30 +27,16 @@ jobs:
         run: |
           python ./samples/list_request_args.py > ./all_request_args.rst
 
-      - name: Generate documentation
+      - name: Build documentation
         run: |
 
           git clone https://github.com/mfesiem/mfesiem.github.io
 
-          rm -rf ./mfesiem.github.io/docs/msiempy
-          mkdir ./mfesiem.github.io/docs/msiempy
-
-          pydoctor \
-           --add-package=msiempy \
-            --project-name="McAfee SIEM Python Library" \
-            --html-viewsource-base=https://github.com/$GITHUB_REPOSITORY/tree/$GITHUB_SHA \
-            --make-html \
-            --project-base-dir="$(pwd)" \
-            --docformat=restructuredtext \
-            --intersphinx=https://docs.python.org/3/objects.inv \
-            --html-output=./mfesiem.github.io/docs/msiempy
-
-      - name: Generate diagrams
-        run: |
-          sudo apt-get install graphviz
-          pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-          mv ./classes.png ./mfesiem.github.io/docs/msiempy
-          mv ./packages.png ./mfesiem.github.io/docs/msiempy
+          if git describe --exact-match --tags; then
+              ./build_docs.sh -o "./mfesiem.github.io/docs/msiempy" -f
+          else
+              ./build_docs.sh -o "./mfesiem.github.io/docs/msiempy" -d -f
+          fi
 
       - name: Publish documentation to mfesiem.github.io/docs/msiempy
         uses: peaceiris/actions-gh-pages@v3

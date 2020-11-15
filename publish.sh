@@ -35,8 +35,16 @@ while getopts ":hp:" arg; do
             python3 setup.py install
             
             # Figuring version
-            version="$(grep __version__ ./msiempy/__version__.py | cut -d '"' -f 2)"
-        
+            version="$(python3 setup.py -V)"
+            
+            # Generate the index.md file and push it
+            ./build_docs -i -f
+            cp -f "./docs/${version}/index.md" "./docs/index.md"
+            
+            git add ./docs
+            git commit -m "Generate docs/${version}/index.md"
+            git push
+
             # Checking keyword
             keyword=${OPTARG}
 

@@ -39,7 +39,7 @@ jobs:
 
           git clone https://github.com/mfesiem/mfesiem.github.io
           
-          ./build_docs.sh "./mfesiem.github.io/docs/test/msiempy"
+          ./build_docs.sh -o "./mfesiem.github.io/docs/test/msiempy" -d -f
 
       - name: Publish documentation to mfesiem.github.io/docs/test/msiempy
         uses: peaceiris/actions-gh-pages@v3.7.3

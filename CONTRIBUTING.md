@@ -66,16 +66,20 @@ Documentation is automatically generated with [`pydoctor`](https://pydoctor.read
 
 Format use in docstrings is ReStructuredText.
 
+The script `buid_docs.sh` integrate a `mkdocs` index to the `pydoctor` HTML files. 
+This is a hack to documented multiple versions of msiempy. 
+The `index.md` files under `./docs/<version>/index.md` should be kept in the repo for mkdocs to be able to generate the navbar with links to different versions.
 
+
+For more infos:
+```
+% ./build_docs.sh -h
+```
 ### Code analysis
 
-.. image:: https://app.codacy.com/project/badge/Grade/114821fcf6e14b8eb0f927e0112488c8
-        :target: https://www.codacy.com/gh/mfesiem/msiempy?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mfesiem/msiempy&amp;utm_campaign=Badge_Grade
-        :alt: Codacy Badge
+[Codacy](https://www.codacy.com/gh/mfesiem/msiempy?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mfesiem/msiempy&amp;utm_campaign=Badge_Grade)
 
-.. image:: https://api.codeclimate.com/v1/badges/0cc21ba8f82394cb05f3/maintainability
-        :target: https://codeclimate.com/github/mfesiem/msiempy/maintainability
-        :alt: Code climate Maintainability
+[Code climate](https://codeclimate.com/github/mfesiem/msiempy/maintainability)
 
 ### Error report
 

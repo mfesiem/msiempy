@@ -7,16 +7,37 @@
 
 # Will first write the docs under the version's folder, and then overwrites default (lastest in the root folder). 
 # See the mkdocs site under ./site folder 
-# Then it will copy the content to your storage location: The 1rt CLI argument. Or  ./multi_version_site by default
+# Then it will copy the content to your storage location: if passed with -o <path>
 # The storage should not be deleted and you should use the same storage for all versions. ./site will still contain the genrated site
 
+# The 'index.md' files under './docs/<version>/index.md' should be kept in the repo for mkdocs to ba able to generate the navbar with different versions.
+
 # Requirements: graphviz, pydoctor mkdocs mkdocs-awesome-pages-plugin
+# Install python requirements
+# python3 setup.py install
+# python3 -m pip install -r requirements.txt
 # sudo apt-get install graphviz || sudo yum install graphviz || brew install graphviz
 
 # Usage ./build_docs "./mfesiem.github.io/docs/test/msiempy"
 
 # Stop if errors
 set -euo pipefail
+
+IFS=$'\n\t,'
+
+usage(){
+    echo "[USAGE] $0 [-h] [-o <path>] [-f]" 1>&2
+    echo
+    echo "This shell script builds the docs for msiempy. Generates the mkdocs site under './site' folder, allows versionning and include a few handy options. Unix only. "
+    echo
+    echo -e "\t-h\tPrint this help message."
+    echo -e "\t-o\t<path>\tStorage location. The content of the mkdocs+pydoctor site will be copied to this folder. './site'  folder will still contain the genrated site. "
+    echo -e "\t-f\t\tOverwrite the existing 'index.md' files located in the './docs/<version>' folder. Default behaviour will quit if './docs/<version>/index.md' already exists. "
+    echo -e "\t-d\t\tDevelopment mode: do not write under './docs/<version>' but directly to './docs' only. Default behaviour will write to './docs/<version>' "
+    echo -e "\t-i\t\tGenerate only the './docs/<version>/index.md' file and exit. "
+
+    exit -1
+}
 
 function restore_docs_folder()
 {
@@ -30,35 +51,71 @@ function restore_docs_folder()
 
 trap restore_docs_folder EXIT
 
-# The out folder # This should be sychronized with alternative storage.  
-multi_version_site=${1:-"./multi_version_site"}
-mkdir -p "${multi_version_site}"
+multi_version_site=""
+force=false
+devel=false
+index_only=false
 
-# Install python requirements
-python3 setup.py install
-python3 -m pip install -r requirements.txt
-python3 -m pip install pydoctor mkdocs mkdocs-awesome-pages-plugin
+while getopts ":ho:fdi" arg; do
+    case "${arg}" in
+        h) #Print help
+            usage
+            ;;
+
+        o)
+            # The out folder # This should be sychronized with alternative storage.  
+            multi_version_site=${OPTARG}
+            mkdir -p "${multi_version_site}"
+            ;;
+        f)
+            force=true
+            ;;
+        
+        d)
+            devel=true
+            ;;
+
+        i)
+            index_only=true
+            ;;
+
+        *)
+            echo "[ERROR] Syntax mistake calling the script."
+            usage
+            exit
+            ;;
+    esac
+done 
 
 # Figure the project version
 project_version="$(python3 setup.py -V)"
-
-# This folder must exists i.e. docs/0.3.5/
-docs_site_version="./docs/${project_version}"
-mkdir -p "${docs_site_version}"
-
-# Generate diagrams under the ./docs/version folder
-
-pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-mv ./classes.png "${docs_site_version}"
-mv ./packages.png "${docs_site_version}"
 
 # Figure commit ref
 git_sha="$(git rev-parse HEAD)"
 if ! git describe --exact-match --tags; then
     tag="Warning: Not a tagged version."
+    is_tag=0
 else
     git_sha="$(git describe --exact-match --tags)"
     tag="Tag: ${git_sha}."
+    is_tag=1
+fi
+
+# Folder i.e. ./docs/0.3.5/
+if ! [[ ${devel} = true ]]; then
+    docs_folder="./docs/${project_version}"
+else
+    docs_folder="./docs"
+fi
+
+# Create the docs folder if it doesn't exists
+if [ -e "${docs_folder}/index.md" ]; then
+    if ! [[ ${force} = true ]]; then
+        echo "[ERROR] An 'index.md' already exists in ${docs_folder}. Use -f to overwrite. "
+        exit 1
+    fi
+else
+    mkdir -p "${docs_folder}"
 fi
 
 #Figure out branch
@@ -76,23 +133,9 @@ echo "# msiempy ${project_version}
 *${tag}*  
 *Generated from branch ${branch}, on the $(date).*    
 
-# API Docs
+# Documentation
 
 **[View the documentation summary](msiempy.html)** 
-
-Or go directly to one of the following object documentation:
-
--   [ESM](msiempy.ESM.html)
--   [DataSource](msiempy.DataSource.html)
--   [DevTree](msiempy.DevTree.html)
--   [Alarm](msiempy.Alarm.html)
--   [AlarmManager](msiempy.AlarmManager.html)
--   [Event](msiempy.Event.html)
--   [EventManager](msiempy.EventManager.html)
--   [GroupedEventManager](msiempy.GroupedEventManager.html)
--   [Watchlist](msiempy.Watchlist.html)
--   [WatchlistManager](msiempy.WatchlistManager.html)
--   [NitroSession](msiempy.NitroSession.html)
 
 Or navigate: 
 
@@ -104,10 +147,17 @@ Generated by [pydoctor](https://github.com/twisted/pydoctor).
 
 ***
 
-(bellow the readme)
+- [Class diagram](https://mfesiem.github.io/docs/msiempy/classes.png), ([Packages diagram](https://mfesiem.github.io/docs/msiempy/packages.png))
+- [mfesiem.github.io](https://mfesiem.github.io) (generated PDFs and other links)  
 
-${readme}
-" > "${docs_site_version}/index.md"
+Back to [GitHub | README](https://github.com/mfesiem/msiempy/)
+
+" > "${docs_folder}/index.md"
+echo "[INFO] Write docs index to ${docs_folder}/index.md "
+
+if [[ ${index_only} = true ]]; then
+    exit 0
+fi
 
 # Backup docs folder right after creating index.md. Only index.md should be kept here
 if [[ -d ./docs ]]; then
@@ -117,8 +167,8 @@ fi
 # Generate diagrams under the ./docs/version folder
 
 pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-mv ./classes.png "${docs_site_version}"
-mv ./packages.png "${docs_site_version}"
+mv ./classes.png "${docs_folder}"
+mv ./packages.png "${docs_folder}"
 
 # Generate 
 python3 ./samples/list_request_args.py > "./all_request_args.rst"
@@ -134,15 +184,20 @@ pydoctor \
     --project-base-dir="$(pwd)" \
     --docformat=restructuredtext \
     --intersphinx=https://docs.python.org/3/objects.inv \
-    --html-output="${docs_site_version}"
+    --html-output="${docs_folder}"
 
-# Copy the docs in the versionned folder to the latest (root folder)
-cp -rf ${docs_site_version}/* "./docs"
+# Copy the docs from the versionned folder to the latest (root folder). Only if not already there. 
+if ! [ ${docs_folder} = "./docs" ] ; then
+    cp -rf ${docs_folder}/* "./docs"
+fi
 
-# Run mkdocs build, overwrite pydoctor index.html files
+# Run mkdocs build, will overwrite pydoctor index.html files
 mkdocs build
 
 # Copy the docs in the versionned folder to the site with multiples versions
-cp -r ./site/* "${multi_version_site}"
+if [[ -n "${multi_version_site}" ]]; then
+    cp -r ./site/* "${multi_version_site}"
+    echo "[INFO] Site content copied to: ${multi_version_site}"
+fi
 
 restore_docs_folder

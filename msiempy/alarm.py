@@ -19,6 +19,7 @@ class AlarmManager(FilteredQueryList):
         
         Print all ``unacknowledged`` alarms filtered by alarm name and event message, then acknowledge the alarms.  
         Filter with alarm match ``'Test alarm'`` and triggering event message match ``'Wordpress'``.  
+        
         .. python::
 
                 from msiempy import AlarmManager, Alarm

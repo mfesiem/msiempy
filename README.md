@@ -66,7 +66,7 @@ Documentation
 
 Read the latest [documentation](https://mfesiem.github.io/docs/msiempy/msiempy.html).
 
-Navigate the [Index](https://mfesiem.github.io/docs/msiempy/index.html).
+Or navigate the [Index](https://mfesiem.github.io/docs/msiempy/index.html).
 
 Authentication and configuration setup
 ======================================
@@ -106,11 +106,12 @@ To set the password, you can use the
 script. You can also directly paste the password\'s base64 in the config
 file by doing:
 
-
-    >>> import base64 
-    >>> passwd = \'<P@assW0rd>\' \>\>\>
-    print(base64.b64encode(passwd.encode(\'utf-8\')).decode()) UEBhc3NXMHJk
-
+```python
+>>> import base64 
+>>> passwd = 'P@assW0rd'
+>>> print(base64.b64encode(passwd.encode('utf-8')).decode()) 
+UEBhc3NXMHJk
+```
 
 Changelog
 =========
@@ -123,9 +124,7 @@ Contribute
 
 Pull requests are welcome!
 
-Please read the
-    [contributing](https://github.com/mfesiem/msiempy/blob/master/CONTRIBUTING.md)
-    file.
+Please read the [contributing](https://github.com/mfesiem/msiempy/blob/master/CONTRIBUTING.md) file.
 
 Disclaimer
 ==========

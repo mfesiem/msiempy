@@ -8,3 +8,5 @@ pytest-rerunfailures
 pytest-cov
 black
 git+https://github.com/twisted/pydoctor.git
+mkdocs
+mkdocs-awesome-pages-plugin
