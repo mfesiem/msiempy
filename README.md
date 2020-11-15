@@ -41,6 +41,8 @@ Main features
 -   Make direct API calls, via
     [NitroSession](https://mfesiem.github.io/docs/msiempy/msiempy.NitroSession.html)
 
+(*Links are directing to the latest documentation version*)
+
 Known module implementations
 ============================
 
@@ -59,9 +61,12 @@ Installation
 
     pip install -U msiempy
 
-Read the [documentation](https://mfesiem.github.io/docs/msiempy/msiempy.html)
+Documentation
+=============
 
-[Index](https://mfesiem.github.io/docs/msiempy/index.html)
+Read the latest [documentation](https://mfesiem.github.io/docs/msiempy/msiempy.html).
+
+Navigate the [Index](https://mfesiem.github.io/docs/msiempy/index.html).
 
 Authentication and configuration setup
 ======================================

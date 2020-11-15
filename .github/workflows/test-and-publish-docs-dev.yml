@@ -34,19 +34,12 @@ jobs:
           python -m pip install .
           python -m pip show msiempy
 
-      - name: Generate list of NitroSession.request() arguments to include in docstring
-        run: |
-          python ./samples/list_request_args.py > ./all_request_args.rst
-
-      - name: Generate test documentation
+      - name: Build test documentation
         run: |
 
           git clone https://github.com/mfesiem/mfesiem.github.io
           
-          ./build_docs.sh
-
-          # Copy the docs in the versionned folder to the latest
-          cp -rf ./site/* "./mfesiem.github.io/docs/test/msiempy"
+          ./build_docs.sh "./mfesiem.github.io/docs/test/msiempy"
 
       - name: Publish documentation to mfesiem.github.io/docs/test/msiempy
         uses: peaceiris/actions-gh-pages@v3.7.3
