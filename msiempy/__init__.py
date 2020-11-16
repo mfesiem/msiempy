@@ -10,10 +10,7 @@
 
 Welcome to the **msiempy** library documentation. 
 
-Quick links:
-        - `GitHub | README.md <https://github.com/mfesiem/msiempy>`_
-        - `Class diagram <https://mfesiem.github.io/docs/msiempy/classes.png>`_, (`Packages diagram <https://mfesiem.github.io/docs/msiempy/packages.png>`_)
-        - `mfesiem.github.io <https://mfesiem.github.io>`_ (generated PDFs and other links)  
+Back to `GitHub | README.md <https://github.com/mfesiem/msiempy>`_
 
 """        
 
