@@ -538,7 +538,7 @@ class NitroSession:
     The first tuple item is the SIEM API endpoint name.  
     The second item is the JSON string data parameters required for the enpoint call. 
 
-    If the tuple item is a `string.Template` string, it needs to be interpolated with paramaters.  
+    If the tuple item is a `string.Template` string, it needs to be interpolated with paramaters. 
 
     See:
         `NitroSession.request` for a list of all possible calls and usage.  
@@ -639,21 +639,22 @@ class NitroSession:
         All upper cases method names signals to use the private API methods.
 
         Arguments:
-            - `method` : ESM API enpoint name and url formatted parameters
-            - `http`: HTTP method.
-            - `data` : dict data to send
-            - `callback` : function to apply afterwards
-            - `raw` : If true will return the Response object from requests module. No retry when raw=True.
-            - `secure` : If true will not log the content of the request.
-            - `retry` : Number of time the request can be retried
+            - `method` (`str`): ESM API enpoint name and url formatted parameters
+            - `http` (`str`): HTTP method.
+            - `data` (`dict`): POST data to send
+            - `callback` (`callable`): function to apply afterwards
+            - `raw` (`bool`): If true will return the Response object from requests module. No retry when raw=True.
+            - `secure` (`bool`): If true will not log the content of the request.
+            - `retry` (`int`): Number of time the request can be retried
 
         Returns:
             - a `dict`, `list` or `str` object.
             - the `resquest.Response` object if raw=True
+            - `result.text` if `requests.HTTPError`,
             - `None` if Timeout or TooManyRedirects if raw=False
 
         Raises:
-            - `msiempy.core.session.NitroError` if any `HTTPError`
+            - `msiempy.NitroError` if any `HTTPError`
 
         Note: 
             Private API is under ``/ess/`` and public api is under ``/rs/esm``
@@ -865,12 +866,12 @@ class NitroSession:
         Also handles auto-login.
 
         Arguments:
-            - `request`: Name keyword corresponding to the request name in `NitroSession.PARAMS` mapping.
-            - `http`: HTTP method.
-            - `callback` : function to apply afterwards
-            - `raw` : If true will return the Response object from requests module.
-            - `secure` : If true will not log the content of the request.
-            - `retry` : Number of time the request can be retried
+            - `request` (`str`): Name keyword corresponding to the request name in `NitroSession.PARAMS` mapping.
+            - `http` (`str`): HTTP method.
+            - `callback` (`callable`): function to apply afterwards
+            - `raw` (`bool`): If true will return the Response object from requests module.
+            - `secure` (`bool`): If true will not log the content of the request.
+            - `retry` (`int`): Number of time the request can be retried
 
         Interpolation parameters :
             - `**kwargs` : Interpolation parameters that will be match to `NitroSession.PARAMS` templates. Dynamic keyword arguments.
@@ -901,7 +902,7 @@ class NitroSession:
         """
 
         log.debug(
-            "Calling nitro request : {} kwargs={}".format(
+            "Calling api_request : {} kwargs={}".format(
                 str(request),
                 "***"
                 if "secure" in kwargs and kwargs["secure"] == True
@@ -914,6 +915,8 @@ class NitroSession:
         if data != None:
             if isinstance(data, Template):
                 data = data.substitute(**kwargs)
+
+            # Build the data with ast parser as the values might not be always valid JSON, using sigle quotes
             data = ast.literal_eval(data.replace("\n", "").replace("\t", ""))
 
         if method != None and isinstance(method, Template):
@@ -943,10 +946,15 @@ class NitroSession:
         Private method. Inits the session's logger settings based on params
         All objects should be able to log stuff, so the logger is globaly accessible
         """
+        logging.captureWarnings(True)
 
         log = logging.getLogger("msiempy")
+        
+        warn_logger = logging.getLogger('py.warnings')
 
         log.setLevel(logging.DEBUG)
+        warn_logger.setLevel(logging.DEBUG)
+        warn_logger.setFormatter(logging.Formatter("%(levelname)s - %(message)s"))
 
         std = logging.StreamHandler()
         std.setLevel(logging.DEBUG)
@@ -962,6 +970,7 @@ class NitroSession:
         log.handlers = []
 
         log.addHandler(std)
+        warn_logger.addHandler(std)
 
         if logfile:
             fh = logging.FileHandler(logfile)
@@ -970,6 +979,7 @@ class NitroSession:
                 logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
             )
             log.addHandler(fh)
+            warn_logger.addHandler(fh)
 
         if verbose and quiet:
             log.warning(
@@ -1051,5 +1061,3 @@ class NitroError(Exception):
     """
 
     pass
-
-Session=NitroSession
