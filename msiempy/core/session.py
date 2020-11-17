@@ -954,7 +954,6 @@ class NitroSession:
 
         log.setLevel(logging.DEBUG)
         warn_logger.setLevel(logging.DEBUG)
-        warn_logger.setFormatter(logging.Formatter("%(levelname)s - %(message)s"))
 
         std = logging.StreamHandler()
         std.setLevel(logging.DEBUG)
