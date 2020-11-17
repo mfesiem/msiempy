@@ -2,7 +2,7 @@ name: test
 on: 
   push:
     branches: 
-      - master
+      - main
 jobs: 
   test:
     name: ${{ matrix.os }} py${{ matrix.python-version }}

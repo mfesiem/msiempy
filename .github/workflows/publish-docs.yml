@@ -2,7 +2,7 @@ name: publish-docs
 on: 
   push:
     branches: 
-      - master
+      - main
 
 jobs:
   publish-docs:
@@ -44,5 +44,5 @@ jobs:
           publish_branch: 'master'
           user_name: 'Github Actions'
           user_email: "actions@github.com"
-          commit_message: "Generate documentation - master"
+          commit_message: "Generate documentation - main"
           enable_jekyll: true
