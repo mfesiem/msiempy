@@ -1,0 +1,48 @@
+name: publish-docs
+on: 
+  push:
+    branches: 
+      - master
+
+jobs:
+  publish-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get install graphviz || sudo yum install graphviz || brew install graphviz
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -r requirements.txt
+          python -m pip install .
+          python -m pip show msiempy
+
+      - name: Build documentation
+        run: |
+
+          git clone https://github.com/mfesiem/mfesiem.github.io
+
+          if git describe --exact-match --tags; then
+              ./build_docs.sh -o "./mfesiem.github.io/docs/msiempy" -f
+          else
+              ./build_docs.sh -o "./mfesiem.github.io/docs/msiempy" -d -f
+          fi
+
+      - name: Publish documentation to mfesiem.github.io/docs/msiempy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          deploy_key: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
+          external_repository: mfesiem/mfesiem.github.io
+          publish_dir: mfesiem.github.io
+          publish_branch: 'master'
+          user_name: 'Github Actions'
+          user_email: "actions@github.com"
+          commit_message: "Generate documentation - master"
+          enable_jekyll: true

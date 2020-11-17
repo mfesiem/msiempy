@@ -1,37 +1,52 @@
 name: test
 on: 
-  schedule:
-    - cron:  '0 0 1,7,15,23 * *'
+  push:
+    branches: 
+      - master
 jobs: 
-
   test:
     name: ${{ matrix.os }} py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }} 
 
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
-        python-version: ['3.6','3.7','3.8']
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.6','3.7','3.8','3.9', '3.10']
       max-parallel: 1
-      fail-fast: false
+      fail-fast: true
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          # Fetches entire history, so we can analyze commits since last tag
+          fetch-depth: 0
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -r requirements.txt
           python -m pip install .
           python -m pip show msiempy
-      
+
       - name: Setup msiempy config
         run: python ./samples/msiempy_setup.py --set esm host ${{ secrets.esmhost }} --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
       
       - name: Run tests
-        run: pytest --reruns 1 --reruns-delay 1
+        run: python -m pytest --cov=./ --cov-report=xml --reruns 5 --reruns-delay 30
       
-        
+      - name: Upload code coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8'
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.xml
+          name: msiempy-code-coverage
+          yml: ./codecov.yml 
+          fail_ci_if_error: true
+
+      - name: Build msiempy
+        run: python setup.py --quiet build check sdist bdist_wheel

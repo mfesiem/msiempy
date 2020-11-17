@@ -1,10 +1,10 @@
-name: publish-test-docs-only
+name: test-and-publish-docs-dev
 on: 
   push:
     branches: 
-      - develop
+      - '*'
 jobs: 
-  deploy:
+  test-and-publish-docs-dev:
     name: ${{ matrix.os }} py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }} 
 
@@ -20,6 +20,7 @@ jobs:
         with:
           # Fetches entire history, so we can analyze commits since last tag
           fetch-depth: 0
+          
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
@@ -27,29 +28,21 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install graphviz
-          python -m pip install --upgrade pip
+          sudo apt-get install graphviz || sudo yum install graphviz || brew install graphviz
+          python -m pip install --upgrade pip setuptools wheel
           python -m pip install -r requirements.txt
           python -m pip install .
           python -m pip show msiempy
 
-      - name: Generate test documentation
+      - name: Build test documentation
         run: |
-          python3 -m pdoc msiempy --output-dir docs_tmp --html --force --template-dir ./.pdoc_templates
-          
-          git clone https://github.com/mfesiem/mfesiem.github.io
-          rm -rf ./mfesiem.github.io/docs/test/msiempy
-          cp -r ./docs_tmp/msiempy mfesiem.github.io/docs/test/
 
-          # Ignore any errors on diagram generation
-          set +e
-          pyreverse -s 1 -f PUB_ONLY -o png -m y msiempy
-          mv ./classes.png ./mfesiem.github.io/docs/test/msiempy
-          mv ./packages.png ./mfesiem.github.io/docs/test/msiempy
-          set -e
+          git clone https://github.com/mfesiem/mfesiem.github.io
+          
+          ./build_docs.sh -o "./mfesiem.github.io/docs/test/msiempy" -d -f
 
       - name: Publish documentation to mfesiem.github.io/docs/test/msiempy
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v3.7.3
         with:
           deploy_key: ${{ secrets.MFESIEM_GITHUB_IO_PRIVATE_KEY }}
           external_repository: mfesiem/mfesiem.github.io
@@ -57,7 +50,17 @@ jobs:
           publish_branch: 'master'
           user_name: 'Github Actions'
           user_email: "actions@github.com"
-          commit_message: "Generate documentation - develop"
+          commit_message: "Generate documentation - (under test folder)"
           enable_jekyll: true
+      
+      - name: Setup msiempy config
+        run: python ./samples/msiempy_setup.py --set esm host ${{ secrets.esmhost }} --set esm user NGCP --set esm passwd ${{ secrets.esmpass }} --set general timeout 60
+      
+      - name: Run tests
+        run: python -m pytest --cov=./ --cov-report=xml --reruns 5 --reruns-delay 1
+
+      - name: Build msiempy
+        run: python setup.py --quiet build check sdist bdist_wheel
+
 
       
