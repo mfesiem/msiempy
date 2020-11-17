@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Provide watchlist management."""
+"""Provide watchlist management. Define `WatchlistManager` and `Watchlist`. """
 
 import logging
 import collections
@@ -12,6 +12,18 @@ from .core import NitroDict, NitroList
 class WatchlistManager(NitroList):
     """
     List-Like object. Summary of ESM watchlists.
+    
+    Exemples:
+        - Add values to a Watchlist
+
+        >>> from msiempy import WatchlistManager
+        >>> wl_list = WatchlistManager()
+        >>> wl = wl_list.search('test_Watchlist')[0]
+        >>> wl.add_values(['1.1.1.2', '2.2.2.1', '3.3.3.1'])
+
+    See: 
+            Object `Watchlist`
+            
     """
 
     def __init__(self, *args, **kwargs):
@@ -60,12 +72,12 @@ class WatchlistManager(NitroList):
         Create a static watchlist.
 
         Arguments:   
-            - `name` (str): Name of the watchlist
-            - `wl_type` (str): Watchlist data type
+            - `name` (`str`): Name of the watchlist
+            - `wl_type` (`str`): Watchlist data type
         
         Note:
             Get the list of types with: `msiempy.watchlist.WatchlistManager.get_wl_types`
-            Most common types are: "IPAddress", "Hash", "SHA1", "DSIDSigID", "Port", "MacAddress", "NormID", "AppID", "CommandID", "DomainID", "HostID", "ObjectID", "Filename", "File_Hash".
+            Most common types are: ``"IPAddress"``, ``"Hash"``, ``"SHA1"``, ``"DSIDSigID"``, ``"Port"``, ``"MacAddress"``, ``"NormID"``, ``"AppID"``, ``"CommandID"``, ``"DomainID"``, ``"HostID"``, ``"ObjectID"``, ``"Filename"``, ``"File_Hash"``.
         """
         for wl in self.data:
             if wl.get("name") == name:
@@ -79,7 +91,7 @@ class WatchlistManager(NitroList):
         Remove watchlist(s).
         
         Arguments:
-            - `wl_id_list` (list of int): list of watchlist IDs. Example: C{[1, 2, 3]}.
+            - `wl_id_list` (`list[int]`): list of watchlist IDs. Example: `[1, 2, 3]`.
 
         """
         self.nitro.request("remove_watchlists", wl_id_list=wl_id_list)
@@ -116,6 +128,8 @@ class Watchlist(NitroDict):
     Note:
         Complete list of watchlist fields is loaded once `load_details` is called. 
 
+    See:
+        Object `WatchlistManager`
     """
 
     def __init__(self, *args, **kwargs):

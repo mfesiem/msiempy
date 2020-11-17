@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Provide simple configuration object with a few custom properties
+Provide simple configuration object with a few custom properties. Define `NitroConfig`. 
 """
 import logging
 import configparser
@@ -16,8 +16,7 @@ class NitroConfig(configparser.ConfigParser):
     """
     `configparser.ConfigParser` parser object.  
 
-    Handles the configuration. Reads the config file `.msiem/conf.ini` and make accessible it's values throught object properties.
-    Additionnal 
+    Handles the configuration. Reads the config file `.msiem/conf.ini` and make accessible it's values throught object properties.  
 
     Default configuration file should look like this. Authentication is left empty::
 
@@ -37,7 +36,7 @@ class NitroConfig(configparser.ConfigParser):
         - For Windows: `%APPDATA%\.msiem\conf.ini`
         - For Mac : `$HOME/.msiem/conf.ini`
         - For Linux : `$XDG_CONFIG_HOME/.msiem/conf.ini` or : `$HOME/.msiem/conf.ini`
-        - If `.msiem` folder exists in your current directory : `./.msiem/conf.ini`
+        - If `.msiem` folder exists in your current directory : `./.msiem/conf.ini` (Unix only)
 
     You can setup the configuration by command line with `msiempy_setup.py <https://github.com/mfesiem/msiempy/blob/master/samples/msiempy_setup.py>`_ script.
     """
@@ -146,80 +145,56 @@ class NitroConfig(configparser.ConfigParser):
     @property
     def user(self):
         """
-        Config value of::
-        
-            [esm]
-            user=
+        Config value section "esm" optiom "user"
         """
         return self.get("esm", "user")
 
     @property
     def host(self):
         """
-        Config value of::
-        
-            [esm]
-            host=
+        Config  section "esm" option "host"
         """
         return self.get("esm", "host")
 
     @property
     def passwd(self):
         """
-        Config value of::
-        
-            [esm]
-            passwd=
+        Config value section "esm" option "passwd"
         """
         return self.get("esm", "passwd")
 
     @property
     def verbose(self):
         """
-        Config value of::
-        
-            [general]
-            verbose=
+        Config value section "general" option "verbose"
         """
         return self.getboolean("general", "verbose")
 
     @property
     def quiet(self):
         """
-        Config value of::
-        
-            [general]
-            quiet=
+        Config value section "general" option "quiet"
         """
         return self.getboolean("general", "quiet")
 
     @property
     def logfile(self):
         """
-        Config value of::
-        
-            [general]
-            logfile=
+        Config value section "general" option "logfile"
         """
         return self.get("general", "logfile")
 
     @property
     def timeout(self):
         """
-        Config value of::
-        
-            [general]
-            timeout=
+        Config value section "general" option "timeout"
         """
         return self.getint("general", "timeout")
 
     @property
     def ssl_verify(self):
         """
-        Config value of::
-        
-            [general]
-            ssl_verify=
+        Config value section "general" option "ssl_verify"
         """
         return self.getboolean("general", "ssl_verify")
 

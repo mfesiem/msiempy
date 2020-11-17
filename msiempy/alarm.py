@@ -1,4 +1,4 @@
-"""Provide alarm management.  
+"""Provide alarm management. Define `AlarmManager` and `Alarm`. 
 """
 import collections
 import logging
@@ -12,7 +12,44 @@ from .core.utils import regex_match, dehexify
 
 class AlarmManager(FilteredQueryList):
     """
-    List-Like object. Interface to query and manage alarms.
+    List-Like object. Interface to query and manage alarms.  
+
+    Exemples:
+        - Acknowledge alarms:
+        
+        Print all ``unacknowledged`` alarms filtered by alarm name and event message, then acknowledge the alarms.  
+        Filter with alarm match ``'Test alarm'`` and triggering event message match ``'Wordpress'``.  
+        
+        .. python::
+
+                from msiempy import AlarmManager, Alarm
+                # Make an alarm query
+                alarms=AlarmManager(
+                        time_range='CURRENT_YEAR',
+                        status_filter='unacknowledged', # passed to alarmGetTriggeredAlarms
+                        filters=[('alarmName', 'Test alarm')], # Regex  
+                        event_filters=[('ruleName','Wordpress')], # Regex  
+                        page_size=5 # Should be increased to 500 or 1000 once finish testing for better performance.
+                ) 
+                # Load the data into the list
+                alarms.load_data() 
+                # Print results
+                print("Alarm list: ")
+                print(alarms)
+                print(alarms.get_text(
+                        fields=['id','triggeredDate','acknowledgedDate', 'alarmName', 'acknowledgedUsername']))
+                # Acknowledge alarms
+                print("Acknowledge alarms")
+                for alarm in alarms:
+                        alarm.acknowledge()
+
+
+    Notes: 
+            - The `AlarmManager` filtering feature is an addon to what the SIEM API offers, filters are applied locally as regular expressions.  
+
+    See: 
+        `Alarm`
+
     """
 
     def __init__(
@@ -28,7 +65,7 @@ class AlarmManager(FilteredQueryList):
             - `filters` (`list[tuple(field, [values])]`):  Filters applied to `Alarm` objects. A single `tuple` is also accepted.
             - `event_filters` (`list[tuple(field, [values])]`): Filters applied to `Event` objects. A single `tuple` is also accepted.
             - `time_range` (`str`): Query time range. String representation of a time range.
-            - `start_time (`str` or a `datetime`): Query start time
+            - `start_time` (`str` or a `datetime`): Query start time
             - `end_time` (`str` or a `datetime`): Query end time
         
         Note:
@@ -112,7 +149,7 @@ class AlarmManager(FilteredQueryList):
 
         Arguments :
 
-        - `afilter` : Can be a a tuple `(field, [values])` or `(field, value)` or `str` 'field=value'
+        - `afilter` : Can be a a tuple `(field, [values])` or `(field, value)` or `str` ``'field=value'``
 
         Filters format is `tuple(field, [values])`.
         """
@@ -207,7 +244,7 @@ class AlarmManager(FilteredQueryList):
             `msiempy.alarm.AlarmManager`
         """
 
-        items, completed = self.qry_load_data(**kwargs)
+        items, completed = self._qry_load_data(**kwargs)
         # Casting items to Alarms
         alarms = [Alarm(adict=item) for item in items]
 
@@ -228,7 +265,7 @@ class AlarmManager(FilteredQueryList):
         self.data = alarms
         return self
 
-    def qry_load_data(
+    def _qry_load_data(
         self,
         workers=10,
         alarms_details=True,
@@ -371,6 +408,9 @@ class Alarm(NitroDict):
         - ``alarmName`` : The name of the alarm that was triggered
         - ``events`` : The events that triggered the alarm
         - **And others**
+
+    See:
+        Object `AlarmManager`
     """
 
     def __init__(self, *arg, **kwargs):
@@ -604,7 +644,7 @@ class Alarm(NitroDict):
 
         Arguments:
             - `use_priv`: (`bool`): Use the private API methods to retreive the INFO, will use it anyway with ESM v10.x. because it's the only way to get the trigerring event ID.
-            Will only load the details of the first triggering event.
+              Will only load the details of the first triggering event.
 
         Note:
             It replace empty strings by `None`
