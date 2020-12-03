@@ -36,10 +36,10 @@ from .core.query import FilteredQueryList as deprecated_FilteredQueryList # Depr
 from .core.types import NitroList as deprecated_NitroList # Deprecated, Should not be used
 from ._deprecation import DeprecationHelper
 _FilteredQueryList = DeprecationHelper(deprecated_FilteredQueryList, 
-    "The direct usage of FilteredQueryList is not supported, please use a concrete class. The class msiempy.FilteredQueryList might be removed in the future. ")
+    "The direct usage of FilteredQueryList is not supported, please use a concrete class or msiempy.core.query.FilteredQueryList. This import might be removed in the future.")
 FilteredQueryList = _FilteredQueryList
 _NitroList = DeprecationHelper(deprecated_NitroList, 
-    "The usage of NitroList is not supported, please use a concrete class or import directly NitroList from msiempy.core.types. The class msiempy.NitroList might be removed in the future. ")
+    "The usage of NitroList is not supported, please use a manager class or msiempy.core.types.NitroList. This import might be removed in the future.")
 NitroList = _NitroList
 
 # Objects part of the public API of the library
