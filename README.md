@@ -66,8 +66,6 @@ Documentation
 
 Read the latest [documentation](https://mfesiem.github.io/docs/msiempy/msiempy.html).
 
-Or navigate the [Index](https://mfesiem.github.io/docs/msiempy/index.html).
-
 Authentication and configuration setup
 ======================================
 

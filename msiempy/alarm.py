@@ -5,49 +5,50 @@ import logging
 
 log = logging.getLogger("msiempy")
 
-from .core import NitroDict, FilteredQueryList
-from .event import Event, EventManager
-from .core.utils import regex_match, dehexify
+from .core.types import NitroDict
+from .core.query import FilteredQueryList
 
+from .core.utils import regex_match, dehexify
+from .event import Event, EventManager
 
 class AlarmManager(FilteredQueryList):
     """
     List-Like object. Interface to query and manage alarms.  
 
     Exemples:
-        - Acknowledge alarms:
+          - Acknowledge alarms:
         
-        Print all ``unacknowledged`` alarms filtered by alarm name and event message, then acknowledge the alarms.  
-        Filter with alarm match ``'Test alarm'`` and triggering event message match ``'Wordpress'``.  
-        
-        .. python::
+            Print all ``unacknowledged`` alarms filtered by alarm name and event message, then acknowledge the alarms.  
+            Filter with alarm match ``'Test alarm'`` and triggering event message match ``'Wordpress'``.  
+            
+            .. python::
 
-                from msiempy import AlarmManager, Alarm
-                # Make an alarm query
-                alarms=AlarmManager(
-                        time_range='CURRENT_YEAR',
-                        status_filter='unacknowledged', # passed to alarmGetTriggeredAlarms
-                        filters=[('alarmName', 'Test alarm')], # Regex  
-                        event_filters=[('ruleName','Wordpress')], # Regex  
-                        page_size=5 # Should be increased to 500 or 1000 once finish testing for better performance.
-                ) 
-                # Load the data into the list
-                alarms.load_data() 
-                # Print results
-                print("Alarm list: ")
-                print(alarms)
-                print(alarms.get_text(
-                        fields=['id','triggeredDate','acknowledgedDate', 'alarmName', 'acknowledgedUsername']))
-                # Acknowledge alarms
-                print("Acknowledge alarms")
-                for alarm in alarms:
-                        alarm.acknowledge()
+                    from msiempy import AlarmManager, Alarm
+                    # Make an alarm query
+                    alarms=AlarmManager(
+                            time_range='CURRENT_YEAR',
+                            status_filter='unacknowledged', # passed to alarmGetTriggeredAlarms
+                            filters=[('alarmName', 'Test alarm')], # Regex  
+                            event_filters=[('ruleName','Wordpress')], # Regex  
+                            page_size=5 # Should be increased to 500 or 1000 once finish testing for better performance.
+                    ) 
+                    # Load the data into the list
+                    alarms.load_data() 
+                    # Print results
+                    print("Alarm list: ")
+                    print(alarms)
+                    print(alarms.get_text(
+                            fields=['id','triggeredDate','acknowledgedDate', 'alarmName', 'acknowledgedUsername']))
+                    # Acknowledge alarms
+                    print("Acknowledge alarms")
+                    for alarm in alarms:
+                            alarm.acknowledge()
 
 
-    Notes: 
-            - The `AlarmManager` filtering feature is an addon to what the SIEM API offers, filters are applied locally as regular expressions.  
+    :Note: 
+            The `AlarmManager` filtering feature is an addon to what the SIEM API offers, **filters are applied locally as regular expressions**.  
 
-    See: 
+    :See: 
         `Alarm`
 
     """
@@ -58,18 +59,15 @@ class AlarmManager(FilteredQueryList):
         """
         Create a new alarm query
 
-        Arguments:
+        :Parameters:
             - `status_filter` (`str`): status of the alarms to query. `status_filter` is not a filter like other cause it's computed on the SIEM side.
-                Accepted values : ``"acknowledged"``, ``"unacknowledged"``, ``""`` or `None` (Default value = ``""``).
+              Accepted values : ``"acknowledged"``, ``"unacknowledged"``, ``""`` or `None` (Default value = ``""``).
             - `page_size` (`int`): max number of rows per query.
             - `filters` (`list[tuple(field, [values])]`):  Filters applied to `Alarm` objects. A single `tuple` is also accepted.
             - `event_filters` (`list[tuple(field, [values])]`): Filters applied to `Event` objects. A single `tuple` is also accepted.
             - `time_range` (`str`): Query time range. String representation of a time range.
             - `start_time` (`str` or a `datetime`): Query start time
             - `end_time` (`str` or a `datetime`): Query end time
-        
-        Note:
-            Unlike `EventManager`, `filters` and `event_filters` ** are computed after the data loaded with regex matching.**
         """
 
         # Declaring attributes before calling super() because it would overwrite values
@@ -178,13 +176,10 @@ class AlarmManager(FilteredQueryList):
             self._alarm_filters.append((afilter[0], values))
             added = True
 
-    @property
-    def event_filters(self):
-        """Event related filters."""
+    def _get_event_filters(self):
         return self._event_filters
 
-    @event_filters.setter
-    def event_filters(self, filters):
+    def _set_event_filters(self, filters):
         if isinstance(filters, list):
             for f in filters:
                 self.add_event_filter(f)
@@ -199,12 +194,14 @@ class AlarmManager(FilteredQueryList):
             raise AttributeError(
                 "Illegal type for the filter object, it must be a list, a tuple or None."
             )
+    event_filters = property(fget=_get_event_filters, fset=_set_event_filters)
+    """Event related filters."""
 
     def add_event_filter(self, afilter):
         """
         Add a event filter to the query.
 
-        Arguments:
+        :Parameters:
             - `afilter` : Can be a a `tuple(field, [values])` or `tuple(field, value)` or `str` like ``'field=value'``.  
 
         """
@@ -229,19 +226,19 @@ class AlarmManager(FilteredQueryList):
         Default behaviour will load all alarms informations. Meaning that foreach alarms,
         the full details is loaded, then the trigerring event details is loaded.
 
-        Arguments:
+        :Parameters:
             - `events_details` (`bool`): Load detailed events infos. (Default value = `True`). If `False`, no detailed `events` will be loaded. Only `str` representation for SIEM 10.x and minimal events records from SIEM 11.x.
             - `alarms_details` (`bool`): Load detailed alarms infos. (Default value = `True`). If `False`, only return ``alarmGetTriggeredAlarms`` infos, no information on trigerring events at all is present.  
             - `pages` (`int`): Number of pages to load. (Default value = 1)
             - `workers` (`int`): Number of asynchronous workers. (Default value = 10)
-            - `use_query` (`bool`): `Uses` the query module to retreive event data. Only works with SIEM v11.2.1 or greater.
-                Default behaviour will call `ipsGetAlertData` to retreive the complete event definition. (Default value = `False`)
-            - `extra_fields` (`list[str]`):  Applicable if ``use_query=True``. Additionnal event fields to load in the query. See : `msiempy.event.EventManager`
+            - `use_query` (`bool`): Use the query module to retreive event data. Only works with SIEM v11.2.1 or greater.
+              Default behaviour will call ``ipsGetAlertData`` to retreive the complete event definition. (Default value = `False`)
+            - `extra_fields` (`list[str]`):  Applicable if ``use_query=True``. Additionnal event fields to load in the query. See : `EventManager`
         
         .. - `page_number` (`int`): Page number. (Default value = 1). Do not touch if you're using `pages` parameter
 
-        Returns:
-            `msiempy.alarm.AlarmManager`
+        :Returns:
+            `AlarmManager`
         """
 
         items, completed = self._qry_load_data(**kwargs)
@@ -262,7 +259,8 @@ class AlarmManager(FilteredQueryList):
         if "page_number" not in kwargs:
             log.info(str(len(alarms)) + " alarms are matching your filter(s)")
 
-        self.data = alarms
+        self.data.clear()
+        self.data.extend(alarms)
         return self
 
     def _qry_load_data(
@@ -286,7 +284,7 @@ class AlarmManager(FilteredQueryList):
             - `alarms_details` : Load detailed alarms infos. If `False`, only a couple values are loaded, no `events` infos.
             - `events_details` : Load detailed events infos. If `False`, no detailed `events` will be loaded only `str` representation.
             - `use_query` : Uses the query module to retreive event data. Only works with SIEM v11.2.1 or greater.
-            - `extra_fields` :  Only when `use_query=True`. Additionnal event fields to load in the query. See : `msiempy.event.EventManager`
+            - `extra_fields` :  Only when `use_query=True`. Additionnal event fields to load in the query. See : `EventManager`
             - `page_number` : Page number, default to 1. Do not touch if you're using `pages` parameter
 
         Returns : `tuple` : ( Results : `list` , Status of the query : `completed` )
@@ -416,7 +414,7 @@ class Alarm(NitroDict):
     def __init__(self, *arg, **kwargs):
         """Create a new alarm representation
         
-        Arguments:
+        :Parameters:
             - `adict`: Alarm parameters
             - `id`: The alarm ID to instanciate. Will load informations
 
@@ -467,7 +465,7 @@ class Alarm(NitroDict):
         "domain",
         "ipsId",
     ]
-    """Few Events fields names can be automatically added as event's filters when passing to `AlarmManager()`'s `filter` argument. See `msiempy.event.Event`.  """
+    """Few Events fields names can be automatically added as event's filters when passing to `AlarmManager()`'s `filter` argument. See `Event`.  """
 
     ALARM_DEFAULT_FIELDS = [
         "id",
@@ -527,9 +525,9 @@ class Alarm(NitroDict):
         Retreive the complete trigerring Event(s) objects from an Alarm.
         This methos is automatically called automatically by default when calling `load_data()`.
         
-        Arguments:
+        :Parameters:
             - `use_query` (`bool`): Uses the query module to retreive the event(s) data. Only works with SIEM v 11.2 or greater.
-                Default behaviour will call ``ipsGetAlertData`` to retreive the complete event definition.
+              Default behaviour will call ``ipsGetAlertData`` to retreive the complete event definition.
             - `extra_fields` (`list[str]`): Only when `use_query=True`. Additionnal event fields to load in the query. See: `EventManager`
             - `workers` (`int`): The number of asynchronous workers.
 
@@ -612,7 +610,7 @@ class Alarm(NitroDict):
 
     def map_alarm_int_fields(self, alarm_details):
         """
-        Map the internal ESM field names to msiempy style with `msiempy.alarm.Alarm.ALARM_FIELDS_MAP`.
+        Map the internal ESM field names to msiempy style with `Alarm.ALARM_FIELDS_MAP`.
         Converts "T" and "F" to `True` and `False` and handle None values.
         """
 
@@ -642,7 +640,7 @@ class Alarm(NitroDict):
         """
         Gets the alarm parameters based on an ID.  
 
-        Arguments:
+        :Parameters:
             - `use_priv`: (`bool`): Use the private API methods to retreive the INFO, will use it anyway with ESM v10.x. because it's the only way to get the trigerring event ID.
               Will only load the details of the first triggering event.
 
