@@ -25,16 +25,18 @@ class NitroSession:
 
     See `api_request` and `request` for usage.
     
-    :ivar session: Underlying `requests.Session` object. 
-    :ivar config: `NitroConfig` object.  
-    :ivar login_info: Login user infos as returned by ``login`` API method.
+    :Variables:
+        - `session`: Underlying `requests.Session` object. 
+        - `config`: `NitroConfig` object.  
+        - `login_info`: Login user infos as returned by ``login`` API method.
+
     """
 
     def __init__(self, config=None):
         """
         Create or get the ESM session
 
-        Arguments:
+        :Parameters:
             - `config` (`msiempy.core.config.NitroConfig`): Config object. Find default config if `None`.
         """
 
@@ -638,7 +640,7 @@ class NitroSession:
 
         All upper cases method names signals to use the private API methods.
 
-        Arguments:
+        :Parameters:
             - `method` (`str`): ESM API enpoint name and url formatted parameters
             - `http` (`str`): HTTP method.
             - `data` (`dict`): POST data to send
@@ -647,31 +649,30 @@ class NitroSession:
             - `secure` (`bool`): If true will not log the content of the request.
             - `retry` (`int`): Number of time the request can be retried
 
-        Returns:
+        :Returns:
             - a `dict`, `list` or `str` object.
             - the `resquest.Response` object if raw=True
             - `result.text` if `requests.HTTPError`,
             - `None` if Timeout or TooManyRedirects if raw=False
 
-        Raises:
+        :Raises:
             - `msiempy.NitroError` if any `HTTPError`
 
-        Note: 
+        :Note: 
             Private API is under ``/ess/`` and public api is under ``/rs/esm``
 
-        Exemple:
-
-        .. python::
-        
-            from msiempy import NitroSession
-            s = NitroSession()
-            s.login()
-            # qryGetFilterFields
-            s.api_request('qryGetFilterFields')
-            # Get all last 24h alarms details with ESM API v2.
-            alarms = s.api_request('v2/alarmGetTriggeredAlarms?triggeredTimeRange=LAST_24_HOURS&status=&pageSize=500&pageNumber=1', None)
-            for a in alarms:
-                a.update(s.api_request('v2/notifyGetTriggeredNotificationDetail', {'id':a['id']}))
+        :Exemple:
+            .. python::
+            
+                from msiempy import NitroSession
+                s = NitroSession()
+                s.login()
+                # qryGetFilterFields
+                s.api_request('qryGetFilterFields')
+                # Get all last 24h alarms details with ESM API v2.
+                alarms = s.api_request('v2/alarmGetTriggeredAlarms?triggeredTimeRange=LAST_24_HOURS&status=&pageSize=500&pageNumber=1', None)
+                for a in alarms:
+                    a.update(s.api_request('v2/notifyGetTriggeredNotificationDetail', {'id':a['id']}))
 
         """
 
@@ -810,28 +811,31 @@ class NitroSession:
             log.error(e)
             raise
 
-    esm_request=api_request
+    def _deprecated_esm_request(self, *args, **kwargs):
+        """Deprecated. Please use `api_request`"""
+        log.warning("Deprecated method: NitroSession.esm_request(). Please use NitroSession.api_request().")
+        return self.api_request(*args, **kwargs)
+    esm_request = _deprecated_esm_request
 
     def version(self):
         """
         Returns: `str` ESM short version.
-        Example: '10.0.2'
+        Example: ``'10.0.2'``
         """
         return self.buildstamp().split()[0]
 
     def buildstamp(self):
         """
         Returns: `str` ESM buildstamp.
-        Example: '10.0.2 20170516001031'
+        Example: ``'10.0.2 20170516001031'``
         """
         return self.request("build_stamp")["buildStamp"]
 
     def get_internal_file(self, file_token):
         """Uses the private API to retrieve, assemble and delete a temp file from the ESM.
 
-        Arguments:
-
-        - `file_token` (`str`): File token ID
+        :Parameters:
+            - `file_token` (`str`): File token ID
         """
         pos = 0
         nbytes = 0
@@ -865,36 +869,34 @@ class NitroSession:
 
         Also handles auto-login.
 
-        Arguments:
+        :Parameters:
             - `request` (`str`): Name keyword corresponding to the request name in `NitroSession.PARAMS` mapping.
             - `http` (`str`): HTTP method.
             - `callback` (`callable`): function to apply afterwards
             - `raw` (`bool`): If true will return the Response object from requests module.
             - `secure` (`bool`): If true will not log the content of the request.
             - `retry` (`int`): Number of time the request can be retried
-
-        Interpolation parameters :
             - `**kwargs` : Interpolation parameters that will be match to `NitroSession.PARAMS` templates. Dynamic keyword arguments.
 
-        Returns:
+        :Returns:
             - a `dict`, `list` or `str` object
             - the `resquest.Response` object if raw=True
             - `result.text` if `requests.HTTPError`,
             - `None` if Timeout or TooManyRedirects if raw=False
 
-        Exemple:
-
-        .. python::
-        
-            from msiempy import NitroSession
-            s = NitroSession()
-            s.login()
-            # Get all last 24h alarms details
-            alarms = s.request('get_alarms', time_range='LAST_24_HOURS',  status='', page_size=500, page_number=0)
-            for a in alarms:
-                a.update(s.request('get_notification_detail', id=a['id']))
-        
-        All requests currently supported:
+        :Exemple:
+            .. python::
+            
+                from msiempy import NitroSession
+                s = NitroSession()
+                s.login()
+                # Get all last 24h alarms details
+                alarms = s.request('get_alarms', time_range='LAST_24_HOURS',  status='', page_size=500, page_number=0)
+                for a in alarms:
+                    a.update(s.request('get_notification_detail', id=a['id']))
+    
+        :Annex: 
+          List of all requests currently supported:
             All upper cases method names signals to use the private API methods.
             
             .. include:: ./all_request_args.rst
@@ -1026,10 +1028,10 @@ class NitroSession:
         """Unpack data from response.
         Should not be necessary with API v2.
         
-        Arguments:
-            - response: `requests.Response` response object
+        :Parameters:
+            - `response`: `requests.Response` response object
         
-        Returns:
+        :Returns:
             a list, a dict or a string
         """
         log.debug("Unpacking SIEM response: {}".format(str(response.text))[:5000])
