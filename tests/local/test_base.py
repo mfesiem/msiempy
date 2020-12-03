@@ -1,6 +1,6 @@
 import unittest
 import pytest
-from msiempy.core import NitroList
+from msiempy.core.types import NitroList
 import csv
 import time
 import json

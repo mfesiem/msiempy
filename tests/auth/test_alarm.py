@@ -1,5 +1,5 @@
 import msiempy
-from msiempy.core import NitroList
+from msiempy.core.types import NitroList
 from msiempy import EventManager
 import msiempy.alarm
 import unittest
