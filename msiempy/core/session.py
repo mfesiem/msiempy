@@ -37,14 +37,14 @@ class NitroSession:
         Create or get the ESM session
 
         :Parameters:
-            - `config` (`msiempy.core.config.NitroConfig`): Config object. Find default config if `None`.
+            - `config` (`msiempy.NitroConfig`): Config object. Find default config if `None`.
         """
 
-        self.__dict__ = NitroSession.__unique_state__
+        self.__dict__ = NitroSession._unique_state
 
         # Init properties only once
-        if NitroSession.__initiated__ == False:
-            NitroSession.__initiated__ = True
+        if NitroSession._initiated == False:
+            NitroSession._initiated = True
 
             # Config parsing
             self.config = None
@@ -85,11 +85,11 @@ class NitroSession:
     BASE_URL_PRIV = "https://{}/ess/"
     """Private API base URL: ``https://{}/ess/``"""
 
-    __initiated__ = False
+    _initiated = False
     """
-    Weither the session has been intaciated. It's supposed to be a singleton.
+    Wether the session has been intaciated. It's supposed to be a singleton.
     """
-    __unique_state__ = {}
+    _unique_state = {}
     """
     The singleton unique state.
     """
@@ -551,7 +551,7 @@ class NitroSession:
     """
 
     def __str__(self):
-        return repr(self.__unique_state__)
+        return repr(self._unique_state)
 
     def login(self, retry=1):
         """
