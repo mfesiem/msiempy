@@ -111,7 +111,7 @@ def timerange_gettimes(time_range):
     """
     Convert a string time range to a tuple of datetime objects. Only works for certain time ranges.
 
-    :Retruns:
+    :Returns:
         `tuple[str, str]`: Start and end of the timerange. 
     """
     t = time_range.upper()
