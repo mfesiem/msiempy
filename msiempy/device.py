@@ -38,15 +38,18 @@ class ESM(NitroObject):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    @property
-    def text(self):
-        """ Returns ``"ESM object"`` """
-        return str("ESM object")
-
-    @property
-    def json(self):
-        """Not implemented"""
+    def _get_text(self):
+        return str("ESM version %s"%self.version())
+    def _get_json(self):
         raise NotImplementedError()
+    text = property(fget=_get_text)
+    """
+    String representation: ``"ESM version <YOUR_ESM_VERSION>"``
+    """
+    json = property(fget=_get_json)
+    """
+    Not implemented
+    """
 
     def refresh(self):
         """Not implemented"""

@@ -47,23 +47,28 @@ class NitroObject(abc.ABC):
     def __init__(self):
         self.nitro = NitroSession()
         """
-        `msiempy.core.session.NitroSession` object. Interface to the SIEM.
+        Reference to the `NitroSession`, interface to the SIEM.
         """
 
-    @abc.abstractproperty
-    def text(self):
+    @abc.abstractmethod
+    def _get_text(self):
         """
-        Returns printable string.
+        Abstract declaration.
+        """
+        pass
+
+    @abc.abstractmethod
+    def _get_json(self):
+        """
         Abstract declaration.
         """
         pass
 
     @abc.abstractproperty
-    def json(self):
-        """
-        Returns json string representation.
-        Abstract declaration.
-        """
+    def text(self):pass
+
+    @abc.abstractproperty
+    def json(self):pass
 
     @abc.abstractmethod
     def refresh(self):
@@ -92,7 +97,7 @@ class NitroDict(collections.UserDict, NitroObject):
             - `adict`: dict object to wrap., typically received from the SIEM.
             - `id`: ESM obejct unique identifier. `Alert.IPSIDAlertID` for exemple. Load the data from the SIEM.
 
-        Note:
+        :Note:
             `NitroDict` is an abstract class and cannot be instanciated as is.  
         """
         NitroObject.__init__(self)
@@ -108,22 +113,27 @@ class NitroDict(collections.UserDict, NitroObject):
                 self[key] = NitroList(alist=self[key])
 
     def __str__(self):
-        """str(obj) -> return text string."""
+        """Same as `text` attribute. """
         return self.text
 
     def __repr__(self):
-        """repr(obj) -> return json string."""
+        """Same as `json` attribute. """
         return self.json
 
-    @property
-    def json(self):
-        """JSON representation of a item"""
+    def _get_json(self):
         return json.dumps(dict(self), indent=4, cls=NitroObject.NitroJSONEncoder)
 
-    @property
-    def text(self):
-        """Text list of item's values"""
+    def _get_text(self):
         return ", ".join([str(val) for val in self.values()])
+
+    text = property(fget=_get_text)
+    """
+    Printable string representation of the dict: comma separated list of item's values
+    """
+    json = property(fget=_get_json)
+    """
+    JSON string representation of the dict
+    """
 
     @abc.abstractmethod
     def data_from_id(id):
@@ -265,19 +275,26 @@ class NitroList(collections.UserList, NitroObject):
 
         return text
 
-    @property
-    def text(self):
+    def _get_text(self):
         """Defaut table string, a shorcut to `get_text()` with no arguments."""
         return self.get_text()
 
-    @property
-    def json(self):
+    def _get_json(self):
         """JSON list of dicts representing the list."""
         return json.dumps(
             [dict(item) for item in list(self)],
             indent=4,
             cls=NitroObject.NitroJSONEncoder,
         )
+
+    text = property(fget=_get_text)
+    """
+    "Prettytable" representation of the list: Same as `get_text` with no arguments. 
+    """
+    json = property(fget=_get_json)
+    """
+    JSON string representation of the list of dicts. 
+    """
 
     def search(self, term, fields=None, invert=False):
         """
