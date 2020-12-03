@@ -72,6 +72,7 @@ if [[ ${is_tag} = true ]]; then
     docs_folder="./apidocs/${project_version}"
 else
     docs_folder="./apidocs/dev"
+    project_version="(dev)"
 fi
 
 # Init output folder - not storage
@@ -94,7 +95,7 @@ python3 ./samples/list_request_args.py > "./all_request_args.rst"
 
 # Run pydoctor build
 pydoctor \
-    --project-name="msiempy" \
+    --project-name="msiempy ${project_version}" \
     --html-viewsource-base="https://github.com/mfesiem/msiempy/tree/${git_sha}" \
     --make-html \
     --quiet \
