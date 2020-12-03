@@ -8,9 +8,6 @@ from functools import wraps
 from datetime import datetime, timedelta
 import dateutil.parser
 
-__pdoc__ = {}  # Init pdoc to document dynamically
-
-
 def dehexify(data):
     """
     A URL and Hexadecimal Decoding Method.
@@ -113,6 +110,9 @@ def fromb64(s):
 def timerange_gettimes(time_range):
     """
     Convert a string time range to a tuple of datetime objects. Only works for certain time ranges.
+
+    :Retruns:
+        `tuple[str, str]`: Start and end of the timerange. 
     """
     t = time_range.upper()
     now = datetime.now()
@@ -178,7 +178,7 @@ def divide_times(first, last, slots=0, delta=0, time=0):
     """
     Divide the time range based on a delta or on a number of slots or another time,.
     
-    Returns:
+    :Returns:
         `list[tuple(datetime, datetime)]`
     """
 
@@ -219,7 +219,7 @@ def divide_times(first, last, slots=0, delta=0, time=0):
 
 def regex_match(regex, string):
     """
-    Returns:
+    :Returns:
         `True` if the string match the regex.
     """
     if re.search(regex, string):
@@ -232,10 +232,10 @@ def format_esm_time(esm_time):
     """
     Converts time object to ESM time string.
 
-    Arguments:
+    :Parameters:
         - `time_obj` (`datetime`)
 
-    Returns: 
+    :Returns: 
         `str` in format `2019-04-08T19:35:02.971Z`
     """
     _esm_out_time_fmt = "%m/%d/%Y %H:%M:%S"
@@ -249,10 +249,10 @@ def convert_to_time_obj(time_str):
     """
     Converts given timestamp string to datetime object
 
-    Arguments:
+    :Parameters:
         - `time_str` (`str`): timestamp in format ``'YYYY/MM/DD HH:MM:SS'``, ``'MM/DD/YYYY HH:MM:SS'``, or ``'DD/MM/YYYY HH:MM:SS'``
 
-    Returns:
+    :Returns:
         datetime object or None if no format matches
     """
     return dateutil.parser.parse(time_str)
@@ -262,7 +262,7 @@ def parse_query_result(columns, rows):
     """
     Parse the query results into a list of dict 
     
-    Arguments:
+    :Parameters:
         - `columns` (`list[dict]`): Returned by the SIEM. Exemple:: 
         
             [{'name': 'Alert.LastTime'}, {'name': 'Rule.msg'}, {'name': 'Alert.DstIP'}, {'name': 'Alert.IPSIDAlertID'}]
@@ -274,22 +274,22 @@ def parse_query_result(columns, rows):
                 {'values': ['09/22/2020 15:51:14', 'Postfix Lost connection from host', '::', '144116287604260864|547122']}
             ]
 
-    Returns :
+    :Returns :
         `list[dict]`
 
-    Exemple::
+        Exemple::
 
-        [
-            {
-                "Alert.LastTime":"09/22/2020 15:51:14",
-                "Rule.msg":"Postfix Disconnect from host",
-                "Alert.DstIP":"::",
-                "Alert.IPSIDAlertID":"144116287604260864|547123"
-            },
-            {
-                ...
-            },
-        ]
+            [
+                {
+                    "Alert.LastTime":"09/22/2020 15:51:14",
+                    "Rule.msg":"Postfix Disconnect from host",
+                    "Alert.DstIP":"::",
+                    "Alert.IPSIDAlertID":"144116287604260864|547123"
+                },
+                {
+                    ...
+                },
+            ]
 
     """
     events = list()
@@ -307,18 +307,21 @@ def format_fields_for_query(fields):
     """
     Format fields names to cann query module.
 
-    Arguments:
+    :Parameters:
         - `fields`: list of fields, exemple:: 
             
             ['field1','name','user']
 
-    Returns::
+    :Returns:
+        `list[dict]`
 
-        [
-            {'name':'field1'},
-            {'name':'name'},
-            {'name':'user'},
-        ]
+        Like::
+
+            [
+                {'name':'field1'},
+                {'name':'name'},
+                {'name':'user'},
+            ]
 
     """
     return [{"name": value} for value in list(fields)]
@@ -330,11 +333,11 @@ def parse_timedelta(time_str):
 
     Modified from virhilo's answer at https://stackoverflow.com/a/4628148/851699
 
-    Arguments:
+    :Parameters:
         - `time_str`: A string identifying a duration.  (eg. `2h13m`)
 
 
-    Returns:
+    :Returns:
         `timedelta`: A timedelta object
     """
     regex = re.compile(
@@ -385,10 +388,10 @@ def nitro_tz(tz_id):
     """Maps McAfee SIEM/Nitro ESM internal timezone IDs to
     the tz database at: http://web.cs.ucla.edu/~eggert/tz/tz-link.htm
 
-    Arguments:
+    :Parameters:
         - `tz_id` (`int`): McAfee ESM internal timezone ID
 
-    Returns:
+    :Returns:
         `str`: timezone name
 
     """

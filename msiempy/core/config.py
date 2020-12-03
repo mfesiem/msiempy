@@ -45,7 +45,7 @@ class NitroConfig(configparser.ConfigParser):
         """
         Create the configuration parser
 
-        Arguments:
+        :Parameters:
             - `path`: Config file special path, if path is left `None`, will automatically look for it.
             - `config`: Manual config dict. ex: `{'general':{'verbose':True}}`.
             - `*args, **kwargs` : Passed to `configparser.ConfigParser.__init__()` method.
@@ -131,7 +131,7 @@ class NitroConfig(configparser.ConfigParser):
     def iset(self, section, option=None, secure=False):
         """Interactively set the specified section/option by asking the user the input.
         
-        Arguments:
+        :Parameters:
             - `section` (`str`): Configuration's section. Exemple : 'esm' or 'general'.
             - `option` (`bool`): Configuraion's option. Leave to `None` to set the whole section one after another. Exemple : 'user', 'timeout'.
             - `secure` (`bool`): Will use getpass to retreive the configuration value and won't print old value.

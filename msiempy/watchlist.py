@@ -6,7 +6,7 @@ import collections
 
 log = logging.getLogger("msiempy")
 
-from .core import NitroDict, NitroList
+from .core.types import NitroDict, NitroList
 
 
 class WatchlistManager(NitroList):
@@ -14,14 +14,14 @@ class WatchlistManager(NitroList):
     List-Like object. Summary of ESM watchlists.
     
     Exemples:
-        - Add values to a Watchlist
+      - Add values to a Watchlist
 
         >>> from msiempy import WatchlistManager
         >>> wl_list = WatchlistManager()
         >>> wl = wl_list.search('test_Watchlist')[0]
         >>> wl.add_values(['1.1.1.2', '2.2.2.1', '3.3.3.1'])
 
-    See: 
+    :See: 
             Object `Watchlist`
             
     """
@@ -71,7 +71,7 @@ class WatchlistManager(NitroList):
         """
         Create a static watchlist.
 
-        Arguments:   
+        :Parameters:   
             - `name` (`str`): Name of the watchlist
             - `wl_type` (`str`): Watchlist data type
         
@@ -90,7 +90,7 @@ class WatchlistManager(NitroList):
         """
         Remove watchlist(s).
         
-        Arguments:
+        :Parameters:
             - `wl_id_list` (`list[int]`): list of watchlist IDs. Example: `[1, 2, 3]`.
 
         """
@@ -100,7 +100,7 @@ class WatchlistManager(NitroList):
         """
         Get a list of watchlist types.
         
-        Returns: 
+        :Returns: 
             `list`: list of watchlist types.
         """
         return self.nitro.request("get_wl_types")
@@ -125,10 +125,10 @@ class Watchlist(NitroDict):
         - ``values``: values
         - And others, see SIEM API docs
 
-    Note:
+    :Note:
         Complete list of watchlist fields is loaded once `load_details` is called. 
 
-    See:
+    :See:
         Object `WatchlistManager`
     """
 
@@ -136,7 +136,7 @@ class Watchlist(NitroDict):
         """
         Create a new Watchlist object from parameters or ID.  
 
-        Arguments:
+        :Parameters:
             - `adict` (`dict`): Watchlist dict parameters
             - `id` (`str`): The watchlist ID to instanciate. Will load informations for the SIEM. 
 
@@ -147,7 +147,7 @@ class Watchlist(NitroDict):
         """
         Add values to static watchlist.
         
-        Arguments:
+        :Parameters:
             - `values` (list): list of values
         """
         self.nitro.request("add_watchlist_values", watchlist=self["id"], values=values)
@@ -156,7 +156,7 @@ class Watchlist(NitroDict):
         """
         Remove values from static watchlist.
 
-        Arguments:
+        :Parameters:
             - `values` (list): list of values
         """
         self.nitro.request(
@@ -167,10 +167,10 @@ class Watchlist(NitroDict):
         """
         Retrieve watchlist data from given ID.
 
-        Arguments:
+        :Parameters:
             - `id` (str): watchlist ID
 
-        Returns:
+        :Returns:
             `dict`: The watchlist paramaters
         """
         info = self.nitro.request("get_watchlist_details", id=id)
@@ -192,10 +192,10 @@ class Watchlist(NitroDict):
         """
         Load Watchlist values into the ``values`` Watchlist dict key.   
         
-        Raises: 
+        :Raises: 
             `KeyError` if watchlist invalid.  
 
-        Note:
+        :Note:
             Uses the internal API method ``SYS_GETWATCHLISTDETAILS``
         """
         wl_details = self.nitro.request("get_watchlist_values", id=self.data["id"])
@@ -210,7 +210,7 @@ class Watchlist(NitroDict):
 
     def get_id(self):
         """
-        Returns:
+        :Returns:
             `int`: The Watchlist ID.
         """
         return self["id"]

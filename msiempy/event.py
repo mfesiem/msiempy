@@ -11,7 +11,8 @@ from datetime import datetime, timedelta
 
 log = logging.getLogger("msiempy")
 
-from .core import NitroDict, NitroError, FilteredQueryList
+from .core.types import NitroDict
+from .core.query import FilteredQueryList
 from .core.utils import (
     timerange_gettimes,
     parse_query_result,
@@ -19,8 +20,9 @@ from .core.utils import (
     divide_times,
     parse_timedelta,
 )
-from .device import DevTree
 
+from .core.session import NitroError
+from .device import DevTree
 
 class _QueryExecuteManager(FilteredQueryList):
     """
@@ -43,7 +45,7 @@ class _QueryExecuteManager(FilteredQueryList):
 
     def _get_filters(self):
         """
-        Returns SIEM formatted filters for the query structured from `msiempy.event.GroupFilter` and/or `msiempy.event.FieldFilter`
+        Returns SIEM formatted filters for the query structured from `GroupFilter` and/or `FieldFilter`
         See `msiempy.core.query.FilteredQueryList.filters`.
         """
         return [dict(f) for f in self._filters]
@@ -54,8 +56,8 @@ class _QueryExecuteManager(FilteredQueryList):
         
         Called by the `filters` property setter.  
 
-        Arguments:
-            - `afilter` (`tuple(field, [values])` or `tuple(field, value)` or `msiempy.event.GroupFilter` or `msiempy.event.FieldFilter`): The filter
+        :Parameters:
+            - `afilter` (`tuple(field, [values])` or `tuple(field, value)` or `GroupFilter` or `FieldFilter`): The filter
         """
         if isinstance(afilter, tuple):
             self._filters.append(FieldFilter(afilter[0], afilter[1]))
@@ -84,7 +86,7 @@ class _QueryExecuteManager(FilteredQueryList):
 
         Internal method called by _qry_load_data
         
-        Arguments:
+        :Parameters:
             - `resultID`: Query result ID
             - `wait_timeout_sec` (`int`): Duration in seconds until the query is completed or countdown arrives at zero.
             - `sleep_time` (`float`): Time to sleep in the waiting loop
@@ -160,7 +162,7 @@ class EventManager(_QueryExecuteManager):
     List-Like object. Interface to execute a event query.
 
     Exemples:
-        - Execute an event query 
+      - Execute an event query 
 
         Query events according to destination IP and hostname filters, sorted by AlertID.  
 
@@ -183,7 +185,7 @@ class EventManager(_QueryExecuteManager):
         Note: 
             You can dump full list of fields usable in query `FieldFilter` with `dump_all_fields.py <https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py>`_ script.  
 
-        - Add a note to events
+      - Add a note to events
 
         Set the note of some events and check if the note is well set.  
 
@@ -199,10 +201,9 @@ class EventManager(_QueryExecuteManager):
                         event.refresh(use_query=False) # Event data will be loaded with ipsGetAlertData API method
                         assert "Test note" in genuine_event['note'], "Error, the note hasn't been added"
 
-        See: 
-                - `add_wpsan_note.py <https://github.com/mfesiem/msiempy/blob/master/samples/add_wpsan_note.py>`_ script for more on how to add notes to event that triggered alarms.       
+        Look at the `add_wpsan_note.py <https://github.com/mfesiem/msiempy/blob/master/samples/add_wpsan_note.py>`_ script for more code to add notes to event that triggered alarms.       
 
-    See: 
+    :See: 
             Objects `Event` and `FieldFilter`
             
     """
@@ -219,7 +220,7 @@ class EventManager(_QueryExecuteManager):
         """
         Create a new event query.  
 
-        Arguments: 
+        :Parameters: 
             - `fields` (`list[str]`): Query fields
             - `order` (`tuple(direction, field)`): Query order direction and field. Direction can be ``"ASCENDING"`` or ``"DESCENDING"``. 
             - `limit` (int): Max number of rows per query result.
@@ -228,10 +229,10 @@ class EventManager(_QueryExecuteManager):
             - `start_time` (`str` or `datetime`): Query start time
             - `end_time` (`str` or `datetime`): Query end time
 
-        Note: 
+        :Note: 
             Some minimal fields will always be present. Get the list of possible fields with `EventManager.get_possible_fields`
 
-        See: 
+        :See: 
             `Event`
 
         """
@@ -326,14 +327,14 @@ class EventManager(_QueryExecuteManager):
             - Wait the query to be executed
             - Get and parse the events
 
-        Arguments:
+        :Parameters:
             - `retry` (`int`): number of time the query can be failed and retried.  (Default value = 1)
             - `wait_timeout_sec` (`int`): wait timeout in seconds. (Default value = 120)
 
-        Returns: 
-            tuple: ( `msiempy.event.EventManager`, Query completed? `bool` )
+        :Returns: 
+            tuple: ( `EventManager`, Query completed? `bool` )
 
-        Raises:
+        :Raises:
             - `msiempy.core.session.NitroError`: If any unhandled errors.
             - `TimeoutError`: If ``wait_timeout_sec`` counter gets to 0.
         """
@@ -388,21 +389,23 @@ class EventManager(_QueryExecuteManager):
     def load_data(self, workers=10, slots=10, delta=None, max_query_depth=0, **kwargs):
         """
         **Load the events data into the list.**  
-        Wraps around `msiempy.event.EventManager._qry_load_data`.
+        Wraps around `EventManager._qry_load_data`.
 
-        Arguments:
-            - `max_query_depth` (`int`): Maximum number of reccursive divisions `load_data` method can apply to the query in order to load all events. Splits the query in differents time slots if the query apprears not to be completed.  Only works with custom times and some time ranges.
-                If ``EventManager.limit=500``, ``slots=10`` and ``max_query_depth=2``, then the maximum capacity of the list is ``(500*10)*(500*10)`` = ``25000000`` (instead of ``500`` with ``max_query_depth=0``). 
+        :Parameters:
+            - `max_query_depth` (`int`): Maximum number of reccursive divisions `load_data` method can apply to the query in order to load all events. 
+              Splits the query in differents time slots if the query apprears not to be completed.  
+              If ``EventManager.limit=500``, ``slots=10`` and ``max_query_depth=2``, then the maximum capacity of the list is ``(500*10)*(500*10)`` = ``25000000`` (instead of ``500`` with ``max_query_depth=0``). 
+              Only works with custom time ranges and some time ranges for now. 
             - `slots` (`int`): number of time slots the query can be divided. Loading bar is divided according to the number of slots. Applicable if ``max_query_depth>0``.
             - `delta` (`str`): exemple : '2h', the query will be firstly divided in chuncks according to the time delta read with `dateutil`. Applicable if ``max_query_depth>0``. 
             - `workers` (`int`): numbre of parrallels tasks, should be equal or less than the number of slots. Applicable if ``max_query_depth>0``. 
             - `retry` (`int`): number of time the query can be failed and retried.  (Default value = 1)
             - `wait_timeout_sec` (`int`): wait timeout in seconds. (Default value = 120)
 
-        Returns: 
-            `msiempy.event.EventManager`
+        :Returns: 
+            `EventManager`
 
-        Note: 
+        :Note: 
             Only the first query is loaded asynchronously.
         """
 
@@ -479,8 +482,9 @@ class EventManager(_QueryExecuteManager):
                     )
                     self._root_parent.not_completed = True
 
-        events = [Event(adict=item) for item in items]
-        self.data = events
+        self.data.clear()
+        self.data.extend(Event(adict=item) for item in items)
+
         return self
 
     @property
@@ -495,8 +499,8 @@ class EventManager(_QueryExecuteManager):
 
     def get_possible_fields(self):
         """
-        Return the list of possible fields that you can request in a Events query.
-        The list is loaded from the SIEM.
+        :Returns: `list` of possible fields that you can request in a events query.
+            The list is loaded from the SIEM.
         """
         return self.nitro.request(
             "get_possible_fields", type=self._TYPE, groupType=self._GROUPTYPE
@@ -515,7 +519,7 @@ class GroupedEventManager(_QueryExecuteManager):
     List-Like object. Interface to execute a grouped event query.
 
     Exemples:
-        - Execute a grouped event query:
+      - Execute a grouped event query:
 
         Query the curent day events filtered by `IPSID` grouped by `ScrIP`.  
 
@@ -535,10 +539,10 @@ class GroupedEventManager(_QueryExecuteManager):
                 pprint.pprint(top10)
 
 
-    See:
+    :See:
             Object `GroupedEvent`.  
 
-    Tip:
+    :Note:
             `all_dev.py script <https://github.com/mfesiem/msiempy/blob/master/samples/all_dev.py>`_ can help you list all your datasources IDs (for the required ``IPSID`` filter).  
 
 
@@ -548,9 +552,9 @@ class GroupedEventManager(_QueryExecuteManager):
         """
         Create a new grouped query
 
-        Arguments:
+        :Parameters:
             - `field` (`str`): The field that will be selected when this query is executed.
-            - `filters` (`list`): list of filters. A filter can be a `tuple(field, [values])` or it can be a `msiempy.event.FieldFilter` or `msiempy.event.GroupFilter` if you wish to use advanced filtering.
+            - `filters` (`list`): list of filters. A filter can be a `tuple(field, [values])` or it can be a `FieldFilter` or `GroupFilter` if you wish to use advanced filtering.
             - `time_range` (`str`): Query time range. String representation of a time range. Not need to specify ``"CUSTOM"`` if `start_time` and `end_time` are set.
             - `start_time` (`str` or a `datetime`): Query start time.
             - `end_time` (`str` or a `datetime`): Query end time.
@@ -583,18 +587,19 @@ class GroupedEventManager(_QueryExecuteManager):
         """
         Load the data into the list.
 
-        Arguments:
+        :Parameters:
             - `num_rows` (`int`): Maximum number of rows to load.
             - `retry` (`int`): number of time the query can be failed and retried.
             - `wait_timeout_sec` (`int`): wait timeout in seconds.
 
-        Returns: 
+        :Returns: 
             `GroupedEventManager`
         """
         items, completed = self._qry_load_data(*args, **kwargs)
         if not completed:
             log.warning("The query is not complete... Try to increase the num_rows")
-        self.data = [GroupedEvent(item) for item in items]
+        self.data.clear()
+        self.data.extend(GroupedEvent(item) for item in items)
         return self
 
     def clear_filters(self):
@@ -623,15 +628,15 @@ class GroupedEventManager(_QueryExecuteManager):
             - Wait the query to be executed
             - Get and parse the events
 
-        Arguments:
+        :Parameters:
             - `num_rows` (`int`): Maximum number of rows to load.
             - `retry` (`int`): number of time the query can be failed and retried.
             - `wait_timeout_sec` (`int`): wait timeout in seconds.
 
-        Returns:
+        :Returns:
             tuple : ( `list`, Query completed? `bool` )
 
-        Raises:
+        :Raises:
             - `msiempy.core.session.NitroError` if any unhandled errors.
             - `TimeoutError` if ``wait_timeout_sec`` counter gets to 0.
             - `ValueError` if an ``IPSID`` filter is not present.
@@ -691,7 +696,7 @@ class Event(NitroDict):
             ``Rule.msg``,
             ``Alert.LastTime``, 
             ``Alert.IPSIDAlertID``
-            **And any other** :
+            **And any other**, depending of your query:
             dump the available fields and filters with `dump_all_fields.py <https://github.com/mfesiem/msiempy/blob/master/samples/dump_all_fields.py>`_ script.  
 
 
@@ -737,7 +742,7 @@ class Event(NitroDict):
         
     For ``qryGetResults`` events: 
         We tried our best effort to match SIEM returned fields with initially requested fields.  
-        `__getitem__` and `__contains__`, method have been rewrote in order to offer more straight-forward `dict` usage.  
+        Methods `__getitem__`, `__contains__` etc. have been rewrote in order to offer more straight-forward `dict` usage.  
         
         Exemple:
 
@@ -795,7 +800,7 @@ class Event(NitroDict):
 
     # Minimal default query fields
     DEFAULTS_EVENT_FIELDS = ["Rule.msg", "LastTime", "IPSIDAlertID"]
-    """Always present when using `msiempy.event.EventManager` querying :  
+    """Always present when using `EventManager` querying :  
         `Rule.msg`  
         `Alert.LastTime`  
         `Alert.IPSIDAlertID`
@@ -1415,7 +1420,7 @@ class Event(NitroDict):
         """
         Create a new event representation
 
-        Arguments:
+        :Parameters:
             - `adict` (`dict`): Event parameters
             - `id` (`str`): The event ``"IPSIDAlertID"`` to instanciate. Will load informations.  
         """
@@ -1477,7 +1482,8 @@ class Event(NitroDict):
         """
         Get the event ID.  
 
-        Return the full event ID or `None`.  
+        :Returns: 
+            `str`: the full event ID or `None`.  
         """
         the_id = (
             self.data["Alert.IPSIDAlertID"]
@@ -1503,7 +1509,7 @@ class Event(NitroDict):
         """
         Set the event's note. Desctructive action.  
 
-        Note: 
+        :Note: 
             Uses the internal API method `IPS_ADDALERTNOTE`
         """
         the_id = self.get_id()
@@ -1535,10 +1541,10 @@ class Event(NitroDict):
         """
         Load event's data.
 
-        Arguments:
+        :Parameters:
             - `id` (`str`): The event ID. (i.e. : ``"144128388087414784|747122896"``)
             - `use_query` (`bool`): Uses the query module to retreive common event data. Only works with SIEM 11.2 or greater.
-                Default behaviour will call ``ipsGetAlertData`` to retreive the complete event definition.
+              Default behaviour will call ``ipsGetAlertData`` to retreive the complete event definition.
             - `extra_fields` (`list`): Only when `use_query=True`. Additionnal event fields to load in the query.
         """
 
@@ -1579,16 +1585,16 @@ class Event(NitroDict):
         """
         Re-load event's data.
 
-        Arguments:
+        :Parameters:
             - `use_query` (`bool`): Force the use of the query module to retreive the event data. Only works with SIEM 11.2 or greater.
-                In contrario, if explicitly `False`, force the use of ``ipsGetAlertData`` to get the details.
-                Default behaviour will use the query module if an ``'Alert.IPSIDAlertID'`` keys exists.  
+              In contrario, if explicitly `False`, force the use of ``ipsGetAlertData`` to get the details.
+              Default behaviour will use the query module if an ``'Alert.IPSIDAlertID'`` keys exists.  
             - `extra_fields` (`list`): Only when `use_query=True` or the Event is already a query event. Additionnal event fields to load in the query.
 
         Warning:
             Enforce `use_query=True` will reset the Events fields to whatever is passed to `extra_fields`
 
-        Raises:
+        :Raises:
             `AttributeError` if the event ID has not been found.
         """
         if not self.get_id():
@@ -1641,8 +1647,11 @@ class GroupedEvent(Event):
 
     Meaning that you can use ``e['TotalEventCount']``, it will return ``e['SUM(Alert.EventCount)']``.
 
-    Note:
+    :Note:
         `GroupedEvent` is NOT suitable for Event's operations like `Event.set_note` or `Event.refresh` because there is no ID associated with events records.
+
+    :See:
+        Object `GroupedEventManager`
 
     """
 
@@ -1663,21 +1672,33 @@ class GroupFilter(_QueryFilter):
     """
     Query group filter
 
-    Based on ``EsmFilterGroup`` SIEM API object.  
+    Helper to dump groups of filters in the right format.
 
-    Used to dump groups of filters in the right format.
+    Exemple to filter by Signature ID OR by UserIDSrc:
+    
+    >>> e = EventManager(time_range='LAST_24_HOURS', 
+    ...         filters = [ GroupFilter(
+    ...                      filters = [ FieldFilter('DSIDSigID', ["49190-4294967295"], operator='EQUALS'),
+    ...                                  FieldFilter('UserIDSrc', ["user"], operator='EQUALS')   ],
+    ...                      logic = "OR" ) ])
 
-    See:
+    :See:
         Object `FieldFilter`
+
+    :Note:
+        This class is based on ``EsmFilterGroup`` SIEM API object.  
     """
 
     def __init__(self, filters, logic="AND"):
         """
         Create a new group filter
 
-        Arguments:
+        :Parameters:
             - `filters` (`list`): a list of filters. Filters can be `msiempy.FieldFilter` or `msiempy.GroupFilter`
             - `logic` (`str`): ``"AND"`` or ``"OR"``
+
+        :Note:
+            A filter can also the be a `dict` in the ``EsmFieldFilter`` SIEM API object format. 
         """
         super().__init__()
 
@@ -1692,10 +1713,8 @@ class GroupFilter(_QueryFilter):
 class FieldFilter(_QueryFilter):
     """
     Query field filter
-    
-    Based on ``EsmFieldFilter`` SIEM API object.  
 
-    This class is automatically used when instanciating `EventManager` objects. It automatically creates filters in the right `dict` format from ``tuples`` passed to the filter argument of `EventManager`:
+    Helper to dump filters in the right `dict` format. 
     
     >>> e = EventManager(time_range='LAST_MINUTE', filters=[ ('SrcIP', ['10.5.0.0/16']) ])
 
@@ -1705,10 +1724,12 @@ class FieldFilter(_QueryFilter):
     
     >>> e = EventManager(time_range='LAST_24_HOURS', filters=[ FieldFilter('DSIDSigID', ["49190-4294967295"], operator='EQUALS') ])
 
-    Note:
-        Make sure the filter name is valid by checking the result of `EventManager.get_possible_filters` or use the provided script in the sample folder
+    :Note:
+        - Make sure the filter name is valid by checking the result of `EventManager.get_possible_filters` or use the provided script in the sample folder
+        - This class is automatically used when using `EventManager` objects. 
+        - This class is based on ``EsmFieldFilter`` SIEM API object.  
 
-    See:
+    :See:
         Object `GroupFilter`
     """
 
@@ -1960,7 +1981,7 @@ class FieldFilter(_QueryFilter):
         """
         Create a new field filter for a query.  
 
-        Arguments:
+        :Parameters:
             - `name` (`str`): field name as string. Field name property. Example : ``"SrcIP"``. See full list here: https://github.com/mfesiem/msiempy/blob/master/static/all_filters.json
             - `values` (`list`): list of values the field is going to be tested againts with the specified orperator.
             - `orperator` (`str`): One of: ``IN``, ``NOT_IN``, ``GREATER_THAN``, ``LESS_THAN``, ``GREATER_OR_EQUALS_THAN``, ``LESS_OR_EQUALS_THAN``, ``NUMERIC_EQUALS``, ``NUMERIC_NOT_EQUALS``, ``DOES_NOT_EQUAL``, ``EQUALS``, ``CONTAINS``, ``DOES_NOT_CONTAIN``, ``REGEX``
@@ -2079,7 +2100,9 @@ class FieldFilter(_QueryFilter):
 
     Values will always be added to the filter. To remove values, handle directly the `_values` property.
 
-    Example::
+    Example:
+
+    .. python::
 
         filter = FieldFilter(name='DstIP', values=[{'type':'EsmWatchlistValue', 'watchlist':42}], operator='IN')
     """
@@ -2088,17 +2111,17 @@ class FieldFilter(_QueryFilter):
         """
         Add a new value to the filter.
 
-        Arguments:  
+        :Parameters:  
             - `type` (`str`): Type of the value
             - `value` (`str`): If ``type`` is ``"EsmBasicValue"``
             - `watchlist` (`int`): If ``type`` is ``"EsmWatchlistValue"``
             - `variable` (`int`): If ``type`` is ``"EsmVariableValue"``
             - `values` (`list`): If ``type`` is ``"EsmCompoundValue"``
 
-        Raises: 
+        :Raises: 
             `KeyError` or `AttributeError` if you don't respect the correct type/key/value combo.
 
-        Note: 
+        :Note: 
             Filtering query with other type of filter than ``EsmBasicValue`` is not tested.
         """
         try:
