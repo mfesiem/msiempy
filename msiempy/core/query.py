@@ -3,7 +3,6 @@
 Base query class with timerange handling. Define `FilteredQueryList`. 
 """
 
-from abc import abstractproperty
 import logging
 import abc
 import datetime
@@ -33,9 +32,9 @@ class FilteredQueryList(NitroList):
         """
         Create a query list
 
-        Arguments:
+        :Parameters:
             - `time_range` (`str`): Query time range. String representation of a time range.
-                See `msiempy.core.query.FilteredQueryList.POSSIBLE_TIME_RANGE`.
+              See `msiempy.core.query.FilteredQueryList.POSSIBLE_TIME_RANGE`.
             - `start_time` (`str` or a `datetime`): Query start time.
             - `end_time` (`str` or a `datetime`): Query end time.
             - `filters`: List of filters applied to the query.
@@ -261,6 +260,12 @@ class FilteredQueryList(NitroList):
         Abstract declaration.
         """
         pass
+
+    def _deprecated_qry_load_data(self, *args, **kwargs):
+        log.warning("Deprecated: qry_load_data() method is now private. Please use load_data() or the private method _qry_load_data(). ")
+        return self._qry_load_data(*args, **kwargs)
+    qry_load_data = _deprecated_qry_load_data
+    
 
     @abc.abstractmethod
     def load_data(self, *args, **kwargs):

@@ -43,33 +43,37 @@ python3 -m unittest tests.auth.test_event.T.test_add_note
 
 
 ### Git flow
-- Commits to `master` branch are trigerring: 
-    - Tests on Windows and MacOS and Ubuntu + upload coverage
-    - Generate documentation + [publish to gh-pages](https://mfesiem.github.io/docs/msiempy/)
 
-- Commits to any branch are trigerring:
-    - Tests on Ubuntu
-    - Generate documentation + publish to gh-pages [under `test` folder](https://mfesiem.github.io/docs/test/msiempy/)
+- Commits to `main` branch are trigerring: 
+    - Tests on Windows and MacOS and Ubuntu + upload coverage
+    - Generate documentation: 
+        If tag release: [publish to gh-pages](https://mfesiem.github.io/docs/msiempy/)
+        Else: publish [under `dev` folder](https://mfesiem.github.io/docs/msiempy/dev)
+    - Release to PyPI on git tags
 
 See the github actions workflows for more details.  
 
 ### Publish
 
-Use the publish script to push tha package to PyPi and create a new tag, for Unix only. 
-For more infos:
-```
-% ./publish.sh -h
-```
+Publishing to PyPI is done via a GitHub Actions workflow that is triggered when a tag is pushed.
+
+First commit the version update to master and wait for tests to pass.
+
+You can push a tab by creating a GitHub Release <https://github.com/mfesiem/msiempy/releases/new>
+
+You can also create a tag on local branch then push it:
+
+    git tag 0.3.5
+    git push --tags
+
+The tag name should match extacly the version number. 
 
 ### Documentation
 Documentation is automatically generated with [`pydoctor`](https://pydoctor.readthedocs.io/en/latest/) from docstrings. 
 
 Format use in docstrings is ReStructuredText.
 
-The script `buid_docs.sh` integrate a `mkdocs` index to the `pydoctor` HTML files. 
-This is a hack to documented multiple versions of msiempy. 
-The `index.md` files under `./docs/<version>/index.md` should be kept in the repo for mkdocs to be able to generate the navbar with links to different versions.
-
+The script `buid_docs.sh` build documentation.  
 
 For more infos:
 ```
